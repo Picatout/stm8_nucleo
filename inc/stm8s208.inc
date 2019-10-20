@@ -4,21 +4,35 @@
 ; sdas file
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.module stm8s208rb
-	
-;;;;;;;;;;
-; bit mask
-;;;;;;;;;;
- BIT0 = (0)
- BIT1 = (1)
- BIT2 = (2)
- BIT3 = (3)
- BIT4 = (4)
- BIT5 = (5)
- BIT6 = (6)
- BIT7 = (7)
 
-; clock frequency using HSE without division
- Fmaster = 8000000;UL
+;;;;;;;;;;;;
+; bits
+;;;;;;;;;;;;
+ BIT0 = 0
+ BIT1 = 1
+ BIT2 = 2
+ BIT3 = 3
+ BIT4 = 4
+ BIT5 = 5
+ BIT6 = 6
+ BIT7 = 7
+ 	
+;;;;;;;;;;;;
+; bits masks
+;;;;;;;;;;;;
+ B0_MASK = (1<<0)
+ B1_MASK = (1<<1)
+ B2_MASK = (1<<2)
+ B3_MASK = (1<<3)
+ B4_MASK = (1<<4)
+ B5_MASK = (1<<5)
+ B6_MASK = (1<<6)
+ B7_MASK = (1<<7)
+
+; HSI oscillator frequency 16Mhz
+ FHSI = 16000000
+; LSI oscillator frequency 128Khz
+ FLSI = 128000 
 
 ; controller memory regions
  RAM_SIZE = (0x1800) ; 6KB 
@@ -127,16 +141,6 @@ NFLASH_WS = NOPT7
  DEVID_LOT6  = (0x48D8)
 
 
-; port bit
- PIN0 = (0)
- PIN1 = (1)
- PIN2 = (2)
- PIN3 = (3)
- PIN4 = (4)
- PIN5 = (5)
- PIN6 = (6)
- PIN7 = (7)
-
 GPIO_BASE = (0x5000)
 GPIO_SIZE = (5)
 ; PORTS SFR OFFSET
@@ -149,54 +153,83 @@ PF = 25
 PG = 30
 
 ; GPIO
+; gpio register offset to base
+ GPIO_ODR = 0
+ GPIO_IDR = 1
+ GPIO_DDR = 2
+ GPIO_CR1 = 3
+ GPIO_CR2 = 4
+
+; port A
+ PA_BASE = (0X5000)
  PA_ODR  = (0x5000)
  PA_IDR  = (0x5001)
  PA_DDR  = (0x5002)
  PA_CR1  = (0x5003)
  PA_CR2  = (0x5004)
-
+; port B
+ PB_BASE = (0X5005)
  PB_ODR  = (0x5005)
  PB_IDR  = (0x5006)
  PB_DDR  = (0x5007)
  PB_CR1  = (0x5008)
  PB_CR2  = (0x5009)
-
+; port C
+ PC_BASE = (0X500A)
  PC_ODR  = (0x500A)
  PC_IDR  = (0x500B)
  PC_DDR  = (0x500C)
  PC_CR1  = (0x500D)
  PC_CR2  = (0x500E)
-
+; port D
+ PD_BASE = (0X500F)
  PD_ODR  = (0x500F)
  PD_IDR  = (0x5010)
  PD_DDR  = (0x5011)
  PD_CR1  = (0x5012)
  PD_CR2  = (0x5013)
-
+; port E
+ PE_BASE = (0X5014)
  PE_ODR  = (0x5014)
  PE_IDR  = (0x5015)
  PE_DDR  = (0x5016)
  PE_CR1  = (0x5017)
  PE_CR2  = (0x5018)
-
+; port F
+ PF_BASE = (0X5019)
  PF_ODR  = (0x5019)
  PF_IDR  = (0x501A)
  PF_DDR  = (0x501B)
  PF_CR1  = (0x501C)
  PF_CR2  = (0x501D)
-
+; port G
+ PG_BASE = (0X501E)
  PG_ODR  = (0x501E)
  PG_IDR  = (0x501F)
  PG_DDR  = (0x5020)
  PG_CR1  = (0x5021)
  PG_CR2  = (0x5022)
+; port H not present on LQFP48/LQFP64 package
+ PH_BASE = (0X5023)
+ PH_ODR  = (0x5023)
+ PH_IDR  = (0x5024)
+ PH_DDR  = (0x5025)
+ PH_CR1  = (0x5026)
+ PH_CR2  = (0x5027)
+; port I ; only bit 0 on LQFP64 package, not present on LQFP48
+ PI_BASE = (0X5028)
+ PI_ODR  = (0x5028)
+ PI_IDR  = (0x5029)
+ PI_DDR  = (0x502a)
+ PI_CR1  = (0x502b)
+ PI_CR2  = (0x502c)
 
 ; input modes CR1
- INPUT_FLOAT = (0)
+ INPUT_FLOAT = (0) ; no pullup resistor
  INPUT_PULLUP = (1)
 ; output mode CR1
- OUTPUT_OD = (0)
- OUTPUT_PP = (1)
+ OUTPUT_OD = (0) ; open drain
+ OUTPUT_PP = (1) ; push pull
 ; input modes CR2
  INPUT_DI = (0)
  INPUT_EI = (1)
@@ -205,7 +238,7 @@ PG = 30
  OUTPUT_FAST = (1)
 
 
-; Flash
+; Flash memory
  FLASH_CR1  = (0x505A)
  FLASH_CR2  = (0x505B)
  FLASH_NCR2  = (0x505C)
@@ -324,8 +357,13 @@ PG = 30
  AWU_APR  = (0x50F1)
  AWU_TBR  = (0x50F2)
 
-; Beep
+; Beeper
+; beeper output is alternate function AFR7 on PD4
+; connected to CN9-6
  BEEP_CSR  = (0x50F3)
+ BEEP_PORT = PD
+ BEEP_BIT = 4
+ BEEP_MASK = B4_MASK
 
 ; SPI
  SPI_CR1  = (0x5200)

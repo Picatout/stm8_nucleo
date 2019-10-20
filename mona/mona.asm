@@ -2,6 +2,7 @@
 	.module MONA 
     .optsdcc -mstm8
 ;	.nlist
+	.include "../inc/nucleo_8s208.inc"
 	.include "../inc/stm8s208.inc"
 ;	.list
 	.page
@@ -45,21 +46,21 @@
 ;      MACROS
 ;--------------------------------------------------------
 		.macro _ledenable ; set PC5 as push-pull output fast mode
-		bset PC_CR1,#BIT5
-		bset PC_CR2,#BIT5
-		bset PC_DDR,#BIT5
+		bset PC_CR1,#LED2_BIT
+		bset PC_CR2,#LED2_BIT
+		bset PC_DDR,#LED2_BIT
 		.endm
 		
 		.macro _ledon ; turn on green LED 
-		bset PC_ODR,#BIT5
+		bset PC_ODR,#LED2_BIT
 		.endm
 		
 		.macro _ledoff ; turn off green LED
-		bres PC_ODR,#BIT5
+		bres PC_ODR,#LED2_BIT
 		.endm
 		
 		.macro _ledtoggle ; invert green LED state
-		ld a,#(1<<BIT5)
+		ld a,#LED2_MASK
 		xor a,PC_ODR
 		ld PC_ODR,a
 		.endm
@@ -172,9 +173,9 @@ clock_init:
 uart3_init:
 ;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
 	; configure tx pin
-	bset PD_DDR,#PIN5 ; tx pin
-	bset PD_CR1,#PIN5 ; push-pull output
-	bset PD_CR2,#PIN5 ; fast output
+	bset PD_DDR,#BIT5 ; tx pin
+	bset PD_CR1,#BIT5 ; push-pull output
+	bset PD_CR2,#BIT5 ; fast output
 	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
 	mov UART3_BRR2,#0x05 ; must be loaded first
 	mov UART3_BRR1,#0x4
