@@ -84,7 +84,9 @@
 ;--------------------------------------------------------
 ; ram uninitialized variables
 ;--------------------------------------------------------
-		STACK_BASE = RAM_SIZE-1 ; stack at end of ram
+		STACK_SIZE = 256
+		STACK_BASE = RAM_SIZE-STACK_SIZE
+		STACK_TOP = RAM_SIZE-1 ; stack at end of ram
 		TIB_SIZE = 80
 		PAD_SIZE = 80
         .area DATA
@@ -106,7 +108,15 @@ flash_free_base: .blkw 1
 ; ram data
 ;--------------------------------------------------------
         .area INITIALIZED
-        
+
+;--------------------------------------------------------
+;  stack segment
+;--------------------------------------------------------
+       .area SSEG  (ABS)
+	   .org RAM_SIZE-STACK_SIZE
+ __stack_buttom:
+	   .ds  256
+
 ;--------------------------------------------------------
 ; interrupt vector 
 ;--------------------------------------------------------
@@ -190,10 +200,26 @@ uart3_init:
 ;1$:	ldw y,cntdwn
 ;	jrne 1$
 ;    ret
-    
+
+;-------------------------
+;  zero all free ram
+;-------------------------
+clear_all_free_ram:
+	ldw x,#0
+clear_ram0:	
+	clr (x)
+	incw x
+	cpw x,#STACK_TOP-2
+	jrule clear_ram0
+	ret
+
 init0:
+	; initialize SP
+	ldw x,#STACK_TOP
+	ldw sp,x
 	_no_interrupts
 	call clock_init
+	call clear_all_free_ram
 ;	clr ticks
 ;	clr cntdwn
 	ld a,#255
@@ -203,25 +229,14 @@ init0:
 	_ledenable
 	_ledoff
 	clr in.w ; must always be 0
-	; clear stack
-	ldw x,#STACK_BASE
-clear_ram0:
-	clr (x)
-	incw x
-	cpw x,#STACK_BASE-1	
-	jrule clear_ram0
-
-	; initialize SP
-	ldw x,#0x7FE
-	ldw sp,x
-	; initialize free_ram_base 
+	; initialize free_ram_base variable
 	ldw y,#ram_free_base
 	addw y,#0xf
 	ld a,yl
 	and a,#0xf0
 	ld yl,a
 	ldw ram_free_base,y
-	; initialize flash_free_base
+	; initialize flash_free_base variable
 	ldw y,#flash_free
 	addw y,#0xff
 	clr a
@@ -791,7 +806,7 @@ write_byte:
 1$: cpw y,ram_free_base
     jrpl 2$
     ret
-2$: cpw y,#STACK_BASE
+2$: cpw y,#STACK_TOP+1
     jrmi 3$
     jp write_sfr    
 3$: ld (y),a

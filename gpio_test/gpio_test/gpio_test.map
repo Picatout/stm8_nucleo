@@ -7,27 +7,36 @@ Area                                    Addr        Size        Decimal Bytes (A
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
-     FFFFFFFF  s_SSEG                          
-     00000000  .__.ABS.                           MONA
+     00000000  .__.ABS.                           gpio_test
+     00000000  l_CABS                          
+     00000000  l_DABS                          
+     00000000  l_DATA                          
      00000000  l_INITIALIZED                   
-     00000000  l_SSEG                          
+     00000000  l_INITIALIZER                   
      00000000  l__CODE                         
-     00000000  s_SSEG0                         
+     00000000  s_CABS                          
+     00000000  s_DABS                          
      00000000  s__CODE                         
+     00000001  l_SSEG                          
      00000001  s_DATA                          
-     0000007C  l_HOME                          
-     000000AE  l_DATA                          
-     000000AF  s_INITIALIZED                   
-     00000100  l_SSEG0                         
-     00000828  l_CODE                          
+     00000001  s_INITIALIZED                   
+     00000001  s_SSEG                          
+     00000003  l_GSFINAL                       
+     0000001A  l_GSINIT                        
+     00000043  l_CODE                          
+     00000083  l_HOME                          
      00008000  s_HOME                          
-     0000807C  s_CODE                          
+     00008083  s_GSINIT                        
+     0000809D  s_GSFINAL                       
+     000080A0  s_CODE                          
+     000080E3  s_INITIALIZER                   
+
 ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
 Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    000000AE =         174. bytes (REL,CON)
+SSEG                                00000001    00000001 =           1. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -36,7 +45,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-SSEG0                               00000000    00000100 =         256. bytes (ABS,CON)
+HOME                                00008000    00000083 =         131. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -45,7 +54,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-HOME                                00008000    0000007C =         124. bytes (REL,CON)
+GSINIT                              00008083    0000001A =          26. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -54,22 +63,32 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                0000807C    00000828 =        2088. bytes (REL,CON)
+GSFINAL                             0000809D    00000003 =           3. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+CODE                                000080A0    00000043 =          67. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     000080A0  _main                              gpio_test
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 
 Files Linked                              [ module(s) ]
 
-mona.rel                                  [ MONA ]
+./gpio_test.rel                           [ gpio_test ]
 
-ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
+ASxxxx Linker V03.00 + NoICE + sdld,  page 8.
 
 User Base Address Definitions
 
 HOME = 0x8000
 DATA = 0x0001
-SSEG = 0xffffffff
 
 

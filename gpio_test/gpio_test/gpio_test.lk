@@ -1,0 +1,12 @@
+-muwx
+-i gpio_test.ihx
+-Y
+-b HOME = 0x8000
+-b DATA = 0x0001
+-k /usr/local/lib
+-k /usr/bin/../share/sdcc/lib/stm8
+-k /usr/share/sdcc/lib/stm8
+-l stm8
+./gpio_test.rel
+
+-e

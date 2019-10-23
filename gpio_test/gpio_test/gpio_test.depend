@@ -1,0 +1,4 @@
+# depslib dependency file v1.0
+1571795236 source:/home/jacques/github/stm8_nucleo/gpio_test/gpio_test/gpio_test.c
+	<stdint.h>
+

@@ -1,0 +1,88 @@
+XH3
+H 1C areas A global symbols
+M gpio_test
+O -mmcs51 --model-small
+S __mcs51_genRAMCLEAR Ref000000
+S __mcs51_genXINIT Ref000000
+S __gptrput Ref000000
+S .__.ABS. Def000000
+S __mcs51_genXRAMCLEAR Ref000000
+S __sdcc_gsinit_startup Ref000000
+S __gptrget Ref000000
+A _CODE size 0 flags 0 addr 0
+A RSEG size 0 flags 8 addr 0
+A RSEG0 size 0 flags 8 addr 0
+A RSEG1 size 0 flags 8 addr 0
+A REG_BANK_0 size 8 flags 4 addr 0
+A DSEG size 0 flags 0 addr 0
+A OSEG size 0 flags 4 addr 0
+A SSEG size 1 flags 0 addr 0
+S __start__stack Def000000
+A ISEG size 0 flags 0 addr 0
+A IABS size 0 flags 8 addr 0
+A BSEG size 0 flags 80 addr 0
+A PSEG size 0 flags 50 addr 0
+A XSEG size 0 flags 40 addr 0
+A XABS size 0 flags 48 addr 0
+A XISEG size 0 flags 40 addr 0
+A HOME size 6 flags 20 addr 0
+S __sdcc_program_startup Def000003
+A GSINIT0 size 0 flags 20 addr 0
+A GSINIT1 size 0 flags 20 addr 0
+A GSINIT2 size 0 flags 20 addr 0
+A GSINIT3 size 0 flags 20 addr 0
+A GSINIT4 size 0 flags 20 addr 0
+A GSINIT5 size 0 flags 20 addr 0
+A GSINIT size 0 flags 20 addr 0
+A GSFINAL size 3 flags 20 addr 0
+A CSEG size 6D flags 20 addr 0
+S _main Def000000
+A CONST size 0 flags 20 addr 0
+A XINIT size 0 flags 20 addr 0
+A CABS size 0 flags 28 addr 0
+T 00 00 00
+R 00 00 00 02
+T 00 00 00
+R 00 00 00 03
+T 00 00 00
+R 00 00 00 04
+T 00 00 00
+R 00 00 00 07
+T 00 00 00
+R 00 00 00 07
+T 00 00 00
+R 00 00 00 0F
+T 00 00 00 02 00 00
+R 00 00 00 0F 02 04 00 05
+T 00 00 00 02 00 03
+R 00 00 00 17 00 04 00 0F
+T 00 00 03
+R 00 00 00 0F
+T 00 00 03 02 00 00
+R 00 00 00 0F 00 04 00 18
+T 00 00 00
+R 00 00 00 18
+T 00 00 00 90 50 0C 75 F0 00 12 00 00 FF 43 07 20
+R 00 00 00 18 02 0A 00 06
+T 00 00 0D 90 50 0C 75 F0 00 EF 12 00 00 90 50 0D
+R 00 00 00 18 02 0B 00 02
+T 00 00 1A 75 F0 00 12 00 00 FF 43 07 20 90 50 0D
+R 00 00 00 18 02 07 00 06
+T 00 00 27 75 F0 00 EF 12 00 00
+R 00 00 00 18 02 08 00 02
+T 00 00 2E
+R 00 00 00 18
+T 00 00 2E 90 50 0A 75 F0 00 12 00 00 FF 63 07 20
+R 00 00 00 18 02 0A 00 06
+T 00 00 3B 90 50 0A 75 F0 00 EF 12 00 00 7C FF 7D
+R 00 00 00 18 02 0B 00 02
+T 00 00 48 FF 7E 00 7F 00
+R 00 00 00 18
+T 00 00 4D
+R 00 00 00 18
+T 00 00 4D EC 24 FF F8 ED 34 FF F9 EE 34 FF FA EF
+R 00 00 00 18
+T 00 00 5A 34 FF FB 88 04 89 05 8A 06 8B 07 E8 49
+R 00 00 00 18
+T 00 00 67 4A 4B 70 E2 80 C1
+R 00 00 00 18

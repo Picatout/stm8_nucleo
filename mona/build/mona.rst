@@ -1235,1109 +1235,1129 @@ Hexadecimal [24-Bits]
                                      84 ;--------------------------------------------------------
                                      85 ; ram uninitialized variables
                                      86 ;--------------------------------------------------------
-                           0017FF    87 		STACK_BASE = RAM_SIZE-1 ; stack at end of ram
-                           000050    88 		TIB_SIZE = 80
-                           000050    89 		PAD_SIZE = 80
-                                     90         .area DATA
-                                     91 ;ticks  .blkw 1 ; system ticks at every millisecond        
-                                     92 ;cntdwn:	.blkw 1 ; millisecond count down timer
-      000001                         93 rx_char: .blkb 1 ; last uart received char
-      000002                         94 in.w:     .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
-      000003                         95 in:		.blkb 1; parser position in tib
-      000004                         96 count:  .blkb 1; length of string in tib
-      000005                         97 idx_x:  .blkw 1; index for table pointed by x
-      000007                         98 idx_y:  .blkw 1; index for table pointed by y
-      000009                         99 tib:	.blkb TIB_SIZE ; transaction input buffer
-      000059                        100 pad:	.blkb PAD_SIZE ; working pad
-      0000A9                        101 acc16:  .blkw 1; 16 bits accumulator
-      0000AB                        102 ram_free_base: .blkw 1
-      0000AD                        103 flash_free_base: .blkw 1
-                                    104 		
-                                    105 ;--------------------------------------------------------
-                                    106 ; ram data
+                           000100    87 		STACK_SIZE = 256
+                           001700    88 		STACK_BASE = RAM_SIZE-STACK_SIZE
+                           0017FF    89 		STACK_TOP = RAM_SIZE-1 ; stack at end of ram
+                           000050    90 		TIB_SIZE = 80
+                           000050    91 		PAD_SIZE = 80
+                                     92         .area DATA
+                                     93 ;ticks  .blkw 1 ; system ticks at every millisecond        
+                                     94 ;cntdwn:	.blkw 1 ; millisecond count down timer
+      000001                         95 rx_char: .blkb 1 ; last uart received char
+      000002                         96 in.w:     .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
+      000003                         97 in:		.blkb 1; parser position in tib
+      000004                         98 count:  .blkb 1; length of string in tib
+      000005                         99 idx_x:  .blkw 1; index for table pointed by x
+      000007                        100 idx_y:  .blkw 1; index for table pointed by y
+      000009                        101 tib:	.blkb TIB_SIZE ; transaction input buffer
+      000059                        102 pad:	.blkb PAD_SIZE ; working pad
+      0000A9                        103 acc16:  .blkw 1; 16 bits accumulator
+      0000AB                        104 ram_free_base: .blkw 1
+      0000AD                        105 flash_free_base: .blkw 1
+                                    106 		
                                     107 ;--------------------------------------------------------
-                                    108         .area INITIALIZED
-                                    109         
-                                    110 ;--------------------------------------------------------
-                                    111 ; interrupt vector 
+                                    108 ; ram data
+                                    109 ;--------------------------------------------------------
+                                    110         .area INITIALIZED
+                                    111 
                                     112 ;--------------------------------------------------------
-                                    113 	.area HOME
-      008000                        114 __interrupt_vect:
-      008000 82 00 80 A4            115 	int init0 ;RESET vector
-      008004 82 00 81 50            116 	int NonHandledInterrupt ;TRAP  software interrupt
-      008008 82 00 81 50            117 	int NonHandledInterrupt ;int0 TLI   external top level interrupt
-      00800C 82 00 81 50            118 	int NonHandledInterrupt ;int1 AWU   auto wake up from halt
+                                    113 ;  stack segment
+                                    114 ;--------------------------------------------------------
+                                    115        .area SSEG  (ABS)
+      001700                        116 	   .org RAM_SIZE-STACK_SIZE
+      001700                        117  __stack_buttom:
+      001700                        118 	   .ds  256
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 25.
 Hexadecimal [24-Bits]
 
 
 
-      008010 82 00 81 50            119 	int NonHandledInterrupt ;int2 CLK   clock controller
-      008014 82 00 81 50            120 	int NonHandledInterrupt ;int3 EXTI0 port A external interrupts
-      008018 82 00 81 50            121 	int NonHandledInterrupt ;int4 EXTI1 port B external interrupts
-      00801C 82 00 81 50            122 	int NonHandledInterrupt ;int5 EXTI2 port C external interrupts
-      008020 82 00 81 50            123 	int NonHandledInterrupt ;int6 EXTI3 port D external interrupts
-      008024 82 00 81 50            124 	int NonHandledInterrupt ;int7 EXTI4 port E external interrupts
-      008028 82 00 81 50            125 	int NonHandledInterrupt ;int8 beCAN RX interrupt
-      00802C 82 00 81 50            126 	int NonHandledInterrupt ;int9 beCAN TX/ER/SC interrupt
-      008030 82 00 81 50            127 	int NonHandledInterrupt ;int10 SPI End of transfer
-      008034 82 00 81 50            128 	int NonHandledInterrupt ;int11 TIM1 update/overflow/underflow/trigger/break
-      008038 82 00 81 50            129 	int NonHandledInterrupt ;int12 TIM1 capture/compare
-      00803C 82 00 81 50            130 	int NonHandledInterrupt ;int13 TIM2 update /overflow
-      008040 82 00 81 50            131 	int NonHandledInterrupt ;int14 TIM2 capture/compare
-      008044 82 00 81 50            132 	int NonHandledInterrupt ;int15 TIM3 Update/overflow
-      008048 82 00 81 50            133 	int NonHandledInterrupt ;int16 TIM3 Capture/compare
-      00804C 82 00 81 50            134 	int NonHandledInterrupt ;int17 UART1 TX completed
-      008050 82 00 81 50            135 	int NonHandledInterrupt ;int18 UART1 RX full
-      008054 82 00 81 50            136 	int NonHandledInterrupt ;int19 I2C 
-      008058 82 00 81 50            137 	int NonHandledInterrupt ;int20 UART3 TX completed
-      00805C 82 00 81 51            138 	int uart_rx_isr         ;int21 UART3 RX full
-      008060 82 00 81 50            139 	int NonHandledInterrupt ;int22 ADC2 end of conversion
-      008064 82 00 81 50            140 	int NonHandledInterrupt	;int23 TIM4 update/overflow
-      008068 82 00 81 50            141 	int NonHandledInterrupt ;int24 flash writing EOP/WR_PG_DIS
-      00806C 82 00 81 50            142 	int NonHandledInterrupt ;int25  not used
-      008070 82 00 81 50            143 	int NonHandledInterrupt ;int26  not used
-      008074 82 00 81 50            144 	int NonHandledInterrupt ;int27  not used
-      008078 82 00 81 50            145 	int NonHandledInterrupt ;int28  not used
-                                    146 
-                                    147 	.area CODE
-                                    148 
-                                    149 	;initialize clock to HSE 16Mhz
-      00807C                        150 clock_init:	
-      00807C 72 12 50 C5      [ 1]  151 	bset CLK_SWCR,#CLK_SWCR_SWEN
-      008080 A6 B4            [ 1]  152 	ld a,#CLK_SWR_HSE
-      008082 C7 50 C4         [ 1]  153 	ld CLK_SWR,a
-      008085 C1 50 C3         [ 1]  154 1$:	cp a,CLK_CMSR
-      008088 26 FB            [ 1]  155 	jrne 1$
-      00808A 81               [ 4]  156 	ret
-                                    157 
-                                    158 		; initialize TIMER4 ticks counter
-                                    159 ;timer4_init:
-                                    160 ;	clr ticks
-                                    161 ;	clr cntdwn
-                                    162 ;	ld a,#TIM4_PSCR_128 
-                                    163 ;	ld TIM4_PSCR,a
-                                    164 ;	bset TIM4_IER,#TIM4_IER_UIE
-                                    165 ;	bres TIM4_SR,#TIM4_SR_UIF
-                                    166 ;	ld a,#125
-                                    167 ;	ld TIM4_ARR,a ; 1 msec interval
-                                    168 ;	ld a,#((1<<TIM4_CR1_CEN)+(1<<TIM4_CR1_ARPE)) 
-                                    169 ;	ld TIM4_CR1,a
-                                    170 ;	ret
-                                    171 
-                                    172 	; initialize UART3, 115200 8N1
-      00808B                        173 uart3_init:
+                                    119 
+                                    120 ;--------------------------------------------------------
+                                    121 ; interrupt vector 
+                                    122 ;--------------------------------------------------------
+                                    123 	.area HOME
+      008000                        124 __interrupt_vect:
+      008000 82 00 80 AF            125 	int init0 ;RESET vector
+      008004 82 00 81 54            126 	int NonHandledInterrupt ;TRAP  software interrupt
+      008008 82 00 81 54            127 	int NonHandledInterrupt ;int0 TLI   external top level interrupt
+      00800C 82 00 81 54            128 	int NonHandledInterrupt ;int1 AWU   auto wake up from halt
+      008010 82 00 81 54            129 	int NonHandledInterrupt ;int2 CLK   clock controller
+      008014 82 00 81 54            130 	int NonHandledInterrupt ;int3 EXTI0 port A external interrupts
+      008018 82 00 81 54            131 	int NonHandledInterrupt ;int4 EXTI1 port B external interrupts
+      00801C 82 00 81 54            132 	int NonHandledInterrupt ;int5 EXTI2 port C external interrupts
+      008020 82 00 81 54            133 	int NonHandledInterrupt ;int6 EXTI3 port D external interrupts
+      008024 82 00 81 54            134 	int NonHandledInterrupt ;int7 EXTI4 port E external interrupts
+      008028 82 00 81 54            135 	int NonHandledInterrupt ;int8 beCAN RX interrupt
+      00802C 82 00 81 54            136 	int NonHandledInterrupt ;int9 beCAN TX/ER/SC interrupt
+      008030 82 00 81 54            137 	int NonHandledInterrupt ;int10 SPI End of transfer
+      008034 82 00 81 54            138 	int NonHandledInterrupt ;int11 TIM1 update/overflow/underflow/trigger/break
+      008038 82 00 81 54            139 	int NonHandledInterrupt ;int12 TIM1 capture/compare
+      00803C 82 00 81 54            140 	int NonHandledInterrupt ;int13 TIM2 update /overflow
+      008040 82 00 81 54            141 	int NonHandledInterrupt ;int14 TIM2 capture/compare
+      008044 82 00 81 54            142 	int NonHandledInterrupt ;int15 TIM3 Update/overflow
+      008048 82 00 81 54            143 	int NonHandledInterrupt ;int16 TIM3 Capture/compare
+      00804C 82 00 81 54            144 	int NonHandledInterrupt ;int17 UART1 TX completed
+      008050 82 00 81 54            145 	int NonHandledInterrupt ;int18 UART1 RX full
+      008054 82 00 81 54            146 	int NonHandledInterrupt ;int19 I2C 
+      008058 82 00 81 54            147 	int NonHandledInterrupt ;int20 UART3 TX completed
+      00805C 82 00 81 55            148 	int uart_rx_isr         ;int21 UART3 RX full
+      008060 82 00 81 54            149 	int NonHandledInterrupt ;int22 ADC2 end of conversion
+      008064 82 00 81 54            150 	int NonHandledInterrupt	;int23 TIM4 update/overflow
+      008068 82 00 81 54            151 	int NonHandledInterrupt ;int24 flash writing EOP/WR_PG_DIS
+      00806C 82 00 81 54            152 	int NonHandledInterrupt ;int25  not used
+      008070 82 00 81 54            153 	int NonHandledInterrupt ;int26  not used
+      008074 82 00 81 54            154 	int NonHandledInterrupt ;int27  not used
+      008078 82 00 81 54            155 	int NonHandledInterrupt ;int28  not used
+                                    156 
+                                    157 	.area CODE
+                                    158 
+                                    159 	;initialize clock to HSE 16Mhz
+      00807C                        160 clock_init:	
+      00807C 72 12 50 C5      [ 1]  161 	bset CLK_SWCR,#CLK_SWCR_SWEN
+      008080 A6 B4            [ 1]  162 	ld a,#CLK_SWR_HSE
+      008082 C7 50 C4         [ 1]  163 	ld CLK_SWR,a
+      008085 C1 50 C3         [ 1]  164 1$:	cp a,CLK_CMSR
+      008088 26 FB            [ 1]  165 	jrne 1$
+      00808A 81               [ 4]  166 	ret
+                                    167 
+                                    168 		; initialize TIMER4 ticks counter
+                                    169 ;timer4_init:
+                                    170 ;	clr ticks
+                                    171 ;	clr cntdwn
+                                    172 ;	ld a,#TIM4_PSCR_128 
+                                    173 ;	ld TIM4_PSCR,a
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 26.
 Hexadecimal [24-Bits]
 
 
 
-                                    174 ;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
-                                    175 	; configure tx pin
-      00808B 72 1A 50 11      [ 1]  176 	bset PD_DDR,#BIT5 ; tx pin
-      00808F 72 1A 50 12      [ 1]  177 	bset PD_CR1,#BIT5 ; push-pull output
-      008093 72 1A 50 13      [ 1]  178 	bset PD_CR2,#BIT5 ; fast output
-                                    179 	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
-      008097 35 05 52 43      [ 1]  180 	mov UART3_BRR2,#0x05 ; must be loaded first
-      00809B 35 04 52 42      [ 1]  181 	mov UART3_BRR1,#0x4
-      00809F 35 2C 52 45      [ 1]  182 	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN)|(1<<UART_CR2_RIEN))
-      0080A3 81               [ 4]  183 	ret
-                                    184 	
-                                    185 	; pause in milliseconds
-                                    186     ; input:  y delay
-                                    187     ; output: none
-                                    188 ;pause:
-                                    189 ;	ldw cntdwn,y
-                                    190 ;1$:	ldw y,cntdwn
-                                    191 ;	jrne 1$
-                                    192 ;    ret
-                                    193     
-      0080A4                        194 init0:
-      000028                        195 	_no_interrupts
-      0080A4 9B               [ 1]    1 		sim
-      0080A5 CD 80 7C         [ 4]  196 	call clock_init
-                                    197 ;	clr ticks
-                                    198 ;	clr cntdwn
-      0080A8 A6 FF            [ 1]  199 	ld a,#255
-      0080AA C7 00 01         [ 1]  200 	ld rx_char,a
-                                    201 ;	call timer4_init
-      0080AD CD 80 8B         [ 4]  202 	call uart3_init
-      000034                        203 	_ledenable
-      0080B0 72 1A 50 0D      [ 1]    1 		bset PC_CR1,#LED2_BIT
-      0080B4 72 1A 50 0E      [ 1]    2 		bset PC_CR2,#LED2_BIT
-      0080B8 72 1A 50 0C      [ 1]    3 		bset PC_DDR,#LED2_BIT
-      000040                        204 	_ledoff
-      0080BC 72 1B 50 0A      [ 1]    1 		bres PC_ODR,#LED2_BIT
-      0080C0 72 5F 00 02      [ 1]  205 	clr in.w ; must always be 0
-                                    206 	; clear stack
-      0080C4 AE 17 FF         [ 2]  207 	ldw x,#STACK_BASE
-      0080C7                        208 clear_ram0:
-      0080C7 7F               [ 1]  209 	clr (x)
-      0080C8 5C               [ 2]  210 	incw x
-      0080C9 A3 17 FE         [ 2]  211 	cpw x,#STACK_BASE-1	
-      0080CC 23 F9            [ 2]  212 	jrule clear_ram0
-                                    213 
-                                    214 	; initialize SP
-      0080CE AE 07 FE         [ 2]  215 	ldw x,#0x7FE
-      0080D1 94               [ 1]  216 	ldw sp,x
-                                    217 	; initialize free_ram_base 
-      0080D2 90 AE 00 AB      [ 2]  218 	ldw y,#ram_free_base
-      0080D6 72 A9 00 0F      [ 2]  219 	addw y,#0xf
-      0080DA 90 9F            [ 1]  220 	ld a,yl
-      0080DC A4 F0            [ 1]  221 	and a,#0xf0
-      0080DE 90 97            [ 1]  222 	ld yl,a
-      0080E0 90 CF 00 AB      [ 2]  223 	ldw ram_free_base,y
+                                    174 ;	bset TIM4_IER,#TIM4_IER_UIE
+                                    175 ;	bres TIM4_SR,#TIM4_SR_UIF
+                                    176 ;	ld a,#125
+                                    177 ;	ld TIM4_ARR,a ; 1 msec interval
+                                    178 ;	ld a,#((1<<TIM4_CR1_CEN)+(1<<TIM4_CR1_ARPE)) 
+                                    179 ;	ld TIM4_CR1,a
+                                    180 ;	ret
+                                    181 
+                                    182 	; initialize UART3, 115200 8N1
+      00808B                        183 uart3_init:
+                                    184 ;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
+                                    185 	; configure tx pin
+      00808B 72 1A 50 11      [ 1]  186 	bset PD_DDR,#BIT5 ; tx pin
+      00808F 72 1A 50 12      [ 1]  187 	bset PD_CR1,#BIT5 ; push-pull output
+      008093 72 1A 50 13      [ 1]  188 	bset PD_CR2,#BIT5 ; fast output
+                                    189 	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
+      008097 35 05 52 43      [ 1]  190 	mov UART3_BRR2,#0x05 ; must be loaded first
+      00809B 35 04 52 42      [ 1]  191 	mov UART3_BRR1,#0x4
+      00809F 35 2C 52 45      [ 1]  192 	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN)|(1<<UART_CR2_RIEN))
+      0080A3 81               [ 4]  193 	ret
+                                    194 	
+                                    195 	; pause in milliseconds
+                                    196     ; input:  y delay
+                                    197     ; output: none
+                                    198 ;pause:
+                                    199 ;	ldw cntdwn,y
+                                    200 ;1$:	ldw y,cntdwn
+                                    201 ;	jrne 1$
+                                    202 ;    ret
+                                    203 
+                                    204 ;-------------------------
+                                    205 ;  zero all free ram
+                                    206 ;-------------------------
+      0080A4                        207 clear_all_free_ram:
+      0080A4 AE 00 00         [ 2]  208 	ldw x,#0
+      0080A7                        209 clear_ram0:	
+      0080A7 7F               [ 1]  210 	clr (x)
+      0080A8 5C               [ 1]  211 	incw x
+      0080A9 A3 17 FD         [ 2]  212 	cpw x,#STACK_TOP-2
+      0080AC 23 F9            [ 2]  213 	jrule clear_ram0
+      0080AE 81               [ 4]  214 	ret
+                                    215 
+      0080AF                        216 init0:
+                                    217 	; initialize SP
+      0080AF AE 17 FF         [ 2]  218 	ldw x,#STACK_TOP
+      0080B2 94               [ 1]  219 	ldw sp,x
+      000037                        220 	_no_interrupts
+      0080B3 9B               [ 1]    1 		sim
+      0080B4 CD 80 7C         [ 4]  221 	call clock_init
+      0080B7 CD 80 A4         [ 4]  222 	call clear_all_free_ram
+                                    223 ;	clr ticks
+                                    224 ;	clr cntdwn
+      0080BA A6 FF            [ 1]  225 	ld a,#255
+      0080BC C7 00 01         [ 1]  226 	ld rx_char,a
+                                    227 ;	call timer4_init
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 27.
 Hexadecimal [24-Bits]
 
 
 
-                                    224 	; initialize flash_free_base
-      0080E4 90 AE 88 A0      [ 2]  225 	ldw y,#flash_free
-      0080E8 72 A9 00 FF      [ 2]  226 	addw y,#0xff
-      0080EC 4F               [ 1]  227 	clr a
-      0080ED 90 97            [ 1]  228 	ld yl,a
-      0080EF 90 CF 00 AD      [ 2]  229 	ldw flash_free_base,y
-      0080F3                        230 main:
-      000077                        231 	_interrupts
-      0080F3 9A               [ 1]    1 		 rim
-      0080F4 A6 0C            [ 1]  232 	ld a,#0xc
-      0080F6 CD 81 63         [ 4]  233 	call uart_tx
-      0080F9 90 AE 86 4B      [ 2]  234 	ldw y,#VERSION
-      0080FD CD 81 6D         [ 4]  235 	call uart_print
-      008100 90 AE 86 93      [ 2]  236 	ldw y,#RAM_FREE_MSG
-      008104 CD 81 6D         [ 4]  237 	call uart_print
-      008107 90 CE 00 AB      [ 2]  238 	ldw y,ram_free_base
-      00810B A6 10            [ 1]  239 	ld a,#16
-      00810D CD 82 D7         [ 4]  240 	call itoa
-      008110 CD 81 6D         [ 4]  241 	call uart_print
-      008113 90 AE 86 9E      [ 2]  242 	ldw y,#RAM_LAST_FREE_MSG
-      008117 CD 81 6D         [ 4]  243 	call uart_print
-      00811A 90 AE 86 A7      [ 2]  244 	ldw y,#FLASH_FREE_MSG
-      00811E CD 81 6D         [ 4]  245 	call uart_print
-      008121 A6 10            [ 1]  246 	ld a,#16
-      008123 90 CE 00 AD      [ 2]  247 	ldw y,flash_free_base
-      008127 CD 82 D7         [ 4]  248 	call itoa
-      00812A CD 81 6D         [ 4]  249 	call uart_print
-      00812D 90 AE 86 B4      [ 2]  250 	ldw y,#EEPROM_MSG
-      008131 CD 81 6D         [ 4]  251 	call uart_print
-                                    252 	; read execute print loop
-      008134                        253 repl:
-      008134 A6 0A            [ 1]  254 	ld a,#NL
-      008136 CD 81 63         [ 4]  255 	call uart_tx
-      008139 A6 3E            [ 1]  256 	ld a,#'>
-      00813B CD 81 63         [ 4]  257 	call uart_tx
-      00813E CD 81 B3         [ 4]  258 	call readln
-      008141 72 5D 00 04      [ 1]  259 	tnz count
-      008145 27 ED            [ 1]  260 	jreq repl
-      008147 72 5F 00 03      [ 1]  261 	clr in
-      00814B CD 84 C2         [ 4]  262 	call eval
-      00814E 20 E4            [ 2]  263 	jra repl
-                                    264 	 
-                                    265 
-                                    266 ;	interrupt NonHandledInterrupt
-      008150                        267 NonHandledInterrupt:
-      008150 80               [11]  268 	iret
-                                    269 
-                                    270 	; TIMER4 interrupt service
-                                    271 ;timer4_isr:
-                                    272 ;	ldw y,ticks
-                                    273 ;	incw y
-                                    274 ;	ldw ticks,y
-                                    275 ;	ldw y,cntdwn
-                                    276 ;	jreq 1$
-                                    277 ;	decw y
+      0080BF CD 80 8B         [ 4]  228 	call uart3_init
+      000046                        229 	_ledenable
+      0080C2 72 1A 50 0D      [ 1]    1 		bset PC_CR1,#LED2_BIT
+      0080C6 72 1A 50 0E      [ 1]    2 		bset PC_CR2,#LED2_BIT
+      0080CA 72 1A 50 0C      [ 1]    3 		bset PC_DDR,#LED2_BIT
+      000052                        230 	_ledoff
+      0080CE 72 1B 50 0A      [ 1]    1 		bres PC_ODR,#LED2_BIT
+      0080D2 72 5F 00 02      [ 1]  231 	clr in.w ; must always be 0
+                                    232 	; initialize free_ram_base variable
+      0080D6 90 AE 00 AB      [ 2]  233 	ldw y,#ram_free_base
+      0080DA 72 A9 00 0F      [ 2]  234 	addw y,#0xf
+      0080DE 90 9F            [ 1]  235 	ld a,yl
+      0080E0 A4 F0            [ 1]  236 	and a,#0xf0
+      0080E2 90 97            [ 1]  237 	ld yl,a
+      0080E4 90 CF 00 AB      [ 2]  238 	ldw ram_free_base,y
+                                    239 	; initialize flash_free_base variable
+      0080E8 90 AE 88 A4      [ 2]  240 	ldw y,#flash_free
+      0080EC 72 A9 00 FF      [ 2]  241 	addw y,#0xff
+      0080F0 4F               [ 1]  242 	clr a
+      0080F1 90 97            [ 1]  243 	ld yl,a
+      0080F3 90 CF 00 AD      [ 2]  244 	ldw flash_free_base,y
+      0080F7                        245 main:
+      00007B                        246 	_interrupts
+      0080F7 9A               [ 1]    1 		 rim
+      0080F8 A6 0C            [ 1]  247 	ld a,#0xc
+      0080FA CD 81 67         [ 4]  248 	call uart_tx
+      0080FD 90 AE 86 4F      [ 2]  249 	ldw y,#VERSION
+      008101 CD 81 71         [ 4]  250 	call uart_print
+      008104 90 AE 86 97      [ 2]  251 	ldw y,#RAM_FREE_MSG
+      008108 CD 81 71         [ 4]  252 	call uart_print
+      00810B 90 CE 00 AB      [ 2]  253 	ldw y,ram_free_base
+      00810F A6 10            [ 1]  254 	ld a,#16
+      008111 CD 82 DB         [ 4]  255 	call itoa
+      008114 CD 81 71         [ 4]  256 	call uart_print
+      008117 90 AE 86 A2      [ 2]  257 	ldw y,#RAM_LAST_FREE_MSG
+      00811B CD 81 71         [ 4]  258 	call uart_print
+      00811E 90 AE 86 AB      [ 2]  259 	ldw y,#FLASH_FREE_MSG
+      008122 CD 81 71         [ 4]  260 	call uart_print
+      008125 A6 10            [ 1]  261 	ld a,#16
+      008127 90 CE 00 AD      [ 2]  262 	ldw y,flash_free_base
+      00812B CD 82 DB         [ 4]  263 	call itoa
+      00812E CD 81 71         [ 4]  264 	call uart_print
+      008131 90 AE 86 B8      [ 2]  265 	ldw y,#EEPROM_MSG
+      008135 CD 81 71         [ 4]  266 	call uart_print
+                                    267 	; read execute print loop
+      008138                        268 repl:
+      008138 A6 0A            [ 1]  269 	ld a,#NL
+      00813A CD 81 67         [ 4]  270 	call uart_tx
+      00813D A6 3E            [ 1]  271 	ld a,#'>
+      00813F CD 81 67         [ 4]  272 	call uart_tx
+      008142 CD 81 B7         [ 4]  273 	call readln
+      008145 72 5D 00 04      [ 1]  274 	tnz count
+      008149 27 ED            [ 1]  275 	jreq repl
+      00814B 72 5F 00 03      [ 1]  276 	clr in
+      00814F CD 84 C6         [ 4]  277 	call eval
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 28.
 Hexadecimal [24-Bits]
 
 
 
-                                    278 ;	ldw cntdwn,y
-                                    279 ;1$: bres TIM4_SR,#TIM4_SR_UIF
-                                    280 ;	iret
-                                    281 
-                                    282 	; uart3 receive interrupt service
-      008151                        283 uart_rx_isr:
-      008151 88               [ 1]  284     push a
-      008152 C6 52 40         [ 1]  285     ld a, UART3_SR
-      008155 6B 01            [ 1]  286     ld (1,sp),a
-      008157 C6 52 41         [ 1]  287 	ld a, UART3_DR
-      00815A 0D 01            [ 1]  288 	tnz (1,sp)
-      00815C 27 03            [ 1]  289 	jreq 1$
-      00815E C7 00 01         [ 1]  290     ld rx_char,a
-      008161 84               [ 1]  291 1$: pop a
-      008162 80               [11]  292 	iret
-                                    293 	
-                                    294 
-                                    295 	; transmit character in a via UART3
-                                    296 	; character to transmit on (3,sp)
-      008163                        297 uart_tx:
-      008163 72 5D 52 40      [ 1]  298 	tnz UART3_SR
-      008167 2A FA            [ 1]  299 	jrpl uart_tx
-      008169 C7 52 41         [ 1]  300 	ld UART3_DR,a
-      00816C 81               [ 4]  301     ret
-                                    302 
-                                    303 	; send string via UART2
-                                    304 	; y is pointer to str
-      00816D                        305 uart_print:
-      00816D 90 F6            [ 1]  306 	ld a,(y)
-      00816F 27 07            [ 1]  307 	jreq 1$
-      008171 CD 81 63         [ 4]  308 	call uart_tx
-      008174 90 5C            [ 2]  309 	incw y
-      008176 20 F5            [ 2]  310 	jra uart_print
-      008178 81               [ 4]  311 1$: ret
-                                    312 
-                                    313 	 ; check if char available
-      008179                        314 uart_qchar:
-      008179 A6 FF            [ 1]  315 	ld a,#255
-      00817B C1 00 01         [ 1]  316 	cp a,rx_char
-      00817E 81               [ 4]  317     ret
-                                    318 
-      00817F                        319 ungetchar: ; return char ina A to queue
-      000103                        320 	_no_interrupts
-      00817F 9B               [ 1]    1 		sim
-      008180 C7 00 01         [ 1]  321 	ld rx_char,a
-      000107                        322     _interrupts
-      008183 9A               [ 1]    1 		 rim
-      008184 81               [ 4]  323     ret
-                                    324     
-                                    325 	 ; return character from uart2
-      008185                        326 uart_getchar:
-      008185 A6 FF            [ 1]  327 	ld a,#255
-      008187 C1 00 01         [ 1]  328 	cp a,rx_char
-      00818A 27 F9            [ 1]  329 	jreq uart_getchar
-      000110                        330 	_no_interrupts
+      008152 20 E4            [ 2]  278 	jra repl
+                                    279 	 
+                                    280 
+                                    281 ;	interrupt NonHandledInterrupt
+      008154                        282 NonHandledInterrupt:
+      008154 80               [11]  283 	iret
+                                    284 
+                                    285 	; TIMER4 interrupt service
+                                    286 ;timer4_isr:
+                                    287 ;	ldw y,ticks
+                                    288 ;	incw y
+                                    289 ;	ldw ticks,y
+                                    290 ;	ldw y,cntdwn
+                                    291 ;	jreq 1$
+                                    292 ;	decw y
+                                    293 ;	ldw cntdwn,y
+                                    294 ;1$: bres TIM4_SR,#TIM4_SR_UIF
+                                    295 ;	iret
+                                    296 
+                                    297 	; uart3 receive interrupt service
+      008155                        298 uart_rx_isr:
+      008155 88               [ 1]  299     push a
+      008156 C6 52 40         [ 1]  300     ld a, UART3_SR
+      008159 6B 01            [ 1]  301     ld (1,sp),a
+      00815B C6 52 41         [ 1]  302 	ld a, UART3_DR
+      00815E 0D 01            [ 1]  303 	tnz (1,sp)
+      008160 27 03            [ 1]  304 	jreq 1$
+      008162 C7 00 01         [ 1]  305     ld rx_char,a
+      008165 84               [ 1]  306 1$: pop a
+      008166 80               [11]  307 	iret
+                                    308 	
+                                    309 
+                                    310 	; transmit character in a via UART3
+                                    311 	; character to transmit on (3,sp)
+      008167                        312 uart_tx:
+      008167 72 5D 52 40      [ 1]  313 	tnz UART3_SR
+      00816B 2A FA            [ 1]  314 	jrpl uart_tx
+      00816D C7 52 41         [ 1]  315 	ld UART3_DR,a
+      008170 81               [ 4]  316     ret
+                                    317 
+                                    318 	; send string via UART2
+                                    319 	; y is pointer to str
+      008171                        320 uart_print:
+      008171 90 F6            [ 1]  321 	ld a,(y)
+      008173 27 07            [ 1]  322 	jreq 1$
+      008175 CD 81 67         [ 4]  323 	call uart_tx
+      008178 90 5C            [ 1]  324 	incw y
+      00817A 20 F5            [ 2]  325 	jra uart_print
+      00817C 81               [ 4]  326 1$: ret
+                                    327 
+                                    328 	 ; check if char available
+      00817D                        329 uart_qchar:
+      00817D A6 FF            [ 1]  330 	ld a,#255
+      00817F C1 00 01         [ 1]  331 	cp a,rx_char
+      008182 81               [ 4]  332     ret
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 29.
 Hexadecimal [24-Bits]
 
 
 
-      00818C 9B               [ 1]    1 		sim
-      00818D C6 00 01         [ 1]  331 	ld a, rx_char
-      008190 88               [ 1]  332 	push a
-      008191 A6 FF            [ 1]  333 	ld a,#-1
-      008193 C7 00 01         [ 1]  334 	ld rx_char,a
-      00011A                        335 	_interrupts
-      008196 9A               [ 1]    1 		 rim
-      008197 84               [ 1]  336 	pop a
-      008198 81               [ 4]  337 	ret
-                                    338 
-                                    339 	; delete n character from input line
-      008199                        340 uart_delete:
-      008199 88               [ 1]  341 	push a ; n 
-      00819A                        342 del_loop:
-      00819A 0D 01            [ 1]  343 	tnz (1,sp)
-      00819C 27 13            [ 1]  344 	jreq 1$
-      00819E A6 08            [ 1]  345 	ld a,#BSP
-      0081A0 CD 81 63         [ 4]  346 	call uart_tx
-      0081A3 A6 20            [ 1]  347     ld a,#SPACE
-      0081A5 CD 81 63         [ 4]  348     call uart_tx
-      0081A8 A6 08            [ 1]  349     ld a,#BSP
-      0081AA CD 81 63         [ 4]  350     call uart_tx
-      0081AD 0A 01            [ 1]  351     dec (1,sp)
-      0081AF 20 E9            [ 2]  352     jra del_loop
-      0081B1 84               [ 1]  353 1$: pop a
-      0081B2 81               [ 4]  354 	ret 
-                                    355 
-                                    356 
-                                    357     ;lecture d'une ligne de texte
-                                    358     ; dans le tib
-      0081B3                        359 readln:
-                                    360 	; local variables
-                           000001   361 	LEN = 1  ; accepted line length
-                           000002   362 	RXCHAR = 2 ; last char received
-      0081B3 4B 00            [ 1]  363 	push #0  ; RXCHAR 
-      0081B5 4B 00            [ 1]  364 	push #0  ; LEN
-      0081B7 90 AE 00 09      [ 2]  365  	ldw y,#tib ; input buffer
-      0081BB                        366 readln_loop:
-      0081BB CD 81 85         [ 4]  367 	call uart_getchar
-      0081BE 6B 02            [ 1]  368 	ld (RXCHAR,sp),a
-      0081C0 A1 03            [ 1]  369 	cp a,#CTRL_C
-      0081C2 26 03            [ 1]  370 	jrne 2$
-      0081C4 CC 82 3F         [ 2]  371 	jp cancel
-      0081C7 A1 12            [ 1]  372 2$:	cp a,#CTRL_R
-      0081C9 27 50            [ 1]  373 	jreq reprint
-      0081CB A1 0D            [ 1]  374 	cp a,#CR
-      0081CD 26 03            [ 1]  375 	jrne 1$
-      0081CF CC 82 49         [ 2]  376 	jp readln_quit
-      0081D2 A1 0A            [ 1]  377 1$:	cp a,#NL
-      0081D4 27 73            [ 1]  378 	jreq readln_quit
-      0081D6 A1 08            [ 1]  379 	cp a,#BSP
-      0081D8 27 1B            [ 1]  380 	jreq del_back
-      0081DA A1 04            [ 1]  381 	cp a,#CTRL_D
-      0081DC 27 06            [ 1]  382 	jreq del_line
-      0081DE A1 20            [ 1]  383 	cp a,#SPACE
+                                    333 
+      008183                        334 ungetchar: ; return char ina A to queue
+      000107                        335 	_no_interrupts
+      008183 9B               [ 1]    1 		sim
+      008184 C7 00 01         [ 1]  336 	ld rx_char,a
+      00010B                        337     _interrupts
+      008187 9A               [ 1]    1 		 rim
+      008188 81               [ 4]  338     ret
+                                    339     
+                                    340 	 ; return character from uart2
+      008189                        341 uart_getchar:
+      008189 A6 FF            [ 1]  342 	ld a,#255
+      00818B C1 00 01         [ 1]  343 	cp a,rx_char
+      00818E 27 F9            [ 1]  344 	jreq uart_getchar
+      000114                        345 	_no_interrupts
+      008190 9B               [ 1]    1 		sim
+      008191 C6 00 01         [ 1]  346 	ld a, rx_char
+      008194 88               [ 1]  347 	push a
+      008195 A6 FF            [ 1]  348 	ld a,#-1
+      008197 C7 00 01         [ 1]  349 	ld rx_char,a
+      00011E                        350 	_interrupts
+      00819A 9A               [ 1]    1 		 rim
+      00819B 84               [ 1]  351 	pop a
+      00819C 81               [ 4]  352 	ret
+                                    353 
+                                    354 	; delete n character from input line
+      00819D                        355 uart_delete:
+      00819D 88               [ 1]  356 	push a ; n 
+      00819E                        357 del_loop:
+      00819E 0D 01            [ 1]  358 	tnz (1,sp)
+      0081A0 27 13            [ 1]  359 	jreq 1$
+      0081A2 A6 08            [ 1]  360 	ld a,#BSP
+      0081A4 CD 81 67         [ 4]  361 	call uart_tx
+      0081A7 A6 20            [ 1]  362     ld a,#SPACE
+      0081A9 CD 81 67         [ 4]  363     call uart_tx
+      0081AC A6 08            [ 1]  364     ld a,#BSP
+      0081AE CD 81 67         [ 4]  365     call uart_tx
+      0081B1 0A 01            [ 1]  366     dec (1,sp)
+      0081B3 20 E9            [ 2]  367     jra del_loop
+      0081B5 84               [ 1]  368 1$: pop a
+      0081B6 81               [ 4]  369 	ret 
+                                    370 
+                                    371 
+                                    372     ;lecture d'une ligne de texte
+                                    373     ; dans le tib
+      0081B7                        374 readln:
+                                    375 	; local variables
+                           000001   376 	LEN = 1  ; accepted line length
+                           000002   377 	RXCHAR = 2 ; last char received
+      0081B7 4B 00            [ 1]  378 	push #0  ; RXCHAR 
+      0081B9 4B 00            [ 1]  379 	push #0  ; LEN
+      0081BB 90 AE 00 09      [ 2]  380  	ldw y,#tib ; input buffer
+      0081BF                        381 readln_loop:
+      0081BF CD 81 89         [ 4]  382 	call uart_getchar
+      0081C2 6B 02            [ 1]  383 	ld (RXCHAR,sp),a
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 30.
 Hexadecimal [24-Bits]
 
 
 
-      0081E0 2A 24            [ 1]  384 	jrpl accept_char
-      0081E2 20 D7            [ 2]  385 	jra readln_loop
-      0081E4                        386 del_line:
-      0081E4 7B 01            [ 1]  387 	ld a,(LEN,sp)
-      0081E6 CD 81 99         [ 4]  388 	call uart_delete
-      0081E9 90 AE 00 09      [ 2]  389 	ldw y,#tib
-      0081ED 72 5F 00 04      [ 1]  390 	clr count
-      0081F1 0F 01            [ 1]  391 	clr (LEN,sp)
-      0081F3 20 C6            [ 2]  392 	jra readln_loop
-      0081F5                        393 del_back:
-      0081F5 0D 01            [ 1]  394     tnz (LEN,sp)
-      0081F7 27 C2            [ 1]  395     jreq readln_loop
-      0081F9 0A 01            [ 1]  396     dec (LEN,sp)
-      0081FB 90 5A            [ 2]  397     decw y
-      0081FD 90 7F            [ 1]  398     clr  (y)
-      0081FF A6 01            [ 1]  399     ld a,#1
-      008201 CD 81 99         [ 4]  400     call uart_delete
-      008204 20 B5            [ 2]  401     jra readln_loop	
-      008206                        402 accept_char:
-      008206 A6 4F            [ 1]  403 	ld a,#TIB_SIZE-1
-      008208 11 01            [ 1]  404 	cp a, (1,sp)
-      00820A 27 AF            [ 1]  405 	jreq readln_loop
-      00820C 7B 02            [ 1]  406 	ld a,(RXCHAR,sp)
-      00820E 90 F7            [ 1]  407 	ld (y),a
-      008210 0C 01            [ 1]  408 	inc (LEN,sp)
-      008212 90 5C            [ 2]  409 	incw y
-      008214 90 7F            [ 1]  410 	clr (y)
-      008216 CD 81 63         [ 4]  411 	call uart_tx
-      008219 20 A0            [ 2]  412 	jra readln_loop
-      00821B                        413 reprint:
-      00821B 0D 01            [ 1]  414 	tnz (LEN,sp)
-      00821D 26 9C            [ 1]  415 	jrne readln_loop
-      00821F 72 5D 00 04      [ 1]  416 	tnz count
-      008223 27 96            [ 1]  417 	jreq readln_loop
-      008225 90 AE 00 09      [ 2]  418 	ldw y,#tib
-      008229 90 89            [ 2]  419 	pushw y
-      00822B CD 81 6D         [ 4]  420 	call uart_print
-      00822E 90 85            [ 2]  421 	popw y
-      008230 C6 00 04         [ 1]  422 	ld a,count
-      008233 6B 01            [ 1]  423 	ld (LEN,sp),a
-      008235 90 9F            [ 1]  424 	ld a,yl
-      008237 CB 00 04         [ 1]  425 	add a,count
-      00823A 90 97            [ 1]  426 	ld yl,a
-      00823C CC 81 BB         [ 2]  427 	jp readln_loop
-      00823F                        428 cancel:
-      00823F 72 5F 00 09      [ 1]  429 	clr tib
-      008243 72 5F 00 04      [ 1]  430 	clr count
-      008247 20 05            [ 2]  431 	jra readln_quit2
-      008249                        432 readln_quit:
-      008249 7B 01            [ 1]  433 	ld a,(LEN,sp)
-      00824B C7 00 04         [ 1]  434 	ld count,a
-      00824E                        435 readln_quit2:
-      00824E 5B 02            [ 2]  436 	addw sp,#2
-      008250 A6 0A            [ 1]  437 	ld a,#NL
-      008252 CD 81 63         [ 4]  438 	call uart_tx
+      0081C4 A1 03            [ 1]  384 	cp a,#CTRL_C
+      0081C6 26 03            [ 1]  385 	jrne 2$
+      0081C8 CC 82 43         [ 2]  386 	jp cancel
+      0081CB A1 12            [ 1]  387 2$:	cp a,#CTRL_R
+      0081CD 27 50            [ 1]  388 	jreq reprint
+      0081CF A1 0D            [ 1]  389 	cp a,#CR
+      0081D1 26 03            [ 1]  390 	jrne 1$
+      0081D3 CC 82 4D         [ 2]  391 	jp readln_quit
+      0081D6 A1 0A            [ 1]  392 1$:	cp a,#NL
+      0081D8 27 73            [ 1]  393 	jreq readln_quit
+      0081DA A1 08            [ 1]  394 	cp a,#BSP
+      0081DC 27 1B            [ 1]  395 	jreq del_back
+      0081DE A1 04            [ 1]  396 	cp a,#CTRL_D
+      0081E0 27 06            [ 1]  397 	jreq del_line
+      0081E2 A1 20            [ 1]  398 	cp a,#SPACE
+      0081E4 2A 24            [ 1]  399 	jrpl accept_char
+      0081E6 20 D7            [ 2]  400 	jra readln_loop
+      0081E8                        401 del_line:
+      0081E8 7B 01            [ 1]  402 	ld a,(LEN,sp)
+      0081EA CD 81 9D         [ 4]  403 	call uart_delete
+      0081ED 90 AE 00 09      [ 2]  404 	ldw y,#tib
+      0081F1 72 5F 00 04      [ 1]  405 	clr count
+      0081F5 0F 01            [ 1]  406 	clr (LEN,sp)
+      0081F7 20 C6            [ 2]  407 	jra readln_loop
+      0081F9                        408 del_back:
+      0081F9 0D 01            [ 1]  409     tnz (LEN,sp)
+      0081FB 27 C2            [ 1]  410     jreq readln_loop
+      0081FD 0A 01            [ 1]  411     dec (LEN,sp)
+      0081FF 90 5A            [ 2]  412     decw y
+      008201 90 7F            [ 1]  413     clr  (y)
+      008203 A6 01            [ 1]  414     ld a,#1
+      008205 CD 81 9D         [ 4]  415     call uart_delete
+      008208 20 B5            [ 2]  416     jra readln_loop	
+      00820A                        417 accept_char:
+      00820A A6 4F            [ 1]  418 	ld a,#TIB_SIZE-1
+      00820C 11 01            [ 1]  419 	cp a, (1,sp)
+      00820E 27 AF            [ 1]  420 	jreq readln_loop
+      008210 7B 02            [ 1]  421 	ld a,(RXCHAR,sp)
+      008212 90 F7            [ 1]  422 	ld (y),a
+      008214 0C 01            [ 1]  423 	inc (LEN,sp)
+      008216 90 5C            [ 1]  424 	incw y
+      008218 90 7F            [ 1]  425 	clr (y)
+      00821A CD 81 67         [ 4]  426 	call uart_tx
+      00821D 20 A0            [ 2]  427 	jra readln_loop
+      00821F                        428 reprint:
+      00821F 0D 01            [ 1]  429 	tnz (LEN,sp)
+      008221 26 9C            [ 1]  430 	jrne readln_loop
+      008223 72 5D 00 04      [ 1]  431 	tnz count
+      008227 27 96            [ 1]  432 	jreq readln_loop
+      008229 90 AE 00 09      [ 2]  433 	ldw y,#tib
+      00822D 90 89            [ 2]  434 	pushw y
+      00822F CD 81 71         [ 4]  435 	call uart_print
+      008232 90 85            [ 2]  436 	popw y
+      008234 C6 00 04         [ 1]  437 	ld a,count
+      008237 6B 01            [ 1]  438 	ld (LEN,sp),a
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 31.
 Hexadecimal [24-Bits]
 
 
 
-      008255 81               [ 4]  439 	ret
-                                    440 	
-                                    441 	; skip character c in tib starting from 'in'
-                                    442 	; input: 
-                                    443 	;    a character to skip
-                                    444 	; output:  'in' ajusted to new position
-      008256                        445 skip:
-                           000001   446 	C = 1 ; local var
-      008256 88               [ 1]  447 	push a
-      008257 90 AE 00 09      [ 2]  448 	ldw y,#tib
-      00825B 91 D6 02         [ 4]  449 1$:	ld a,([in.w],y)
-      00825E 27 0A            [ 1]  450 	jreq 2$
-      008260 11 01            [ 1]  451 	cp a,(C,sp)
-      008262 26 06            [ 1]  452 	jrne 2$
-      008264 72 5C 00 03      [ 1]  453 	inc in
-      008268 20 F1            [ 2]  454 	jra 1$
-      00826A 84               [ 1]  455 2$: pop a
-      00826B 81               [ 4]  456 	ret
-                                    457 	
-                                    458 	; scan tib for charater 'c' starting from 'in'
-                                    459 	; input:
-                                    460 	;    a character to skip
-      00826C                        461 scan: 
-                           000001   462 	C = 1 ; local var
-      00826C 88               [ 1]  463 	push a
-      00826D 90 AE 00 09      [ 2]  464 	ldw y,#tib
-      008271 91 D6 02         [ 4]  465 1$:	ld a,([in.w],y)
-      008274 27 0A            [ 1]  466 	jreq 2$
-      008276 11 01            [ 1]  467 	cp a,(C,sp)
-      008278 27 06            [ 1]  468 	jreq 2$
-      00827A 72 5C 00 03      [ 1]  469 	inc in
-      00827E 20 F1            [ 2]  470 	jra 1$
-      008280 84               [ 1]  471 2$: pop a
-      008281 81               [ 4]  472 	ret
-                                    473 
-                                    474 	; scan tib for next word
-                                    475 	; move word in 'pad'
-      008282                        476 next_word:	
-                           000001   477 	FIRST = 1
-                           000002   478 	XSAVE = 2
-      008282 52 03            [ 2]  479 	sub sp,#3
-      008284 1F 02            [ 2]  480 	ldw (XSAVE,sp),x ; save x
-      008286 A6 20            [ 1]  481 	ld a,#SPACE
-      008288 CD 82 56         [ 4]  482 	call skip
-      00828B C6 00 03         [ 1]  483 	ld a,in
-      00828E 6B 01            [ 1]  484 	ld (FIRST,sp),a
-      008290 A6 20            [ 1]  485 	ld a,#SPACE
-      008292 CD 82 6C         [ 4]  486 	call scan
-                                    487 	; copy word in pad
-      008295 AE 00 09         [ 2]  488 	ldw x,#tib  ; source
-      008298 72 5F 00 05      [ 1]  489 	clr idx_x
-      00829C 7B 01            [ 1]  490 	ld a,(FIRST,sp)
-      00829E C7 00 06         [ 1]  491 	ld idx_x+1,a
-      0082A1 90 AE 00 59      [ 2]  492 	ldw y,#pad
-      0082A5 72 5F 00 07      [ 1]  493 	clr idx_y
+      008239 90 9F            [ 1]  439 	ld a,yl
+      00823B CB 00 04         [ 1]  440 	add a,count
+      00823E 90 97            [ 1]  441 	ld yl,a
+      008240 CC 81 BF         [ 2]  442 	jp readln_loop
+      008243                        443 cancel:
+      008243 72 5F 00 09      [ 1]  444 	clr tib
+      008247 72 5F 00 04      [ 1]  445 	clr count
+      00824B 20 05            [ 2]  446 	jra readln_quit2
+      00824D                        447 readln_quit:
+      00824D 7B 01            [ 1]  448 	ld a,(LEN,sp)
+      00824F C7 00 04         [ 1]  449 	ld count,a
+      008252                        450 readln_quit2:
+      008252 5B 02            [ 2]  451 	addw sp,#2
+      008254 A6 0A            [ 1]  452 	ld a,#NL
+      008256 CD 81 67         [ 4]  453 	call uart_tx
+      008259 81               [ 4]  454 	ret
+                                    455 	
+                                    456 	; skip character c in tib starting from 'in'
+                                    457 	; input: 
+                                    458 	;    a character to skip
+                                    459 	; output:  'in' ajusted to new position
+      00825A                        460 skip:
+                           000001   461 	C = 1 ; local var
+      00825A 88               [ 1]  462 	push a
+      00825B 90 AE 00 09      [ 2]  463 	ldw y,#tib
+      00825F 91 D6 02         [ 4]  464 1$:	ld a,([in.w],y)
+      008262 27 0A            [ 1]  465 	jreq 2$
+      008264 11 01            [ 1]  466 	cp a,(C,sp)
+      008266 26 06            [ 1]  467 	jrne 2$
+      008268 72 5C 00 03      [ 1]  468 	inc in
+      00826C 20 F1            [ 2]  469 	jra 1$
+      00826E 84               [ 1]  470 2$: pop a
+      00826F 81               [ 4]  471 	ret
+                                    472 	
+                                    473 	; scan tib for charater 'c' starting from 'in'
+                                    474 	; input:
+                                    475 	;    a character to skip
+      008270                        476 scan: 
+                           000001   477 	C = 1 ; local var
+      008270 88               [ 1]  478 	push a
+      008271 90 AE 00 09      [ 2]  479 	ldw y,#tib
+      008275 91 D6 02         [ 4]  480 1$:	ld a,([in.w],y)
+      008278 27 0A            [ 1]  481 	jreq 2$
+      00827A 11 01            [ 1]  482 	cp a,(C,sp)
+      00827C 27 06            [ 1]  483 	jreq 2$
+      00827E 72 5C 00 03      [ 1]  484 	inc in
+      008282 20 F1            [ 2]  485 	jra 1$
+      008284 84               [ 1]  486 2$: pop a
+      008285 81               [ 4]  487 	ret
+                                    488 
+                                    489 	; scan tib for next word
+                                    490 	; move word in 'pad'
+      008286                        491 next_word:	
+                           000001   492 	FIRST = 1
+                           000002   493 	XSAVE = 2
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 32.
 Hexadecimal [24-Bits]
 
 
 
-      0082A9 72 5F 00 08      [ 1]  494 	clr idx_y+1
-      0082AD C6 00 03         [ 1]  495 	ld a,in
-      0082B0 10 01            [ 1]  496 	sub a,(FIRST,sp)
-      0082B2 CD 82 BA         [ 4]  497 	call strcpyn
-      0082B5 1E 02            [ 2]  498 	ldw x,(XSAVE,sp)
-      0082B7 5B 03            [ 2]  499 	addw sp,#3
-      0082B9 81               [ 4]  500 	ret
-                                    501 	
-                                    502 	
-                                    503 	; copy n character from (x) to (y)
-                                    504 	; input:
-                                    505 	;   	x   source pointer
-                                    506 	;       idx_x index in (x)
-                                    507 	;       y   destination pointer
-                                    508 	;       idx_y  index in (y)
-                                    509 	;       a   number of character to copy
-      0082BA                        510 strcpyn:
-                           000001   511 	N = 1 ; local variable count
-      0082BA 88               [ 1]  512 	push a
-      0082BB 7B 01            [ 1]  513 1$: ld a,(N,sp)		
-      0082BD 27 13            [ 1]  514 	jreq 2$ 
-      0082BF 72 D6 00 05      [ 4]  515 	ld a,([idx_x],x)
-      0082C3 91 D7 07         [ 4]  516 	ld ([idx_y],y),a
-      0082C6 72 5C 00 06      [ 1]  517 	inc idx_x+1
-      0082CA 72 5C 00 08      [ 1]  518 	inc idx_y+1
-      0082CE 0A 01            [ 1]  519 	dec (N,sp)
-      0082D0 20 E9            [ 2]  520 	jra 1$
-      0082D2 91 6F 07         [ 4]  521 2$: clr ([idx_y],y)
-      0082D5 84               [ 1]  522 	pop a
-      0082D6 81               [ 4]  523 	ret
-                                    524 		
-                                    525 	; convert integer to string
-                                    526 	; input:
-                                    527 	;   a  base
-                                    528 	;	y  integer to convert
-                                    529 	; output:
-                                    530 	;   y  pointer to string
-      0082D7                        531 itoa:
-                           000001   532 	SIGN=1
-                           000002   533 	BASE=2
-                           000002   534 	LOCAL_SIZE=2
-      0082D7 89               [ 2]  535 	pushw x
-      0082D8 88               [ 1]  536 	push a  ; base
-      0082D9 4B 00            [ 1]  537 	push #0 ; sign
-      0082DB A1 0A            [ 1]  538 	cp a,#10
-      0082DD 26 0D            [ 1]  539 	jrne 1$
-      0082DF 90 CF 00 A9      [ 2]  540 	ldw acc16,y
-      0082E3 72 0F 00 A9 04   [ 2]  541 	btjf acc16,#7,1$
-      0082E8 03 01            [ 1]  542 	cpl (SIGN,sp)
-      0082EA 90 50            [ 2]  543 	negw y
-                                    544 	; initialize string pointer 
-      0082EC AE 00 4F         [ 2]  545 1$:	ldw x,#PAD_SIZE-1
-      0082EF CF 00 A9         [ 2]  546 	ldw acc16,x
-      0082F2 AE 00 59         [ 2]  547 	ldw x,#pad
-      0082F5 72 BB 00 A9      [ 2]  548 	addw x,acc16
+      008286 52 03            [ 2]  494 	sub sp,#3
+      008288 1F 02            [ 2]  495 	ldw (XSAVE,sp),x ; save x
+      00828A A6 20            [ 1]  496 	ld a,#SPACE
+      00828C CD 82 5A         [ 4]  497 	call skip
+      00828F C6 00 03         [ 1]  498 	ld a,in
+      008292 6B 01            [ 1]  499 	ld (FIRST,sp),a
+      008294 A6 20            [ 1]  500 	ld a,#SPACE
+      008296 CD 82 70         [ 4]  501 	call scan
+                                    502 	; copy word in pad
+      008299 AE 00 09         [ 2]  503 	ldw x,#tib  ; source
+      00829C 72 5F 00 05      [ 1]  504 	clr idx_x
+      0082A0 7B 01            [ 1]  505 	ld a,(FIRST,sp)
+      0082A2 C7 00 06         [ 1]  506 	ld idx_x+1,a
+      0082A5 90 AE 00 59      [ 2]  507 	ldw y,#pad
+      0082A9 72 5F 00 07      [ 1]  508 	clr idx_y
+      0082AD 72 5F 00 08      [ 1]  509 	clr idx_y+1
+      0082B1 C6 00 03         [ 1]  510 	ld a,in
+      0082B4 10 01            [ 1]  511 	sub a,(FIRST,sp)
+      0082B6 CD 82 BE         [ 4]  512 	call strcpyn
+      0082B9 1E 02            [ 2]  513 	ldw x,(XSAVE,sp)
+      0082BB 5B 03            [ 2]  514 	addw sp,#3
+      0082BD 81               [ 4]  515 	ret
+                                    516 	
+                                    517 	
+                                    518 	; copy n character from (x) to (y)
+                                    519 	; input:
+                                    520 	;   	x   source pointer
+                                    521 	;       idx_x index in (x)
+                                    522 	;       y   destination pointer
+                                    523 	;       idx_y  index in (y)
+                                    524 	;       a   number of character to copy
+      0082BE                        525 strcpyn:
+                           000001   526 	N = 1 ; local variable count
+      0082BE 88               [ 1]  527 	push a
+      0082BF 7B 01            [ 1]  528 1$: ld a,(N,sp)		
+      0082C1 27 13            [ 1]  529 	jreq 2$ 
+      0082C3 72 D6 00 05      [ 4]  530 	ld a,([idx_x],x)
+      0082C7 91 D7 07         [ 4]  531 	ld ([idx_y],y),a
+      0082CA 72 5C 00 06      [ 1]  532 	inc idx_x+1
+      0082CE 72 5C 00 08      [ 1]  533 	inc idx_y+1
+      0082D2 0A 01            [ 1]  534 	dec (N,sp)
+      0082D4 20 E9            [ 2]  535 	jra 1$
+      0082D6 91 6F 07         [ 4]  536 2$: clr ([idx_y],y)
+      0082D9 84               [ 1]  537 	pop a
+      0082DA 81               [ 4]  538 	ret
+                                    539 		
+                                    540 	; convert integer to string
+                                    541 	; input:
+                                    542 	;   a  base
+                                    543 	;	y  integer to convert
+                                    544 	; output:
+                                    545 	;   y  pointer to string
+      0082DB                        546 itoa:
+                           000001   547 	SIGN=1
+                           000002   548 	BASE=2
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 33.
 Hexadecimal [24-Bits]
 
 
 
-      0082F9 7F               [ 1]  549 	clr (x)
-      0082FA 5A               [ 2]  550 	decw x
-      0082FB A6 20            [ 1]  551 	ld a,#SPACE
-      0082FD F7               [ 1]  552 	ld (x),a
-      0082FE 72 5F 00 A9      [ 1]  553 	clr acc16
-      008302 72 5F 00 AA      [ 1]  554 	clr acc16+1
-      008306                        555 itoa_loop:
-      008306 7B 02            [ 1]  556     ld a,(BASE,sp)
-      008308 90 62            [ 2]  557     div y,a
-      00830A AB 30            [ 1]  558     add a,#'0
-      00830C A1 3A            [ 1]  559     cp a,#'9+1
-      00830E 2B 02            [ 1]  560     jrmi 2$
-      008310 AB 07            [ 1]  561     add a,#7 
-      008312 5A               [ 2]  562 2$: decw x
-      008313 F7               [ 1]  563     ld (x),a
-      008314 90 C3 00 A9      [ 2]  564     cpw y,acc16
-      008318 26 EC            [ 1]  565     jrne itoa_loop
-                                    566 	; copy string pointer in y
-      00831A CF 00 A9         [ 2]  567     ldw acc16,x
-      00831D 90 CE 00 A9      [ 2]  568     ldw y,acc16
-      008321 7B 02            [ 1]  569 	ld a,(BASE,sp)
-      008323 A1 10            [ 1]  570 	cp a,#16
-      008325 26 1B            [ 1]  571 	jrne 9$
-      008327 CD 83 FE         [ 4]  572     call strlen
-      00832A A1 03            [ 1]  573     cp a,#3
-      00832C 27 0C            [ 1]  574     jreq 8$
-      00832E 25 04            [ 1]  575     jrult 7$
-      008330 A1 05            [ 1]  576 	cp a,#5
-      008332 27 06            [ 1]  577 	jreq 8$
-      008334 90 5A            [ 2]  578 7$: decw y
-      008336 A6 30            [ 1]  579     ld a,#'0
-      008338 90 F7            [ 1]  580     ld (y),a
-      00833A 90 5A            [ 2]  581 8$:	decw y
-      00833C A6 24            [ 1]  582 	ld a,#'$
-      00833E 90 F7            [ 1]  583 	ld (y),a
-      008340 20 0A            [ 2]  584 	jra 10$
-      008342 7B 01            [ 1]  585 9$: ld a,(SIGN,sp)
-      008344 27 06            [ 1]  586     jreq 10$
-      008346 90 5A            [ 2]  587     decw y
-      008348 A6 2D            [ 1]  588     ld a,#'-
-      00834A 90 F7            [ 1]  589     ld (y),a
-      00834C                        590 10$:
-      00834C 5B 02            [ 2]  591 	addw sp,#LOCAL_SIZE
-      00834E 85               [ 2]  592 	popw x
-      00834F 81               [ 4]  593 	ret
-                                    594 
-                                    595 	;multiply Y=A*Y	
-                                    596 	; input:
-                                    597 	;    Y uint16_t
-                                    598 	;    A uint8_t
-                                    599 	; output:
-                                    600 	;   Y uint16_t product modulo 65535
-      008350                        601 mul16x8:
-      008350 89               [ 2]  602 	pushw x ; save x
-      008351 CE 00 A9         [ 2]  603 	ldw x, acc16 ; save it
+                           000002   549 	LOCAL_SIZE=2
+      0082DB 89               [ 2]  550 	pushw x
+      0082DC 88               [ 1]  551 	push a  ; base
+      0082DD 4B 00            [ 1]  552 	push #0 ; sign
+      0082DF A1 0A            [ 1]  553 	cp a,#10
+      0082E1 26 0D            [ 1]  554 	jrne 1$
+      0082E3 90 CF 00 A9      [ 2]  555 	ldw acc16,y
+      0082E7 72 0F 00 A9 04   [ 2]  556 	btjf acc16,#7,1$
+      0082EC 03 01            [ 1]  557 	cpl (SIGN,sp)
+      0082EE 90 50            [ 2]  558 	negw y
+                                    559 	; initialize string pointer 
+      0082F0 AE 00 4F         [ 2]  560 1$:	ldw x,#PAD_SIZE-1
+      0082F3 CF 00 A9         [ 2]  561 	ldw acc16,x
+      0082F6 AE 00 59         [ 2]  562 	ldw x,#pad
+      0082F9 72 BB 00 A9      [ 2]  563 	addw x,acc16
+      0082FD 7F               [ 1]  564 	clr (x)
+      0082FE 5A               [ 2]  565 	decw x
+      0082FF A6 20            [ 1]  566 	ld a,#SPACE
+      008301 F7               [ 1]  567 	ld (x),a
+      008302 72 5F 00 A9      [ 1]  568 	clr acc16
+      008306 72 5F 00 AA      [ 1]  569 	clr acc16+1
+      00830A                        570 itoa_loop:
+      00830A 7B 02            [ 1]  571     ld a,(BASE,sp)
+      00830C 90 62            [ 2]  572     div y,a
+      00830E AB 30            [ 1]  573     add a,#'0
+      008310 A1 3A            [ 1]  574     cp a,#'9+1
+      008312 2B 02            [ 1]  575     jrmi 2$
+      008314 AB 07            [ 1]  576     add a,#7 
+      008316 5A               [ 2]  577 2$: decw x
+      008317 F7               [ 1]  578     ld (x),a
+      008318 90 C3 00 A9      [ 2]  579     cpw y,acc16
+      00831C 26 EC            [ 1]  580     jrne itoa_loop
+                                    581 	; copy string pointer in y
+      00831E CF 00 A9         [ 2]  582     ldw acc16,x
+      008321 90 CE 00 A9      [ 2]  583     ldw y,acc16
+      008325 7B 02            [ 1]  584 	ld a,(BASE,sp)
+      008327 A1 10            [ 1]  585 	cp a,#16
+      008329 26 1B            [ 1]  586 	jrne 9$
+      00832B CD 84 02         [ 4]  587     call strlen
+      00832E A1 03            [ 1]  588     cp a,#3
+      008330 27 0C            [ 1]  589     jreq 8$
+      008332 25 04            [ 1]  590     jrult 7$
+      008334 A1 05            [ 1]  591 	cp a,#5
+      008336 27 06            [ 1]  592 	jreq 8$
+      008338 90 5A            [ 2]  593 7$: decw y
+      00833A A6 30            [ 1]  594     ld a,#'0
+      00833C 90 F7            [ 1]  595     ld (y),a
+      00833E 90 5A            [ 2]  596 8$:	decw y
+      008340 A6 24            [ 1]  597 	ld a,#'$
+      008342 90 F7            [ 1]  598 	ld (y),a
+      008344 20 0A            [ 2]  599 	jra 10$
+      008346 7B 01            [ 1]  600 9$: ld a,(SIGN,sp)
+      008348 27 06            [ 1]  601     jreq 10$
+      00834A 90 5A            [ 2]  602     decw y
+      00834C A6 2D            [ 1]  603     ld a,#'-
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 34.
 Hexadecimal [24-Bits]
 
 
 
-      008354 89               [ 2]  604 	pushw x
-      008355 93               [ 1]  605 	ldw x,y
-      008356 42               [ 4]  606 	mul x,a ; a*yl
-      008357 CF 00 A9         [ 2]  607 	ldw acc16,x
-      00835A 90 5E            [ 1]  608 	swapw y
-      00835C 90 42            [ 4]  609 	mul y,a ; a*yh
-                                    610 	; y*=256
-      00835E 90 5E            [ 1]  611 	swapw y
-      008360 4F               [ 1]  612 	clr a
-      008361 90 97            [ 1]  613 	ld yl,a
-      008363 72 B9 00 A9      [ 2]  614 	addw y,acc16
-      008367 85               [ 2]  615 	popw x ; restore acc16
-      008368 CF 00 A9         [ 2]  616 	ldw acc16,x
-      00836B 85               [ 2]  617 	popw x ; restore x
-      00836C 81               [ 4]  618 	ret
-                                    619 
-                                    620 	; check if character in {'0'..'9'}
-                                    621 	; input:
-                                    622 	;    a  character to test
-                                    623 	; output:
-                                    624 	;    a  0|1
-      00836D                        625 is_digit:
-      00836D A1 30            [ 1]  626 	cp a,#'0
-      00836F 2A 02            [ 1]  627 	jrpl 1$
-      008371 4F               [ 1]  628 0$:	clr a
-      008372 81               [ 4]  629 	ret
-      008373 A1 39            [ 1]  630 1$: cp a,#'9
-      008375 22 FA            [ 1]  631     jrugt 0$
-      008377 A6 01            [ 1]  632     ld a,#1
-      008379 81               [ 4]  633     ret
-                                    634 	
-                                    635 	; check if character in {'0'..'9','A'..'F'}
+      00834E 90 F7            [ 1]  604     ld (y),a
+      008350                        605 10$:
+      008350 5B 02            [ 2]  606 	addw sp,#LOCAL_SIZE
+      008352 85               [ 2]  607 	popw x
+      008353 81               [ 4]  608 	ret
+                                    609 
+                                    610 	;multiply Y=A*Y	
+                                    611 	; input:
+                                    612 	;    Y uint16_t
+                                    613 	;    A uint8_t
+                                    614 	; output:
+                                    615 	;   Y uint16_t product modulo 65535
+      008354                        616 mul16x8:
+      008354 89               [ 2]  617 	pushw x ; save x
+      008355 CE 00 A9         [ 2]  618 	ldw x, acc16 ; save it
+      008358 89               [ 2]  619 	pushw x
+      008359 93               [ 1]  620 	ldw x,y
+      00835A 42               [ 4]  621 	mul x,a ; a*yl
+      00835B CF 00 A9         [ 2]  622 	ldw acc16,x
+      00835E 90 5E            [ 1]  623 	swapw y
+      008360 90 42            [ 4]  624 	mul y,a ; a*yh
+                                    625 	; y*=256
+      008362 90 5E            [ 1]  626 	swapw y
+      008364 4F               [ 1]  627 	clr a
+      008365 90 97            [ 1]  628 	ld yl,a
+      008367 72 B9 00 A9      [ 2]  629 	addw y,acc16
+      00836B 85               [ 2]  630 	popw x ; restore acc16
+      00836C CF 00 A9         [ 2]  631 	ldw acc16,x
+      00836F 85               [ 2]  632 	popw x ; restore x
+      008370 81               [ 4]  633 	ret
+                                    634 
+                                    635 	; check if character in {'0'..'9'}
                                     636 	; input:
-                                    637 	;   a  character to test
+                                    637 	;    a  character to test
                                     638 	; output:
-                                    639 	;   a   0|1 
-      00837A                        640 is_hex:
-      00837A 88               [ 1]  641 	push a
-      00837B CD 83 6D         [ 4]  642 	call is_digit
-      00837E A1 01            [ 1]  643 	cp a,#1
-      008380 26 03            [ 1]  644 	jrne 1$
-      008382 5B 01            [ 2]  645 	addw sp,#1
-      008384 81               [ 4]  646 	ret
-      008385 84               [ 1]  647 1$:	pop a
-      008386 A1 61            [ 1]  648 	cp a,#'a
-      008388 2B 02            [ 1]  649 	jrmi 2$
-      00838A A0 20            [ 1]  650 	sub a,#32
-      00838C A1 41            [ 1]  651 2$: cp a,#'A
-      00838E 2A 02            [ 1]  652     jrpl 3$
-      008390 4F               [ 1]  653 0$: clr a
-      008391 81               [ 4]  654     ret
-      008392 A1 46            [ 1]  655 3$: cp a,#'F
-      008394 22 FA            [ 1]  656     jrugt 0$
-      008396 A6 01            [ 1]  657     ld a,#1
-      008398 81               [ 4]  658     ret
+                                    639 	;    a  0|1
+      008371                        640 is_digit:
+      008371 A1 30            [ 1]  641 	cp a,#'0
+      008373 2A 02            [ 1]  642 	jrpl 1$
+      008375 4F               [ 1]  643 0$:	clr a
+      008376 81               [ 4]  644 	ret
+      008377 A1 39            [ 1]  645 1$: cp a,#'9
+      008379 22 FA            [ 1]  646     jrugt 0$
+      00837B A6 01            [ 1]  647     ld a,#1
+      00837D 81               [ 4]  648     ret
+                                    649 	
+                                    650 	; check if character in {'0'..'9','A'..'F'}
+                                    651 	; input:
+                                    652 	;   a  character to test
+                                    653 	; output:
+                                    654 	;   a   0|1 
+      00837E                        655 is_hex:
+      00837E 88               [ 1]  656 	push a
+      00837F CD 83 71         [ 4]  657 	call is_digit
+      008382 A1 01            [ 1]  658 	cp a,#1
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 35.
 Hexadecimal [24-Bits]
 
 
 
-                                    659             	
-                                    660 	; convert alpha to uppercase
-                                    661 	; input:
-                                    662 	;    a  character to convert
-                                    663 	; output:
-                                    664 	;    a  uppercase character
-      008399                        665 a_upper:
-      008399 A1 61            [ 1]  666 	cp a,#'a
-      00839B 2A 01            [ 1]  667 	jrpl 1$
-      00839D 81               [ 4]  668 0$:	ret
-      00839E A1 7A            [ 1]  669 1$: cp a,#'z	
-      0083A0 22 FB            [ 1]  670 	jrugt 0$
-      0083A2 A0 20            [ 1]  671 	sub a,#32
-      0083A4 81               [ 4]  672 	ret
-                                    673 	
-                                    674 	; convert pad content in integer
-                                    675 	; input:
-                                    676 	;    pad
-                                    677 	; output:
-                                    678 	;    y
-      0083A5                        679 atoi:
-                                    680 	; local variables
-                           000001   681 	SIGN=1 ; 1 byte, 
-                           000002   682 	BASE=2 ; 1 byte, numeric base used in conversion
-                           000003   683 	TEMP=3 ; 1 byte, temporary storage
-                           000003   684 	LOCAL_SIZE=3 ; 3 bytes reserved for local storage
-      0083A5 89               [ 2]  685 	pushw x ;save x
-      0083A6 52 03            [ 2]  686 	sub sp,#LOCAL_SIZE
-      0083A8 0F 01            [ 1]  687 	clr (SIGN,sp)
-      0083AA A6 0A            [ 1]  688 	ld a,#10
-      0083AC 6B 02            [ 1]  689 	ld (BASE,sp),a ; default base decimal
-      0083AE AE 00 59         [ 2]  690 	ldw x,#pad ; pointer to string to convert
-      0083B1 90 5F            [ 1]  691 	clrw y    ; convertion result
-      0083B3 F6               [ 1]  692 	ld a,(x)
-      0083B4 27 3E            [ 1]  693 	jreq 9$
-      0083B6 A1 2D            [ 1]  694 	cp a,#'-
-      0083B8 26 04            [ 1]  695 	jrne 1$
-      0083BA 03 01            [ 1]  696 	cpl (SIGN,sp)
-      0083BC 20 08            [ 2]  697 	jra 2$
-      0083BE A1 24            [ 1]  698 1$: cp a,#'$
-      0083C0 26 06            [ 1]  699 	jrne 3$
-      0083C2 A6 10            [ 1]  700 	ld a,#16
-      0083C4 6B 02            [ 1]  701 	ld (BASE,sp),a
-      0083C6 5C               [ 2]  702 2$:	incw x
-      0083C7 F6               [ 1]  703 	ld a,(x)
-      0083C8                        704 3$:	
-      0083C8 A1 61            [ 1]  705 	cp a,#'a
-      0083CA 2B 02            [ 1]  706 	jrmi 4$
-      0083CC A0 20            [ 1]  707 	sub a,#32
-      0083CE A1 30            [ 1]  708 4$:	cp a,#'0
-      0083D0 2B 22            [ 1]  709 	jrmi 9$
-      0083D2 A0 30            [ 1]  710 	sub a,#'0
-      0083D4 A1 0A            [ 1]  711 	cp a,#10
-      0083D6 2B 06            [ 1]  712 	jrmi 5$
-      0083D8 A0 07            [ 1]  713 	sub a,#7
+      008384 26 03            [ 1]  659 	jrne 1$
+      008386 5B 01            [ 2]  660 	addw sp,#1
+      008388 81               [ 4]  661 	ret
+      008389 84               [ 1]  662 1$:	pop a
+      00838A A1 61            [ 1]  663 	cp a,#'a
+      00838C 2B 02            [ 1]  664 	jrmi 2$
+      00838E A0 20            [ 1]  665 	sub a,#32
+      008390 A1 41            [ 1]  666 2$: cp a,#'A
+      008392 2A 02            [ 1]  667     jrpl 3$
+      008394 4F               [ 1]  668 0$: clr a
+      008395 81               [ 4]  669     ret
+      008396 A1 46            [ 1]  670 3$: cp a,#'F
+      008398 22 FA            [ 1]  671     jrugt 0$
+      00839A A6 01            [ 1]  672     ld a,#1
+      00839C 81               [ 4]  673     ret
+                                    674             	
+                                    675 	; convert alpha to uppercase
+                                    676 	; input:
+                                    677 	;    a  character to convert
+                                    678 	; output:
+                                    679 	;    a  uppercase character
+      00839D                        680 a_upper:
+      00839D A1 61            [ 1]  681 	cp a,#'a
+      00839F 2A 01            [ 1]  682 	jrpl 1$
+      0083A1 81               [ 4]  683 0$:	ret
+      0083A2 A1 7A            [ 1]  684 1$: cp a,#'z	
+      0083A4 22 FB            [ 1]  685 	jrugt 0$
+      0083A6 A0 20            [ 1]  686 	sub a,#32
+      0083A8 81               [ 4]  687 	ret
+                                    688 	
+                                    689 	; convert pad content in integer
+                                    690 	; input:
+                                    691 	;    pad
+                                    692 	; output:
+                                    693 	;    y
+      0083A9                        694 atoi:
+                                    695 	; local variables
+                           000001   696 	SIGN=1 ; 1 byte, 
+                           000002   697 	BASE=2 ; 1 byte, numeric base used in conversion
+                           000003   698 	TEMP=3 ; 1 byte, temporary storage
+                           000003   699 	LOCAL_SIZE=3 ; 3 bytes reserved for local storage
+      0083A9 89               [ 2]  700 	pushw x ;save x
+      0083AA 52 03            [ 2]  701 	sub sp,#LOCAL_SIZE
+      0083AC 0F 01            [ 1]  702 	clr (SIGN,sp)
+      0083AE A6 0A            [ 1]  703 	ld a,#10
+      0083B0 6B 02            [ 1]  704 	ld (BASE,sp),a ; default base decimal
+      0083B2 AE 00 59         [ 2]  705 	ldw x,#pad ; pointer to string to convert
+      0083B5 90 5F            [ 1]  706 	clrw y    ; convertion result
+      0083B7 F6               [ 1]  707 	ld a,(x)
+      0083B8 27 3E            [ 1]  708 	jreq 9$
+      0083BA A1 2D            [ 1]  709 	cp a,#'-
+      0083BC 26 04            [ 1]  710 	jrne 1$
+      0083BE 03 01            [ 1]  711 	cpl (SIGN,sp)
+      0083C0 20 08            [ 2]  712 	jra 2$
+      0083C2 A1 24            [ 1]  713 1$: cp a,#'$
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 36.
 Hexadecimal [24-Bits]
 
 
 
-      0083DA 11 02            [ 1]  714 	cp a,(BASE,sp)
-      0083DC 2A 16            [ 1]  715 	jrpl 9$
-      0083DE 6B 03            [ 1]  716 5$:	ld (TEMP,sp),a
-      0083E0 7B 02            [ 1]  717 	ld a,(BASE,sp)
-      0083E2 CD 83 50         [ 4]  718 	call mul16x8
-      0083E5 7B 03            [ 1]  719 	ld a,(TEMP,sp)
-      0083E7 C7 00 AA         [ 1]  720 	ld acc16+1,a
-      0083EA 72 5F 00 A9      [ 1]  721 	clr acc16
-      0083EE 72 B9 00 A9      [ 2]  722 	addw y,acc16
-      0083F2 20 D2            [ 2]  723 	jra 2$
-      0083F4 0D 01            [ 1]  724 9$:	tnz (SIGN,sp)
-      0083F6 27 02            [ 1]  725     jreq 11$
-      0083F8 90 50            [ 2]  726     negw y
-      0083FA 5B 03            [ 2]  727 11$: addw sp,#LOCAL_SIZE
-      0083FC 85               [ 2]  728 	popw x ; restore x
-      0083FD 81               [ 4]  729 	ret
-                                    730 
-                                    731 	;strlen  return ASCIIZ string length
-                                    732 	; input:
-                                    733 	;	y  pointer to string
-                                    734 	; output:
-                                    735 	;	a   length  < 256
-      0083FE                        736 strlen:
-                           000001   737 	LEN=1
-      0083FE 90 89            [ 2]  738     pushw y
-      008400 4B 00            [ 1]  739     push #0
-      008402 90 F6            [ 1]  740 0$: ld a,(y)
-      008404 27 06            [ 1]  741     jreq 1$
-      008406 0C 01            [ 1]  742     inc (LEN,sp)
-      008408 90 5C            [ 2]  743     incw y
-      00840A 20 F6            [ 2]  744     jra 0$
-      00840C 84               [ 1]  745 1$: pop a
-      00840D 90 85            [ 2]  746     popw y
-      00840F 81               [ 4]  747     ret
-                                    748 	
-                                    749 	; peek addr, print byte at this address 
-                                    750 	; input:
-                                    751 	;	 y   address to peek
-                                    752 	;    a   numeric base for convertion
-                                    753 	; output:
-                                    754 	;    print byte value at this address
-      008410                        755 peek:
-      008410 90 89            [ 2]  756 	pushw y
-      008412 88               [ 1]  757     push a
-      008413 90 F6            [ 1]  758     ld a,(y)
-      008415 90 97            [ 1]  759     ld yl,a
-      008417 4F               [ 1]  760     clr a
-      008418 90 95            [ 1]  761     ld yh,a
-      00841A 84               [ 1]  762     pop a
-      00841B CD 82 D7         [ 4]  763     call itoa
-      00841E CD 81 6D         [ 4]  764     call uart_print
-      008421 90 85            [ 2]  765     popw y
-      008423 81               [ 4]  766     ret	
-                                    767 	
-                                    768 	; get a number from command line next argument
+      0083C4 26 06            [ 1]  714 	jrne 3$
+      0083C6 A6 10            [ 1]  715 	ld a,#16
+      0083C8 6B 02            [ 1]  716 	ld (BASE,sp),a
+      0083CA 5C               [ 1]  717 2$:	incw x
+      0083CB F6               [ 1]  718 	ld a,(x)
+      0083CC                        719 3$:	
+      0083CC A1 61            [ 1]  720 	cp a,#'a
+      0083CE 2B 02            [ 1]  721 	jrmi 4$
+      0083D0 A0 20            [ 1]  722 	sub a,#32
+      0083D2 A1 30            [ 1]  723 4$:	cp a,#'0
+      0083D4 2B 22            [ 1]  724 	jrmi 9$
+      0083D6 A0 30            [ 1]  725 	sub a,#'0
+      0083D8 A1 0A            [ 1]  726 	cp a,#10
+      0083DA 2B 06            [ 1]  727 	jrmi 5$
+      0083DC A0 07            [ 1]  728 	sub a,#7
+      0083DE 11 02            [ 1]  729 	cp a,(BASE,sp)
+      0083E0 2A 16            [ 1]  730 	jrpl 9$
+      0083E2 6B 03            [ 1]  731 5$:	ld (TEMP,sp),a
+      0083E4 7B 02            [ 1]  732 	ld a,(BASE,sp)
+      0083E6 CD 83 54         [ 4]  733 	call mul16x8
+      0083E9 7B 03            [ 1]  734 	ld a,(TEMP,sp)
+      0083EB C7 00 AA         [ 1]  735 	ld acc16+1,a
+      0083EE 72 5F 00 A9      [ 1]  736 	clr acc16
+      0083F2 72 B9 00 A9      [ 2]  737 	addw y,acc16
+      0083F6 20 D2            [ 2]  738 	jra 2$
+      0083F8 0D 01            [ 1]  739 9$:	tnz (SIGN,sp)
+      0083FA 27 02            [ 1]  740     jreq 11$
+      0083FC 90 50            [ 2]  741     negw y
+      0083FE 5B 03            [ 2]  742 11$: addw sp,#LOCAL_SIZE
+      008400 85               [ 2]  743 	popw x ; restore x
+      008401 81               [ 4]  744 	ret
+                                    745 
+                                    746 	;strlen  return ASCIIZ string length
+                                    747 	; input:
+                                    748 	;	y  pointer to string
+                                    749 	; output:
+                                    750 	;	a   length  < 256
+      008402                        751 strlen:
+                           000001   752 	LEN=1
+      008402 90 89            [ 2]  753     pushw y
+      008404 4B 00            [ 1]  754     push #0
+      008406 90 F6            [ 1]  755 0$: ld a,(y)
+      008408 27 06            [ 1]  756     jreq 1$
+      00840A 0C 01            [ 1]  757     inc (LEN,sp)
+      00840C 90 5C            [ 1]  758     incw y
+      00840E 20 F6            [ 2]  759     jra 0$
+      008410 84               [ 1]  760 1$: pop a
+      008411 90 85            [ 2]  761     popw y
+      008413 81               [ 4]  762     ret
+                                    763 	
+                                    764 	; peek addr, print byte at this address 
+                                    765 	; input:
+                                    766 	;	 y   address to peek
+                                    767 	;    a   numeric base for convertion
+                                    768 	; output:
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 37.
 Hexadecimal [24-Bits]
 
 
 
-                                    769 	;  input:
-                                    770 	;	  none
-                                    771 	;  output:
-                                    772 	;    y   uint16_t 
-      008424                        773 number:
-      008424 CD 82 82         [ 4]  774 	call next_word
-      008427 CD 83 A5         [ 4]  775 	call atoi
-      00842A 81               [ 4]  776 	ret
-                                    777 	
-                                    778 	; write a byte in memory
-                                    779 	; input:
-                                    780 	;    a  byte to write
-                                    781 	;    y  address 
-                                    782 	; output:
-                                    783 	;    none
-      00842B                        784 write_byte:
-      00842B 90 A3 80 00      [ 2]  785     cpw y,#FLASH_BASE
-      00842F 2A 2E            [ 1]  786     jrpl write_flash
-      008431 90 A3 40 00      [ 2]  787     cpw y,#EEPROM_BASE
-      008435 2B 06            [ 1]  788 	jrmi 1$
-      008437 90 A3 48 80      [ 2]  789 	cpw y,#OPTION_END+1  
-      00843B 2B 44            [ 1]  790     jrmi write_eeprom
-      00843D 90 C3 00 AB      [ 2]  791 1$: cpw y,ram_free_base
-      008441 2A 01            [ 1]  792     jrpl 2$
-      008443 81               [ 4]  793     ret
-      008444 90 A3 17 FF      [ 2]  794 2$: cpw y,#STACK_BASE
-      008448 2B 03            [ 1]  795     jrmi 3$
-      00844A CC 84 50         [ 2]  796     jp write_sfr    
-      00844D 90 F7            [ 1]  797 3$: ld (y),a
-      00844F 81               [ 4]  798 	ret
-                                    799 	; write SFR
-      008450                        800 write_sfr:
-      008450 90 A3 50 00      [ 2]  801 	cpw y,#SFR_BASE
-      008454 2B 08            [ 1]  802 	jrmi 2$
-      008456 90 A3 58 00      [ 2]  803 	cpw y,#SFR_END+1
-      00845A 2A 02            [ 1]  804 	jrpl 2$
-      00845C 90 F7            [ 1]  805 	ld (y),a
-      00845E 81               [ 4]  806 2$:	ret
-                                    807 	; write program memory
-      00845F                        808 write_flash:
-      00845F 90 C3 00 AD      [ 2]  809 	cpw y,flash_free_base
-      008463 2A 01            [ 1]  810 	jrpl 0$
-      008465 81               [ 4]  811 	ret
-      008466 35 56 50 62      [ 1]  812 0$:	mov FLASH_PUKR,#FLASH_PUKR_KEY1
-      00846A 35 AE 50 62      [ 1]  813 	mov FLASH_PUKR,#FLASH_PUKR_KEY2
-      00846E 72 03 50 5F FB   [ 2]  814 	btjf FLASH_IAPSR,#FLASH_IAPSR_PUL,.
-      0003F7                        815 1$:	_no_interrupts
-      008473 9B               [ 1]    1 		sim
-      008474 90 F7            [ 1]  816 	ld (y),a
-      008476 72 05 50 5F FB   [ 2]  817 	btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
-      0003FF                        818     _interrupts
-      00847B 9A               [ 1]    1 		 rim
-      00847C 72 13 50 5F      [ 1]  819     bres FLASH_IAPSR,#FLASH_IAPSR_PUL
-      008480 81               [ 4]  820     ret
-                                    821     ; write eeprom and option
+                                    769 	;    print byte value at this address
+      008414                        770 peek:
+      008414 90 89            [ 2]  771 	pushw y
+      008416 88               [ 1]  772     push a
+      008417 90 F6            [ 1]  773     ld a,(y)
+      008419 90 97            [ 1]  774     ld yl,a
+      00841B 4F               [ 1]  775     clr a
+      00841C 90 95            [ 1]  776     ld yh,a
+      00841E 84               [ 1]  777     pop a
+      00841F CD 82 DB         [ 4]  778     call itoa
+      008422 CD 81 71         [ 4]  779     call uart_print
+      008425 90 85            [ 2]  780     popw y
+      008427 81               [ 4]  781     ret	
+                                    782 	
+                                    783 	; get a number from command line next argument
+                                    784 	;  input:
+                                    785 	;	  none
+                                    786 	;  output:
+                                    787 	;    y   uint16_t 
+      008428                        788 number:
+      008428 CD 82 86         [ 4]  789 	call next_word
+      00842B CD 83 A9         [ 4]  790 	call atoi
+      00842E 81               [ 4]  791 	ret
+                                    792 	
+                                    793 	; write a byte in memory
+                                    794 	; input:
+                                    795 	;    a  byte to write
+                                    796 	;    y  address 
+                                    797 	; output:
+                                    798 	;    none
+      00842F                        799 write_byte:
+      00842F 90 A3 80 00      [ 2]  800     cpw y,#FLASH_BASE
+      008433 2A 2E            [ 1]  801     jrpl write_flash
+      008435 90 A3 40 00      [ 2]  802     cpw y,#EEPROM_BASE
+      008439 2B 06            [ 1]  803 	jrmi 1$
+      00843B 90 A3 48 80      [ 2]  804 	cpw y,#OPTION_END+1  
+      00843F 2B 44            [ 1]  805     jrmi write_eeprom
+      008441 90 C3 00 AB      [ 2]  806 1$: cpw y,ram_free_base
+      008445 2A 01            [ 1]  807     jrpl 2$
+      008447 81               [ 4]  808     ret
+      008448 90 A3 18 00      [ 2]  809 2$: cpw y,#STACK_TOP+1
+      00844C 2B 03            [ 1]  810     jrmi 3$
+      00844E CC 84 54         [ 2]  811     jp write_sfr    
+      008451 90 F7            [ 1]  812 3$: ld (y),a
+      008453 81               [ 4]  813 	ret
+                                    814 	; write SFR
+      008454                        815 write_sfr:
+      008454 90 A3 50 00      [ 2]  816 	cpw y,#SFR_BASE
+      008458 2B 08            [ 1]  817 	jrmi 2$
+      00845A 90 A3 58 00      [ 2]  818 	cpw y,#SFR_END+1
+      00845E 2A 02            [ 1]  819 	jrpl 2$
+      008460 90 F7            [ 1]  820 	ld (y),a
+      008462 81               [ 4]  821 2$:	ret
+                                    822 	; write program memory
+      008463                        823 write_flash:
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 38.
 Hexadecimal [24-Bits]
 
 
 
-      008481                        822 write_eeprom:
-                           000002   823 	OPT=2
-                           000001   824 	BYTE=1
-                           000002   825 	LOCAL_SIZE=2
-      008481 4B 00            [ 1]  826 	push #0
-      008483 88               [ 1]  827 	push a
-                                    828 	; check for data eeprom or option eeprom
-      008484 90 A3 48 00      [ 2]  829 	cpw y,#OPTION_BASE
-      008488 2B 08            [ 1]  830 	jrmi 1$
-      00848A 90 A3 48 80      [ 2]  831 	cpw y,#OPTION_END+1
-      00848E 2A 02            [ 1]  832 	jrpl 1$
-      008490 03 02            [ 1]  833 	cpl (OPT,sp)
-      008492 35 AE 50 64      [ 1]  834 1$: mov FLASH_DUKR,#FLASH_DUKR_KEY1
-      008496 35 56 50 64      [ 1]  835     mov FLASH_DUKR,#FLASH_DUKR_KEY2
-      00849A 7B 02            [ 1]  836     ld a,(OPT,sp)
-      00849C 27 08            [ 1]  837     jreq 2$
-      00849E 72 1E 50 5B      [ 1]  838     bset FLASH_CR2,#FLASH_CR2_OPT
-      0084A2 72 1F 50 5C      [ 1]  839     bres FLASH_NCR2,#FLASH_CR2_OPT 
-      0084A6 72 07 50 5F FB   [ 2]  840 2$: btjf FLASH_IAPSR,#FLASH_IAPSR_DUL,.
-      0084AB 7B 01            [ 1]  841     ld a,(BYTE,sp)
-      0084AD 90 F7            [ 1]  842     ld (y),a
-      0084AF 90 5C            [ 2]  843     incw y
-      0084B1 7B 02            [ 1]  844     ld a,(OPT,sp)
-      0084B3 27 05            [ 1]  845     jreq 3$
-      0084B5 7B 01            [ 1]  846     ld a,(BYTE,sp)
-      0084B7 43               [ 1]  847     cpl a
-      0084B8 90 F7            [ 1]  848     ld (y),a
-      0084BA 72 05 50 5F FB   [ 2]  849 3$: btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
-      0084BF 5B 02            [ 2]  850 	addw sp,#LOCAL_SIZE
-      0084C1 81               [ 4]  851     ret
-                                    852         
-                                    853 		  
-                                    854 	; evaluate command string in tib
-                                    855 	; list of commands
-                                    856 	;   @  addr display content at address
-                                    857 	;   !  addr byte [byte ]* store bytes at address
-                                    858 	;   ?  diplay command help
-                                    859 	;   b  n    convert n in the other base
-                                    860 	;	c  addr bitmask  clear  bits at address
-                                    861 	;   h  addr hex dump memory starting at address
-                                    862 	;   m  src dest count,  move memory block
-                                    863 	;   s  addr bitmask  set a bits at address
-                                    864 	;   t  addr bitmask  toggle bits at address
-                                    865 	;   x  addr execute  code at address  
-      0084C2                        866 eval:
-      0084C2 C6 00 03         [ 1]  867 	ld a, in
-      0084C5 C1 00 04         [ 1]  868 	cp a, count
-      0084C8 26 01            [ 1]  869 	jrne 0$
-      0084CA 81               [ 4]  870 	ret ; nothing to evaluate
-      0084CB CD 82 82         [ 4]  871 0$:	call next_word
-      0084CE 90 AE 00 59      [ 2]  872 	ldw y,#pad
-      0084D2 90 F6            [ 1]  873     ld a,(y)	
-      0084D4 A1 40            [ 1]  874 	cp a,#'@
-      0084D6 26 03            [ 1]  875 	jrne 1$
-      0084D8 CC 85 25         [ 2]  876 	jp fetch
+      008463 90 C3 00 AD      [ 2]  824 	cpw y,flash_free_base
+      008467 2A 01            [ 1]  825 	jrpl 0$
+      008469 81               [ 4]  826 	ret
+      00846A 35 56 50 62      [ 1]  827 0$:	mov FLASH_PUKR,#FLASH_PUKR_KEY1
+      00846E 35 AE 50 62      [ 1]  828 	mov FLASH_PUKR,#FLASH_PUKR_KEY2
+      008472 72 03 50 5F FB   [ 2]  829 	btjf FLASH_IAPSR,#FLASH_IAPSR_PUL,.
+      0003FB                        830 1$:	_no_interrupts
+      008477 9B               [ 1]    1 		sim
+      008478 90 F7            [ 1]  831 	ld (y),a
+      00847A 72 05 50 5F FB   [ 2]  832 	btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
+      000403                        833     _interrupts
+      00847F 9A               [ 1]    1 		 rim
+      008480 72 13 50 5F      [ 1]  834     bres FLASH_IAPSR,#FLASH_IAPSR_PUL
+      008484 81               [ 4]  835     ret
+                                    836     ; write eeprom and option
+      008485                        837 write_eeprom:
+                           000002   838 	OPT=2
+                           000001   839 	BYTE=1
+                           000002   840 	LOCAL_SIZE=2
+      008485 4B 00            [ 1]  841 	push #0
+      008487 88               [ 1]  842 	push a
+                                    843 	; check for data eeprom or option eeprom
+      008488 90 A3 48 00      [ 2]  844 	cpw y,#OPTION_BASE
+      00848C 2B 08            [ 1]  845 	jrmi 1$
+      00848E 90 A3 48 80      [ 2]  846 	cpw y,#OPTION_END+1
+      008492 2A 02            [ 1]  847 	jrpl 1$
+      008494 03 02            [ 1]  848 	cpl (OPT,sp)
+      008496 35 AE 50 64      [ 1]  849 1$: mov FLASH_DUKR,#FLASH_DUKR_KEY1
+      00849A 35 56 50 64      [ 1]  850     mov FLASH_DUKR,#FLASH_DUKR_KEY2
+      00849E 7B 02            [ 1]  851     ld a,(OPT,sp)
+      0084A0 27 08            [ 1]  852     jreq 2$
+      0084A2 72 1E 50 5B      [ 1]  853     bset FLASH_CR2,#FLASH_CR2_OPT
+      0084A6 72 1F 50 5C      [ 1]  854     bres FLASH_NCR2,#FLASH_CR2_OPT 
+      0084AA 72 07 50 5F FB   [ 2]  855 2$: btjf FLASH_IAPSR,#FLASH_IAPSR_DUL,.
+      0084AF 7B 01            [ 1]  856     ld a,(BYTE,sp)
+      0084B1 90 F7            [ 1]  857     ld (y),a
+      0084B3 90 5C            [ 1]  858     incw y
+      0084B5 7B 02            [ 1]  859     ld a,(OPT,sp)
+      0084B7 27 05            [ 1]  860     jreq 3$
+      0084B9 7B 01            [ 1]  861     ld a,(BYTE,sp)
+      0084BB 43               [ 1]  862     cpl a
+      0084BC 90 F7            [ 1]  863     ld (y),a
+      0084BE 72 05 50 5F FB   [ 2]  864 3$: btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
+      0084C3 5B 02            [ 2]  865 	addw sp,#LOCAL_SIZE
+      0084C5 81               [ 4]  866     ret
+                                    867         
+                                    868 		  
+                                    869 	; evaluate command string in tib
+                                    870 	; list of commands
+                                    871 	;   @  addr display content at address
+                                    872 	;   !  addr byte [byte ]* store bytes at address
+                                    873 	;   ?  diplay command help
+                                    874 	;   b  n    convert n in the other base
+                                    875 	;	c  addr bitmask  clear  bits at address
+                                    876 	;   h  addr hex dump memory starting at address
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 39.
 Hexadecimal [24-Bits]
 
 
 
-      0084DB A1 21            [ 1]  877 1$:	cp a,#'!
-      0084DD 26 03            [ 1]  878 	jrne 10$
-      0084DF CC 85 49         [ 2]  879 	jp store
-      0084E2                        880 10$:
-      0084E2 A1 3F            [ 1]  881 	cp a,#'?
-      0084E4 26 03            [ 1]  882 	jrne 15$
-      0084E6 CC 85 6B         [ 2]  883 	jp help
-      0084E9                        884 15$: 
-      0084E9 A1 62            [ 1]  885 	cp a,#'b
-      0084EB 26 03            [ 1]  886     jrne 2$
-      0084ED CC 85 73         [ 2]  887     jp base_convert	
-      0084F0 A1 63            [ 1]  888 2$:	cp a,#'c
-      0084F2 26 03            [ 1]  889 	jrne 3$
-      0084F4 CC 85 8A         [ 2]  890 	jp clear_bits
-      0084F7 A1 68            [ 1]  891 3$:	cp a,#'h
-      0084F9 26 03            [ 1]  892 	jrne 4$
-      0084FB CC 85 9C         [ 2]  893 	jp hexdump
-      0084FE A1 6D            [ 1]  894 4$:	cp a,#'m
-      008500 26 03            [ 1]  895 	jrne 5$
-      008502 CC 85 F7         [ 2]  896 	jp move_memory
-      008505 A1 73            [ 1]  897 5$:	cp a,#'s
-      008507 26 03            [ 1]  898 	jrne 6$
-      008509 CC 86 24         [ 2]  899 	jp set_bits
-      00850C A1 74            [ 1]  900 6$:	cp a,#'t
-      00850E 26 03            [ 1]  901 	jrne 7$
-      008510 CC 86 35         [ 2]  902 	jp toggle_bits
-      008513 A1 78            [ 1]  903 7$:	cp a,#'x
-      008515 26 03            [ 1]  904 	jrne 8$
-      008517 CC 86 46         [ 2]  905 	jp execute
-      00851A CD 81 6D         [ 4]  906 8$:	call uart_print
-      00851D 90 AE 87 16      [ 2]  907 	ldw y,#BAD_CMD
-      008521 CD 81 6D         [ 4]  908 	call uart_print
-      008524 81               [ 4]  909 	ret
-                                    910 	
-                                    911 	; fetch a byte and display it,  @  addr
-      008525                        912 fetch:
-      008525 CD 84 24         [ 4]  913 	call number 
-      008528 90 89            [ 2]  914 	pushw y
-      00852A 90 AE 00 59      [ 2]  915 	ldw y,#pad
-      00852E CD 81 6D         [ 4]  916 	call uart_print
-      008531 A6 3D            [ 1]  917 	ld a,#'=
-      008533 CD 81 63         [ 4]  918 	call uart_tx	
-      008536 90 85            [ 2]  919 	popw y
-      008538 C6 00 59         [ 1]  920 	ld a,pad
-      00853B A1 24            [ 1]  921 	cp a,#'$
-      00853D 27 04            [ 1]  922 	jreq 1$
-      00853F A6 0A            [ 1]  923 	ld a,#10
-      008541 20 02            [ 2]  924 	jra 2$
-      008543 A6 10            [ 1]  925 1$: ld a,#16	
-      008545 CD 84 10         [ 4]  926 2$:	call peek
-      008548 81               [ 4]  927 	ret
-                                    928 	
-                                    929 	; store bytes,   !  addr byte [byte ]*
-      008549                        930 store:
-                           000001   931 	MADDR=1
+                                    877 	;   m  src dest count,  move memory block
+                                    878 	;   s  addr bitmask  set a bits at address
+                                    879 	;   t  addr bitmask  toggle bits at address
+                                    880 	;   x  addr execute  code at address  
+      0084C6                        881 eval:
+      0084C6 C6 00 03         [ 1]  882 	ld a, in
+      0084C9 C1 00 04         [ 1]  883 	cp a, count
+      0084CC 26 01            [ 1]  884 	jrne 0$
+      0084CE 81               [ 4]  885 	ret ; nothing to evaluate
+      0084CF CD 82 86         [ 4]  886 0$:	call next_word
+      0084D2 90 AE 00 59      [ 2]  887 	ldw y,#pad
+      0084D6 90 F6            [ 1]  888     ld a,(y)	
+      0084D8 A1 40            [ 1]  889 	cp a,#'@
+      0084DA 26 03            [ 1]  890 	jrne 1$
+      0084DC CC 85 29         [ 2]  891 	jp fetch
+      0084DF A1 21            [ 1]  892 1$:	cp a,#'!
+      0084E1 26 03            [ 1]  893 	jrne 10$
+      0084E3 CC 85 4D         [ 2]  894 	jp store
+      0084E6                        895 10$:
+      0084E6 A1 3F            [ 1]  896 	cp a,#'?
+      0084E8 26 03            [ 1]  897 	jrne 15$
+      0084EA CC 85 6F         [ 2]  898 	jp help
+      0084ED                        899 15$: 
+      0084ED A1 62            [ 1]  900 	cp a,#'b
+      0084EF 26 03            [ 1]  901     jrne 2$
+      0084F1 CC 85 77         [ 2]  902     jp base_convert	
+      0084F4 A1 63            [ 1]  903 2$:	cp a,#'c
+      0084F6 26 03            [ 1]  904 	jrne 3$
+      0084F8 CC 85 8E         [ 2]  905 	jp clear_bits
+      0084FB A1 68            [ 1]  906 3$:	cp a,#'h
+      0084FD 26 03            [ 1]  907 	jrne 4$
+      0084FF CC 85 A0         [ 2]  908 	jp hexdump
+      008502 A1 6D            [ 1]  909 4$:	cp a,#'m
+      008504 26 03            [ 1]  910 	jrne 5$
+      008506 CC 85 FB         [ 2]  911 	jp move_memory
+      008509 A1 73            [ 1]  912 5$:	cp a,#'s
+      00850B 26 03            [ 1]  913 	jrne 6$
+      00850D CC 86 28         [ 2]  914 	jp set_bits
+      008510 A1 74            [ 1]  915 6$:	cp a,#'t
+      008512 26 03            [ 1]  916 	jrne 7$
+      008514 CC 86 39         [ 2]  917 	jp toggle_bits
+      008517 A1 78            [ 1]  918 7$:	cp a,#'x
+      008519 26 03            [ 1]  919 	jrne 8$
+      00851B CC 86 4A         [ 2]  920 	jp execute
+      00851E CD 81 71         [ 4]  921 8$:	call uart_print
+      008521 90 AE 87 1A      [ 2]  922 	ldw y,#BAD_CMD
+      008525 CD 81 71         [ 4]  923 	call uart_print
+      008528 81               [ 4]  924 	ret
+                                    925 	
+                                    926 	; fetch a byte and display it,  @  addr
+      008529                        927 fetch:
+      008529 CD 84 28         [ 4]  928 	call number 
+      00852C 90 89            [ 2]  929 	pushw y
+      00852E 90 AE 00 59      [ 2]  930 	ldw y,#pad
+      008532 CD 81 71         [ 4]  931 	call uart_print
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 40.
 Hexadecimal [24-Bits]
 
 
 
-      008549 CD 84 24         [ 4]  932 	call number
-      00854C 90 89            [ 2]  933 	pushw y
-      00854E CD 84 24         [ 4]  934 1$:	call number
-      008551 90 9F            [ 1]  935 	ld a,yl
-      008553 16 01            [ 2]  936 	ldw y,(MADDR,sp)
-      008555 CD 84 2B         [ 4]  937 	call write_byte
-      008558 C6 00 03         [ 1]  938 	ld a,in
-      00855B C1 00 04         [ 1]  939 	cp a,count
-      00855E 27 08            [ 1]  940 	jreq 2$
-      008560 16 01            [ 2]  941 	ldw y,(MADDR,sp)
-      008562 90 5C            [ 2]  942 	incw y
-      008564 17 01            [ 2]  943 	ldw (MADDR,sp),y
-      008566 20 E6            [ 2]  944 	jra 1$
-      008568 90 85            [ 2]  945 2$:	popw y
-      00856A 81               [ 4]  946 	ret
-                                    947 	; ? , display command information
-      00856B                        948 help:
-      00856B 90 AE 87 29      [ 2]  949 	ldw y, #HELP
-      00856F CD 81 6D         [ 4]  950 	call uart_print
-      008572 81               [ 4]  951 	ret
-                                    952 	; convert from one numeric base to the other
-                                    953 	;  b n|$n
-      008573                        954 base_convert:
-      008573 CD 84 24         [ 4]  955     call number
-      008576 C6 00 59         [ 1]  956     ld a,pad
-      008579 A1 24            [ 1]  957     cp a,#'$
-      00857B 26 04            [ 1]  958     jrne 1$
-      00857D A6 0A            [ 1]  959     ld a,#10
-      00857F 20 02            [ 2]  960     jra 2$
-      008581 A6 10            [ 1]  961 1$: ld a,#16
-      008583 CD 82 D7         [ 4]  962 2$: call itoa
-      008586 CD 81 6D         [ 4]  963     call uart_print
-      008589 81               [ 4]  964     ret
-                                    965         	
-                                    966 	; clear bitmask, c addr mask
-      00858A                        967 clear_bits:
-      00858A CD 84 24         [ 4]  968 	call number
-      00858D 90 89            [ 2]  969 	pushw y
-      00858F CD 84 24         [ 4]  970 	call number
-      008592 90 9F            [ 1]  971 	ld a,yl
-      008594 43               [ 1]  972 	cpl a
-      008595 90 85            [ 2]  973 	popw y
-      008597 90 F4            [ 1]  974 	and a,(y)
-      008599 90 F7            [ 1]  975 	ld (y),a
-      00859B 81               [ 4]  976     ret
-                                    977     
-                                    978     ; hexadecimal dump memory, h addr
-                                    979     ; stop after each row, SPACE continue, other stop
-      00859C                        980 hexdump: 
-                           000001   981 	MADDR = 1
-                           000003   982 	CNTR = 3 ; loop counter
-                           000003   983 	LOCAL_SIZE=3
-      00859C 52 03            [ 2]  984 	sub sp,#LOCAL_SIZE
-      00859E CD 84 24         [ 4]  985 	call number
-      0085A1 17 01            [ 2]  986     ldw (MADDR,sp),y ; save address
+      008535 A6 3D            [ 1]  932 	ld a,#'=
+      008537 CD 81 67         [ 4]  933 	call uart_tx	
+      00853A 90 85            [ 2]  934 	popw y
+      00853C C6 00 59         [ 1]  935 	ld a,pad
+      00853F A1 24            [ 1]  936 	cp a,#'$
+      008541 27 04            [ 1]  937 	jreq 1$
+      008543 A6 0A            [ 1]  938 	ld a,#10
+      008545 20 02            [ 2]  939 	jra 2$
+      008547 A6 10            [ 1]  940 1$: ld a,#16	
+      008549 CD 84 14         [ 4]  941 2$:	call peek
+      00854C 81               [ 4]  942 	ret
+                                    943 	
+                                    944 	; store bytes,   !  addr byte [byte ]*
+      00854D                        945 store:
+                           000001   946 	MADDR=1
+      00854D CD 84 28         [ 4]  947 	call number
+      008550 90 89            [ 2]  948 	pushw y
+      008552 CD 84 28         [ 4]  949 1$:	call number
+      008555 90 9F            [ 1]  950 	ld a,yl
+      008557 16 01            [ 2]  951 	ldw y,(MADDR,sp)
+      008559 CD 84 2F         [ 4]  952 	call write_byte
+      00855C C6 00 03         [ 1]  953 	ld a,in
+      00855F C1 00 04         [ 1]  954 	cp a,count
+      008562 27 08            [ 1]  955 	jreq 2$
+      008564 16 01            [ 2]  956 	ldw y,(MADDR,sp)
+      008566 90 5C            [ 1]  957 	incw y
+      008568 17 01            [ 2]  958 	ldw (MADDR,sp),y
+      00856A 20 E6            [ 2]  959 	jra 1$
+      00856C 90 85            [ 2]  960 2$:	popw y
+      00856E 81               [ 4]  961 	ret
+                                    962 	; ? , display command information
+      00856F                        963 help:
+      00856F 90 AE 87 2D      [ 2]  964 	ldw y, #HELP
+      008573 CD 81 71         [ 4]  965 	call uart_print
+      008576 81               [ 4]  966 	ret
+                                    967 	; convert from one numeric base to the other
+                                    968 	;  b n|$n
+      008577                        969 base_convert:
+      008577 CD 84 28         [ 4]  970     call number
+      00857A C6 00 59         [ 1]  971     ld a,pad
+      00857D A1 24            [ 1]  972     cp a,#'$
+      00857F 26 04            [ 1]  973     jrne 1$
+      008581 A6 0A            [ 1]  974     ld a,#10
+      008583 20 02            [ 2]  975     jra 2$
+      008585 A6 10            [ 1]  976 1$: ld a,#16
+      008587 CD 82 DB         [ 4]  977 2$: call itoa
+      00858A CD 81 71         [ 4]  978     call uart_print
+      00858D 81               [ 4]  979     ret
+                                    980         	
+                                    981 	; clear bitmask, c addr mask
+      00858E                        982 clear_bits:
+      00858E CD 84 28         [ 4]  983 	call number
+      008591 90 89            [ 2]  984 	pushw y
+      008593 CD 84 28         [ 4]  985 	call number
+      008596 90 9F            [ 1]  986 	ld a,yl
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 41.
 Hexadecimal [24-Bits]
 
 
 
-      0085A3                        987 row_init:
-      0085A3 AE 00 59         [ 2]  988 	ldw x,#pad
-      0085A6 A6 10            [ 1]  989 	ld a,#16
-      0085A8 CD 82 D7         [ 4]  990 	call itoa
-      0085AB CD 81 6D         [ 4]  991 	call uart_print
-      0085AE A6 20            [ 1]  992 	ld a,#SPACE
-      0085B0 CD 81 63         [ 4]  993 	call uart_tx
-      0085B3 A6 08            [ 1]  994     ld a,#8
-      0085B5 6B 03            [ 1]  995     ld (CNTR,sp),a
-      0085B7                        996 row:
-      0085B7 A6 10            [ 1]  997 	ld a,#16
-      0085B9 16 01            [ 2]  998 	ldw y,(MADDR,sp)
-      0085BB CD 84 10         [ 4]  999 	call peek
-      0085BE 90 F6            [ 1] 1000 	ld a,(y)
-      0085C0 A1 20            [ 1] 1001 	cp a,#SPACE
-      0085C2 2A 02            [ 1] 1002 	jrpl 1$
-      0085C4 A6 20            [ 1] 1003 	ld a,#SPACE
-      0085C6 A1 80            [ 1] 1004 1$:	cp a,#128
-      0085C8 2B 02            [ 1] 1005     jrmi 2$
-      0085CA A6 20            [ 1] 1006     ld a,#SPACE
-      0085CC F7               [ 1] 1007 2$: ld (x),a
-      0085CD 5C               [ 2] 1008 	incw x
-      0085CE 90 5C            [ 2] 1009 	incw y
-      0085D0 17 01            [ 2] 1010 	ldw (MADDR,sp),y
-      0085D2 0A 03            [ 1] 1011 	dec (CNTR,sp)
-      0085D4 26 E1            [ 1] 1012 	jrne row
-      0085D6 A6 20            [ 1] 1013 	ld a,#SPACE
-      0085D8 CD 81 63         [ 4] 1014 	call uart_tx
-      0085DB 4F               [ 1] 1015 	clr a
-      0085DC F7               [ 1] 1016 	ld (x),a
-      0085DD 90 89            [ 2] 1017 	pushw y
-      0085DF 90 AE 00 59      [ 2] 1018 	ldw y,#pad
-      0085E3 CD 81 6D         [ 4] 1019 	call uart_print
-      0085E6 90 85            [ 2] 1020 	popw y
-      0085E8 A6 0A            [ 1] 1021 	ld a,#NL
-      0085EA CD 81 63         [ 4] 1022 	call uart_tx
-      0085ED CD 81 85         [ 4] 1023 	call uart_getchar
-      0085F0 A1 20            [ 1] 1024 	cp a,#SPACE
-      0085F2 27 AF            [ 1] 1025 	jreq row_init
-      0085F4 5B 03            [ 2] 1026     addw sp,#LOCAL_SIZE
-      0085F6 81               [ 4] 1027     ret
-                                   1028     
-                                   1029     ; move memory block, m src dest count
-      0085F7                       1030 move_memory:
-                           000003  1031     SRC=3
-                           000001  1032     DEST=1
-                           000004  1033     LOCAL_SIZE=4    
-      0085F7 CD 84 24         [ 4] 1034     call number
-      0085FA 90 89            [ 2] 1035     pushw y  ; source
-      0085FC CD 84 24         [ 4] 1036     call number
-      0085FF 90 89            [ 2] 1037     pushw y  ; destination
-      008601 CD 84 24         [ 4] 1038     call number 
-      008604 90 CF 00 A9      [ 2] 1039     ldw acc16,y ; counter
-      008608 1E 03            [ 2] 1040     ldw x,(SRC,sp)  ; source
-      00860A                       1041 move_loop:
+      008598 43               [ 1]  987 	cpl a
+      008599 90 85            [ 2]  988 	popw y
+      00859B 90 F4            [ 1]  989 	and a,(y)
+      00859D 90 F7            [ 1]  990 	ld (y),a
+      00859F 81               [ 4]  991     ret
+                                    992     
+                                    993     ; hexadecimal dump memory, h addr
+                                    994     ; stop after each row, SPACE continue, other stop
+      0085A0                        995 hexdump: 
+                           000001   996 	MADDR = 1
+                           000003   997 	CNTR = 3 ; loop counter
+                           000003   998 	LOCAL_SIZE=3
+      0085A0 52 03            [ 2]  999 	sub sp,#LOCAL_SIZE
+      0085A2 CD 84 28         [ 4] 1000 	call number
+      0085A5 17 01            [ 2] 1001     ldw (MADDR,sp),y ; save address
+      0085A7                       1002 row_init:
+      0085A7 AE 00 59         [ 2] 1003 	ldw x,#pad
+      0085AA A6 10            [ 1] 1004 	ld a,#16
+      0085AC CD 82 DB         [ 4] 1005 	call itoa
+      0085AF CD 81 71         [ 4] 1006 	call uart_print
+      0085B2 A6 20            [ 1] 1007 	ld a,#SPACE
+      0085B4 CD 81 67         [ 4] 1008 	call uart_tx
+      0085B7 A6 08            [ 1] 1009     ld a,#8
+      0085B9 6B 03            [ 1] 1010     ld (CNTR,sp),a
+      0085BB                       1011 row:
+      0085BB A6 10            [ 1] 1012 	ld a,#16
+      0085BD 16 01            [ 2] 1013 	ldw y,(MADDR,sp)
+      0085BF CD 84 14         [ 4] 1014 	call peek
+      0085C2 90 F6            [ 1] 1015 	ld a,(y)
+      0085C4 A1 20            [ 1] 1016 	cp a,#SPACE
+      0085C6 2A 02            [ 1] 1017 	jrpl 1$
+      0085C8 A6 20            [ 1] 1018 	ld a,#SPACE
+      0085CA A1 80            [ 1] 1019 1$:	cp a,#128
+      0085CC 2B 02            [ 1] 1020     jrmi 2$
+      0085CE A6 20            [ 1] 1021     ld a,#SPACE
+      0085D0 F7               [ 1] 1022 2$: ld (x),a
+      0085D1 5C               [ 1] 1023 	incw x
+      0085D2 90 5C            [ 1] 1024 	incw y
+      0085D4 17 01            [ 2] 1025 	ldw (MADDR,sp),y
+      0085D6 0A 03            [ 1] 1026 	dec (CNTR,sp)
+      0085D8 26 E1            [ 1] 1027 	jrne row
+      0085DA A6 20            [ 1] 1028 	ld a,#SPACE
+      0085DC CD 81 67         [ 4] 1029 	call uart_tx
+      0085DF 4F               [ 1] 1030 	clr a
+      0085E0 F7               [ 1] 1031 	ld (x),a
+      0085E1 90 89            [ 2] 1032 	pushw y
+      0085E3 90 AE 00 59      [ 2] 1033 	ldw y,#pad
+      0085E7 CD 81 71         [ 4] 1034 	call uart_print
+      0085EA 90 85            [ 2] 1035 	popw y
+      0085EC A6 0A            [ 1] 1036 	ld a,#NL
+      0085EE CD 81 67         [ 4] 1037 	call uart_tx
+      0085F1 CD 81 89         [ 4] 1038 	call uart_getchar
+      0085F4 A1 20            [ 1] 1039 	cp a,#SPACE
+      0085F6 27 AF            [ 1] 1040 	jreq row_init
+      0085F8 5B 03            [ 2] 1041     addw sp,#LOCAL_SIZE
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 42.
 Hexadecimal [24-Bits]
 
 
 
-      00860A 16 01            [ 2] 1042     ldw y,(DEST,sp)  ; destination
-      00860C F6               [ 1] 1043     ld a,(x)
-      00860D CD 84 2B         [ 4] 1044     call write_byte
-      008610 5C               [ 2] 1045     incw x
-      008611 90 5C            [ 2] 1046     incw y
-      008613 17 01            [ 2] 1047     ldw (DEST,sp),y
-      008615 90 CE 00 A9      [ 2] 1048     ldw y,acc16
-      008619 90 5A            [ 2] 1049     decw y
-      00861B 90 CF 00 A9      [ 2] 1050     ldw acc16,y
-      00861F 26 E9            [ 1] 1051     jrne move_loop
-      008621 5B 04            [ 2] 1052     addw sp,#LOCAL_SIZE
-      008623 81               [ 4] 1053     ret
-                                   1054     
-                                   1055     ; clear bitmask,  c addr mask
-      008624                       1056 set_bits:
-      008624 CD 84 24         [ 4] 1057 	call number
-      008627 90 89            [ 2] 1058 	pushw y
-      008629 CD 84 24         [ 4] 1059 	call number
-      00862C 90 9F            [ 1] 1060 	ld a,yl
-      00862E 90 85            [ 2] 1061 	popw y
-      008630 90 FA            [ 1] 1062 	or a,(y)
-      008632 90 F7            [ 1] 1063 	ld (y),a
-      008634 81               [ 4] 1064     ret
-                                   1065     
-                                   1066     ; toggle bitmask,  t addr mask
-      008635                       1067 toggle_bits:
-      008635 CD 84 24         [ 4] 1068 	call number
-      008638 90 89            [ 2] 1069     pushw y
-      00863A CD 84 24         [ 4] 1070     call number
-      00863D 90 9F            [ 1] 1071     ld a,yl
-      00863F 90 85            [ 2] 1072     popw y
-      008641 90 F8            [ 1] 1073     xor a,(y)
-      008643 90 F7            [ 1] 1074     ld (y),a
-      008645 81               [ 4] 1075     ret
-                                   1076     
-                                   1077     ; execute binary code,   x addr
-      008646                       1078 execute:
-      008646 CD 84 24         [ 4] 1079 	call number
-      008649 90 FC            [ 2] 1080 	jp (y)
-                                   1081 	
-                                   1082 
-                                   1083 	
-                                   1084 ;------------------------
-                                   1085 ;  run time CONSTANTS
-                                   1086 ;------------------------	
-      00864B 4D 4F 4E 41 20 56 45  1087 VERSION:	.asciz "MONA VERSION 0.1\nstm8s208rb     memory map\n---------------------------\n"
+      0085FA 81               [ 4] 1042     ret
+                                   1043     
+                                   1044     ; move memory block, m src dest count
+      0085FB                       1045 move_memory:
+                           000003  1046     SRC=3
+                           000001  1047     DEST=1
+                           000004  1048     LOCAL_SIZE=4    
+      0085FB CD 84 28         [ 4] 1049     call number
+      0085FE 90 89            [ 2] 1050     pushw y  ; source
+      008600 CD 84 28         [ 4] 1051     call number
+      008603 90 89            [ 2] 1052     pushw y  ; destination
+      008605 CD 84 28         [ 4] 1053     call number 
+      008608 90 CF 00 A9      [ 2] 1054     ldw acc16,y ; counter
+      00860C 1E 03            [ 2] 1055     ldw x,(SRC,sp)  ; source
+      00860E                       1056 move_loop:
+      00860E 16 01            [ 2] 1057     ldw y,(DEST,sp)  ; destination
+      008610 F6               [ 1] 1058     ld a,(x)
+      008611 CD 84 2F         [ 4] 1059     call write_byte
+      008614 5C               [ 1] 1060     incw x
+      008615 90 5C            [ 1] 1061     incw y
+      008617 17 01            [ 2] 1062     ldw (DEST,sp),y
+      008619 90 CE 00 A9      [ 2] 1063     ldw y,acc16
+      00861D 90 5A            [ 2] 1064     decw y
+      00861F 90 CF 00 A9      [ 2] 1065     ldw acc16,y
+      008623 26 E9            [ 1] 1066     jrne move_loop
+      008625 5B 04            [ 2] 1067     addw sp,#LOCAL_SIZE
+      008627 81               [ 4] 1068     ret
+                                   1069     
+                                   1070     ; clear bitmask,  c addr mask
+      008628                       1071 set_bits:
+      008628 CD 84 28         [ 4] 1072 	call number
+      00862B 90 89            [ 2] 1073 	pushw y
+      00862D CD 84 28         [ 4] 1074 	call number
+      008630 90 9F            [ 1] 1075 	ld a,yl
+      008632 90 85            [ 2] 1076 	popw y
+      008634 90 FA            [ 1] 1077 	or a,(y)
+      008636 90 F7            [ 1] 1078 	ld (y),a
+      008638 81               [ 4] 1079     ret
+                                   1080     
+                                   1081     ; toggle bitmask,  t addr mask
+      008639                       1082 toggle_bits:
+      008639 CD 84 28         [ 4] 1083 	call number
+      00863C 90 89            [ 2] 1084     pushw y
+      00863E CD 84 28         [ 4] 1085     call number
+      008641 90 9F            [ 1] 1086     ld a,yl
+      008643 90 85            [ 2] 1087     popw y
+      008645 90 F8            [ 1] 1088     xor a,(y)
+      008647 90 F7            [ 1] 1089     ld (y),a
+      008649 81               [ 4] 1090     ret
+                                   1091     
+                                   1092     ; execute binary code,   x addr
+      00864A                       1093 execute:
+      00864A CD 84 28         [ 4] 1094 	call number
+      00864D 90 FC            [ 2] 1095 	jp (y)
+                                   1096 	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 43.
+Hexadecimal [24-Bits]
+
+
+
+                                   1097 
+                                   1098 	
+                                   1099 ;------------------------
+                                   1100 ;  run time CONSTANTS
+                                   1101 ;------------------------	
+      00864F 4D 4F 4E 41 20 56 45  1102 VERSION:	.asciz "MONA VERSION 0.1\nstm8s208rb     memory map\n---------------------------\n"
              52 53 49 4F 4E 20 30
              2E 31 0A 73 74 6D 38
              73 32 30 38 72 62 20
@@ -2347,106 +2367,101 @@ Hexadecimal [24-Bits]
              2D 2D 2D 2D 2D 2D 2D
              2D 2D 2D 2D 2D 2D 2D
              2D 2D 2D 2D 2D 2D 2D
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 43.
-Hexadecimal  0A-Bits]
-
-
-
              0A 00
-      008692 00 72 61 6D 20 66 72  1088 RAM_FREE_MSG: .asciz "ram free: "
-             65 65 3A 20
-      00869D 00 2D 20 24 31 36 46  1089 RAM_LAST_FREE_MSG: .asciz "- $16FF\n"
-             46 0A
-      0086A6 00 66 72 65 65 20 66  1090 FLASH_FREE_MSG: .asciz "free flash: "
-             6C 61 73 68 3A 20
-      0086B3 00 20 2D 20 24 32 37  1091 EEPROM_MSG: .ascii " - $27FFF\n"
-             46 46 46
-      0086BD 0A 65 65 70 72 6F 6D  1092             .ascii "eeprom: $4000 - $47ff\n"
-             3A 20 24 34 30 30 30
-             20 2D 20 24 34 37 66
-             66
-      0086D3 0A 6F 70 74 69 6F 6E  1093             .ascii "option: $4800 - $487f\n"
-             3A 20 24 34 38 30 30
-             20 2D 20 24 34 38 37
-             66
-      0086E9 0A 53 46 52 3A 20 24  1094             .ascii "SFR: $5000 - $57FF\n"
-             35 30 30 30 20 2D 20
-             24 35 37 46 46
-      0086FC 0A 62 6F 6F 74 20 52  1095             .asciz "boot ROM: $6000 - $67FF\n"
-             4F 4D 3A 20 24 36 30
-             30 30 20 2D 20 24 36
-             37 46 46 0A
-      008715 00 20 69 73 20 6E 6F  1096 BAD_CMD:    .asciz " is not a command\n"	
-             74 20 61 20 63 6F 6D
-             6D 61 6E 64 0A
-      008728 00 63 6F 6D 6D 61 6E  1097 HELP: .ascii "commands:\n"
-             64 73 3A
-      008732 0A 40 20 61 64 64 72  1098 	  .ascii "@ addr, display content at address\n"
-             2C 20 64 69 73 70 6C
-             61 79 20 63 6F 6E 74
-             65 6E 74 20 61 74 20
-             61 64 64 72 65 73 73
-      008755 0A 21 20 61 64 64 72  1099 	  .ascii "! addr byte [byte ]*, store bytes at addr++\n"
-             20 62 79 74 65 20 5B
-             62 79 74 65 20 5D 2A
-             2C 20 73 74 6F 72 65
-             20 62 79 74 65 73 20
-             61 74 20 61 64 64 72
-             2B 2B
-      008781 0A 3F 2C 20 64 69 70  1100 	  .ascii "?, diplay command help\n"
+      008697 72 61 6D 20 66 72 65  1103 RAM_FREE_MSG: .asciz "ram free: "
+             65 3A 20 00
+      0086A2 2D 20 24 31 36 46 46  1104 RAM_LAST_FREE_MSG: .asciz "- $16FF\n"
+             0A 00
+      0086AB 66 72 65 65 20 66 6C  1105 FLASH_FREE_MSG: .asciz "free flash: "
+             61 73 68 3A 20 00
+      0086B8 20 2D 20 24 32 37 46  1106 EEPROM_MSG: .ascii " - $27FFF\n"
+             46 46 0A
+      0086C2 65 65 70 72 6F 6D 3A  1107             .ascii "eeprom: $4000 - $47ff\n"
+             20 24 34 30 30 30 20
+             2D 20 24 34 37 66 66
+             0A
+      0086D8 6F 70 74 69 6F 6E 3A  1108             .ascii "option: $4800 - $487f\n"
+             20 24 34 38 30 30 20
+             2D 20 24 34 38 37 66
+             0A
+      0086EE 53 46 52 3A 20 24 35  1109             .ascii "SFR: $5000 - $57FF\n"
+             30 30 30 20 2D 20 24
+             35 37 46 46 0A
+      008701 62 6F 6F 74 20 52 4F  1110             .asciz "boot ROM: $6000 - $67FF\n"
+             4D 3A 20 24 36 30 30
+             30 20 2D 20 24 36 37
+             46 46 0A 00
+      00871A 20 69 73 20 6E 6F 74  1111 BAD_CMD:    .asciz " is not a command\n"	
+             20 61 20 63 6F 6D 6D
+             61 6E 64 0A 00
+      00872D 63 6F 6D 6D 61 6E 64  1112 HELP: .ascii "commands:\n"
+             73 3A 0A
+      008737 40 20 61 64 64 72 2C  1113 	  .ascii "@ addr, display content at address\n"
+             20 64 69 73 70 6C 61
+             79 20 63 6F 6E 74 65
+             6E 74 20 61 74 20 61
+             64 64 72 65 73 73 0A
+      00875A 21 20 61 64 64 72 20  1114 	  .ascii "! addr byte [byte ]*, store bytes at addr++\n"
+             62 79 74 65 20 5B 62
+             79 74 65 20 5D 2A 2C
+             20 73 74 6F 72 65 20
+             62 79 74 65 73 20 61
+             74 20 61 64 64 72 2B
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 44.
+Hexadecimal  2B-Bits]
+
+
+
+             2B 0A
+      008785 0A 3F 2C 20 64 69 70  1115 	  .ascii "?, diplay command help\n"
              6C 61 79 20 63 6F 6D
              6D 61 6E 64 20 68 65
              6C 70
-      008798 0A 62 20 6E 7C 24 6E  1101 	  .ascii "b n|$n, convert n in the other base\n"
+      00879C 0A 62 20 6E 7C 24 6E  1116 	  .ascii "b n|$n, convert n in the other base\n"
              2C 20 63 6F 6E 76 65
              72 74 20 6E 20 69 6E
              20 74 68 65 20 6F 74
              68 65 72 20 62 61 73
              65
-      0087BC 0A 63 20 61 64 64 72  1102 	  .ascii "c addr bitmask, clear bits at address\n"
+      0087C0 0A 63 20 61 64 64 72  1117 	  .ascii "c addr bitmask, clear bits at address\n"
              20 62 69 74 6D 61 73
              6B 2C 20 63 6C 65 61
              72 20 62 69 74 73 20
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 44.
-Hexadecimal  61-Bits]
-
-
-
+             61 74 20 61 64 64 72
+             65 73 73
+      0087E6 0A 68 20 61 64 64 72  1118 	  .ascii "h addr, hex dump memory starting at address\n"
+             2C 20 68 65 78 20 64
+             75 6D 70 20 6D 65 6D
+             6F 72 79 20 73 74 61
+             72 74 69 6E 67 20 61
              74 20 61 64 64 72 65
-             73 73 0A
-      0087D9 74 20 61 64 64 72 65  1103 	  .ascii "h addr, hex dump memory starting at address\n"
-             73 73 0A 68 20 61 64
-             64 72 2C 20 68 65 78
-             20 64 75 6D 70 20 6D
-             65 6D 6F 72 79 20 73
-             74 61 72 74 69 6E 67
-             20 61
-      008805 74 20 61 64 64 72 65  1104 	  .ascii "m src dest count, move memory block\n"
-             73 73 0A 6D 20 73 72
-             63 20 64 65 73 74 20
-             63 6F 75 6E 74 2C 20
-             6D 6F 76 65 20 6D 65
-             6D
-      008829 6F 72 79 20 62 6C 6F  1105 	  .ascii "s addr bitmask, set bits at address\n"
-             63 6B 0A 73 20 61 64
-             64 72 20 62 69 74 6D
-             61 73 6B 2C 20 73 65
-             74 20 62 69 74 73 20
-             61
-      00884D 74 20 61 64 64 72 65  1106 	  .ascii "t addr bitmask, toggle bits at address\n"
-             73 73 0A 74 20 61 64
-             64 72 20 62 69 74 6D
-             61 73 6B 2C 20 74 6F
-             67 67 6C 65 20 62 69
-             74 73 20 61
-      008874 74 20 61 64 64 72 65  1107 	  .asciz "x addr, execute  code at address\n"
-             73 73 0A 78 20 61 64
-             64 72 2C 20 65 78 65
-             63 75 74 65 20 20 63
-             6F 64 65 20 61 74
-                                   1108 
-      000824                       1109 flash_free:
-                                   1110 	
+             73 73
+      008812 0A 6D 20 73 72 63 20  1119 	  .ascii "m src dest count, move memory block\n"
+             64 65 73 74 20 63 6F
+             75 6E 74 2C 20 6D 6F
+             76 65 20 6D 65 6D 6F
+             72 79 20 62 6C 6F 63
+             6B
+      008836 0A 73 20 61 64 64 72  1120 	  .ascii "s addr bitmask, set bits at address\n"
+             20 62 69 74 6D 61 73
+             6B 2C 20 73 65 74 20
+             62 69 74 73 20 61 74
+             20 61 64 64 72 65 73
+             73
+      00885A 0A 74 20 61 64 64 72  1121 	  .ascii "t addr bitmask, toggle bits at address\n"
+             20 62 69 74 6D 61 73
+             6B 2C 20 74 6F 67 67
+             6C 65 20 62 69 74 73
+             20 61 74 20 61 64 64
+             72 65 73 73
+      008881 0A 78 20 61 64 64 72  1122 	  .asciz "x addr, execute  code at address\n"
+             2C 20 65 78 65 63 75
+             74 65 20 20 63 6F 64
+             65 20 61 74 20 61 64
+             64 72 65 73 73 0A
+                                   1123 
+      000828                       1124 flash_free:
+                                   1125 	
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 45.
 Hexadecimal [24-Bits]
 
@@ -2472,7 +2487,7 @@ Symbol Table
     B38400  =  000004     |     B3_MASK =  000008     |     B460800 =  000008 
     B4800   =  000001     |     B4_MASK =  000010     |     B57600  =  000005 
     B5_MASK =  000020     |     B6_MASK =  000040     |     B7_MASK =  000080 
-    B921600 =  000009     |     B9600   =  000002     |   4 BAD_CMD    00069A R
+    B921600 =  000009     |     B9600   =  000002     |   6 BAD_CMD    00069E R
     BASE    =  000002     |     BEEP_BIT=  000004     |     BEEP_CSR=  0050F3 
     BEEP_MAS=  000010     |     BEEP_POR=  00000F     |     BIT0    =  000000 
     BIT1    =  000001     |     BIT2    =  000002     |     BIT3    =  000003 
@@ -2532,7 +2547,7 @@ Symbol Table
     DM_BK2RE=  007F93     |     DM_BK2RH=  007F94     |     DM_BK2RL=  007F95 
     DM_CR1  =  007F96     |     DM_CR2  =  007F97     |     DM_CSR1 =  007F98 
     DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A     |     EEPROM_B=  004000 
-    EEPROM_E=  0047FF     |   4 EEPROM_M   000638 R   |     EEPROM_S=  000800 
+    EEPROM_E=  0047FF     |   6 EEPROM_M   00063C R   |     EEPROM_S=  000800 
     ESC     =  00001B     |     EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1 
     FHSE    =  7A1200     |     FHSI    =  F42400     |     FIRST   =  000001 
     FLASH_BA=  008000     |     FLASH_CR=  00505A     |     FLASH_CR=  000002 
@@ -2542,7 +2557,7 @@ Symbol Table
     FLASH_DU=  005064     |     FLASH_DU=  0000AE     |     FLASH_DU=  000056 
     FLASH_EN=  027FFF     |     FLASH_FP=  00505D     |     FLASH_FP=  000000 
     FLASH_FP=  000001     |     FLASH_FP=  000002     |     FLASH_FP=  000003 
-    FLASH_FP=  000004     |     FLASH_FP=  000005     |   4 FLASH_FR   00062B R
+    FLASH_FP=  000004     |     FLASH_FP=  000005     |   6 FLASH_FR   00062F R
     FLASH_IA=  00505F     |     FLASH_IA=  000003     |     FLASH_IA=  000002 
     FLASH_IA=  000006     |     FLASH_IA=  000001     |     FLASH_IA=  000000 
     FLASH_NC=  00505C     |     FLASH_NF=  00505E     |     FLASH_NF=  000000 
@@ -2552,7 +2567,7 @@ Symbol Table
     FLASH_WS=  00480D     |     FLSI    =  01F400     |     GPIO_BAS=  005000 
     GPIO_CR1=  000003     |     GPIO_CR2=  000004     |     GPIO_DDR=  000002 
     GPIO_IDR=  000001     |     GPIO_ODR=  000000     |     GPIO_SIZ=  000005 
-  4 HELP       0006AD R   |     HSECNT  =  004809     |     I2C_CCRH=  00521C 
+  6 HELP       0006B1 R   |     HSECNT  =  004809     |     I2C_CCRH=  00521C 
     I2C_CCRH=  000080     |     I2C_CCRH=  0000C0     |     I2C_CCRH=  000080 
     I2C_CCRH=  000000     |     I2C_CCRH=  000001     |     I2C_CCRH=  000000 
     I2C_CCRL=  00521B     |     I2C_CCRL=  00001A     |     I2C_CCRL=  000002 
@@ -2611,7 +2626,7 @@ Symbol Table
     NOPT4   =  004808     |     NOPT5   =  00480A     |     NOPT6   =  00480C 
     NOPT7   =  00480E     |     NOPTBL  =  00487F     |     NUBC    =  004802 
     NWDGOPT =  004806     |     NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC 
-    NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE     |   4 NonHandl   0000D4 R
+    NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE     |   6 NonHandl   0000D8 R
     OPT     =  000002     |     OPT0    =  004800     |     OPT1    =  004801 
     OPT2    =  004803     |     OPT3    =  004805     |     OPT4    =  004807 
     OPT5    =  004809     |     OPT6    =  00480B     |     OPT7    =  00480D 
@@ -2643,148 +2658,149 @@ Symbol Table
     PH_DDR  =  005025     |     PH_IDR  =  005024     |     PH_ODR  =  005023 
     PI_BASE =  005028     |     PI_CR1  =  00502B     |     PI_CR2  =  00502C 
     PI_DDR  =  00502A     |     PI_IDR  =  005029     |     PI_ODR  =  005028 
-    RAM_BASE=  000000     |     RAM_END =  0017FF     |   4 RAM_FREE   000617 R
-  4 RAM_LAST   000622 R   |     RAM_SIZE=  001800     |     ROP     =  004800 
+    RAM_BASE=  000000     |     RAM_END =  0017FF     |   6 RAM_FREE   00061B R
+  6 RAM_LAST   000626 R   |     RAM_SIZE=  001800     |     ROP     =  004800 
     RST_SR  =  0050B3     |     RXCHAR  =  000002     |     SFR_BASE=  005000 
     SFR_END =  0057FF     |     SIGN    =  000001     |     SPACE   =  000020 
     SPI_CR1 =  005200     |     SPI_CR2 =  005201     |     SPI_CRCP=  005205 
     SPI_DR  =  005204     |     SPI_ICR =  005202     |     SPI_RXCR=  005206 
     SPI_SR  =  005203     |     SPI_TXCR=  005207     |     SRC     =  000003 
-    STACK_BA=  0017FF     |     SWIM_CSR=  007F80     |     TEMP    =  000003 
-    TIB_SIZE=  000050     |     TIM1_ARR=  005262     |     TIM1_ARR=  005263 
-    TIM1_BKR=  00526D     |     TIM1_CCE=  00525C     |     TIM1_CCE=  00525D 
-    TIM1_CCM=  005258     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  005259     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  00525A     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  00525B     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCR=  005265     |     TIM1_CCR=  005266     |     TIM1_CCR=  005267 
-    TIM1_CCR=  005268     |     TIM1_CCR=  005269     |     TIM1_CCR=  00526A 
-    TIM1_CCR=  00526B     |     TIM1_CCR=  00526C     |     TIM1_CNT=  00525E 
-    TIM1_CNT=  00525F     |     TIM1_CR1=  005250     |     TIM1_CR2=  005251 
-    TIM1_CR2=  000000     |     TIM1_CR2=  000002     |     TIM1_CR2=  000004 
-    TIM1_CR2=  000005     |     TIM1_CR2=  000006     |     TIM1_DTR=  00526E 
-    TIM1_EGR=  005257     |     TIM1_EGR=  000007     |     TIM1_EGR=  000001 
-    TIM1_EGR=  000002     |     TIM1_EGR=  000003     |     TIM1_EGR=  000004 
-    TIM1_EGR=  000005     |     TIM1_EGR=  000006     |     TIM1_EGR=  000000 
-    TIM1_ETR=  005253     |     TIM1_ETR=  000006     |     TIM1_ETR=  000000 
-    TIM1_ETR=  000001     |     TIM1_ETR=  000002     |     TIM1_ETR=  000003 
-    TIM1_ETR=  000007     |     TIM1_ETR=  000004     |     TIM1_ETR=  000005 
-    TIM1_IER=  005254     |     TIM1_IER=  000007     |     TIM1_IER=  000001 
-    TIM1_IER=  000002     |     TIM1_IER=  000003     |     TIM1_IER=  000004 
+    STACK_BA=  001700     |     STACK_SI=  000100     |     STACK_TO=  0017FF 
+    SWIM_CSR=  007F80     |     TEMP    =  000003     |     TIB_SIZE=  000050 
+    TIM1_ARR=  005262     |     TIM1_ARR=  005263     |     TIM1_BKR=  00526D 
+    TIM1_CCE=  00525C     |     TIM1_CCE=  00525D     |     TIM1_CCM=  005258 
+    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  005259 
+    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  00525A 
+    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  00525B 
+    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
+    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCR=  005265 
+    TIM1_CCR=  005266     |     TIM1_CCR=  005267     |     TIM1_CCR=  005268 
+    TIM1_CCR=  005269     |     TIM1_CCR=  00526A     |     TIM1_CCR=  00526B 
+    TIM1_CCR=  00526C     |     TIM1_CNT=  00525E     |     TIM1_CNT=  00525F 
+    TIM1_CR1=  005250     |     TIM1_CR2=  005251     |     TIM1_CR2=  000000 
+    TIM1_CR2=  000002     |     TIM1_CR2=  000004     |     TIM1_CR2=  000005 
+    TIM1_CR2=  000006     |     TIM1_DTR=  00526E     |     TIM1_EGR=  005257 
+    TIM1_EGR=  000007     |     TIM1_EGR=  000001     |     TIM1_EGR=  000002 
+    TIM1_EGR=  000003     |     TIM1_EGR=  000004     |     TIM1_EGR=  000005 
+    TIM1_EGR=  000006     |     TIM1_EGR=  000000     |     TIM1_ETR=  005253 
+    TIM1_ETR=  000006     |     TIM1_ETR=  000000     |     TIM1_ETR=  000001 
+    TIM1_ETR=  000002     |     TIM1_ETR=  000003     |     TIM1_ETR=  000007 
+    TIM1_ETR=  000004     |     TIM1_ETR=  000005     |     TIM1_IER=  005254 
+    TIM1_IER=  000007     |     TIM1_IER=  000001     |     TIM1_IER=  000002 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 49.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    TIM1_IER=  000005     |     TIM1_IER=  000006     |     TIM1_IER=  000000 
-    TIM1_OIS=  00526F     |     TIM1_PSC=  005260     |     TIM1_PSC=  005261 
-    TIM1_RCR=  005264     |     TIM1_SMC=  005252     |     TIM1_SMC=  000007 
-    TIM1_SMC=  000000     |     TIM1_SMC=  000001     |     TIM1_SMC=  000002 
-    TIM1_SMC=  000004     |     TIM1_SMC=  000005     |     TIM1_SMC=  000006 
-    TIM1_SR1=  005255     |     TIM1_SR1=  000007     |     TIM1_SR1=  000001 
-    TIM1_SR1=  000002     |     TIM1_SR1=  000003     |     TIM1_SR1=  000004 
-    TIM1_SR1=  000005     |     TIM1_SR1=  000006     |     TIM1_SR1=  000000 
-    TIM1_SR2=  005256     |     TIM1_SR2=  000001     |     TIM1_SR2=  000002 
-    TIM1_SR2=  000003     |     TIM1_SR2=  000004     |     TIM2_ARR=  00530D 
-    TIM2_ARR=  00530E     |     TIM2_CCE=  005308     |     TIM2_CCE=  005309 
-    TIM2_CCM=  005305     |     TIM2_CCM=  005306     |     TIM2_CCM=  005307 
-    TIM2_CCR=  00530F     |     TIM2_CCR=  005310     |     TIM2_CCR=  005311 
-    TIM2_CCR=  005312     |     TIM2_CCR=  005313     |     TIM2_CCR=  005314 
-    TIM2_CNT=  00530A     |     TIM2_CNT=  00530B     |     TIM2_CR1=  005300 
-    TIM2_EGR=  005304     |     TIM2_IER=  005301     |     TIM2_PSC=  00530C 
-    TIM2_SR1=  005302     |     TIM2_SR2=  005303     |     TIM3_ARR=  00532B 
-    TIM3_ARR=  00532C     |     TIM3_CCE=  005327     |     TIM3_CCE=  000000 
-    TIM3_CCE=  000001     |     TIM3_CCE=  000004     |     TIM3_CCE=  000005 
-    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCM=  005325 
-    TIM3_CCM=  005326     |     TIM3_CCM=  000000     |     TIM3_CCM=  000004 
-    TIM3_CCM=  000003     |     TIM3_CCR=  00532D     |     TIM3_CCR=  00532E 
-    TIM3_CCR=  00532F     |     TIM3_CCR=  005330     |     TIM3_CNT=  005328 
-    TIM3_CNT=  005329     |     TIM3_CR1=  005320     |     TIM3_CR1=  000007 
-    TIM3_CR1=  000000     |     TIM3_CR1=  000003     |     TIM3_CR1=  000001 
-    TIM3_CR1=  000002     |     TIM3_EGR=  005324     |     TIM3_IER=  005321 
-    TIM3_PSC=  00532A     |     TIM3_SR1=  005322     |     TIM3_SR2=  005323 
-    TIM4_ARR=  005346     |     TIM4_CNT=  005344     |     TIM4_CR1=  005340 
-    TIM4_CR1=  000007     |     TIM4_CR1=  000000     |     TIM4_CR1=  000003 
-    TIM4_CR1=  000001     |     TIM4_CR1=  000002     |     TIM4_EGR=  005343 
-    TIM4_EGR=  000000     |     TIM4_IER=  005341     |     TIM4_IER=  000000 
-    TIM4_PSC=  005345     |     TIM4_PSC=  000000     |     TIM4_PSC=  000007 
-    TIM4_PSC=  000004     |     TIM4_PSC=  000001     |     TIM4_PSC=  000005 
-    TIM4_PSC=  000002     |     TIM4_PSC=  000006     |     TIM4_PSC=  000003 
-    TIM4_PSC=  000000     |     TIM4_PSC=  000001     |     TIM4_PSC=  000002 
-    TIM4_SR =  005342     |     TIM4_SR_=  000000     |     TIM_CR1_=  000007 
-    TIM_CR1_=  000000     |     TIM_CR1_=  000006     |     TIM_CR1_=  000005 
-    TIM_CR1_=  000004     |     TIM_CR1_=  000003     |     TIM_CR1_=  000001 
-    TIM_CR1_=  000002     |     UART1_BR=  005232     |     UART1_BR=  005233 
-    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
-    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
-    UART1_GT=  005239     |     UART1_PS=  00523A     |     UART1_SR=  005230 
-    UART3_BR=  005242     |     UART3_BR=  005243     |     UART3_CR=  005244 
-    UART3_CR=  005245     |     UART3_CR=  005246     |     UART3_CR=  005247 
-    UART3_CR=  004249     |     UART3_DR=  005241     |     UART3_SR=  005240 
-    UART_CR1=  000004     |     UART_CR1=  000002     |     UART_CR1=  000000 
-    UART_CR1=  000001     |     UART_CR1=  000007     |     UART_CR1=  000006 
-    UART_CR1=  000005     |     UART_CR1=  000003     |     UART_CR2=  000004 
-    UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
-    UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
-    UART_CR2=  000007     |     UART_CR3=  000003     |     UART_CR3=  000001 
-    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
-    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000000 
-    UART_CR4=  000001     |     UART_CR4=  000002     |     UART_CR4=  000003 
-    UART_CR4=  000004     |     UART_CR4=  000006     |     UART_CR4=  000005 
+    TIM1_IER=  000003     |     TIM1_IER=  000004     |     TIM1_IER=  000005 
+    TIM1_IER=  000006     |     TIM1_IER=  000000     |     TIM1_OIS=  00526F 
+    TIM1_PSC=  005260     |     TIM1_PSC=  005261     |     TIM1_RCR=  005264 
+    TIM1_SMC=  005252     |     TIM1_SMC=  000007     |     TIM1_SMC=  000000 
+    TIM1_SMC=  000001     |     TIM1_SMC=  000002     |     TIM1_SMC=  000004 
+    TIM1_SMC=  000005     |     TIM1_SMC=  000006     |     TIM1_SR1=  005255 
+    TIM1_SR1=  000007     |     TIM1_SR1=  000001     |     TIM1_SR1=  000002 
+    TIM1_SR1=  000003     |     TIM1_SR1=  000004     |     TIM1_SR1=  000005 
+    TIM1_SR1=  000006     |     TIM1_SR1=  000000     |     TIM1_SR2=  005256 
+    TIM1_SR2=  000001     |     TIM1_SR2=  000002     |     TIM1_SR2=  000003 
+    TIM1_SR2=  000004     |     TIM2_ARR=  00530D     |     TIM2_ARR=  00530E 
+    TIM2_CCE=  005308     |     TIM2_CCE=  005309     |     TIM2_CCM=  005305 
+    TIM2_CCM=  005306     |     TIM2_CCM=  005307     |     TIM2_CCR=  00530F 
+    TIM2_CCR=  005310     |     TIM2_CCR=  005311     |     TIM2_CCR=  005312 
+    TIM2_CCR=  005313     |     TIM2_CCR=  005314     |     TIM2_CNT=  00530A 
+    TIM2_CNT=  00530B     |     TIM2_CR1=  005300     |     TIM2_EGR=  005304 
+    TIM2_IER=  005301     |     TIM2_PSC=  00530C     |     TIM2_SR1=  005302 
+    TIM2_SR2=  005303     |     TIM3_ARR=  00532B     |     TIM3_ARR=  00532C 
+    TIM3_CCE=  005327     |     TIM3_CCE=  000000     |     TIM3_CCE=  000001 
+    TIM3_CCE=  000004     |     TIM3_CCE=  000005     |     TIM3_CCE=  000000 
+    TIM3_CCE=  000001     |     TIM3_CCM=  005325     |     TIM3_CCM=  005326 
+    TIM3_CCM=  000000     |     TIM3_CCM=  000004     |     TIM3_CCM=  000003 
+    TIM3_CCR=  00532D     |     TIM3_CCR=  00532E     |     TIM3_CCR=  00532F 
+    TIM3_CCR=  005330     |     TIM3_CNT=  005328     |     TIM3_CNT=  005329 
+    TIM3_CR1=  005320     |     TIM3_CR1=  000007     |     TIM3_CR1=  000000 
+    TIM3_CR1=  000003     |     TIM3_CR1=  000001     |     TIM3_CR1=  000002 
+    TIM3_EGR=  005324     |     TIM3_IER=  005321     |     TIM3_PSC=  00532A 
+    TIM3_SR1=  005322     |     TIM3_SR2=  005323     |     TIM4_ARR=  005346 
+    TIM4_CNT=  005344     |     TIM4_CR1=  005340     |     TIM4_CR1=  000007 
+    TIM4_CR1=  000000     |     TIM4_CR1=  000003     |     TIM4_CR1=  000001 
+    TIM4_CR1=  000002     |     TIM4_EGR=  005343     |     TIM4_EGR=  000000 
+    TIM4_IER=  005341     |     TIM4_IER=  000000     |     TIM4_PSC=  005345 
+    TIM4_PSC=  000000     |     TIM4_PSC=  000007     |     TIM4_PSC=  000004 
+    TIM4_PSC=  000001     |     TIM4_PSC=  000005     |     TIM4_PSC=  000002 
+    TIM4_PSC=  000006     |     TIM4_PSC=  000003     |     TIM4_PSC=  000000 
+    TIM4_PSC=  000001     |     TIM4_PSC=  000002     |     TIM4_SR =  005342 
+    TIM4_SR_=  000000     |     TIM_CR1_=  000007     |     TIM_CR1_=  000000 
+    TIM_CR1_=  000006     |     TIM_CR1_=  000005     |     TIM_CR1_=  000004 
+    TIM_CR1_=  000003     |     TIM_CR1_=  000001     |     TIM_CR1_=  000002 
+    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
+    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
+    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
+    UART1_PS=  00523A     |     UART1_SR=  005230     |     UART3_BR=  005242 
+    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
+    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
+    UART3_DR=  005241     |     UART3_SR=  005240     |     UART_CR1=  000004 
+    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
+    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
+    UART_CR1=  000003     |     UART_CR2=  000004     |     UART_CR2=  000002 
+    UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
+    UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
+    UART_CR3=  000003     |     UART_CR3=  000001     |     UART_CR3=  000002 
+    UART_CR3=  000000     |     UART_CR3=  000006     |     UART_CR3=  000004 
+    UART_CR3=  000005     |     UART_CR4=  000000     |     UART_CR4=  000001 
+    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 50.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
-    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000004 
-    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
-    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_SR_=  000001 
-    UART_SR_=  000004     |     UART_SR_=  000002     |     UART_SR_=  000003 
-    UART_SR_=  000000     |     UART_SR_=  000005     |     UART_SR_=  000006 
-    UART_SR_=  000007     |     UBC     =  004801     |   4 VERSION    0005CF R
-    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
-    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
-    WWDG_WR =  0050D2     |     XSAVE   =  000002     |   3 __interr   000000 R
-  4 a_upper    00031D R   |   1 acc16      0000A8 R   |   4 accept_c   00018A R
-  4 atoi       000329 R   |   4 base_con   0004F7 R   |   4 cancel     0001C3 R
-  4 clear_bi   00050E R   |   4 clear_ra   00004B R   |   4 clock_in   000000 R
-  1 count      000003 R   |   4 del_back   000179 R   |   4 del_line   000168 R
-  4 del_loop   00011E R   |   4 eval       000446 R   |   4 execute    0005CA R
-  4 fetch      0004A9 R   |   4 flash_fr   000824 R   |   1 flash_fr   0000AC R
-  4 help       0004EF R   |   4 hexdump    000520 R   |   1 idx_x      000004 R
-  1 idx_y      000006 R   |   1 in         000002 R   |   1 in.w       000001 R
-  4 init0      000028 R   |   4 is_digit   0002F1 R   |   4 is_hex     0002FE R
-  4 itoa       00025B R   |   4 itoa_loo   00028A R   |   4 main       000077 R
-  4 move_loo   00058E R   |   4 move_mem   00057B R   |   4 mul16x8    0002D4 R
-  4 next_wor   000206 R   |   4 number     0003A8 R   |   1 pad        000058 R
-  4 peek       000394 R   |   1 ram_free   0000AA R   |   4 readln     000137 R
-  4 readln_l   00013F R   |   4 readln_q   0001CD R   |   4 readln_q   0001D2 R
-  4 repl       0000B8 R   |   4 reprint    00019F R   |   4 row        00053B R
-  4 row_init   000527 R   |   1 rx_char    000000 R   |   4 scan       0001F0 R
-  4 set_bits   0005A8 R   |   4 skip       0001DA R   |   4 store      0004CD R
-  4 strcpyn    00023E R   |   4 strlen     000382 R   |   1 tib        000008 R
-  4 toggle_b   0005B9 R   |   4 uart3_in   00000F R   |   4 uart_del   00011D R
-  4 uart_get   000109 R   |   4 uart_pri   0000F1 R   |   4 uart_qch   0000FD R
-  4 uart_rx_   0000D5 R   |   4 uart_tx    0000E7 R   |   4 ungetcha   000103 R
-  4 write_by   0003AF R   |   4 write_ee   000405 R   |   4 write_fl   0003E3 R
-  4 write_sf   0003D4 R
+    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000003 
+    UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
+    UART_CR5=  000005     |     UART_CR6=  000004     |     UART_CR6=  000007 
+    UART_CR6=  000001     |     UART_CR6=  000002     |     UART_CR6=  000000 
+    UART_CR6=  000005     |     UART_SR_=  000001     |     UART_SR_=  000004 
+    UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
+    UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
+    UBC     =  004801     |   6 VERSION    0005D3 R   |     WDGOPT  =  004805 
+    WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
+    WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
+    XSAVE   =  000002     |   5 __interr   000000 R   |   4 __stack_   001700 R
+  6 a_upper    000321 R   |   1 acc16      0000A8 R   |   6 accept_c   00018E R
+  6 atoi       00032D R   |   6 base_con   0004FB R   |   6 cancel     0001C7 R
+  6 clear_al   000028 R   |   6 clear_bi   000512 R   |   6 clear_ra   00002B R
+  6 clock_in   000000 R   |   1 count      000003 R   |   6 del_back   00017D R
+  6 del_line   00016C R   |   6 del_loop   000122 R   |   6 eval       00044A R
+  6 execute    0005CE R   |   6 fetch      0004AD R   |   6 flash_fr   000828 R
+  1 flash_fr   0000AC R   |   6 help       0004F3 R   |   6 hexdump    000524 R
+  1 idx_x      000004 R   |   1 idx_y      000006 R   |   1 in         000002 R
+  1 in.w       000001 R   |   6 init0      000033 R   |   6 is_digit   0002F5 R
+  6 is_hex     000302 R   |   6 itoa       00025F R   |   6 itoa_loo   00028E R
+  6 main       00007B R   |   6 move_loo   000592 R   |   6 move_mem   00057F R
+  6 mul16x8    0002D8 R   |   6 next_wor   00020A R   |   6 number     0003AC R
+  1 pad        000058 R   |   6 peek       000398 R   |   1 ram_free   0000AA R
+  6 readln     00013B R   |   6 readln_l   000143 R   |   6 readln_q   0001D1 R
+  6 readln_q   0001D6 R   |   6 repl       0000BC R   |   6 reprint    0001A3 R
+  6 row        00053F R   |   6 row_init   00052B R   |   1 rx_char    000000 R
+  6 scan       0001F4 R   |   6 set_bits   0005AC R   |   6 skip       0001DE R
+  6 store      0004D1 R   |   6 strcpyn    000242 R   |   6 strlen     000386 R
+  1 tib        000008 R   |   6 toggle_b   0005BD R   |   6 uart3_in   00000F R
+  6 uart_del   000121 R   |   6 uart_get   00010D R   |   6 uart_pri   0000F5 R
+  6 uart_qch   000101 R   |   6 uart_rx_   0000D9 R   |   6 uart_tx    0000EB R
+  6 ungetcha   000107 R   |   6 write_by   0003B3 R   |   6 write_ee   000409 R
+  6 write_fl   0003E7 R   |   6 write_sf   0003D8 R
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 51.
 Hexadecimal [24-Bits]
@@ -2794,6 +2810,8 @@ Area Table
    0 _CODE      size      0   flags    0
    1 DATA       size     AE   flags    0
    2 INITIALI   size      0   flags    0
-   3 HOME       size     7C   flags    0
-   4 CODE       size    824   flags    0
+   3 SSEG       size      0   flags    8
+   4 SSEG0      size    100   flags    8
+   5 HOME       size     7C   flags    0
+   6 CODE       size    828   flags    0
 
