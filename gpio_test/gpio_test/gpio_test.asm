@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.0 #9253 (Apr  3 2018) (Linux)
-; This file was generated Tue Oct 22 22:08:05 2019
+; This file was generated Wed Oct 23 11:51:45 2019
 ;--------------------------------------------------------
 	.module gpio_test
 	.optsdcc -mstm8
@@ -106,7 +106,7 @@ __sdcc_program_startup:
 ; code
 ;--------------------------------------------------------
 	.area CODE
-;	gpio_test.c: 12: int main(){
+;	gpio_test.c: 13: int main(){
 ;	-----------------------------------------
 ;	 function main
 ;	-----------------------------------------
@@ -122,14 +122,16 @@ _main:
 	ld	a, (x)
 	or	a, #0x20
 	ld	(x), a
-;	gpio_test.c: 17: while (1){
+;	gpio_test.c: 17: WWDG_CR=0x80;
+	mov	0x50d1+0, #0x80
+;	gpio_test.c: 18: while (1){
 00103$:
-;	gpio_test.c: 18: PC_ODR^=LED2;
+;	gpio_test.c: 19: PC_ODR^=LED2;
 	ldw	x, #0x500a
 	ld	a, (x)
 	xor	a, #0x20
 	ld	(x), a
-;	gpio_test.c: 19: for (delay=0;delay<DELAY;delay++);
+;	gpio_test.c: 20: for (delay=0;delay<DELAY;delay++);
 	ldw	x, #0xffff
 	ldw	(0x03, sp), x
 	clr	a

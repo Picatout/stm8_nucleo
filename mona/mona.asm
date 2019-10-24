@@ -103,7 +103,8 @@ pad:	.blkb PAD_SIZE ; working pad
 acc16:  .blkw 1; 16 bits accumulator
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
-		
+		.area USER_RAM_BASE
+ _user_ram:		
 ;--------------------------------------------------------
 ; ram data
 ;--------------------------------------------------------
@@ -196,9 +197,9 @@ uart3_init:
     ; input:  y delay
     ; output: none
 ;pause:
-;	ldw cntdwn,y
-;1$:	ldw y,cntdwn
-;	jrne 1$
+;	 ldw cntdwn,y
+;1$: ldw y,cntdwn
+;	 jrne 1$
 ;    ret
 
 ;-------------------------
@@ -230,11 +231,11 @@ init0:
 	_ledoff
 	clr in.w ; must always be 0
 	; initialize free_ram_base variable
-	ldw y,#ram_free_base
-	addw y,#0xf
-	ld a,yl
-	and a,#0xf0
-	ld yl,a
+	ldw y,#_user_ram ;#ram_free_base
+;	addw y,#0xf
+;	ld a,yl
+;	and a,#0xf0
+;	ld yl,a
 	ldw ram_free_base,y
 	; initialize flash_free_base variable
 	ldw y,#flash_free
@@ -279,8 +280,11 @@ repl:
 	 
 
 ;	interrupt NonHandledInterrupt
+;   non handled interrupt reset MCU
 NonHandledInterrupt:
-	iret
+	ld a,#0x80
+	ld WWDG_CR,a
+	;iret
 
 	; TIMER4 interrupt service
 ;timer4_isr:
@@ -875,6 +879,7 @@ write_eeprom:
 	;	c  addr bitmask  clear  bits at address
 	;   h  addr hex dump memory starting at address
 	;   m  src dest count,  move memory block
+	;   r  reset MCU
 	;   s  addr bitmask  set a bits at address
 	;   t  addr bitmask  toggle bits at address
 	;   x  addr execute  code at address  
@@ -909,16 +914,19 @@ eval:
 4$:	cp a,#'m
 	jrne 5$
 	jp move_memory
-5$:	cp a,#'s
-	jrne 6$
-	jp set_bits
-6$:	cp a,#'t
+5$: cp a,#'r
+    jrne 6$
+	call NonHandledInterrupt	
+6$:	cp a,#'s
 	jrne 7$
-	jp toggle_bits
-7$:	cp a,#'x
+	jp set_bits
+7$:	cp a,#'t
 	jrne 8$
+	jp toggle_bits
+8$:	cp a,#'x
+	jrne 9$
 	jp execute
-8$:	call uart_print
+9$:	call uart_print
 	ldw y,#BAD_CMD
 	call uart_print
 	ret
@@ -1117,6 +1125,7 @@ HELP: .ascii "commands:\n"
 	  .ascii "c addr bitmask, clear bits at address\n"
 	  .ascii "h addr, hex dump memory starting at address\n"
 	  .ascii "m src dest count, move memory block\n"
+	  .ascii "r reset MCU\n"
 	  .ascii "s addr bitmask, set bits at address\n"
 	  .ascii "t addr bitmask, toggle bits at address\n"
 	  .asciz "x addr, execute  code at address\n"

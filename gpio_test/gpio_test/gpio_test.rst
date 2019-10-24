@@ -1,7 +1,7 @@
                                       1 ;--------------------------------------------------------
                                       2 ; File Created by SDCC : free open source ANSI-C Compiler
                                       3 ; Version 3.5.0 #9253 (Apr  3 2018) (Linux)
-                                      4 ; This file was generated Tue Oct 22 22:08:05 2019
+                                      4 ; This file was generated Wed Oct 23 11:51:45 2019
                                       5 ;--------------------------------------------------------
                                       6 	.module gpio_test
                                       7 	.optsdcc -mstm8
@@ -86,7 +86,7 @@
       00808F AE 00 00         [ 2]   86 	ldw	x, #l_INITIALIZER
       008092 27 09            [ 1]   87 	jreq	00004$
       008094                         88 00003$:
-      008094 D6 80 E2         [ 1]   89 	ld	a, (s_INITIALIZER - 1, x)
+      008094 D6 80 E6         [ 1]   89 	ld	a, (s_INITIALIZER - 1, x)
       008097 D7 00 00         [ 1]   90 	ld	(s_INITIALIZED - 1, x), a
       00809A 5A               [ 2]   91 	decw	x
       00809B 26 F7            [ 1]   92 	jrne	00003$
@@ -106,7 +106,7 @@
                                     106 ; code
                                     107 ;--------------------------------------------------------
                                     108 	.area CODE
-                                    109 ;	gpio_test.c: 12: int main(){
+                                    109 ;	gpio_test.c: 13: int main(){
                                     110 ;	-----------------------------------------
                                     111 ;	 function main
                                     112 ;	-----------------------------------------
@@ -122,40 +122,42 @@
       0080AC F6               [ 1]  122 	ld	a, (x)
       0080AD AA 20            [ 1]  123 	or	a, #0x20
       0080AF F7               [ 1]  124 	ld	(x), a
-                                    125 ;	gpio_test.c: 17: while (1){
-      0080B0                        126 00103$:
-                                    127 ;	gpio_test.c: 18: PC_ODR^=LED2;
-      0080B0 AE 50 0A         [ 2]  128 	ldw	x, #0x500a
-      0080B3 F6               [ 1]  129 	ld	a, (x)
-      0080B4 A8 20            [ 1]  130 	xor	a, #0x20
-      0080B6 F7               [ 1]  131 	ld	(x), a
-                                    132 ;	gpio_test.c: 19: for (delay=0;delay<DELAY;delay++);
-      0080B7 AE FF FF         [ 2]  133 	ldw	x, #0xffff
-      0080BA 1F 03            [ 2]  134 	ldw	(0x03, sp), x
-      0080BC 4F               [ 1]  135 	clr	a
-      0080BD 0F 01            [ 1]  136 	clr	(0x01, sp)
-      0080BF                        137 00107$:
-      0080BF 1E 03            [ 2]  138 	ldw	x, (0x03, sp)
-      0080C1 1D 00 01         [ 2]  139 	subw	x, #0x0001
-      0080C4 1F 07            [ 2]  140 	ldw	(0x07, sp), x
-      0080C6 A2 00            [ 1]  141 	sbc	a, #0x00
-      0080C8 97               [ 1]  142 	ld	xl, a
-      0080C9 7B 01            [ 1]  143 	ld	a, (0x01, sp)
-      0080CB A2 00            [ 1]  144 	sbc	a, #0x00
-      0080CD 95               [ 1]  145 	ld	xh, a
-      0080CE 02               [ 1]  146 	rlwa	x
-      0080CF 6B 01            [ 1]  147 	ld	(0x01, sp), a
-      0080D1 01               [ 1]  148 	rrwa	x
-      0080D2 16 07            [ 2]  149 	ldw	y, (0x07, sp)
-      0080D4 17 03            [ 2]  150 	ldw	(0x03, sp), y
-      0080D6 9F               [ 1]  151 	ld	a, xl
-      0080D7 16 07            [ 2]  152 	ldw	y, (0x07, sp)
-      0080D9 26 E4            [ 1]  153 	jrne	00107$
-      0080DB 5D               [ 2]  154 	tnzw	x
-      0080DC 27 D2            [ 1]  155 	jreq	00103$
-      0080DE 20 DF            [ 2]  156 	jra	00107$
-      0080E0 5B 08            [ 2]  157 	addw	sp, #8
-      0080E2 81               [ 4]  158 	ret
-                                    159 	.area CODE
-                                    160 	.area INITIALIZER
-                                    161 	.area CABS (ABS)
+                                    125 ;	gpio_test.c: 17: WWDG_CR=0x80;
+      0080B0 35 80 50 D1      [ 1]  126 	mov	0x50d1+0, #0x80
+                                    127 ;	gpio_test.c: 18: while (1){
+      0080B4                        128 00103$:
+                                    129 ;	gpio_test.c: 19: PC_ODR^=LED2;
+      0080B4 AE 50 0A         [ 2]  130 	ldw	x, #0x500a
+      0080B7 F6               [ 1]  131 	ld	a, (x)
+      0080B8 A8 20            [ 1]  132 	xor	a, #0x20
+      0080BA F7               [ 1]  133 	ld	(x), a
+                                    134 ;	gpio_test.c: 20: for (delay=0;delay<DELAY;delay++);
+      0080BB AE FF FF         [ 2]  135 	ldw	x, #0xffff
+      0080BE 1F 03            [ 2]  136 	ldw	(0x03, sp), x
+      0080C0 4F               [ 1]  137 	clr	a
+      0080C1 0F 01            [ 1]  138 	clr	(0x01, sp)
+      0080C3                        139 00107$:
+      0080C3 1E 03            [ 2]  140 	ldw	x, (0x03, sp)
+      0080C5 1D 00 01         [ 2]  141 	subw	x, #0x0001
+      0080C8 1F 07            [ 2]  142 	ldw	(0x07, sp), x
+      0080CA A2 00            [ 1]  143 	sbc	a, #0x00
+      0080CC 97               [ 1]  144 	ld	xl, a
+      0080CD 7B 01            [ 1]  145 	ld	a, (0x01, sp)
+      0080CF A2 00            [ 1]  146 	sbc	a, #0x00
+      0080D1 95               [ 1]  147 	ld	xh, a
+      0080D2 02               [ 1]  148 	rlwa	x
+      0080D3 6B 01            [ 1]  149 	ld	(0x01, sp), a
+      0080D5 01               [ 1]  150 	rrwa	x
+      0080D6 16 07            [ 2]  151 	ldw	y, (0x07, sp)
+      0080D8 17 03            [ 2]  152 	ldw	(0x03, sp), y
+      0080DA 9F               [ 1]  153 	ld	a, xl
+      0080DB 16 07            [ 2]  154 	ldw	y, (0x07, sp)
+      0080DD 26 E4            [ 1]  155 	jrne	00107$
+      0080DF 5D               [ 2]  156 	tnzw	x
+      0080E0 27 D2            [ 1]  157 	jreq	00103$
+      0080E2 20 DF            [ 2]  158 	jra	00107$
+      0080E4 5B 08            [ 2]  159 	addw	sp, #8
+      0080E6 81               [ 4]  160 	ret
+                                    161 	.area CODE
+                                    162 	.area INITIALIZER
+                                    163 	.area CABS (ABS)

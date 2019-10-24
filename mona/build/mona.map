@@ -11,6 +11,7 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000000  .__.ABS.                           MONA
      00000000  l_INITIALIZED                   
      00000000  l_SSEG                          
+     00000000  l_USER_RAM_BASE                 
      00000000  l__CODE                         
      00000000  s_SSEG0                         
      00000000  s__CODE                         
@@ -18,10 +19,12 @@ Area                                    Addr        Size        Decimal Bytes (A
      0000007C  l_HOME                          
      000000AE  l_DATA                          
      000000AF  s_INITIALIZED                   
+     000000AF  s_USER_RAM_BASE                 
      00000100  l_SSEG0                         
-     00000828  l_CODE                          
+     00000835  l_CODE                          
      00008000  s_HOME                          
      0000807C  s_CODE                          
+
 ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
 Hexadecimal  [32-Bits]
 
@@ -54,7 +57,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                0000807C    00000828 =        2088. bytes (REL,CON)
+CODE                                0000807C    00000835 =        2101. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -62,7 +65,7 @@ CODE                                0000807C    00000828 =        2088. bytes (R
 
 Files Linked                              [ module(s) ]
 
-mona.rel                                  [ MONA ]
+build/mona.rel                            [ MONA ]
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 

@@ -1,7 +1,7 @@
                                       1 ;--------------------------------------------------------
                                       2 ; File Created by SDCC : free open source ANSI-C Compiler
                                       3 ; Version 3.5.0 #9253 (Apr  3 2018) (Linux)
-                                      4 ; This file was generated Tue Oct 22 22:08:05 2019
+                                      4 ; This file was generated Wed Oct 23 11:51:45 2019
                                       5 ;--------------------------------------------------------
                                       6 	.module gpio_test
                                       7 	.optsdcc -mstm8
@@ -106,7 +106,7 @@
                                     106 ; code
                                     107 ;--------------------------------------------------------
                                     108 	.area CODE
-                                    109 ;	gpio_test.c: 12: int main(){
+                                    109 ;	gpio_test.c: 13: int main(){
                                     110 ;	-----------------------------------------
                                     111 ;	 function main
                                     112 ;	-----------------------------------------
@@ -122,40 +122,42 @@
       00000C F6               [ 1]  122 	ld	a, (x)
       00000D AA 20            [ 1]  123 	or	a, #0x20
       00000F F7               [ 1]  124 	ld	(x), a
-                                    125 ;	gpio_test.c: 17: while (1){
-      000010                        126 00103$:
-                                    127 ;	gpio_test.c: 18: PC_ODR^=LED2;
-      000010 AE 50 0A         [ 2]  128 	ldw	x, #0x500a
-      000013 F6               [ 1]  129 	ld	a, (x)
-      000014 A8 20            [ 1]  130 	xor	a, #0x20
-      000016 F7               [ 1]  131 	ld	(x), a
-                                    132 ;	gpio_test.c: 19: for (delay=0;delay<DELAY;delay++);
-      000017 AE FF FF         [ 2]  133 	ldw	x, #0xffff
-      00001A 1F 03            [ 2]  134 	ldw	(0x03, sp), x
-      00001C 4F               [ 1]  135 	clr	a
-      00001D 0F 01            [ 1]  136 	clr	(0x01, sp)
-      00001F                        137 00107$:
-      00001F 1E 03            [ 2]  138 	ldw	x, (0x03, sp)
-      000021 1D 00 01         [ 2]  139 	subw	x, #0x0001
-      000024 1F 07            [ 2]  140 	ldw	(0x07, sp), x
-      000026 A2 00            [ 1]  141 	sbc	a, #0x00
-      000028 97               [ 1]  142 	ld	xl, a
-      000029 7B 01            [ 1]  143 	ld	a, (0x01, sp)
-      00002B A2 00            [ 1]  144 	sbc	a, #0x00
-      00002D 95               [ 1]  145 	ld	xh, a
-      00002E 02               [ 1]  146 	rlwa	x
-      00002F 6B 01            [ 1]  147 	ld	(0x01, sp), a
-      000031 01               [ 1]  148 	rrwa	x
-      000032 16 07            [ 2]  149 	ldw	y, (0x07, sp)
-      000034 17 03            [ 2]  150 	ldw	(0x03, sp), y
-      000036 9F               [ 1]  151 	ld	a, xl
-      000037 16 07            [ 2]  152 	ldw	y, (0x07, sp)
-      000039 26 E4            [ 1]  153 	jrne	00107$
-      00003B 5D               [ 2]  154 	tnzw	x
-      00003C 27 D2            [ 1]  155 	jreq	00103$
-      00003E 20 DF            [ 2]  156 	jra	00107$
-      000040 5B 08            [ 2]  157 	addw	sp, #8
-      000042 81               [ 4]  158 	ret
-                                    159 	.area CODE
-                                    160 	.area INITIALIZER
-                                    161 	.area CABS (ABS)
+                                    125 ;	gpio_test.c: 17: WWDG_CR=0x80;
+      000010 35 80 50 D1      [ 1]  126 	mov	0x50d1+0, #0x80
+                                    127 ;	gpio_test.c: 18: while (1){
+      000014                        128 00103$:
+                                    129 ;	gpio_test.c: 19: PC_ODR^=LED2;
+      000014 AE 50 0A         [ 2]  130 	ldw	x, #0x500a
+      000017 F6               [ 1]  131 	ld	a, (x)
+      000018 A8 20            [ 1]  132 	xor	a, #0x20
+      00001A F7               [ 1]  133 	ld	(x), a
+                                    134 ;	gpio_test.c: 20: for (delay=0;delay<DELAY;delay++);
+      00001B AE FF FF         [ 2]  135 	ldw	x, #0xffff
+      00001E 1F 03            [ 2]  136 	ldw	(0x03, sp), x
+      000020 4F               [ 1]  137 	clr	a
+      000021 0F 01            [ 1]  138 	clr	(0x01, sp)
+      000023                        139 00107$:
+      000023 1E 03            [ 2]  140 	ldw	x, (0x03, sp)
+      000025 1D 00 01         [ 2]  141 	subw	x, #0x0001
+      000028 1F 07            [ 2]  142 	ldw	(0x07, sp), x
+      00002A A2 00            [ 1]  143 	sbc	a, #0x00
+      00002C 97               [ 1]  144 	ld	xl, a
+      00002D 7B 01            [ 1]  145 	ld	a, (0x01, sp)
+      00002F A2 00            [ 1]  146 	sbc	a, #0x00
+      000031 95               [ 1]  147 	ld	xh, a
+      000032 02               [ 1]  148 	rlwa	x
+      000033 6B 01            [ 1]  149 	ld	(0x01, sp), a
+      000035 01               [ 1]  150 	rrwa	x
+      000036 16 07            [ 2]  151 	ldw	y, (0x07, sp)
+      000038 17 03            [ 2]  152 	ldw	(0x03, sp), y
+      00003A 9F               [ 1]  153 	ld	a, xl
+      00003B 16 07            [ 2]  154 	ldw	y, (0x07, sp)
+      00003D 26 E4            [ 1]  155 	jrne	00107$
+      00003F 5D               [ 2]  156 	tnzw	x
+      000040 27 D2            [ 1]  157 	jreq	00103$
+      000042 20 DF            [ 2]  158 	jra	00107$
+      000044 5B 08            [ 2]  159 	addw	sp, #8
+      000046 81               [ 4]  160 	ret
+                                    161 	.area CODE
+                                    162 	.area INITIALIZER
+                                    163 	.area CABS (ABS)

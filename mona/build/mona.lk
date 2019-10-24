@@ -1,5 +1,5 @@
 -muwx
--i mona.ihx
+-i build/mona.ihx
 -Y
 -b HOME = 0x8000
 -b DATA = 0x0001
@@ -7,6 +7,7 @@
 -k /usr/local/bin/../share/sdcc/lib/stm8
 -k /usr/local/share/sdcc/lib/stm8
 -l stm8
-mona.rel
+-l stm8
+build/mona.rel
 
 -e
