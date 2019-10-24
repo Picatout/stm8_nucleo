@@ -340,9 +340,13 @@ Sur la carte la **LED2** est branchée à la pin 5 du port C. Il faut donc initi
 
 Le reste de la cette routine conssiste à initialiser les différentes variables.
 ```
+;------------------------
+; program main function
+;------------------------
 main:
-	_interrupts ; enable interrupts
-	; print startup message
+; enable interrupts
+	_interrupts 
+; print startup message.
 	ld a,#0xc
 	call uart_tx
 	ldw y,#VERSION
@@ -363,20 +367,27 @@ main:
 	call uart_print
 	ldw y,#EEPROM_MSG
 	call uart_print
-	; read execute print loop
-repl:
-	ld a,#NL
+; Read Execute Print Loop
+; MONA spend is time in this loop
+repl: 
+; move terminal cursor to next line
+	ld a,#NL 
 	call uart_tx
+; print prompt sign	 
 	ld a,#'>
 	call uart_tx
-	call readln
+; read command line	
+	call readln 
+;if empty line -> ignore it, loop.	
 	tnz count
 	jreq repl
+; initialize parser and call eval function	  
 	clr in
 	call eval
-	jra repl
+; start over	
+	jra repl  ; loop
 ```
-L'initialisation est terminée on est rendu à la routine principale du programme. 
+L'initialisation est terminée on est rendu à la routine principale du programme. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour faire lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
 
 
 

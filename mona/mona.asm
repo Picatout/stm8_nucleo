@@ -256,9 +256,14 @@ init0:
 	clr a
 	ld yl,a
 	ldw flash_free_base,y
-main:
-	_interrupts ; enable interrupts
-	; print startup message.
+
+;------------------------
+; program main function
+;------------------------
+main:	
+; enable interrupts
+	_interrupts 
+; print startup message.
 	ld a,#0xc
 	call uart_tx
 	ldw y,#VERSION
@@ -279,28 +284,38 @@ main:
 	call uart_print
 	ldw y,#EEPROM_MSG
 	call uart_print
-	; read execute print loop
-repl:
-	ld a,#NL
+; Read Execute Print Loop
+; MONA spend is time in this loop
+repl: 
+; move terminal cursor to next line
+	ld a,#NL 
 	call uart_tx
+; print prompt sign	 
 	ld a,#'>
 	call uart_tx
-	call readln
+; read command line	
+	call readln 
+;if empty line -> ignore it, loop.	
 	tnz count
 	jreq repl
+; initialize parser and call eval function	  
 	clr in
 	call eval
-	jra repl
+; start over	
+	jra repl  ; loop
 	 
-
+;------------------------------------
 ;	interrupt NonHandledInterrupt
 ;   non handled interrupt reset MCU
+;------------------------------------
 NonHandledInterrupt:
 	ld a,#0x80
 	ld WWDG_CR,a
 	;iret
 
-	; TIMER4 interrupt service
+;------------------------------------
+; TIMER4 interrupt service routine
+;------------------------------------
 ;timer4_isr:
 ;	ldw y,ticks
 ;	incw y
@@ -312,7 +327,9 @@ NonHandledInterrupt:
 ;1$: bres TIM4_SR,#TIM4_SR_UIF
 ;	iret
 
-	; uart3 receive interrupt service
+;------------------------------------
+; uart3 receive interrupt service
+;------------------------------------
 uart_rx_isr:
     push a
     ld a, UART3_SR
@@ -324,17 +341,20 @@ uart_rx_isr:
 1$: pop a
 	iret
 	
-
-	; transmit character in a via UART3
-	; character to transmit on (3,sp)
+;------------------------------------
+; transmit character in a via UART3
+; character to transmit on (3,sp)
+;------------------------------------
 uart_tx:
 	tnz UART3_SR
 	jrpl uart_tx
 	ld UART3_DR,a
     ret
 
-	; send string via UART2
-	; y is pointer to str
+;------------------------------------
+; send string via UART2
+; y is pointer to str
+;------------------------------------
 uart_print:
 	ld a,(y)
 	jreq 1$
@@ -343,19 +363,26 @@ uart_print:
 	jra uart_print
 1$: ret
 
-	 ; check if char available
+;------------------------------------
+; check if char available
+;------------------------------------
 uart_qchar:
 	ld a,#255
 	cp a,rx_char
     ret
 
-ungetchar: ; return char ina A to queue
+;------------------------------------
+; return char in A to queue
+;------------------------------------
+ungetchar: 
 	_no_interrupts
 	ld rx_char,a
     _interrupts
     ret
     
-	 ; return character from uart2
+;------------------------------------
+; return character from uart3
+;------------------------------------
 uart_getchar:
 	ld a,#255
 	cp a,rx_char
@@ -369,7 +396,9 @@ uart_getchar:
 	pop a
 	ret
 
-	; delete n character from input line
+;------------------------------------
+; delete n character from input line
+;------------------------------------
 uart_delete:
 	push a ; n 
 del_loop:
@@ -386,9 +415,10 @@ del_loop:
 1$: pop a
 	ret 
 
-
-    ;lecture d'une ligne de texte
-    ; dans le tib
+;------------------------------------
+; lecture d'une ligne de texte
+; dans le tib
+;------------------------------------
 readln:
 	; local variables
 	LEN = 1  ; accepted line length
@@ -471,10 +501,12 @@ readln_quit2:
 	call uart_tx
 	ret
 	
-	; skip character c in tib starting from 'in'
-	; input: 
-	;    a character to skip
-	; output:  'in' ajusted to new position
+;------------------------------------
+; skip character c in tib starting from 'in'
+; input: 
+;    a character to skip
+; output:  'in' ajusted to new position
+;------------------------------------
 skip:
 	C = 1 ; local var
 	push a
@@ -488,9 +520,11 @@ skip:
 2$: pop a
 	ret
 	
-	; scan tib for charater 'c' starting from 'in'
-	; input:
-	;    a character to skip
+;------------------------------------
+; scan tib for charater 'c' starting from 'in'
+; input:
+;    a character to skip
+;------------------------------------
 scan: 
 	C = 1 ; local var
 	push a
@@ -504,8 +538,10 @@ scan:
 2$: pop a
 	ret
 
-	; scan tib for next word
-	; move word in 'pad'
+;------------------------------------
+; scan tib for next word
+; move word in 'pad'
+;------------------------------------
 next_word:	
 	FIRST = 1
 	XSAVE = 2
@@ -533,13 +569,15 @@ next_word:
 	ret
 	
 	
-	; copy n character from (x) to (y)
-	; input:
-	;   	x   source pointer
-	;       idx_x index in (x)
-	;       y   destination pointer
-	;       idx_y  index in (y)
-	;       a   number of character to copy
+;------------------------------------
+; copy n character from (x) to (y)
+; input:
+;   	x   source pointer
+;       idx_x index in (x)
+;       y   destination pointer
+;       idx_y  index in (y)
+;       a   number of character to copy
+;------------------------------------
 strcpyn:
 	N = 1 ; local variable count
 	push a
@@ -555,12 +593,14 @@ strcpyn:
 	pop a
 	ret
 		
-	; convert integer to string
-	; input:
-	;   a  base
-	;	y  integer to convert
-	; output:
-	;   y  pointer to string
+;------------------------------------
+; convert integer to string
+; input:
+;   a  base
+;	y  integer to convert
+; output:
+;   y  pointer to string
+;------------------------------------
 itoa:
 	SIGN=1
 	BASE=2
@@ -625,12 +665,14 @@ itoa_loop:
 	popw x
 	ret
 
-	;multiply Y=A*Y	
-	; input:
-	;    Y uint16_t
-	;    A uint8_t
-	; output:
-	;   Y uint16_t product modulo 65535
+;------------------------------------
+;multiply Y=A*Y	
+; input:
+;    Y uint16_t
+;    A uint8_t
+; output:
+;   Y uint16_t product modulo 65535
+;------------------------------------
 mul16x8:
 	pushw x ; save x
 	ldw x, acc16 ; save it
@@ -650,11 +692,13 @@ mul16x8:
 	popw x ; restore x
 	ret
 
-	; check if character in {'0'..'9'}
-	; input:
-	;    a  character to test
-	; output:
-	;    a  0|1
+;------------------------------------
+; check if character in {'0'..'9'}
+; input:
+;    a  character to test
+; output:
+;    a  0|1
+;------------------------------------
 is_digit:
 	cp a,#'0
 	jrpl 1$
@@ -665,11 +709,13 @@ is_digit:
     ld a,#1
     ret
 	
-	; check if character in {'0'..'9','A'..'F'}
-	; input:
-	;   a  character to test
-	; output:
-	;   a   0|1 
+;------------------------------------
+; check if character in {'0'..'9','A'..'F'}
+; input:
+;   a  character to test
+; output:
+;   a   0|1 
+;------------------------------------
 is_hex:
 	push a
 	call is_digit
@@ -690,11 +736,13 @@ is_hex:
     ld a,#1
     ret
             	
-	; convert alpha to uppercase
-	; input:
-	;    a  character to convert
-	; output:
-	;    a  uppercase character
+;------------------------------------
+; convert alpha to uppercase
+; input:
+;    a  character to convert
+; output:
+;    a  uppercase character
+;------------------------------------
 a_upper:
 	cp a,#'a
 	jrpl 1$
@@ -704,11 +752,13 @@ a_upper:
 	sub a,#32
 	ret
 	
-	; convert pad content in integer
-	; input:
-	;    pad
-	; output:
-	;    y
+;------------------------------------
+; convert pad content in integer
+; input:
+;    pad
+; output:
+;    y
+;------------------------------------
 atoi:
 	; local variables
 	SIGN=1 ; 1 byte, 
@@ -761,11 +811,13 @@ atoi:
 	popw x ; restore x
 	ret
 
-	;strlen  return ASCIIZ string length
-	; input:
-	;	y  pointer to string
-	; output:
-	;	a   length  < 256
+;------------------------------------
+;strlen  return ASCIIZ string length
+; input:
+;	y  pointer to string
+; output:
+;	a   length  < 256
+;------------------------------------
 strlen:
 	LEN=1
     pushw y
@@ -779,12 +831,14 @@ strlen:
     popw y
     ret
 	
-	; peek addr, print byte at this address 
-	; input:
-	;	 y   address to peek
-	;    a   numeric base for convertion
-	; output:
-	;    print byte value at this address
+;------------------------------------
+; peek addr, print byte at this address 
+; input:
+;	 y   address to peek
+;    a   numeric base for convertion
+; output:
+;    print byte value at this address
+;------------------------------------
 peek:
 	pushw y
     push a
@@ -798,11 +852,13 @@ peek:
     popw y
     ret	
 	
-	; get a number from command line next argument
-	;  input:
-	;	  none
-	;  output:
-	;    y   uint16_t 
+;------------------------------------
+; get a number from command line next argument
+;  input:
+;	  none
+;  output:
+;    y   uint16_t 
+;------------------------------------
 number:
 	call next_word
 	call atoi
@@ -884,19 +940,21 @@ write_eeprom:
     ret
         
 		  
-	; evaluate command string in tib
-	; list of commands
-	;   @  addr display content at address
-	;   !  addr byte [byte ]* store bytes at address
-	;   ?  diplay command help
-	;   b  n    convert n in the other base
-	;	c  addr bitmask  clear  bits at address
-	;   h  addr hex dump memory starting at address
-	;   m  src dest count,  move memory block
-	;   r  reset MCU
-	;   s  addr bitmask  set a bits at address
-	;   t  addr bitmask  toggle bits at address
-	;   x  addr execute  code at address  
+;------------------------------------
+; evaluate command string in tib
+; list of commands
+;   @  addr display content at address
+;   !  addr byte [byte ]* store bytes at address
+;   ?  diplay command help
+;   b  n    convert n in the other base
+;	c  addr bitmask  clear  bits at address
+;   h  addr hex dump memory starting at address
+;   m  src dest count,  move memory block
+;   r  reset MCU
+;   s  addr bitmask  set a bits at address
+;   t  addr bitmask  toggle bits at address
+;   x  addr execute  code at address  
+;------------------------------------
 eval:
 	ld a, in
 	cp a, count
@@ -945,7 +1003,9 @@ eval:
 	call uart_print
 	ret
 	
-	; fetch a byte and display it,  @  addr
+;------------------------------------
+; fetch a byte and display it,  @  addr
+;------------------------------------
 fetch:
 	call number 
 	pushw y
@@ -963,7 +1023,9 @@ fetch:
 2$:	call peek
 	ret
 	
-	; store bytes,   !  addr byte [byte ]*
+;------------------------------------
+; store bytes,   !  addr byte [byte ]*
+;------------------------------------
 store:
 	MADDR=1
 	call number
@@ -981,7 +1043,10 @@ store:
 	jra 1$
 2$:	popw y
 	ret
-	; ? , display command information
+
+;------------------------------------
+; ? , display command information
+;------------------------------------
 help:
 	ldw y, #HELP
 	call uart_print
@@ -1000,7 +1065,9 @@ base_convert:
     call uart_print
     ret
         	
-	; clear bitmask, c addr mask
+;------------------------------------
+; clear bitmask, c addr mask
+;------------------------------------
 clear_bits:
 	call number
 	pushw y
@@ -1012,8 +1079,10 @@ clear_bits:
 	ld (y),a
     ret
     
-    ; hexadecimal dump memory, h addr
-    ; stop after each row, SPACE continue, other stop
+;------------------------------------
+; hexadecimal dump memory, h addr
+; stop after each row, SPACE continue, other stop
+;------------------------------------
 hexdump: 
 	MADDR = 1
 	CNTR = 3 ; loop counter
@@ -1063,7 +1132,9 @@ row:
     addw sp,#LOCAL_SIZE
     ret
     
-    ; move memory block, m src dest count
+;------------------------------------
+; move memory block, m src dest count
+;------------------------------------
 move_memory:
     SRC=3
     DEST=1
@@ -1089,7 +1160,9 @@ move_loop:
     addw sp,#LOCAL_SIZE
     ret
     
-    ; clear bitmask,  c addr mask
+;------------------------------------
+; clear bitmask,  c addr mask
+;------------------------------------
 set_bits:
 	call number
 	pushw y
@@ -1100,7 +1173,9 @@ set_bits:
 	ld (y),a
     ret
     
-    ; toggle bitmask,  t addr mask
+;------------------------------------
+; toggle bitmask,  t addr mask
+;------------------------------------
 toggle_bits:
 	call number
     pushw y
@@ -1111,15 +1186,17 @@ toggle_bits:
     ld (y),a
     ret
     
-    ; execute binary code,   x addr
+;------------------------------------
+; execute binary code,   x addr
+;------------------------------------
 execute:
 	call number
 	jp (y)
 	
-
-	
 ;------------------------
 ;  run time CONSTANTS
+;------------------------
+; messages strings
 ;------------------------	
 VERSION:	.asciz "MONA VERSION 0.1\nstm8s208rb     memory map\n---------------------------\n"
 RAM_FREE_MSG: .asciz "ram free: "
@@ -1144,5 +1221,6 @@ HELP: .ascii "commands:\n"
 	  .ascii "t addr bitmask, toggle bits at address\n"
 	  .asciz "x addr, execute  code at address\n"
 
+; following flash memory is not used by MONA
 flash_free:
 	
