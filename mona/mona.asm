@@ -79,16 +79,29 @@
 ;--------------------------------------------------------
 ;		.area 	OPTION (ABS)
 ;		.org 0x4800
-;		.byte 0,0,255,0,255,0,255,0,255,0,255
+;		.byte 0     ; 0x4800 ; OPT0 read out protection 
+;		.byte 0,255 ; 0x4801 - 0x4802 OPT1 user boot code
+;       .byte 0,255 ; 0x4803 - 0x4804 OPT2 alt. fct remapping 
+;       .byte 0,255 ; 0x4805 - 0x4806 OPT3 watchdog options
+;       .byte 0,255 ; 0x4807 - 0x4808 OPT4 clock options
+;       .byte 0,255 ; 0x4809 - 0x480a OPT5 HSE clock startup
+;       .byte 0,255 ; 0x480b - 0x480c OPT6 reserved
+;       .byte 0,255 ; 0x480d - 0x480e OPT7 flash wait state
+		.area BOOTLOADER (ABS)
+		.org 0x487e
+;       .byte 0,255 ; 0x487e - 0x487f rom bootloader checkpoint
 		
 ;--------------------------------------------------------
-; ram uninitialized variables
+;some sont constants used by this program.
 ;--------------------------------------------------------
-		STACK_SIZE = 256
-		STACK_BASE = RAM_SIZE-STACK_SIZE
-		STACK_TOP = RAM_SIZE-1 ; stack at end of ram
-		TIB_SIZE = 80
-		PAD_SIZE = 80
+		STACK_SIZE = 256 ; call stack size
+		STACK_BASE = RAM_SIZE-STACK_SIZE ; lowest address of stack
+		STACK_TOP = RAM_SIZE-1 ; stack top at end of ram
+		TIB_SIZE = 80 ; transaction input buffer size
+		PAD_SIZE = 80 ; workding pad size
+;--------------------------------------------------------
+;   application variables 
+;---------------------------------------------------------		
         .area DATA
 ;ticks  .blkw 1 ; system ticks at every millisecond        
 ;cntdwn:	.blkw 1 ; millisecond count down timer
@@ -103,19 +116,19 @@ pad:	.blkb PAD_SIZE ; working pad
 acc16:  .blkw 1; 16 bits accumulator
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
+
 		.area USER_RAM_BASE
+;--------------------------------------------------------
+;   the following RAM is not used by MONA
+;--------------------------------------------------------
  _user_ram:		
-;--------------------------------------------------------
-; ram data
-;--------------------------------------------------------
-        .area INITIALIZED
 
 ;--------------------------------------------------------
 ;  stack segment
 ;--------------------------------------------------------
        .area SSEG  (ABS)
 	   .org RAM_SIZE-STACK_SIZE
- __stack_buttom:
+ __stack_bottom:
 	   .ds  256
 
 ;--------------------------------------------------------
@@ -207,11 +220,11 @@ uart3_init:
 ;-------------------------
 clear_all_free_ram:
 	ldw x,#0
-clear_ram0:	
+1$:	
 	clr (x)
 	incw x
 	cpw x,#STACK_TOP-2
-	jrule clear_ram0
+	jrule 1$
 	ret
 
 init0:
@@ -244,7 +257,8 @@ init0:
 	ld yl,a
 	ldw flash_free_base,y
 main:
-	_interrupts
+	_interrupts ; enable interrupts
+	; print startup message.
 	ld a,#0xc
 	call uart_tx
 	ldw y,#VERSION
