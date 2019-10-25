@@ -5,11 +5,11 @@
 Utilisation du fichier [mona.asm](mona.asm) comme tutoriel de programmation en assembleur pour STM8 en utilisant sdas. Les deux documents requis pour suivre ce ditactitiel sont dans le dossier **docs**. Il s'agit de [asmlnk.txt](../docs/asmlnk.txt) qui documente l'assembleur. L'autre est le [manuel de programmation du STM8](../docs/pm0044_stm8_programming.pdf) qui est la référence pour la progammation des STM8. 
 
 Un programme en assembleur contient les éléments suivants:
-* Les commentaires qui débutent par le caractère **';'** et se terminent à la fin de la lgine.
-* Les directives à l'assembleur ces directives commence toutes par un **'.'** suivit sans espace par le nom de la directive. La directive elle même peut-être suivit d'un certain nombre d'arguments. Exemple:
-**.org 0x4000** ;déplace le pointeur de code à l'adresse 0x4000.
+* Les commentaires qui débutent par le caractère **';'** et se terminent à la fin de la ligne.
+* Les directives à l'assembleur. Ces directives commencent toutes par un **'.'** suivit sans espace par le nom de la directive. La directive elle même peut-être suivit d'un certain nombre d'arguments. Exemple:
+```.org 0x4000 ;``` déplace le pointeur de code à l'adresse 0x4000.
 * la définition de symboles représentant des constantes.
-* Les instructions machines. Il y a une instruction machine par ligne. Une instruction machine peut-être précédée par une étiquette qui représente une adresse de branchement ou la position d'une variable dans la RAM. Pour connaître les mnémoniques des instructions du STM8 il faut consulter le manuel de référence de programmation mentionné ci-haut.
+* Les instructions machines. Il y a une instruction machine par ligne. Une instruction machine peut-être précédée par une étiquette qui représente une adresse de branchement par exemple le point d'entré d'une sous-routine. Pour connaître les mnémoniques des instructions du STM8 il faut consulter le manuel de référence de programmation mentionné ci-haut.
 
 Le fichier Makefile utilisé pour la construction du projet a été configuré pour que les fichiers générés par l'assembleur et le linker se retrouve dans le dossier **build**. Il y en a plusieurs mais on a pas vraiment besoin  de les consulter sauf peut-être le fichier [build/mona.lst](build/mona.lst) si on veut voir de quoi à l'air le code machine généré par l'assembleur.
 
@@ -34,9 +34,9 @@ A part les commentaires dans le bloc précédent on n'a que des directives desti
 
 * **.module MONA** nomme simplement ce fichier.
 * **.optsdcc -mstm8** indique à l'assembleur qu'il s'agit de code pour le STM8
-* **.list** Cette directive indique simplement que les lignes de code suivantes n'apparaitrons pas dans le listing généré par l'assembleur. Ici la directive a été mise en commentaire et n'a donc aucun effet.
-* **.include "../inc/nucleo_8s208.inc"**  informe l'assembleur qu'il doit traiter se fichier avant de continuer avec celui-ci. Ce fichier contient des informations spécifique à la carte NUCLE-8S208RB.
-* **.include "../inc/stm8s208.inc"** informe l'assembleur qu'il doit traiter ce fichier avant de continuer avec celui-ci. Ce fichier contient toutes les constantes nécessaires à l'utilisation du mcu stm8s208. Ce fichier a été créé en consultant le datasheet du microcontrôleur et contient le nom de tous les registres de contrôle des périphériques avec leur adresse. Il contient aussi le nom symbolique des différents bits à l'intérieur de chacun de ces registres. L'utillisation de noms symboliques plutôt que des adresses simplifie grandement la programmation et rend le texte plus compréhensible.
+* **.nlist** Cette directive indique simplement que les lignes de code suivantes n'apparaitrons pas dans le listing généré par l'assembleur. Ici la directive a été mise en commentaire et n'a donc aucun effet.
+* **.include "../inc/nucleo_8s208.inc"**  informe l'assembleur qu'il doit traiter se fichier avant de continuer avec celui en cours de traitement. Ce fichier contient des informations spécifique à la carte NUCLE-8S208RB.
+* **.include "../inc/stm8s208.inc"** informe l'assembleur qu'il doit traiter ce fichier avant de continuer avec celui en cours de traitement. Ce fichier contient toutes les constantes nécessaires à l'utilisation du mcu stm8s208. Ce fichier a été créé en consultant le datasheet du microcontrôleur et contient le nom de tous les registres de contrôle des périphériques avec leur adresse. Il contient aussi le nom symbolique des différents bits à l'intérieur de chacun de ces registres. L'utillisation de noms symboliques plutôt que des adresses simplifie grandement la programmation et rend le texte plus compréhensible.
 * **.page** est une directive qui indique simplement à l'assembleur d'insérer un saut de page dans le listing qu'il génère.
 
 ### Constantes
@@ -106,18 +106,18 @@ MONA communique avec le PC via un port sériel avec un émulateur de terminal VT
 		
 		
 		.macro  _interrupts ; enable interrupts
-		 rim
+		 rim ; Reset Interrupt Mask
 		.endm
 		
 		.macro _no_interrupts ; disable interrupts
-		sim
+		sim  ; Set Interrupt Mask
 		.endm
 
 
 ```
 
-SDAS possède un langage de macro. Les macros en assembleurs simplifie grandements la programmation. Entre les directives **.macro** et **.endm**
-on retrouve des instructions machines qui seront insérées dans le code source chaque fois que l'assembleur rencontre le nom de la macro. Les macros rendent le code plus lisible et évite aussi d'avoir à resaissir plusieurs foit les même lignes de codes qui se répètent dans un programme. Prenons par exemple la macro **_ledenable**. Les 3 instructions machine qu'elle contient servent à configuré la broche sur laquelle est branchée la LED2 en mode sortie push-pull. Cette macro n'est invoquée qu'une seule fois on aurait put inscrire directement ces 3 instructions directement à l'endroit où est invoquée cette macro ou encore en faire une sous-routine mais cette façon de faire est aussi valide. Les macros **_ineterrupts** et **_no_interrupts** ne contiennent qu'une seule instruction qu'on aurait pu inséré directement dans le code mais il me semble que ces noms de macros sont plus parlant que le mnémonique qu'elle remplace.
+SDAS possède un langage de macro. Les macros en assembleur simplifient la programmation. Entre les directives **.macro** et **.endm**
+on retrouve des instructions machines qui seront insérées dans le code source chaque fois que l'assembleur rencontre le nom de la macro. Les macros rendent le code plus lisible et évite aussi d'avoir à resaisir plusieurs fois les même lignes de codes qui se répètent dans un programme. Prenons par exemple la macro **_ledenable**. Les 3 instructions machine qu'elle contient servent à configurer la broche PC_5 (port C bit 5) en mode sortie push-pull. C'est la broche sur laquelle est branchée la LED2. Cette macro n'est invoquée qu'une seule fois on aurait put inscrire directement ces 3 instructions à l'endroit où est invoquée cette macro ou encore en faire une sous-routine mais cette façon de faire est aussi valide. Les macros **_ineterrupts** et **_no_interrupts** ne contiennent qu'une seule instruction qu'on aurait pu inséré directement dans le code mais il me semble que ces noms de macros sont plus parlant que le mnémonique qu'elle remplace.
 
 **_ledon** est invoquée pour allumer la LED2. **_ledoff** pour l'éteindre et **_led_toggle** pour en inverser l'état.
 
@@ -147,7 +147,7 @@ La directive **.byte** sert à initialiser la mémoire avec les valeurs indiqué
 ### Constantes des paramètres du programmes
 ```
 ;--------------------------------------------------------
-;some sont constants used by this program.
+;some constants used by this program.
 ;--------------------------------------------------------
 		STACK_SIZE = 256 ; call stack size
 		STACK_BASE = RAM_SIZE-STACK_SIZE ; lowest address of stack
@@ -178,7 +178,7 @@ ram_free_base: .blkw 1
 flash_free_base: .blkw 1
 
 ```
-Les variables utilisées par l'application MONA. **.area DATA** définie normalement une section de variables initialisées par la routine **crt0** lorsqu'on écris un programme en **C**. Mais ici les variables qui doivent-être initialisées le sont dans la procédure **init0**. Une directive **.blkb** ser à réserver un bloc de n octets. L'argument qui suit indique le nombre d'octets à réserver. La directive **.blkw** sert à réserver un bloc de mots de 16 bits.
+Les variables utilisées par l'application MONA. **.area DATA** définie normalement une section de variables initialisées par la routine **crt0** lorsqu'on écris un programme en **C**. Mais ici les variables qui doivent-être initialisées le sont dans la procédure **init0**. Une directive **.blkb** sert à réserver un bloc de **n** octets. L'argument qui suit indique le nombre d'octets à réserver. La directive **.blkw** sert à réserver un bloc de mots de 16 bits.
 
 ### Mémoire RAM libre
 ```
@@ -189,7 +189,7 @@ Les variables utilisées par l'application MONA. **.area DATA** définie normale
  _user_ram:		
 ```
 La mémoire RAM après les variables utilisées par MONA est disponible pour l'utilisateur. L'Étiquette **_user_ram:** permet au programme de connaître l'adresse de début de cette zone mémoire et de l'utiliser pour initialiser 
-la variable **ram_free_base**.
+la variable **ram_free_base** qui contient l'adresse de début de la mémoire RAM disponible.
 
 ## La pile
 
@@ -202,7 +202,7 @@ la variable **ram_free_base**.
  __stack_bottom:
 	   .ds  256
 ```
-La pile des appels est située à la fin de la mémoire RAM. Il s'agit d'une pile décroissante. C'est à dire que le pointeur de pile **SP** est décrémenté après chaque empilement d'un octet de sorte que **SP** pointe toujours sur le prochain octet libre. La directive **.ds 256** réserve 256 octets pour la pile.
+La pile des appels est située à la fin de la mémoire RAM. Il s'agit d'une pile décroissante. C'est à dire que le pointeur de pile **SP** est décrémenté après chaque empilement d'un octet de sorte que **SP** pointe toujours sur le prochain octet libre. La directive **.ds 256** réserve 256 octets pour la pile. La pile d'appel peut aussi être utilisée pour passer des arguments à une sous-routine ainsi que pour des variables locales à une sous-routine.
 
 ### La table des vecteurs d'interruption
 ```
@@ -243,12 +243,11 @@ __interrupt_vect:
 	int NonHandledInterrupt ;int27  not used
 	int NonHandledInterrupt ;int28  not used
 ```
- La section **HOME** indique qu'il s'agit de la table des vecteurs d'interruption. En fait le premier vecteur est celui de la réinitialisation. Le deuxième celui de l'interruption logicielle.
- Tous les autres correspondes aux périphériques. MONA n'utilise qu'une seule interruption celle générée par la réception d'un caractère par le UART3.
- Les autres interruption pointent vers **NonHandledInterrupt**.
+ La section **HOME** indique qu'il s'agit de la table des vecteurs d'interruption. En fait le premier vecteur est celui de la réinitialisation **RESET**. Le deuxième celui de l'interruption logicielle **TRAP**.
+ Tous les autres sont générées par les périphériques. MONA n'utilise qu'une seule interruption celle générée par la réception d'un caractère par le UART3. Les autres interruption pointent vers **NonHandledInterrupt**.
  Les vecteurs sont en fait des instruction **JPF** (jump far). Cette instruction occupe 4 octets. Le code **0x82** suivit d'une adresse de 24 bits. 
 
-### routines d'initialisation
+### Routines d'initialisation
 
 ```
 	.area CODE
@@ -310,9 +309,7 @@ clear_all_free_ram:
 	jrule 1$
 	ret
 ```
-La section **CODE** est la où débute vraiment le du programme. Ce n'est pas forcément le point d'entré du programme. Ce point d'entré peut-être placé n'importe où. Dans le cas de MONA il s'agit de la routine **init0** qui est située plus loin. J'ai choisi de placer les routines appellées par **init0** au début. On a donc
-* **clock_init** qui initialise l'horloge utilisé par le programme. Il s'agit dans ce cas de l'oscillateur externe **HSE** et puisque le cristal qui branché broches de cet oscillateur est de 8Mhz le MCU fonctionne à cette fréquence même s'il est possible de le faire fonctionner jusqu'à 20Mhz.
-Notez l'utilisation d'étiquettes de la forme **n$** ou **n** est un entier  dans l'intervalle **[0-65535]**. J'utilise cette forme d'étiquette pour les sauts relatif à l'intérieur des sous-routines. L'aventage est qu'on peut utiliser plusieurs fois le même nom. L'assembleur les traites comme des étiquettes spéciales qui sont utilisées à l'intérieur d'un bloc de code délimité par 2 étiquettes normales. Ces étiquettes sont supprimées chaque fois qu'une étiquette normale est rencontré. Dans le code montré ci-haut l'étiquette **1$** qui apparaît après **clock_init** n'est visible pour l'assembleur que jusqu'à l'apparition de **uart3_init**. Donc on pourrait la réutilisée dans la sous-routine **uart3_init** sans qu'elle entre en conflit avec la première instance.
+La section **CODE** est la où débute vraiment le code du programme. Ce n'est pas forcément le point d'entré du programme. Ce point d'entré peut-être placé n'importe où. Dans le cas de MONA il s'agit de la routine **init0** qui est située plus loin. J'ai choisi de placer les routines appellées par **init0** au début. On a donc **clock_init** qui initialise l'horloge utilisée par le programme. Il s'agit dans ce cas de l'oscillateur externe **HSE** et puisque le cristal qui est branché broches de cet oscillateur est de 8Mhz, le MCU fonctionne à cette fréquence même s'il est possible de le faire fonctionner jusqu'à 20Mhz. Notez l'utilisation d'étiquettes de la forme **n$** ou **n** est un entier  dans l'intervalle **[0-65535]**. J'utilise cette forme d'étiquette pour les sauts relatifs à l'intérieur des sous-routines. L'avantage est qu'on peut utiliser plusieurs fois le même nom. L'assembleur les traites comme des étiquettes spéciales qui sont utilisées à l'intérieur d'un bloc de code délimité par 2 étiquettes normales. Ces étiquettes sont supprimées chaque fois qu'une étiquette normale est rencontrée. Dans le code montré ci-haut l'étiquette **1$** qui apparaît après **clock_init:** n'est visible pour l'assembleur que jusqu'à l'apparition de **uart3_init:**. Donc on pourrait la réutilisée dans la sous-routine **uart3_init** sans qu'elle entre en conflit avec la première instance.
 
 * **timer4_init** sert à initialiser cette minuterie pour générer une interruption à intervalle d'une miliseconde. Elle a été mise en commentaire car elle n'est pas utilisée dans cette version de MONA.
 
@@ -320,6 +317,7 @@ Notez l'utilisation d'étiquettes de la forme **n$** ou **n** est un entier  dan
 * **pause**  sert à créer un délais mais est mise en commentaire car elle n'est pas utilisée dans cette version de MONA
 * **clear_all_free_ram** sert à mettre à zéro toute la mémoire RAM. Notez que la boucle s'arrête à TOP_STACK-2. On ne veut pas écraser l'adresse de retour qui a été empilée lors de l'appel de cette sous-routine. Notez la réutilisation de l'étiquette **1$:** sans conflit avec son utilisation dans **clock_init**.
 
+### Point d'entré après un RESET
 ```
 init0:
 	; initialize SP
@@ -351,13 +349,13 @@ init0:
 	ld yl,a
 	ldw flash_free_base,y
 ```
-La routine **init0** est le point d'entrée de MONA. C'est ici que le vecteur RESET fait un saut lors du démarrage du MCU.  La première opération consiste à initialisé le pointeur de pile **SP**. Ensuite on s'assure que les interruptions sont déscativées en invoquant la macro **_no_interrupts**. Suit un appel à **clock_init** pour commuter de l'oscillateur interne **HSI** à l'osciallateur externe **HSE**. À partir de là le MCU fonctionne à 8Mhz. Ensuite on appel **clear_all_free_ram** pour mettre toute la RAM à zéro. J'ignore les instructions commentées. On met la valeur **255** dans la variable **rx_char** qui contient le dernier caractère reçu par le UART3. La valeur 255 signifie qu'il n'y a pas de caractère reçu. On appel ensuite **uart3_init** pour initialiser le périphérique de communication.
+La routine **init0** est le point d'entrée de MONA. C'est ici que le vecteur RESET fait un saut lors du démarrage du MCU.  La première opération consiste à initialisé le pointeur de pile **SP**. Ensuite on s'assure que les interruptions sont déscativées en invoquant la macro **_no_interrupts**. Suit un appel à **clock_init** pour commuter de l'oscillateur interne **HSI** vers l'osciallateur externe **HSE**. À partir de là le MCU fonctionne à **8 Mhz**. Ensuite on appel **clear_all_free_ram** pour mettre toute la RAM à zéro. J'ignore les instructions commentées. On met la valeur **255** dans la variable **rx_char** qui contient le dernier caractère reçu par le UART3. La valeur 255 signifie qu'il n'y a pas de caractère reçu. On appel ensuite **uart3_init** pour initialiser le périphérique de communication.
 
-Sur la carte la **LED2** est branchée à la pin 5 du port C. Il faut donc initialisé cette pin en mode sortie. C'est ce qui est fait par l'invocation de la macro **_ledenable**. Ensuite on s'assure que la LED est éteinte en invoquant la macro **_ledoff**.  Notez que j'utilise le caractère **'_'** comme premier caractère des noms de macros. Ça me permet de savoir au premier coup d'oeil qu'il s'agit bien d'une macro.
+Sur la carte la **LED2** est branchée à la pin 5 du port C. Il faut donc initialiser cette pin en mode sortie. C'est ce qui est fait par l'invocation de la macro **_ledenable**. Ensuite on s'assure que la LED est éteinte en invoquant la macro **_ledoff**.  Notez que j'utilise le caractère **'_'** comme premier caractère des noms de macros. Ça me permet de savoir au premier coup d'oeil qu'il s'agit bien d'une macro.
 
-Le reste de la cette routine conssiste à initialiser les différentes variables.
+Le reste de la cette routine consiste à initialiser les différentes variables.
 
-### programme principal
+### Programme principal
 ```
 ;------------------------
 ; program main function
@@ -406,7 +404,7 @@ repl:
 ; start over	
 	jra repl  ; loop
 ```
-L'initialisation est terminée on est rendu à la routine principale du programme **main:**. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
+L'initialisation est terminée on est rendu à la routine principale du programme **main**. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
 
 ### Gestionnaires d'interruption
 
@@ -459,9 +457,9 @@ uart_rx_isr:
 
 En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Window Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
 
-La routine **uart_rx_isr:** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. Mais d'abord on s'assure qu'il  n'y a pas d'erreur de réception et que le bit **RXNE** (receive register not empty) est bien à 1.
+La routine **uart_rx_isr** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. Mais d'abord on s'assure qu'il  n'y a pas d'erreur de réception et que le bit **RXNE** (receive register not empty) est bien à 1.
 
-### Routine de communication par port sériel
+### Routines de communication par port sériel
 ```
 ;------------------------------------
 ;  serial port communication routines
@@ -661,6 +659,12 @@ Ce bloc regroupe les fonctions de communications via le UART3 avec l'émulateur 
 * **uart_tx** transmet le caractère qui est dans A.
 * **uart_print** transmet une chaîne de caractères terminée par un zéro.
 La chaîne est pointée par **Y**.
+* **uart_qchar**  Vérifie s'il y a un caractère de disponible dans rx_char. Si au retour de cet fonction **CC:Z** est à **0** c'est qu'il y a un caractère de disponible.
+* **ungetchar** Retourne un caractère inutilisé dans la variable rx_char. Le caractère à retourné est dans **A**.
+* **uart_getchar** Attend la réception d'un caractère à partir du UART3. Le caractère est retourné dans **A**.
+* **uart_delete** Efface **n** sur la console. Le nombre de caractère à effacer est dans **A**.
+* **uart_readln** 
+
 
 
 
