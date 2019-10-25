@@ -349,7 +349,10 @@ uart_rx_isr:
     ld rx_char,a
 1$: pop a
 	iret
-	
+
+;------------------------------------
+;  serial port communication routines
+;------------------------------------
 ;------------------------------------
 ; transmit character in a via UART3
 ; character to transmit on (3,sp)

@@ -18,6 +18,7 @@ Voici comment fonctionne la construction d'un projet. L'assembleur transforme le
 
 ## mona.asm
 
+### Entête de module
 ```
 ;  MONA   MONitor written in Assembly
 	.module MONA 
@@ -38,6 +39,7 @@ A part les commentaires dans le bloc précédent on n'a que des directives desti
 * **.include "../inc/stm8s208.inc"** informe l'assembleur qu'il doit traiter ce fichier avant de continuer avec celui-ci. Ce fichier contient toutes les constantes nécessaires à l'utilisation du mcu stm8s208. Ce fichier a été créé en consultant le datasheet du microcontrôleur et contient le nom de tous les registres de contrôle des périphériques avec leur adresse. Il contient aussi le nom symbolique des différents bits à l'intérieur de chacun de ces registres. L'utillisation de noms symboliques plutôt que des adresses simplifie grandement la programmation et rend le texte plus compréhensible.
 * **.page** est une directive qui indique simplement à l'assembleur d'insérer un saut de page dans le listing qu'il génère.
 
+### Constantes
 ```
 ;-------------------------------------------------------
 ;     vt100 CTRL_x  values
@@ -77,6 +79,7 @@ A part les commentaires dans le bloc précédent on n'a que des directives desti
 ```
 MONA communique avec le PC via un port sériel avec un émulateur de terminal VT100. Ici il s'agit simplement de définir des noms symboliques pour les codes de contrôles VT100.
 
+### macros
 ```
 ;--------------------------------------------------------
 ;      MACROS
@@ -118,6 +121,7 @@ on retrouve des instructions machines qui seront insérées dans le code source 
 
 **_ledon** est invoquée pour allumer la LED2. **_ledoff** pour l'éteindre et **_led_toggle** pour en inverser l'état.
 
+### options de configuration du MCU
 ```
 ;--------------------------------------------------------
 ;        OPTION BYTES
@@ -140,6 +144,7 @@ on retrouve des instructions machines qui seront insérées dans le code source 
 La directive **.area** permet de définir une zone mémoire. **OPTION** est le nom de cette zone et **(ABS)** indique que cette zone ne peut-être déplacée par le linker. Elle doit obligatoirement débutée à l'adresse indiquée par la directive **.org 0x4800**. Le mcu possède des registres de configurations qui permettent d'activer certaines options. Ces registres sont situés dans la plage **0x4800 - 0x487f**. Ici toutes les options sont mises en commentaire car elles ont toutes leur valeur par défaut. Comme il y a un espace d'adrsse inutilisée entre les 8 premières options et la dernière on doit créer une nouvelle région avec la directive **.area BOOTLOADER (ABS)**.  la directive **.org 0x487e** indique l'adresse où débute cette région.
 La directive **.byte** sert à initialiser la mémoire avec les valeurs indiquées. Il s'agit de valeurs octets. Une directive **.word** est utilisée pour initialiser des mots de 16 bits.
 
+### Constantes des paramètres du programmes
 ```
 ;--------------------------------------------------------
 ;some sont constants used by this program.
@@ -150,7 +155,9 @@ La directive **.byte** sert à initialiser la mémoire avec les valeurs indiqué
 		TIB_SIZE = 80 ; transaction input buffer size
 		PAD_SIZE = 80 ; workding pad size
 ```
- Quelques constantes utilisé par le programme.
+
+### Variables de l'application
+
 ```
 ;--------------------------------------------------------
 ;   application variables 
@@ -172,6 +179,8 @@ flash_free_base: .blkw 1
 
 ```
 Les variables utilisées par l'application MONA. **.area DATA** définie normalement une section de variables initialisées par la routine **crt0** lorsqu'on écris un programme en **C**. Mais ici les variables qui doivent-être initialisées le sont dans la procédure **init0**. Une directive **.blkb** ser à réserver un bloc de n octets. L'argument qui suit indique le nombre d'octets à réserver. La directive **.blkw** sert à réserver un bloc de mots de 16 bits.
+
+### Mémoire RAM libre
 ```
 		.area USER_RAM_BASE
 ;--------------------------------------------------------
@@ -181,6 +190,9 @@ Les variables utilisées par l'application MONA. **.area DATA** définie normale
 ```
 La mémoire RAM après les variables utilisées par MONA est disponible pour l'utilisateur. L'Étiquette **_user_ram:** permet au programme de connaître l'adresse de début de cette zone mémoire et de l'utiliser pour initialiser 
 la variable **ram_free_base**.
+
+## La pile
+
 ```
 ;--------------------------------------------------------
 ;  stack segment
@@ -191,6 +203,8 @@ la variable **ram_free_base**.
 	   .ds  256
 ```
 La pile des appels est située à la fin de la mémoire RAM. Il s'agit d'une pile décroissante. C'est à dire que le pointeur de pile **SP** est décrémenté après chaque empilement d'un octet de sorte que **SP** pointe toujours sur le prochain octet libre. La directive **.ds 256** réserve 256 octets pour la pile.
+
+### La table des vecteurs d'interruption
 ```
 ;--------------------------------------------------------
 ; interrupt vector 
@@ -233,6 +247,9 @@ __interrupt_vect:
  Tous les autres correspondes aux périphériques. MONA n'utilise qu'une seule interruption celle générée par la réception d'un caractère par le UART3.
  Les autres interruption pointent vers **NonHandledInterrupt**.
  Les vecteurs sont en fait des instruction **JPF** (jump far). Cette instruction occupe 4 octets. Le code **0x82** suivit d'une adresse de 24 bits. 
+
+### routines d'initialisation
+
 ```
 	.area CODE
 
@@ -339,6 +356,8 @@ La routine **init0** est le point d'entrée de MONA. C'est ici que le vecteur RE
 Sur la carte la **LED2** est branchée à la pin 5 du port C. Il faut donc initialisé cette pin en mode sortie. C'est ce qui est fait par l'invocation de la macro **_ledenable**. Ensuite on s'assure que la LED est éteinte en invoquant la macro **_ledoff**.  Notez que j'utilise le caractère **'_'** comme premier caractère des noms de macros. Ça me permet de savoir au premier coup d'oeil qu'il s'agit bien d'une macro.
 
 Le reste de la cette routine conssiste à initialiser les différentes variables.
+
+### programme principal
 ```
 ;------------------------
 ; program main function
@@ -388,6 +407,9 @@ repl:
 	jra repl  ; loop
 ```
 L'initialisation est terminée on est rendu à la routine principale du programme **main:**. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
+
+### Gestionnaires d'interruption
+
 ```
 ;------------------------------------
 ;	interrupt NonHandledInterrupt
@@ -434,9 +456,212 @@ uart_rx_isr:
 1$: pop a
 	iret
 ```
-Les routines d'interruptions. En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Window Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
 
-La routine **uart_rx_isr:** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. 
+En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Window Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
+
+La routine **uart_rx_isr:** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. Mais d'abord on s'assure qu'il  n'y a pas d'erreur de réception et que le bit **RXNE** (receive register not empty) est bien à 1.
+
+### Routine de communication par port sériel
+```
+;------------------------------------
+;  serial port communication routines
+;------------------------------------
+;------------------------------------
+; transmit character in A via UART3
+; input:
+;	A  character to transmit
+; output:
+;	none
+;------------------------------------
+uart_tx:
+	tnz UART3_SR
+	jrpl uart_tx
+	ld UART3_DR,a
+    ret
+
+;------------------------------------
+; send zero terminated string via UART
+; register A is overwritten.
+; input: 
+; 	y is pointer to string
+; ouptut:
+;	none
+;------------------------------------
+uart_print:
+	ld a,(y)
+	jreq 1$
+	call uart_tx
+	incw y
+	jra uart_print
+1$: ret
+
+;------------------------------------
+; check if char available
+; register a overwritten
+; input:
+;   variable rx_char
+; output
+;   condition code register
+;------------------------------------
+uart_qchar:
+	ld a,#255
+	cp a,rx_char
+    ret
+
+;------------------------------------
+; return char in A to queue
+;  input:
+;      A
+;  output:
+;     variable rx_char
+;------------------------------------
+ungetchar: 
+	_no_interrupts
+	ld rx_char,a
+    _interrupts
+    ret
+    
+;------------------------------------
+;  wait character reception
+; input:
+;	none
+; output:
+;    A  character received
+;------------------------------------
+uart_getchar:
+	ld a,#255
+	cp a,rx_char
+	jreq uart_getchar
+	_no_interrupts
+	ld a, rx_char
+	push a
+	ld a,#-1
+	ld rx_char,a
+	_interrupts
+	pop a
+	ret
+
+;------------------------------------
+; delete n character on terminal screen
+; input:
+;    A number of character to delete
+; output:
+; 	 none
+;------------------------------------
+uart_delete:
+	push a ; n 
+del_loop:
+	tnz (1,sp)
+	jreq 1$
+	ld a,#BSP
+	call uart_tx
+    ld a,#SPACE
+    call uart_tx
+    ld a,#BSP
+    call uart_tx
+    dec (1,sp)
+    jra del_loop
+1$: pop a
+	ret 
+
+;------------------------------------
+; read a line of text from terminal.
+; input:
+;	parameters on stack
+;   (1,sp) maximum character accepted
+;	(2,sp) last character received (local variable)
+; output:
+;   tib
+;   count   count of character in tib
+;------------------------------------
+readln:
+	; local variables
+	LEN = 1  ; accepted line length
+	RXCHAR = 2 ; last char received
+	push #0  ; RXCHAR 
+	push #0  ; LEN
+ 	ldw y,#tib ; input buffer
+readln_loop:
+	call uart_getchar
+	ld (RXCHAR,sp),a
+	cp a,#CTRL_C
+	jrne 2$
+	jp cancel
+2$:	cp a,#CTRL_R
+	jreq reprint
+	cp a,#CR
+	jrne 1$
+	jp readln_quit
+1$:	cp a,#NL
+	jreq readln_quit
+	cp a,#BSP
+	jreq del_back
+	cp a,#CTRL_D
+	jreq del_line
+	cp a,#SPACE
+	jrpl accept_char
+	jra readln_loop
+del_line:
+	ld a,(LEN,sp)
+	call uart_delete
+	ldw y,#tib
+	clr count
+	clr (LEN,sp)
+	jra readln_loop
+del_back:
+    tnz (LEN,sp)
+    jreq readln_loop
+    dec (LEN,sp)
+    decw y
+    clr  (y)
+    ld a,#1
+    call uart_delete
+    jra readln_loop	
+accept_char:
+	ld a,#TIB_SIZE-1
+	cp a, (1,sp)
+	jreq readln_loop
+	ld a,(RXCHAR,sp)
+	ld (y),a
+	inc (LEN,sp)
+	incw y
+	clr (y)
+	call uart_tx
+	jra readln_loop
+reprint:
+	tnz (LEN,sp)
+	jrne readln_loop
+	tnz count
+	jreq readln_loop
+	ldw y,#tib
+	pushw y
+	call uart_print
+	popw y
+	ld a,count
+	ld (LEN,sp),a
+	ld a,yl
+	add a,count
+	ld yl,a
+	jp readln_loop
+cancel:
+	clr tib
+	clr count
+	jra readln_quit2
+readln_quit:
+	ld a,(LEN,sp)
+	ld count,a
+readln_quit2:
+	addw sp,#2
+	ld a,#NL
+	call uart_tx
+	ret
+```
+Ce bloc regroupe les fonctions de communications via le UART3 avec l'émulateur de terminal tournant sur le PC.
+
+* **uart_tx** transmet le caractère qui est dans A.
+* **uart_print** transmet une chaîne de caractères terminée par un zéro.
+La chaîne est pointée par **Y**.
+
 
 
 
