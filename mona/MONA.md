@@ -416,17 +416,25 @@ NonHandledInterrupt:
 ; uart3 receive interrupt service
 ;------------------------------------
 uart_rx_isr:
+; use A so preserve it.
     push a
+; test uart status register
+; bit RXNE must 1
+; bits OR|FE|NF must be 0	
     ld a, UART3_SR
-    ld (0,sp),a
-	ld a, UART3_DR
-	tnz (0,sp)
-	jreq 1$
+	ld rx_status,a
+	ld a,UART3_DR
+	ld (0,sp),a
+	ld a, rx_status
+	and a, #((1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
+	jrne 1$
+	btjf rx_status,#UART_SR_RXNE,1$
+	ld a,(0,sp)
     ld rx_char,a
 1$: pop a
 	iret
 ```
-Les routines d'interruptions. En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
+Les routines d'interruptions. En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Window Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
 
 La routine **uart_rx_isr:** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. 
 

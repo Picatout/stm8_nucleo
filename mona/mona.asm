@@ -106,6 +106,7 @@
 ;ticks  .blkw 1 ; system ticks at every millisecond        
 ;cntdwn:	.blkw 1 ; millisecond count down timer
 rx_char: .blkb 1 ; last uart received char
+rx_status: .blkb 1 ; store last UART_SR read
 in.w:     .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
 in:		.blkb 1; parser position in tib
 count:  .blkb 1; length of string in tib
@@ -331,12 +332,20 @@ NonHandledInterrupt:
 ; uart3 receive interrupt service
 ;------------------------------------
 uart_rx_isr:
+; use A so preserve it.
     push a
+; test uart status register
+; bit RXNE must 1
+; bits OR|FE|NF must be 0	
     ld a, UART3_SR
-    ld (0,sp),a
-	ld a, UART3_DR
-	tnz (0,sp)
-	jreq 1$
+	ld rx_status,a
+	ld a,UART3_DR
+	ld (0,sp),a
+	ld a, rx_status
+	and a, #((1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
+	jrne 1$
+	btjf rx_status,#UART_SR_RXNE,1$
+	ld a,(0,sp)
     ld rx_char,a
 1$: pop a
 	iret
