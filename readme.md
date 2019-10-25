@@ -1,8 +1,12 @@
 # STM8 Nucleo
-Mes explorations de la carte NUCLEO-8S208RB
+Mes explorations de la carte NUCLEO-8S208RB. Cette carte a des connecteurs (CN4,CN5,CN7 et CN8) qui sont compatible avec les cartes d'extension Arduino.
+Les connecteurs CN1 et CN2 permettent l'installation de cartes d'extension vendu par STMicroelectronics.
 
+De plus des projets pour cette carte peuvent-être développés en utilisant l'IDE Arduido. 
+
+![carte NUCLEO-8S208RB](docs/images/carte.png)
 ## organisation
-* **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles. Il contient aussi les images qui sont affichées dans les différents fichiers __*.md__.
+* **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles. Il contient aussi le sous dossier **images** qui contient les images qui sont affichées dans les différents fichiers __*.md__.
 * **build**  Tous les fichiers générés pendant la construction d'un programme sont déposé dans ce répertoire.
 * **hal**  Ce dossier contient le code source en **C** pour la couche d'abstraction matérielle des différents périphériques.
 * **inc** Contient les fichiers d'entête __*.h__ et d'assembleur __*.inc__ d'usage pour les différents projets. Par exemple les fichiers __*.c__ qui sont dans **hal** ont un fichier correspondant __*.h__ ici.
