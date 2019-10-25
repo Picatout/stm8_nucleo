@@ -333,9 +333,9 @@ NonHandledInterrupt:
 uart_rx_isr:
     push a
     ld a, UART3_SR
-    ld (1,sp),a
+    ld (0,sp),a
 	ld a, UART3_DR
-	tnz (1,sp)
+	tnz (0,sp)
 	jreq 1$
     ld rx_char,a
 1$: pop a

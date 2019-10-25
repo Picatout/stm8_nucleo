@@ -387,7 +387,48 @@ repl:
 ; start over	
 	jra repl  ; loop
 ```
-L'initialisation est terminée on est rendu à la routine principale du programme. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour faire lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
+L'initialisation est terminée on est rendu à la routine principale du programme **main:**. On commence par imprimer le texte qui apparaît sur la console du PC au démarrage, soit la version de MONA ainsi que les différentes plages de mémoire du microcontrôleur. Ensuite on entre dans la boucle **repl** que le programme ne quitte jamais. Cette boucle lit une ligne de commande à partir de l'émulateur de terminal utilisé sur le PC. Analyse cette ligne de commande l'exécute et affiche le résultat s'il y en a un. Ensuite on recommence au début de cette boucle. Au début de la boucle un caractère est envoyé au terminal pour déplacer le curseur au début de ligne suivante de la console. Ensuite le caractère **'>'** est affiché pour indiquer que MONA est prêt à recevoir la prochaine commande. La routine **readln** est appellée pour lire la prochaine ligne de commande. Si la ligne reçu ne contient aucun caractère on retourne au début de la boucle **repl**. Sinon la commande est analysée et exécutée par la routine **eval** et puis on retourne au début de la boucle.
+```
+;------------------------------------
+;	interrupt NonHandledInterrupt
+;   non handled interrupt reset MCU
+;------------------------------------
+NonHandledInterrupt:
+	ld a,#0x80
+	ld WWDG_CR,a
+	;iret
+
+;------------------------------------
+; TIMER4 interrupt service routine
+;------------------------------------
+;timer4_isr:
+;	ldw y,ticks
+;	incw y
+;	ldw ticks,y
+;	ldw y,cntdwn
+;	jreq 1$
+;	decw y
+;	ldw cntdwn,y
+;1$: bres TIM4_SR,#TIM4_SR_UIF
+;	iret
+
+;------------------------------------
+; uart3 receive interrupt service
+;------------------------------------
+uart_rx_isr:
+    push a
+    ld a, UART3_SR
+    ld (0,sp),a
+	ld a, UART3_DR
+	tnz (0,sp)
+	jreq 1$
+    ld rx_char,a
+1$: pop a
+	iret
+```
+Les routines d'interruptions. En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
+
+La routine **uart_rx_isr:** est déclenchée lorsque le UART3 a reçu un caractère envoyé par le PC. Ce charactère est simplement déposé dans la variable **rx_char**. 
 
 
 

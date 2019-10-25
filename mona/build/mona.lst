@@ -1515,9 +1515,9 @@ Hexadecimal [24-Bits]
       0000D3                        333 uart_rx_isr:
       0000D3 88               [ 1]  334     push a
       0000D4 C6 52 40         [ 1]  335     ld a, UART3_SR
-      0000D7 6B 01            [ 1]  336     ld (1,sp),a
+      0000D7 6B 00            [ 1]  336     ld (0,sp),a
       0000D9 C6 52 41         [ 1]  337 	ld a, UART3_DR
-      0000DC 0D 01            [ 1]  338 	tnz (1,sp)
+      0000DC 0D 00            [ 1]  338 	tnz (0,sp)
       0000DE 27 03            [ 1]  339 	jreq 1$
       0000E0 C7 00 00         [ 1]  340     ld rx_char,a
       0000E3 84               [ 1]  341 1$: pop a
