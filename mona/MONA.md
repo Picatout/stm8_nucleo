@@ -5,18 +5,117 @@
 Utilisation du fichier [mona.asm](mona.asm) comme tutoriel de programmation en assembleur pour STM8 en utilisant sdas. Les deux documents requis pour suivre ce ditactitiel sont dans le dossier **docs**. Il s'agit de [asmlnk.txt](../docs/asmlnk.txt) qui documente l'assembleur et le linker. L'autre est le [manuel de programmation du STM8](../docs/pm0044_stm8_programming.pdf) qui est la référence pour la progammation des STM8. 
 
 Un programme en assembleur contient les éléments suivants:
-* Les commentaires qui débutent par le caractère **';'** et se terminent à la fin de la ligne.
-* Les directives à l'assembleur. Ces directives commencent toutes par un **'.'** suivit sans espace par le nom de la directive. La directive elle même peut-être suivit d'un certain nombre d'arguments. Exemple:
-```.org 0x4000 ;``` déplace le pointeur de code à l'adresse 0x4000.
-* la définition de symboles représentant des constantes.
-* Les instructions machines. Il y a une instruction machine par ligne. Une instruction machine peut-être précédée par une étiquette qui représente une adresse de branchement par exemple le point d'entré d'une sous-routine. Pour connaître les mnémoniques des instructions du STM8 il faut consulter le manuel de référence de programmation mentionné ci-haut.
+* Des commentaires.
+* Des dierctives à l'assembleur.
+* Des définitions de symboles représentant des constantes.
+* Des définitions de macros.
+* Diverses sections de données.
+* Diverses sections de code.
 
-Le fichier Makefile utilisé pour la construction du projet a été configuré pour que les fichiers générés par l'assembleur et le linker se retrouve dans le dossier **build**. Il y en a plusieurs mais on a pas vraiment besoin  de les consulter sauf peut-être le fichier [build/mona.lst](build/mona.lst) si on veut voir de quoi à l'air le code machine généré par l'assembleur.
+### Commentaires
 
-Voici comment fonctionne la construction d'un projet. L'assembleur transforme le fichier source en un fichier de code binaire mais avec des adresses relatives [build/mona.rel](build/mona.rel) et génère aussi un listing appellé [build/mona.lst](build/mona.lst). Ensuite le linker (générateur de liens) utilise ces fichiers pour générer le fichier [build/mona.ihx](build/mona.ihx) qui contient le code binaire en format **Intel Hex** utilisé pour programmer le microcontrôleur. Le projet MONA contient un seul fichier source mais dans un projet plus complexe il y a plusieurs fichiers sources qui sont assemblés indépendemment les uns des autres et génèrent chacun des fichiers __*.rel__ et __*.lst__. Le travail du linker est de joindre tous ces bouts de codes ensemble en évitant les conflits d'adresses. S'il  n'y arrive pas il affiche un message d'erreur d'allocation.
+Les commentaires débutent par le caractère **';'** et se terminent à la fin de la ligne. Un commentaire peut-être placé après une directive ou une ligne de code. Sitôt que l'assembleur rencontre le caractère **';'** il ignore tous les caractères qui suivent jusqu'à la fin de la ligne.
+Exemple:
+```
+;  MONA   MONitor written in Assembly
+
+```
+
+### Directives 
+
+Les directives à l'assembleur. Ces directives commencent toutes par un **'.'** suivit sans espace par le nom de la directive. La directive elle même peut-être suivit d'un certain nombre d'arguments. Exemple:
+``` 
+.org 0x4000 
+``` 
+Cette directive indique à l'assembleur que le pointeur de code doit-être positionné à l'adresse 0x4000. Ce qui signifie que les instructions machines qui suivent seront assemblée à partir de cette adresse.
+
+Il y a de nombreuses directives mais dans cette introduction je ne présenterai que celles utilisée dans **mona.asm**.
+
+### Définition de constantes
+
+Les constantes numériques sont des noms symboliques assignées à certaines valeurs. Plutôt que d'utiliser ces valeurs numérique directement dans le programme il est préférable de leur donner un nom. Un nom c'est plus significatif qu'un simple chiffre. De plus si cette valeur est utilisée à plusieurs endroits dans le programme et qu'on veut la modifier il suffit de la faire dans la définition de son symbole. De plus comme un même entier peut avoir plusieurs significations leur donner un nom permet de les distinguer et d'éviter des erreurs. exemple:
+```
+TIB_SIZE = 80 ; grandeur du tampon tib.
+PAD_SIZE = 80 ; grandeur du tampon pad.
+```
+On a ici un exemple du même entier désigant deux choses différentes. Puisqu'on les a nommé différemment on peut modifié l'une sans qu'il y est confusion. Chaque fois que l'assembleur rencontre l'un de ces symbole dans le texte il le remplace par sa valeur.
+
+Après le signe **=** on peut utiliser une expression arithmétique pour définir la valeur de la constante. Cette expession peut contenir des constantes définies auparavant.
+
+### Les macros
+
+SDAS supporte un langage de macros. Les macros sont des blocs d'instructions auquel on associe un nom. Lorsque l'assembleur rencontre ce nom dans le texte il le remplace par les instructions qui font parties de la définition de la macro. Les macros peuvent avoir des arguments mais je n'aborderai pas cette notion dans cette introduction. Exemple:
+```
+		.macro _ledenable ; set PC5 as push-pull output fast mode
+		bset PC_CR1,#LED2_BIT
+		bset PC_CR2,#LED2_BIT
+		bset PC_DDR,#LED2_BIT
+		.endm
+```
+La définition d'une macro débute par la directive **.macro** et se termine par la directive **.endm**. La directive **.macro** est suivie du nom de la macro et possiblement par une liste d'argument. Dans cet exemple chaque fois que l'assembleur va rencontré dans le texte le mot **_ledenable** il va remplacé ce mot par les 3 instructions suivantes:
+```
+		bset PC_CR1,#LED2_BIT
+		bset PC_CR2,#LED2_BIT
+		bset PC_DDR,#LED2_BIT
+```
+
+### Les données
+
+Un programme comprend des instructions et des données. Certaines de ces données prennent différentes valeurs lors de l'exécution du programme, on les appelles donc des **variables**. D'autres données sont ne varient pas on les appelle donc **constantes**. 
+
+#### variables
+Les variables sont conservée en mémoire RAM et puisque le contenu de la mémoire RAM est perdu lorsqu'on éteint le microcontrôleur ces variables ne peuvent pas être initialisées lors de la programmation du microcontrôleur. On doit donc prévoir leur initialisation au démarrage. Exemple:
+```
+	.area DATA
+tib:	.blkb TIB_SIZE ; transaction input buffer
+pad:	.blkb PAD_SIZE ; working pad
+```
+La directive **.area** indique à l'assembleur qu'on débute une nouvelle section. Le nom **DATA** indique qu'il s'agit d'un section de variables. Donc l'assembleur ne va pas réserver d'espace dans la mémoire flash pour ces variables il va simplement ajouter leur nom à une table de symboles ainsi que l'espace requis par chacune d'elle ainsi qu'une adresse dans la RAM qui sera utilisé lors de la génération du code machine lorsqu'un de ces symbole sera référencé. La directive **.blkb** sert à réserver un certain nombre d'octets pour cette variable. On voit qu'on utilise les constantes définies auparavant pour ce faire. 
+
+#### constantes
+Puisque les constantes gardent la même valeur en permanence elles peuvent être sauvegardées dans la mémoire FLASH avec les instructions programmes. À cet effet on leur réserve l'espace nécessaire et leur valeur est enregistrée par le programmeur en même temps que le code machine. Exemple:
+```
+;------------------------
+; messages strings
+;------------------------	
+VERSION:	.asciz "MONA VERSION 0.1\nstm8s208rb     memory map\n---------------------------\n"
+RAM_FREE_MSG: .asciz "ram free: "
+```
+Ici il s'agit de constantes de type chaîne de caractères. Pour pouvoir les référencer il faut les identifier par une étiquette. La première constante s'appelle donc **VERSION** et la deuxième **RAM_FREE_MSG**. la directive **.asciz** place les caractères entre guillemets à l'adresse courante du pointeur de code et ajoute un **0** à la fin. Si j'utilise la commande **h** de MONA pour examiner le contenu de la mémoire FLASH à l'adresse où sont enregistrés ces constantes voici ce qui s'y trouve.
+![constantes chaînes](mona_string.png)
+On voit donc que le *linker* a placé la constante chaîne **VERSION** à l'adresse **$865D**. Et On constate qu'il a bien inséré un **0** à la fin de la chaîne à l'adresse **$86A4**.
+
+Bien sur on peut aussi conserver des constantes numériques dans la mémoire FLASH. On s'en sert souvent pour conserver des tables de constantes.
+
+### Le code machine
+
+Bien sur dans un programme il y les instructions machines (le code) qui est exécuté par le CPU. L'asssembleur permet de créer plusieurs sections pour regrouper les différentes parties du code en les nommant. La directive utilisée est **.area nom opt**.  **nom** est le nom de la section et **opt** détermine les propriétés de la section. Par exemple l'option **(ABS)** stipule que cette section ne peut-être relocalisée par le *linker*. Elle est habituellemen suivie d'une directive **.org addr** qui indiquer à qu'elle adresse elle doit-être localisée.
+
+#### Format des instructions machine
+ Il y a une instruction machine par ligne. Une instruction machine peut-être précédée par une étiquette qui représente une adresse de branchement par exemple le point d'entré d'une sous-routine. 
+ Une instruction débute par le mnémoniquqe qui représente cette instruction.
+ Pour connaître les mnémoniques des instructions du STM8 il faut consulter le manuel de référence de programmation mentionné ci-haut. Le mnénomique peut-être suivit par une liste d'arguments. Les arguments sont séparés par la virgule. Exemple:
+ ```
+init0:
+	; initialize SP
+	ldw x,#STACK_TOP
+	ldw sp,x
+	call clock_init
+	call clear_all_free_ram
+ ```
+Ces quelques lignes de code représente le début de la routine d'initialisation de MONA. L'étiquette **init0** est le nom de cette routine et est utilisée par l'assembleur pour localiser cette routine. Notez que l'étiquette peut-être sur une ligne seule. Il n'est pas nécessaire de mettre une instruction sur la même ligne mais on peut le faire. **ldw** et **call** sont des mnémoniques d'instructions machine. **ldw** requière 2 arguments alors que **call** n'en requiert qu'un seul. On peut ajouter un commentaire à la fin de l'instruction.
+
+### Construction de l'application
+
+Pour simplifier la construction du projet MONA j'ai créer un fichier *Makefile*. Le fichier *Makefile* utilisé a été configuré pour que les fichiers générés par l'assembleur et le linker se retrouve dans le dossier **build**. Il y en a plusieurs mais on a pas vraiment besoin  de les consulter sauf peut-être le fichier [build/mona.lst](build/mona.lst) si on veut voir de quoi à l'air le code machine généré par l'assembleur.
+
+Voici comment fonctionne la construction d'un projet. À partir d'un shell de commande on invoke simplement la commande **make**. S'il n'y a pas d'erreur et qu'on veut programmer la carte NUCLEO-8S208RB on fait la commande **make flash**.
+![construction du projet](construction_mona.png)
+
+L'assembleur transforme le fichier source en un fichier de code binaire mais avec des adresses relatives [build/mona.rel](build/mona.rel) et génère aussi un listing appellé [build/mona.lst](build/mona.lst). Ensuite le linker (générateur de liens) utilise ces fichiers pour générer le fichier [build/mona.ihx](build/mona.ihx) qui contient le code binaire en format **Intel Hex** utilisé pour programmer le microcontrôleur. Le projet MONA contient un seul fichier source mais dans un projet plus complexe il y a plusieurs fichiers sources qui sont assemblés indépendemment les uns des autres et génèrent chacun des fichiers __*.rel__ et __*.lst__. Le travail du linker est de joindre tous ces bouts de codes ensemble en évitant les conflits d'adresses. S'il  n'y arrive pas il affiche un message d'erreur d'allocation.
 
 
-## mona.asm
+## Étude de mona.asm
 
 ### Entête de module
 ```
@@ -348,7 +447,7 @@ init0:
 	ld yl,a
 	ldw flash_free_base,y
 ```
-La routine **init0** est le point d'entrée de MONA. C'est ici que le vecteur RESET fait un saut lors du démarrage du MCU.  La première opération consiste à initialiser le pointeur de pile **SP**. Ensuite on s'assure que les interruptions sont déscativées en invoquant la macro **_no_interrupts**. Suit un appel à **clock_init** pour commuter de l'oscillateur interne **HSI** vers l'osciallateur externe **HSE**. À partir de là le MCU fonctionne à **8 Mhz**. Ensuite on appel **clear_all_free_ram** pour mettre toute la RAM à zéro. J'ignore les instructions commentées. On met la valeur **255** dans la variable **rx_char** qui contient le dernier caractère reçu par le UART3. La valeur 255 signifie qu'il n'y a pas de caractère reçu. On appel ensuite **uart3_init** pour initialiser le périphérique de communication.
+La routine **init0** est le point d'entrée de MONA. C'est ici que le vecteur RESET fait un saut lors du démarrage du MCU.  La première opération consiste à initialiser le pointeur de pile **SP**.  Suit un appel à **clock_init** pour commuter de l'oscillateur interne **HSI** vers l'osciallateur externe **HSE**. À partir de là le MCU fonctionne à **8 Mhz**. Ensuite on appel **clear_all_free_ram** pour mettre toute la RAM à zéro. J'ignore les instructions commentées. On met la valeur **255** dans la variable **rx_char** qui contient le dernier caractère reçu par le UART3. La valeur 255 signifie qu'il n'y a pas de caractère reçu. On appel ensuite **uart3_init** pour initialiser le périphérique de communication.
 
 Sur la carte la **LED2** est branchée à la pin 5 du port C. Il faut donc initialiser cette pin en mode sortie. C'est ce qui est fait par l'invocation de la macro **_ledenable**. Ensuite on s'assure que la LED est éteinte en invoquant la macro **_ledoff**.  Notez que j'utilise le caractère **'_'** comme premier caractère des noms de macros. Ça me permet de savoir au premier coup d'oeil qu'il s'agit bien d'une macro.
 
