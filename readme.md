@@ -6,8 +6,8 @@ De plus des projets pour cette carte peuvent-être développés en utilisant l'I
 
 ![carte NUCLEO-8S208RB](docs/images/carte.png)
 ## organisation
-* **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles. Il contient aussi le sous dossier **images** qui contient les images qui sont affichées dans les différents fichiers __*.md__.
-* **build**  Tous les fichiers générés pendant la construction d'un programme sont déposé dans ce répertoire.
+* **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles.
+* **docs/images**   Contient les images qui sont affichées dans les différents fichiers __*.md__.
 * **hal**  Ce dossier contient le code source en **C** pour la couche d'abstraction matérielle des différents périphériques.
 * **inc** Contient les fichiers d'entête __*.h__ et d'assembleur __*.inc__ d'usage pour les différents projets. Par exemple les fichiers __*.c__ qui sont dans **hal** ont un fichier correspondant __*.h__ ici.
 * Tous les autres dossiers correspondent à un programme. Chacun d'eux contient les fichiers sources, un Makefile et des fichiers de documentations spécifiques au programme. Chacun d'eux devrait avoir un fichier **readme.md** qui s'affichera automatiquement lors de l'ouverture du dossier sur https://github.com/picatout/stm8_nucleo.
