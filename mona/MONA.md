@@ -31,7 +31,7 @@ Cette directive indique à l'assembleur que le pointeur de code doit-être posit
 
 Il y a de nombreuses directives mais dans cette introduction je ne présenterai que celles utilisée dans **mona.asm**.
 
-### Définition de constantes
+### Définition de constantes utilisées par l'assembleur
 
 Les constantes numériques sont des noms symboliques assignées à certaines valeurs. Plutôt que d'utiliser ces valeurs numérique directement dans le programme il est préférable de leur donner un nom. Un nom c'est plus significatif qu'un simple chiffre. De plus si cette valeur est utilisée à plusieurs endroits dans le programme et qu'on veut la modifier il suffit de la faire dans la définition de son symbole. De plus comme un même entier peut avoir plusieurs significations leur donner un nom permet de les distinguer et d'éviter des erreurs. exemple:
 ```
@@ -72,7 +72,8 @@ pad:	.blkb PAD_SIZE ; working pad
 ```
 La directive **.area** indique à l'assembleur qu'on débute une nouvelle section. Le nom **DATA** indique qu'il s'agit d'un section de variables. Donc l'assembleur ne va pas réserver d'espace dans la mémoire flash pour ces variables il va simplement ajouter leur nom à une table de symboles ainsi que l'espace requis par chacune d'elle ainsi qu'une adresse dans la RAM qui sera utilisé lors de la génération du code machine lorsqu'un de ces symbole sera référencé. La directive **.blkb** sert à réserver un certain nombre d'octets pour cette variable. On voit qu'on utilise les constantes définies auparavant pour ce faire. 
 
-#### constantes
+#### constantes utilisées par le programme.
+
 Puisque les constantes gardent la même valeur en permanence elles peuvent être sauvegardées dans la mémoire FLASH avec les instructions programmes. À cet effet on leur réserve l'espace nécessaire et leur valeur est enregistrée par le programmeur en même temps que le code machine. Exemple:
 ```
 ;------------------------
@@ -256,7 +257,7 @@ La directive **.byte** sert à initialiser la mémoire avec les valeurs indiqué
 		TIB_SIZE = 80 ; transaction input buffer size
 		PAD_SIZE = 80 ; workding pad size
 ```
-Il est toujours préférable de donner des noms aux constantes utilisées dans un programme pour deux raisons. La première est que si vous utiliser cette contante à plusieurs endroits dans votre code et que pour une raison ou une autre vous devez changer sa valeur vous n'avez qu'à changer la valeur assigner au symbole. Dans le cas contraire il vous faudra lire tout votre code pour remplacer la valeur numérique à chaque endroit où vous l'avez utilisée. La deuxième raison est qu'un symbole ça donne de l'information alors qu'un chiffre ne dit pas grand chose. De plus le même chiffre peut-être utilisé pour diverses significations. Imaginez qu'au lieu de définir les constantes **TIB_SIZE** et **PAD_SIZE** vous avez utilisé la valeur **80** dans votre code. Maintenant vous décider d'augmenter la grandeur du tampon **tib**. Il ne faut pas vous tromper et remplacer les **80** qui sont utilisés pour désigner la grandeur du **pad**. Vous ne risquez pas de faire cette erreur ici car tout ce que vous avez à faire est de remplacer le **80** qui suis le signe **=** dans la définition de **TIB_SIZE**.
+Il s'agit ici de constantes utilisées par l'assembleur. À ne pas confondre avec les constantes utilisées par le programme (voir plus bas). Il est toujours préférable de donner des noms aux constantes utilisées dans un programme pour deux raisons. La première est que si vous utiliser cette contante à plusieurs endroits dans votre code et que pour une raison ou une autre vous devez changer sa valeur vous n'avez qu'à changer la valeur assigner au symbole. Dans le cas contraire il vous faudra lire tout votre code pour remplacer la valeur numérique à chaque endroit où vous l'avez utilisée. La deuxième raison est qu'un symbole ça donne de l'information alors qu'un chiffre ne dit pas grand chose. De plus le même chiffre peut-être utilisé pour diverses significations. Imaginez qu'au lieu de définir les constantes **TIB_SIZE** et **PAD_SIZE** vous avez utilisé la valeur **80** dans votre code. Maintenant vous décider d'augmenter la grandeur du tampon **tib**. Il ne faut pas vous tromper et remplacer les **80** qui sont utilisés pour désigner la grandeur du **pad**. Vous ne risquez pas de faire cette erreur ici car tout ce que vous avez à faire est de remplacer le **80** qui suis le signe **=** dans la définition de **TIB_SIZE**.
 
 ### Variables de l'application
 
