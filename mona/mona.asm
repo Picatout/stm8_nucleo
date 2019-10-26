@@ -232,7 +232,6 @@ init0:
 	; initialize SP
 	ldw x,#STACK_TOP
 	ldw sp,x
-	_no_interrupts
 	call clock_init
 	call clear_all_free_ram
 ;	clr ticks
@@ -332,8 +331,6 @@ NonHandledInterrupt:
 ; uart3 receive interrupt service
 ;------------------------------------
 uart_rx_isr:
-; use A so preserve it.
-    push a
 ; test uart status register
 ; bit RXNE must 1
 ; bits OR|FE|NF must be 0	
@@ -347,7 +344,7 @@ uart_rx_isr:
 	btjf rx_status,#UART_SR_RXNE,1$
 	ld a,(0,sp)
     ld rx_char,a
-1$: pop a
+1$: 
 	iret
 
 ;------------------------------------
@@ -428,8 +425,15 @@ del_loop:
 	ret 
 
 ;------------------------------------
-; lecture d'une ligne de texte
-; dans le tib
+; read a line of text from terminal
+; input:
+;	none
+; local variable on stack:
+;	LEN (1,sp)
+;   RXCHAR (2,sp)
+; output:
+;   text in tib  buffer
+;   len in count variable
 ;------------------------------------
 readln:
 	; local variables
