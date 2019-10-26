@@ -1302,7 +1302,7 @@ Le premier mot de ligne de commande doit-être un des caractères reconnnu comme
 Puisque les commandes sont constituées d'un seul caractère il suffit de mettre ce caractère dans **A** et ensuite de comparer cette valeur avec chacun des caractères reconnus. Lorsque le caractère est reconnu un saut vers la routine qui est responsable d'exécuté cette commande est effectué.
 C'est la commande elle-même qui complète l'analyse de la ligne puisque chaque commande connais les arguments dont elle a besoin.
 
-### Routine d'exécution des commanes
+### Routine d'exécution des commandes
 ```
 ;------------------------------------
 ; fetch a byte and display it,  @  addr
