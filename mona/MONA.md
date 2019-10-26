@@ -1534,6 +1534,8 @@ Les constantes utilisées à l'exécution (run time CONSTANTS) sont inscrite dan
 * **.asciz** est une directive utilisée pour définir une constante chaîne de caractère terminée par un **0**.
 * **.ascii** est une directive utilisée pour définir uen constante chaîne de caractère qui n'est pas terminée par un **0**. Cette directive est utile pour définir une chaîne trop longue pour tenir sur une seule ligne. Les chaînes **EEPROM_MSG** et **HELP** utilise cette façon de faire. La dernière ligne du message utilise la directive **.asciz** pour terminer la chaîne par un **0**. **uart_print** peut ainsi imprimer un message de plusieurs ligne en un seul appel. Notez que toutes les chaînes se termine par **\n** pour forcer une retour à la ligne sur la console.
 
+### Conclusion
+
 Comme il s'agit d'un tutoriel sur SDAS et non sur les instructions machines du STM8 je n'explique pas la signification des instructions machine. Pour ça il faut consulter le [manuel de programmation du STM8](../docs/pm0044_stm8_programming.pdf).
 
 Ce tutoriel n'est qu'une introduction. Encore la pour compléter ce tutoriel et il faut consulter le document [manuel de sdas et du linker](../docs/asmlnk.txt).
