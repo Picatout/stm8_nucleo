@@ -536,21 +536,30 @@ NonHandledInterrupt:
 ; uart3 receive interrupt service
 ;------------------------------------
 uart_rx_isr:
+; local variables
+  UART_STATUS = 2
+  UART_DATA = 1
+; read uart registers and save them in local variables  
+  ld a, UART3_SR
+  push a  ; local variable UART_STATUS
+  ld a,UART3_DR
+  push a ; local variable UART_DATA
 ; test uart status register
 ; bit RXNE must 1
 ; bits OR|FE|NF must be 0	
-    ld a, UART3_SR
-	ld rx_status,a
-	ld a,UART3_DR
-	ld (0,sp),a
-	ld a, rx_status
-	and a, #((1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
-	jrne 1$
-	btjf rx_status,#UART_SR_RXNE,1$
-	ld a,(0,sp)
-    ld rx_char,a
+  ld a, (UART_STATUS,sp)
+; keep only significant bits
+  and a, #((1<<UART_SR_RXNE)|(1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
+; A value shoudl be == (1<<UART_SR_RNXE)  
+  cp a, #(1<<UART_SR_RXNE)
+  jrne 1$
+; no receive error accept it.  
+  ld a,(UART_DATA,sp)
+  ld rx_char,a
 1$: 
-	iret
+; drop local variables
+  popw X	
+  iret
 ```
 
 En fait il n'y en a qu'une d'utilisée par cette version de MONA. la routine **timer4_isr:** a été mise en commentaire car elle n'est pas utilisée. La routine **NonHandledInterrupt:** réinitialise le MCU. En effet en écrivant la valeur **0x80** dans le registre **WWDG_CR** (Window Watchdog control register) on provoque une réinitialisation du MCU. Il me semble logique de réinitialiser le MCU lorsqu'une interruption non gérée est provoquée car ça ne peut-être du qu'à une erreur de programmation.
