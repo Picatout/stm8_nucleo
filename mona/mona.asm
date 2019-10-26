@@ -106,7 +106,6 @@
 ;ticks  .blkw 1 ; system ticks at every millisecond        
 ;cntdwn:	.blkw 1 ; millisecond count down timer
 rx_char: .blkb 1 ; last uart received char
-rx_status: .blkb 1 ; store last UART_SR read
 in.w:     .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
 in:		.blkb 1; parser position in tib
 count:  .blkb 1; length of string in tib
@@ -331,21 +330,30 @@ NonHandledInterrupt:
 ; uart3 receive interrupt service
 ;------------------------------------
 uart_rx_isr:
+; local variables
+  UART_STATUS = 2
+  UART_DATA = 1
+; read uart registers and save them in local variables  
+  ld a, UART3_SR
+  push a  ; local variable UART_STATUS
+  ld a,UART3_DR
+  push a ; local variable UART_DATA
 ; test uart status register
 ; bit RXNE must 1
 ; bits OR|FE|NF must be 0	
-    ld a, UART3_SR
-	ld rx_status,a
-	ld a,UART3_DR
-	ld (0,sp),a
-	ld a, rx_status
-	and a, #((1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
-	jrne 1$
-	btjf rx_status,#UART_SR_RXNE,1$
-	ld a,(0,sp)
-    ld rx_char,a
+  ld a, (UART_STATUS,sp)
+; keep only significant bits
+  and a, #((1<<UART_SR_RXNE)|(1<<UART_SR_OR)|(1<<UART_SR_FE)|(1<<UART_SR_NF))
+; A value shoudl be == (1<<UART_SR_RNXE)  
+  cp a, #(1<<UART_SR_RXNE)
+  jrne 1$
+; no receive error accept it.  
+  ld a,(UART_DATA,sp)
+  ld rx_char,a
 1$: 
-	iret
+; drop local variables
+  popw X	
+  iret
 
 ;------------------------------------
 ;  serial port communication routines

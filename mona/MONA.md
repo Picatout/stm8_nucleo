@@ -83,6 +83,7 @@ RAM_FREE_MSG: .asciz "ram free: "
 ```
 Ici il s'agit de constantes de type chaîne de caractères. Pour pouvoir les référencer il faut les identifier par une étiquette. La première constante s'appelle donc **VERSION** et la deuxième **RAM_FREE_MSG**. la directive **.asciz** place les caractères entre guillemets à l'adresse courante du pointeur de code et ajoute un **0** à la fin. Si j'utilise la commande **h** de MONA pour examiner le contenu de la mémoire FLASH à l'adresse où sont enregistrés ces constantes voici ce qui s'y trouve.
 ![constantes chaînes](mona_string.png)
+
 On voit donc que le *linker* a placé la constante chaîne **VERSION** à l'adresse **$865D**. Et On constate qu'il a bien inséré un **0** à la fin de la chaîne à l'adresse **$86A4**.
 
 Bien sur on peut aussi conserver des constantes numériques dans la mémoire FLASH. On s'en sert souvent pour conserver des tables de constantes.
@@ -110,6 +111,7 @@ Ces quelques lignes de code représente le début de la routine d'initialisation
 Pour simplifier la construction du projet MONA j'ai créer un fichier *Makefile*. Le fichier *Makefile* utilisé a été configuré pour que les fichiers générés par l'assembleur et le linker se retrouve dans le dossier **build**. Il y en a plusieurs mais on a pas vraiment besoin  de les consulter sauf peut-être le fichier [build/mona.lst](build/mona.lst) si on veut voir de quoi à l'air le code machine généré par l'assembleur.
 
 Voici comment fonctionne la construction d'un projet. À partir d'un shell de commande on invoke simplement la commande **make**. S'il n'y a pas d'erreur et qu'on veut programmer la carte NUCLEO-8S208RB on fait la commande **make flash**.
+
 ![construction du projet](construction_mona.png)
 
 L'assembleur transforme le fichier source en un fichier de code binaire mais avec des adresses relatives [build/mona.rel](build/mona.rel) et génère aussi un listing appellé [build/mona.lst](build/mona.lst). Ensuite le linker (générateur de liens) utilise ces fichiers pour générer le fichier [build/mona.ihx](build/mona.ihx) qui contient le code binaire en format **Intel Hex** utilisé pour programmer le microcontrôleur. Le projet MONA contient un seul fichier source mais dans un projet plus complexe il y a plusieurs fichiers sources qui sont assemblés indépendemment les uns des autres et génèrent chacun des fichiers __*.rel__ et __*.lst__. Le travail du linker est de joindre tous ces bouts de codes ensemble en évitant les conflits d'adresses. S'il  n'y arrive pas il affiche un message d'erreur d'allocation.
