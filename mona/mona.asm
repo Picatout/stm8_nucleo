@@ -193,7 +193,7 @@ clock_init:
 ;	ld TIM4_CR1,a
 ;	ret
 
-	; initialize UART3, 115200 8N1
+; initialize UART3, 115200 8N1
 uart3_init:
 ;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
 	; configure tx pin

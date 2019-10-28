@@ -1354,7 +1354,7 @@ Hexadecimal [24-Bits]
                                     193 ;	ld TIM4_CR1,a
                                     194 ;	ret
                                     195 
-                                    196 	; initialize UART3, 115200 8N1
+                                    196 ; initialize UART3, 115200 8N1
       00000F                        197 uart3_init:
                                     198 ;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
                                     199 	; configure tx pin

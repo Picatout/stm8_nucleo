@@ -14,12 +14,12 @@ FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
-OBJECTS=$(BUILD)mona.rel
+OBJECTS=$(BUILD)stm8ef.rel
 SYMBOLS=$(OBJECTS:.rel=.sym)
-ASMS=$(OBJECTS:.rel=.asm)
+ASMS=$(OBJECTS:.rel=.as)
 LISTS=$(OBJECTS:.rel=.lst)
 RSTS=$(OBJECTS:.rel=.rst)
-TARGET=$(BUILD)mona.ihx
+TARGET=$(BUILD)stm8ef.ihx
 MAP=$(TARGET:.ihx=.map)
 LK=$(TARGET:.ihx=.lk)
 CDB=$(TARGET:.ihx=.cdb)
@@ -35,12 +35,12 @@ flash: $(TARGET)
 	@echo "***************"
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
-%.rel: mona.asm  $(INC)stm8s208.inc
+%.rel: stm8ef.as $(INC)stm8s208.inc
 	@echo
 	@echo "***************"
 	@echo "   assembling  "
 	@echo "***************"
-	$(SDAS) -g -l -o $(BUILD)mona.rel mona.asm 
+	$(SDAS) -g -l -o $(BUILD)stm8ef.rel stm8ef.as 
 	
 $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo
