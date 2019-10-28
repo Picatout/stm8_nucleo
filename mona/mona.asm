@@ -8,6 +8,13 @@
 	.page
 
 ;-------------------------------------------------------
+; History:
+;	2019-10-28  starting work on version 0.2 to remove
+; 				version 0.1 adressing limitation.
+;
+;-------------------------------------------------------
+
+;-------------------------------------------------------
 ;     vt100 CTRL_x  values
 ;-------------------------------------------------------
 		CTRL_A = 1
@@ -99,6 +106,10 @@
 		STACK_TOP = RAM_SIZE-1 ; stack top at end of ram
 		TIB_SIZE = 80 ; transaction input buffer size
 		PAD_SIZE = 80 ; workding pad size
+		; vesrion major.minor
+		VERS_MAJOR = 0 ; major version number
+		VERS_MINOR = 2 ; minor version number
+
 ;--------------------------------------------------------
 ;   application variables 
 ;---------------------------------------------------------		
@@ -113,7 +124,8 @@ idx_x:  .blkw 1; index for table pointed by x
 idx_y:  .blkw 1; index for table pointed by y
 tib:	.blkb TIB_SIZE ; transaction input buffer
 pad:	.blkb PAD_SIZE ; working pad
-acc16:  .blkw 1; 16 bits accumulator
+acc24:  .blkb 3; 24 bits accumulator
+addr24: .blkb 3; 24 bits adress pointer.
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
 
@@ -616,12 +628,101 @@ strcpyn:
 2$: clr ([idx_y],y)
 	pop a
 	ret
-		
+
+;------------------------------------
+; unsigned multiply uint24_t by uint8_t
+; input:
+;	U24		argument on stack
+;   U8		in A
+; output:
+;   product   on stack replace U24 input
+;-------------------------------------
+; offset  on sp of arguments and locals
+	U24U = 8   ; U24 most significant byte
+	U24M = 9   ; U24 middle byte
+	U24L = 10  ; U24 lowest significant byte
+	U8   = 3   ; A pushed on stack
+	OVFL = 2  ; multiplicaton overflow low byte
+	OVFH = 1  ; multiplication overflow high byte, always 0
+mulu24_8:
+	pushw x   
+	push a     ; U8
+	clrw x     ; initialize overflow to 0
+	pushw x    ; multiplication overflow
+; multiply low byte.
+	ld a,(U24L,sp)
+	ld xl,a
+	ld a,(U8,sp)
+	mul x,a
+	ld a,xl
+	ld (U24L,sp),a
+	ld a, xh
+	ld (OVFL,sp),a
+; multipy second byte
+	ld a,(U24M,sp)
+	ld xl,a
+	ld a, (U8,sp)
+	mul x,a
+; add overflow to this partial product
+	addw x,(OVFH,sp)
+	ld a,xh
+	adc a,#0
+	ld (OVFL,sp),a
+	ld a, xl
+	ld (U24M,sp),a
+; multiply most signficant digit	
+	ld a, (U24U,sp)
+	ld xl, a
+	ld a, (U8,sp)
+	mul x,a
+	addw x, (OVFH,sp)
+	ld a, xl
+	ld (U24U,sp),a
+    addw sp,#3
+	popw x
+	ret
+
+;-------------------------------------
+; divide uint24_t by uint8_t
+; used to convert uint24_t to string
+; input:
+;	addr24    divident uint24_t
+;   A         divisor
+; output:
+;   addr24    quotient
+;   A         remainder  
+;------------------------------------- 
+divu24_8:
+	pushw x
+	push a ; save divisor
+	ldw x,#addr24
+; check if divident is 0
+	ld a,(x)
+	or a,(1,x)
+	or a,(2,x)
+	jreq 9$ ; divident==0
+; divide 16 most significant bits
+	ldw y,addr24
+	ld a,(1,sp)
+	div y,a
+	ldw (x),Y
+	ld yh,a
+	ld a,(2,x)
+	ld yl,a
+	ld a,(1,sp)
+	div y,a
+	ld (1,sp),a
+	ld a,yl
+	ld (2,x),a
+9$:	pop a
+	popw x
+	ret
+
 ;------------------------------------
 ; convert integer to string
 ; input:
 ;   a  base
-;	y  integer to convert
+;	addr24  integer to convert
 ; output:
 ;   y  pointer to string
 ;------------------------------------
@@ -634,21 +735,21 @@ itoa:
 	push #0 ; sign
 	cp a,#10
 	jrne 1$
-	ldw acc16,y
-	btjf acc16,#7,1$
+	ldw acc24,y
+	btjf acc24,#7,1$
 	cpl (SIGN,sp)
 	negw y
 	; initialize string pointer 
 1$:	ldw x,#PAD_SIZE-1
-	ldw acc16,x
+	ldw acc24,x
 	ldw x,#pad
-	addw x,acc16
+	addw x,acc24
 	clr (x)
 	decw x
 	ld a,#SPACE
 	ld (x),a
-	clr acc16
-	clr acc16+1
+	clr acc24
+	clr acc24+1
 itoa_loop:
     ld a,(BASE,sp)
     div y,a
@@ -658,11 +759,11 @@ itoa_loop:
     add a,#7 
 2$: decw x
     ld (x),a
-    cpw y,acc16
+    cpw y,acc24
     jrne itoa_loop
 	; copy string pointer in y
-    ldw acc16,x
-    ldw y,acc16
+    ldw acc24,x
+    ldw y,acc24
 	ld a,(BASE,sp)
 	cp a,#16
 	jrne 9$
@@ -699,20 +800,20 @@ itoa_loop:
 ;------------------------------------
 mul16x8:
 	pushw x ; save x
-	ldw x, acc16 ; save it
+	ldw x, acc24 ; save it
 	pushw x
 	ldw x,y
 	mul x,a ; a*yl
-	ldw acc16,x
+	ldw acc24,x
 	swapw y
 	mul y,a ; a*yh
 	; y*=256
 	swapw y
 	clr a
 	ld yl,a
-	addw y,acc16
-	popw x ; restore acc16
-	ldw acc16,x
+	addw y,acc24
+	popw x ; restore acc24
+	ldw acc24,x
 	popw x ; restore x
 	ret
 
@@ -824,9 +925,9 @@ atoi:
 	ld a,(BASE,sp)
 	call mul16x8
 	ld a,(TEMP,sp)
-	ld acc16+1,a
-	clr acc16
-	addw y,acc16
+	ld acc24+1,a
+	clr acc24
+	addw y,acc24
 	jra 2$
 9$:	tnz (SIGN,sp)
     jreq 11$
@@ -1168,7 +1269,7 @@ move_memory:
     call number
     pushw y  ; destination
     call number 
-    ldw acc16,y ; counter
+    ldw acc24,y ; counter
     ldw x,(SRC,sp)  ; source
 move_loop:
     ldw y,(DEST,sp)  ; destination
@@ -1177,9 +1278,9 @@ move_loop:
     incw x
     incw y
     ldw (DEST,sp),y
-    ldw y,acc16
+    ldw y,acc24
     decw y
-    ldw acc16,y
+    ldw acc24,y
     jrne move_loop
     addw sp,#LOCAL_SIZE
     ret
