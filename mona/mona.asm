@@ -125,7 +125,6 @@ idx_y:  .blkw 1; index for table pointed by y
 tib:	.blkb TIB_SIZE ; transaction input buffer
 pad:	.blkb PAD_SIZE ; working pad
 acc24:  .blkb 3; 24 bits accumulator
-addr24: .blkb 3; 24 bits adress pointer.
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
 
@@ -629,8 +628,9 @@ strcpyn:
 	pop a
 	ret
 
-;------------------------------------
+;--------------------------------------
 ; unsigned multiply uint24_t by uint8_t
+; use to convert numerical string to uint24_t
 ; input:
 ;	U24		argument on stack
 ;   U8		in A
@@ -686,35 +686,57 @@ mulu24_8:
 ; divide uint24_t by uint8_t
 ; used to convert uint24_t to string
 ; input:
-;	addr24    divident uint24_t
-;   A         divisor
+;	U24		argument on stack
+;   U8		argument on stack
 ; output:
-;   addr24    quotient
-;   A         remainder  
+;   quotient   	on stack replace U24 input
+;   A			remainder
 ;------------------------------------- 
+; offset  on sp of arguments and locals
+	U24U = 6   ; U24 most significant byte
+	U24M = 7   ; U24 middle byte
+	U24L = 8  ; U24 lowest significant byte
+	U8   = 5   ; divisor on stack
 divu24_8:
+	pushw x ; save x
+	ldw x, (U24U,sp)
+	ld a,(U8,sp)
+	div x,a
+	ldw (U24U,sp),x
+	ld xh,a
+	ld a,(U24L,sp)
+	ld xl,a
+	ld a,(U8,sp)
+	div x,a
+	ld xh,a
+	ld a,xl
+	ld (U24L,sp),a
+	pop a
+	popw x
+	ret
+
+;------------------------------------
+;  two's complement acc24
+;  input:
+;		acc24 variable
+;  output:
+;		acc24 variable
+;-------------------------------------
+cpl2_acc24:
 	pushw x
-	push a ; save divisor
-	ldw x,#addr24
-; check if divident is 0
-	ld a,(x)
-	or a,(1,x)
-	or a,(2,x)
-	jreq 9$ ; divident==0
-; divide 16 most significant bits
-	ldw y,addr24
-	ld a,(1,sp)
-	div y,a
-	ldw (x),Y
-	ld yh,a
-	ld a,(2,x)
-	ld yl,a
-	ld a,(1,sp)
-	div y,a
-	ld (1,sp),a
-	ld a,yl
+	ldw x,#acc24
+	cpl (0,x)
+	cpl (1,x)
+	cpl  (2,x)
+	ld a,#1
+	add a,(2,x)
 	ld (2,x),a
-9$:	pop a
+	clr a
+	adc a,(1,x)
+	ld (1,x),a
+	clr a
+	adc a,(0,x)
+	ld (0,x),a
 	popw x
 	ret
 
@@ -722,25 +744,41 @@ divu24_8:
 ; convert integer to string
 ; input:
 ;   a  base
-;	addr24  integer to convert
+;	acc24  integer to convert
 ; output:
 ;   y  pointer to string
 ;------------------------------------
 itoa:
-	SIGN=1
-	BASE=2
-	LOCAL_SIZE=2
+	SIGN=1  ; local variable 
+	BASE=2  ; local variable
+;   U24 local variable 	
+	U24U=3  ; upper byte
+	U24M=4  ; middle byte 
+	U24L=5  ; lower byte 
+	LOCAL_SIZE=5  ;locals size
 	pushw x
-	push a  ; base
-	push #0 ; sign
+	ldw x,sp
+	subw x,#LOCAL_SIZE
+	ldw sp,x
+	ld (BASE,sp), a  ; base
+	clr (SIGN,sp) ; sign
 	cp a,#10
 	jrne 1$
-	ldw acc24,y
 	btjf acc24,#7,1$
-	cpl (SIGN,sp)
-	negw y
-	; initialize string pointer 
-1$:	ldw x,#PAD_SIZE-1
+	ld a,0xff
+	ld (SIGN,sp),a
+	call cpl2_acc24
+1$:
+;   push acc24 , U24U argument for divu24_8
+	ldw x, #acc24
+	ld a,(2,x)
+	ld (U24L,sp),a
+	ld a,(1,x)
+	ld (U24M,sp),a
+	ld a,(0,x)
+	ld (U24L,sp),a	
+; initialize string pointer 
+	ldw x,#PAD_SIZE-1
 	ldw acc24,x
 	ldw x,#pad
 	addw x,acc24
