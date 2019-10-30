@@ -1,4 +1,9 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; NUCLEO-8S208RB board specific definitions
+; Date: 2019/10/29
+; author: Jacques Deschênes, copyright 2018,2019
+; licence: GPLv3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; mcu on board is stm8s208rbt6
 

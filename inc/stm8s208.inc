@@ -1,7 +1,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 2019/10/18
 ; STM8S208RB µC registers map
-; sdas file
+; sdas source file
+; author: Jacques Deschênes, copyright 2018,2019
+; licence: GPLv3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.module stm8s208rb
 

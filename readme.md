@@ -1,3 +1,4 @@
+[//]: # (test de commentaire)
 # STM8 Nucleo
 Mes explorations de la carte NUCLEO-8S208RB. Cette carte a des connecteurs (CN4,CN5,CN7 et CN8) qui sont compatible avec les cartes d'extension Arduino.
 Les connecteurs CN1 et CN2 permettent l'installation de cartes d'extension vendu par STMicroelectronics.
@@ -8,8 +9,8 @@ De plus des projets pour cette carte peuvent-être développés en utilisant l'I
 ## organisation
 * **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles.
 * **docs/images**   Contient les images qui sont affichées dans les différents fichiers __*.md__.
-* **hal**  Ce dossier contient le code source en **C** pour la couche d'abstraction matérielle des différents périphériques.
-* **inc** Contient les fichiers d'entête __*.h__ et d'assembleur __*.inc__ d'usage pour les différents projets. Par exemple les fichiers __*.c__ qui sont dans **hal** ont un fichier correspondant __*.h__ ici.
+* **inc** Contient les fichiers d'assembleur __*.inc__ d'usage pour les différents projets. 
+* **chx_nom** pour chaque chapitre du tutoriel est dans son dossier dont le nom a cette forme. Par exemple le dossier **ch1_blink** est le chapitre du tutoriel avec le progamme exemple **blink.asm**. Chacun de ces dossiers contient un fichier **readme.md** qui contient le texte du tutoriel pour ce chapitre. 
 * Tous les autres dossiers correspondent à un programme. Chacun d'eux contient les fichiers sources, un Makefile et des fichiers de documentations spécifiques au programme. Chacun d'eux devrait avoir un fichier **readme.md** qui s'affichera automatiquement lors de l'ouverture du dossier sur https://github.com/picatout/stm8_nucleo.
 ## fichiers à consulter
 * [processeur STM8](stm8.md) pour une brève présentation du cpu STM8
