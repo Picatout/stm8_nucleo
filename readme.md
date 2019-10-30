@@ -1,18 +1,26 @@
-[//]: # (test de commentaire)
+[//]: # (auteur: Jacques Deschênes)
+[//]: # (Date: 2019/10/30)
+[//]: # (Copyright Jacques Deschênes, 2019)
+
 # STM8 Nucleo
-Mes explorations de la carte NUCLEO-8S208RB. Cette carte a des connecteurs (CN4,CN5,CN7 et CN8) qui sont compatible avec les cartes d'extension Arduino.
-Les connecteurs CN1 et CN2 permettent l'installation de cartes d'extension vendu par STMicroelectronics.
+En même temps que j'apprends à programmer les STM8 en assembleur en utilisant **sdasstm8** et la carte  [NUCLEO-8S208RB](https://www.st.com/en/evaluation-tools/nucleo-8s208rb.html), j'ai décidé d'en faire un tutoriel. Cette carte a des connecteurs (CN4,CN5,CN7 et CN8) qui sont compatible avec les cartes d'extension Arduino. Les connecteurs CN1 et CN2 permettent l'installation de cartes d'extension vendu par STMicroelectronics.
 
-De plus des projets pour cette carte peuvent-être développés en utilisant l'IDE Arduido. 
+**sdasstm8** est la version de l'assembleur du projet SDCC (*Small  Device C Compiler*)  qui cible les microcontrôleurs **STM8** de STMicroelectronics.
 
+### La carte NUCLEO-8S208RB utilisée pour ce tutoriel
 ![carte NUCLEO-8S208RB](docs/images/carte.png)
 ## organisation
 * **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles.
 * **docs/images**   Contient les images qui sont affichées dans les différents fichiers __*.md__.
 * **inc** Contient les fichiers d'assembleur __*.inc__ d'usage pour les différents projets. 
-* **chx_nom** pour chaque chapitre du tutoriel est dans son dossier dont le nom a cette forme. Par exemple le dossier **ch1_blink** est le chapitre du tutoriel avec le progamme exemple **blink.asm**. Chacun de ces dossiers contient un fichier **readme.md** qui contient le texte du tutoriel pour ce chapitre. 
-* Tous les autres dossiers correspondent à un programme. Chacun d'eux contient les fichiers sources, un Makefile et des fichiers de documentations spécifiques au programme. Chacun d'eux devrait avoir un fichier **readme.md** qui s'affichera automatiquement lors de l'ouverture du dossier sur https://github.com/picatout/stm8_nucleo.
+* **chx_nom** pour chaque chapitre du tutoriel il y a un dossier dont le nom est de cette forme. Par exemple le dossier **ch1_blink** est le chapitre 1 du tutoriel avec le progamme exemple **blink.asm**. Chacun de ces dossiers contient un fichier **readme.md** qui contient le texte du tutoriel pour ce chapitre. Le contenu du fichier est affiché automatiquement lors qu'on passe d'un dossier à l'autre sur [github](https://github.com/picatout/stm8_nucleo). 
+
+## Tutoriel
+### Chapitre 1 [blink.asm](ch1_blink/readme.md)
+
+
 ## fichiers à consulter
+
 * [processeur STM8](stm8.md) pour une brève présentation du cpu STM8
 * [manuel de programmation du STM8](docs/pm0044_stm8_programming.pdf)
 * [feuillet de spécification du STM8S208](docs/stm8s208rb.pdf)
