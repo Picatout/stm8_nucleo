@@ -222,3 +222,4 @@ l'option **-c stlinkv21** indique que le type et la version du programmeur qui e
 
 ![capture écran](../docs/images/capture_build.png)
 
+Habituellement je cré un fichier Makefile pour simplifier cette procédure.
