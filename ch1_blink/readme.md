@@ -219,4 +219,4 @@ stm8flash -c stlinkv21 -pstm8s208rb -w build/blink.ihx
 ```
 l'option **-c stlinkv21** indique que le type et la version du programmeur qui est sur la carte. l'option **-pstm8s208rb** indique le modèle du MCU à programmer. l'option **-w build/blink.ihx** indique le nom du fichier à programmer.
 ### Capture d'écran des 3 étapes
-![capture écran](capture_prg_build.png)
+![capture écran](./capture_prg_build.png)
