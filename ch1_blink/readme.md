@@ -22,7 +22,7 @@ Ce programme est le plus simple qu'on puisse imanginer mais il va nous permettre
     .include "../inc/nucleo_8s208.inc"
     .include "../inc/stm8s208.inc"
 ```
-La directive **.include** informe l'assembleur qu'il doit suspendre la compilation du fichier courant pour compiler le fichier à inclure. Dans cet exemple 2 fichiers sont inclus, le premier  **"../inc/nucleo_8s208.inc"** qui contient des définitions de constantes d'assembleur spécifique à la carte **NUCLEO-8S208RB**  et le deuxième **"../inc/stm8s208.inc"** contient toutes les constantes définissant les adresses des registres de périphiques ainsi que les noms de bits à l'intérieur de chacun de ces registres. Ces informations sont spécifique au **stm8s208rb**.
+La directive **.include** informe l'assembleur qu'il doit suspendre la compilation du fichier courant pour compiler le fichier à inclure. Dans cet exemple 2 fichiers sont inclus, le premier  **"../inc/nucleo_8s208.inc"** qui contient des définitions de constantes d'assembleur spécifique à la carte **NUCLEO-8S208RB**  et le deuxième **"../inc/stm8s208.inc"** contient toutes les constantes définissant les adresses des registres de périphiques ainsi que les noms de bits à l'intérieur de chacun de ces registres. Ces informations sont spécifique au **stm8s208**.
 
 ### macros
 ```
@@ -48,7 +48,7 @@ La directive **.include** informe l'assembleur qu'il doit suspendre la compilati
 ```
 
 L'assembleur possède un langage de *macros*  ici nous définissons 3 macros.
-Les macros débutes par la directive **.macro** qui est suivit du nom de la macro. La macro se termine par la directive **.endm**.  Lorsqu'une macro est invoquée dans le texte source l'assembleur remplace son nom par les instructions qui se trouvent entre entre les 2 directives. Ici nous avons définit 3 macros **_ledon** pour allumer la LED **_ledoff** pour l'éteindre et **_led_toggle** pour inverser sont état. Dans blink.asm seul les 2 premières sont utilisées. Plus loin je vais montrer comment modifier le programme pour utiliser la 3ième à la place des 2 autres.
+Les macros débutes par la directive **.macro** qui est suivit du nom de la macro. La macro se termine par la directive **.endm**.  Lorsqu'une macro est invoquée dans le texte source l'assembleur remplace son nom par les instructions qui se trouvent entre les 2 directives. Ici nous avons définit 3 macros **_ledon** pour allumer la LED **_ledoff** pour l'éteindre et **_led_toggle** pour inverser sont état. Dans **blink.asm** seul les 2 premières sont utilisées. Plus loin je vais montrer comment modifier le programme pour utiliser la 3ième à la place des 2 autres.
 
 J'utilise le caractère **_** pour débuter le nom des macros, ce qui me permet au premier coup d'oeil de comprendre qu'il s'agit bien d'une macro et nom d'une étiquette.
 
@@ -69,8 +69,8 @@ J'utilise le caractère **_** pour débuter le nom des macros, ce qui me permet 
     .ds STACK_SIZE
 
 ```
-La directive **.area**  sert à définir les différentes sections du programme. Un programme se divise en plusieurs section la section **DATA** est une section de la mémoire **RAM** où sont les variables du programme.
-la section **SSEG** est la section qui contient la pile pointée par le pointeur de pile **SP** du cpu. l'option **(ABS)** indiqué pour la section **SSEG** indique que le linker ne peut déplacer celle-ci. Elle doit débuter obligatoirement à l'adresse indiquée par la directive **.org RAM_EN-STACK_SIZE**. La directive **.ds STACK_SIZE** indique le nombre d'octets qu'on réserve pour la pile. Ce morceau de code nous indique aussi comment on définit des constantes symboliques pour l'assembleur, **STACK_SIZE** et **STACK_TOP**. Chaque fois que l'assembleur rencontre une constante symbolique dans le texte il la remplace par sa valeur.
+La directive **.area**  sert à définir les différentes sections du programme. Un programme se divise en plusieurs sections la section **DATA** est une section de la mémoire **RAM** où sont les variables du programme.
+la section **SSEG** est la section qui contient la pile pointée par le pointeur de pile **SP** du cpu. l'option **(ABS)** indiqué pour la section **SSEG** indique que le linker ne peut déplacer celle-ci. Elle doit débuter obligatoirement à l'adresse indiquée par la directive **.org RAM_END-STACK_SIZE**. La directive **.ds STACK_SIZE** indique le nombre d'octets qu'on réserve pour la pile. Ce morceau de code nous indique aussi comment on définit des constantes symboliques pour l'assembleur, **STACK_SIZE** et **STACK_TOP**. Chaque fois que l'assembleur rencontre une constante symbolique dans le texte il la remplace par sa valeur.
 
 ```
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -112,6 +112,7 @@ la section **SSEG** est la section qui contient la pile pointée par le pointeur
 La section **.area HOME** doit contenir la liste des gestionnaires d'interruption. Le premier vecteur n'est pas vraiment un gestionnaire d'interruption il indique plutôt l'adresse d'entrée du code qui doit-être exécuté après une réinitialisation du MCU. Dans ce cas ci c'est l'étiquette **main** qui est donnée comme point d'entrée. Comme ce programme n'utilise aucune interruption tous les vecteur pointent vers **NonHandledInterrupt** qui a pour effet de réinitialiser le MCU car si une interruption non gérée est déclenchée celà implique soit un bogue dans le programme ou une défectuosité matérielle. La section **HOME** est installée au début de la mémoire FLASH à l'adresse **0x8000**. Chaque vecteur occupe 4 octets. **int** est l'instruction machine utilisée pour lancer les gestionnaires d'interruptions. Lors d'une interruption tous les registres sont sauvegardés sur la pile avant de lancer le gestionnaire. Ça occupe 9 octets sur la pile.
 
 Les 3 sections **DATA**, **SSEG** et **HOME** sont à déclaration obligatoire. Si une section obligatoire n'est pas déclarer le programme peut quand même être assemblé mais le *linker* va terminer avec une erreur.
+
 ```
     .area CODE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,12 +148,12 @@ delay:
     popw x 
     ret 
 ```
-La section **.area CODE** indique une section de code qui sera programmée dans la mémoire FLASH du MCU. Les étiquettes se terminent par le caractère **:**. Ici l'étiquette **main:** indique le point d'entrée après un *reset** du MCU tel qu'indiqué dans le premier vecteur de la table ci-haut. Le nom importe peut on aurait put la nommée **init0:** ou n'importe quoi d'autre.
+La section **.area CODE** indique une section de code qui sera programmée dans la mémoire FLASH du MCU. Les étiquettes se terminent par le caractère **:**. Ici l'étiquette **main:** indique le point d'entrée après un **reset** du MCU tel qu'indiqué dans le premier vecteur de la table ci-haut. Le nom importe peut on aurait put la nommée **init0:** ou n'importe quoi d'autre.
 
 La première étape consiste à initialiser le pointeur de pile **SP**. Ensuite on initialise la broche **5** du port **C** en sortie *push-pull* car c'est la broche qui contrôle la LED2 qui est sur la carte. Comme ces informations sont spécifiques à cette carte **LED2_BIT** et **LED2_MASK** sont définis dans le fichier **nucleo_8s208.inc** alors que **PC_CR1**,**PC_CR2** et **PC_DDR** ainsi que **PC_ODR** sont définis dans **stm8s208.inc** car spécifique au MCU.
 
 A partir de l'étiquette **1$:** c'est la boucle du programme qui commence.
-les étiquettes de la forme **n$:** sont des étiquettes spéciales qui peuvent-être réutilisées. Elles ne sont valide qu'à l'intérieur d'un bloc de code délimité. Comme on le voit ici la première étiquette **1$:** qui apparaît après l'étiquette **main:** n'est valide que jusqu'à l'étiquette **delay:** et l'étiquette **1$:** qui apparaît après **delay:** n'est valide que jusqu'à la rencontre d'une autre étiquette normale. dans ce cas ci c'est
+les étiquettes de la forme **n$:** où **n** est un entier dans l'intervalle [0..65535] sont des étiquettes spéciales qui peuvent-être réutilisées. Elles ne sont valides qu'à l'intérieur d'un bloc de code délimité. Comme on le voit ici la première étiquette **1$:** qui apparaît après l'étiquette **main:** n'est valide que jusqu'à l'étiquette **delay:** et l'étiquette **1$:** qui apparaît après **delay:** n'est valide que jusqu'à la rencontre d'une autre étiquette normale. dans ce cas ci c'est
 **NonHandledInterrupt:**. Ces étiquettes spéciales réutilisables sont très pratique en réduisant le risque de collision de noms dans un programme plus complexe. 
 
 Pour en revenir au programme principal, au début de la boucle on invoque la macro **_ledoff** pour éteindre la LED2. Ensuite on appelle la sous-routine **delay** pour après cet appel allumer la LED2 en invoquant **_ledon**. Un autre délais puis on recommence la boucle avec l'instruction **jra 1$**.
@@ -163,6 +164,7 @@ C'est une bonne habitude lorsqu'une sous-routine utilise un registre de sauvegar
 
 ### modification au programme
 Voici une solution alternative pour faire clignoter la LED2 en utilisant la macro **_led_toggle**
+
 ```
 1$:
     call delay
@@ -191,7 +193,7 @@ La construction du projet se fait en 3 étapes.
 * génération du binaire
 * programmation du mcu
 
-Pour que ce soit plus propre je préfère créer un dossier **build** ou j'envoie les fichiers créés par lors de la construction du projet.
+Pour que ce soit plus propre je préfère créer un dossier **build** ou j'envoie les fichiers créés lors de la construction du projet.
 Sur la ligne de commande dans le dossier **ch1_blink**
 ```
     mkdir build
@@ -201,25 +203,94 @@ Sur la ligne de commande dans le dossier **ch1_blink**
 ```
 sdasstm8 -g -l -o build/blink.rel blink.asm
 ```
-Après cette opération il y aura 2 fichiers dans **build**, **blink.rel** et **blink.lst**. **blink.lst** est le listing généré par l'assembleur. **blink.rel**  est aussi un fichier texte mais qui contient une réprentation hexadécimal du code binaire avec les adresses relative, d'où l'exteseion **.rel**. 
+Après cette opération il y aura 2 fichiers dans **build**, **blink.rel** et **blink.lst**. **blink.lst** est le listing généré par l'assembleur. **blink.rel**  est aussi un fichier texte mais qui contient une réprentation hexadécimal du code binaire avec les adresses relative, d'où l'exteseion **.rel**. Comme un projet peut-être composé de plusieurs fichiers assemblés indépendemment les uns des autres l'assembleur ne peut pas savoir ou le code de ce fichier sera situé dans la mémoire FLASH. Il assigne donc des adresses relative aux étiquettes. C'est dans l'étape suivante que le générateur de lien **(i.e. linker)** prend tous les fichier __*.rel__ et résout toutes les adresses donnant une position absolue dans la mémoire. 
 
 Dans un programme plus complexe comprenant plusieurs fichiers source, chaque fichier doit-être assemblé séparément.
-### lier le fichier
+### Lier le(s) fichier(s)
 ```
 sdcc -mstm8 -lstm8 -o build/blink.ihx build/blink.rel
 ```
-On utilise sdcc pour en fait invoquer le générateur de lien *(linker)*. Le linker est responsable d'attribuer des adresses absolues à chaque section du programme. Même si un programme asssemble sans erreur il est possible que cette étape génère des erreurs. Par exemple s'il y a conflit d'adresse entre 2 sections déclarées comme (ABS), ou encore qu'une section à déclaration obligatoire soit absente.
+On utilise sdcc pour en fait invoquer le générateur de lien *(linker)*. Le linker est responsable d'attribuer des adresses absolues à chaque section du programme. Même si un programme asssemble sans erreur il est possible que cette étape génère des erreurs. Par exemple s'il y a conflit d'adresse entre 2 sections déclarées comme (ABS), ou encore qu'une section à déclaration obligatoire est absente.
 
 Ce petit programme n'a qu'un fichier **.rel** est s'il y en a plusieurs ils doivent tous être énumérés à la fin la commande.
 
-Cette phase génère plusieurs fichiers mais celui qui nous intéresse pour la programmation du MCU s'appelle **build/blink.ihx**. Il s'agit d'un fichier texte au format Intel hexadécimal.
-### programmer le mcu
+Cette phase génère plusieurs fichiers mais celui qui nous intéresse pour la programmation du MCU s'appelle **build/blink.ihx**. Il s'agit d'un fichier texte au format **Intel hexadécimal**.
+
+### Programmer le mcu
 ```
-stm8flash -c stlinkv21 -pstm8s208rb -w build/blink.ihx
+stm8flash -c stlinkv21 -p stm8s208rb -w build/blink.ihx
 ```
-l'option **-c stlinkv21** indique que le type et la version du programmeur qui est sur la carte. l'option **-pstm8s208rb** indique le modèle du MCU à programmer. l'option **-w build/blink.ihx** indique le nom du fichier à programmer.
+l'option **-c stlinkv21** indique que le type et la version du programmeur qui est sur la carte. l'option **-p stm8s208rb** indique le modèle du MCU à programmer. l'option **-w build/blink.ihx** indique le nom du fichier à programmer.
 ### Capture d'écran des 3 étapes
 
 ![capture écran](../docs/images/capture_build.png)
 
 Habituellement je cré un fichier Makefile pour simplifier cette procédure.
+
+## 2019-10-31,  directives d'assemblage conditionnel.
+
+J'ai modifié le programme pour montrer l'utilisation des directives d'assemblage conditionnel **.if .else .endif**.
+
+Par défaut le MCU utilise l'oscillateur interne HSI qui fonctionne à 16 Mhz et divise cette fréquence par 8 pour le CPU qui fonctionne donc à 2 Mhz. Dans cette version j'ai ajouter des directives d'assemblage conditionnel pour choisir entre la valeur Fcpu par défaut de 2 Mhz ou bien la fréquence de 16 Mhz. J'ai modifier la routine **delay** en conséquence car le délais était insuffisant pour Fcpu à 16 Mhz. On avait l'impression que la LED restait allumée. Cette version utilise le registre **Y** pour créer un boucle externe à la boucle utilisant **X**. Le délais total est donc le produit des 2 boucles: __Y*delay(X)__.
+
+### **main**, nouvelle version
+
+Si on met **FAST_FCPU = 0**  le code résultant est le même que pour la
+version précédente.  Mais avec **FAST_FCPU = 1** le code est modifié et le cpu fonctionne  8 fois plus rapidement. 
+
+```
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   point d'entrée après une réinitialisation du MCU
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    FAST_FCPU = 1 ; 16 Mhz, mettre à zéro pour 2 Mhz
+main:
+; initialisation de la pile
+    ldw x,#STACK_TOP
+    ldw sp,x
+    .if FAST_FCPU
+    ; configurer pour Fcpu = 16 Mhz.
+    clr CLK_CKDIVR
+    .else
+    ;laisse Fcpu à sa valeur par défaut, i.e. 2 Mhz.
+    .endif
+; initialise la broche du LED2 en mode 
+; sortie push pull
+    bset PC_CR1,#LED2_BIT
+    bset PC_CR2,#LED2_BIT
+    bset PC_DDR,#LED2_BIT
+; invoke la macro pour éteindre la LED2
+1$:
+    _ledoff
+;   délais
+    call delay
+; invoke la macro pour allumer la LED2    
+    _ledon  
+    call delay
+    jra 1$
+```
+
+### **delay**, nouvelle version
+
+```
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   sous-routine de délais
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+delay:
+    pushw x
+    .if FAST_FCPU
+    pushw y
+    ldw y,#4
+    .endif
+1$: ldw x,#0xffff
+2$: decw x
+    jrne 2$
+    .if FAST_FCPU
+     decw y
+     jrne 1$
+     popw y
+    .endif
+    popw x 
+    ret 
+```
+Si on charge **Y** avec la valeur **8** au lieu de **4** la LED va clignoter à la même fréquence que Fcpu soit 2 Mhz ou 16 Mhz. Avec la valeur **4** que j'ai choisi la LED clignote 2 fois plus vite à 16 Mhz.
+

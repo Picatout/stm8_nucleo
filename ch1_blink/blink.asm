@@ -87,10 +87,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   point d'entrée après une réinitialisation du MCU
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    FAST_FCPU = 1 ; 16 Mhz, mettre à zéro pour 2 Mhz
 main:
 ; initialisation de la pile
     ldw x,#STACK_TOP
     ldw sp,x
+    .if FAST_FCPU
+    ; configurer pour Fcpu = 16 Mhz.
+    clr CLK_CKDIVR
+    .else
+    ;laisse Fcpu à sa valeur par défaut, i.e. 2 Mhz.
+    .endif
 ; initialise la broche du LED2 en mode 
 ; sortie push pull
     bset PC_CR1,#LED2_BIT
@@ -111,9 +118,18 @@ main:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 delay:
     pushw x
-    ldw x,#0xffff
-1$: decw x
-    jrne 1$
+    .if FAST_FCPU
+    pushw y
+    ldw y,#4
+    .endif
+1$: ldw x,#0xffff
+2$: decw x
+    jrne 2$
+    .if FAST_FCPU
+     decw y
+     jrne 1$
+     popw y
+    .endif
     popw x 
     ret 
 

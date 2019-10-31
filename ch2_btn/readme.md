@@ -8,7 +8,7 @@ Je voulais savoir si à la sortie de l'interruption le MCU retournais en mode **
 
 Donc le programme fonctionne de la façon suivante. Après l'initialisation l'instruction **halt** est exécutée ce qui arrête le MCU. Lorsque le bouton est enfoncé la routine d'interruption **usr_btn_isr** est exécutée et lorsqu'elle se termine le cpu exécute l'instruction **jra 1$** dans la procédure **main**. Ce qui ramène le cpu à l'instruction **halt**.
 
-Par rapport au programme du chapitre il n'y a pas de nouvelles directives d'assembleur mais la routine d'interruption suivante a été ajoutée.
+Par rapport au programme du chapitre 1 il n'y a pas de nouvelles directives d'assembleur mais la routine d'interruption suivante a été ajoutée.
 ```
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;       gestionnaire d'interruption pour le bouton USER
