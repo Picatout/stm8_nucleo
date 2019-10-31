@@ -929,6 +929,8 @@ B921600=9
 
 ; global configuration register
  CFG_GCR   = (0x7F60)
+ CFG_GCR_AL = 1
+ CFG_GCR_SWIM = 0
 
 ; interrupt control registers
  ITC_SPR1   = (0x7F70)

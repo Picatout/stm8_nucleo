@@ -1,11 +1,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   tutoriel sdas pour stm8
-;   chapitre 1  blink
+;   chapitre 2  button
 ;   Date: 2019-10-30
 ;   Copyright Jacques Deschêens, 2019
 ;   licence:  CC-BY-SA version 2 ou ultérieure
 ;
-;   Description: Clignotement de la LED2 sur la carte
+;   Description: 
+;       contrôle de la LED2 par le bouton USER (bouton bleu sur la carte)
+;       Après la configuration initiale le MCU est placé dans le
+;       mode de la plus faible consommation avec l'instruction HALT
+;       Lorsque le bouton HALT est enfoncé l'interruption
+;       externe EXT4 est déclenché. l'état de la LED2 est alors inversé.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     .include "../inc/nucleo_8s208.inc"
@@ -60,7 +65,7 @@
 	int NonHandledInterrupt ;int4 EXTI1 port B external interrupts
 	int NonHandledInterrupt ;int5 EXTI2 port C external interrupts
 	int NonHandledInterrupt ;int6 EXTI3 port D external interrupts
-	int NonHandledInterrupt ;int7 EXTI4 port E external interrupts
+	int usr_btn_isr         ;int7 EXTI4 port E external interrupts
 	int NonHandledInterrupt ;int8 beCAN RX interrupt
 	int NonHandledInterrupt ;int9 beCAN TX/ER/SC interrupt
 	int NonHandledInterrupt ;int10 SPI End of transfer
@@ -96,26 +101,16 @@ main:
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
-; invoke la macro pour éteindre la LED2
-1$:
-    _ledoff
-;   délais
-    call delay
-; invoke la macro pour allumer la LED2    
-    _ledon  
-    call delay
+; active l'interruption sur bouton utilisateur sur
+; la transition descendante seulement
+    bset EXTI_CR2,#1    
+; active l'interruption sur PE_4 bouton utilisateur
+    bset PE_CR2,#USR_BTN_BIT
+; active les interruptions
+    rim 
+; suspend le MCU en attendant l'interruption du bouton
+1$: halt
     jra 1$
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;   sous-routine de délais
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-delay:
-    pushw x
-    ldw x,#0xffff
-1$: decw x
-    jrne 1$
-    popw x 
-    ret 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;	gestionnaire d'interruption pour
@@ -126,3 +121,23 @@ NonHandledInterrupt:
 	ld a,#0x80
 	ld WWDG_CR,a
     ;iret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;       gestionnaire d'interruption pour le bouton USER
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+usr_btn_isr:
+    _led_toggle
+; anti-rebond
+; attend que le bouton soit relâché
+1$: clrw x
+    btjf USR_BTN_PORT,#USR_BTN_BIT,1$ 
+; tant que le bouton est relâché incrémente X 
+; si X==0x7fff quitte
+; si bouton revient à zéro avant retourne à 1$     
+2$: incw x
+    cpw x,#0x7fff
+    jreq 3$
+    btjt USR_BTN_PORT,#USR_BTN_BIT,2$
+    jra 1$  
+3$: iret
+

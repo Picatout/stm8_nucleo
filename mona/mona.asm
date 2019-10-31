@@ -75,22 +75,13 @@
 		.endm
 
 ;--------------------------------------------------------
-;        OPTION BYTES
+;		MCU configuration option
+;       met le bit AL à 1
 ;--------------------------------------------------------
-;		.area 	OPTION (ABS)
-;		.org 0x4800
-;		.byte 0     ; 0x4800 ; OPT0 read out protection 
-;		.byte 0,255 ; 0x4801 - 0x4802 OPT1 user boot code
-;       .byte 0,255 ; 0x4803 - 0x4804 OPT2 alt. fct remapping 
-;       .byte 0,255 ; 0x4805 - 0x4806 OPT3 watchdog options
-;       .byte 0,255 ; 0x4807 - 0x4808 OPT4 clock options
-;       .byte 0,255 ; 0x4809 - 0x480a OPT5 HSE clock startup
-;       .byte 0,255 ; 0x480b - 0x480c OPT6 reserved
-;       .byte 0,255 ; 0x480d - 0x480e OPT7 flash wait state
-		.area BOOTLOADER (ABS)
-		.org 0x487e
-;       .byte 0,255 ; 0x487e - 0x487f rom bootloader checkpoint
-		
+		.area MCU_CONFIG (ABS)
+		.org 0x7f60
+		.byte 2
+
 ;--------------------------------------------------------
 ;some sont constants used by this program.
 ;--------------------------------------------------------
