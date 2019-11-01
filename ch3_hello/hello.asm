@@ -1,16 +1,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   tutoriel sdas pour stm8
-;   chapitre 2  button
-;   Date: 2019-10-30
+;   chapitre 3  hello.asm
+;   Date: 2019-10-31
 ;   Copyright Jacques Deschêens, 2019
 ;   licence:  CC-BY-SA version 2 ou ultérieure
 ;
 ;   Description: 
-;       contrôle de la LED2 par le bouton USER (bouton bleu sur la carte)
-;       Après la configuration initiale le MCU est placé dans le
-;       mode de la plus faible consommation avec l'instruction HALT
-;       Lorsque le bouton USER est enfoncé l'interruption
-;       externe EXT4 est déclenché. l'état de la LED2 est alors inversé.
+;       Chaque fois que le boutin USER est enfoncé le message
+;       "Hello from extended memory.\n" est envoyé via le UART3.
+;       Utilisation de la mémoire flash au delà de 0xffff.
+;       Discution sur l'utilisation de la mémoire étendue.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     .include "../inc/nucleo_8s208.inc"
@@ -36,11 +35,24 @@
     ld LED2_PORT,a
     .endm
 
+    ; initialise farptr avec l'adresse étendu d'un message
+    .macro _ld_farptr  msg 
+    ld a,#msg>>16
+    ld farptr,a
+    ld a,#msg>>8
+    ld farptrM,a
+    ld a,#msg
+    ld farptrL,a
+    .endm
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;       section des variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .area DATA
-
+farptr:  .blkb 1 ; pointeur étendu octet supérieur [23:16]
+farptrM: .blkb 1 ; pointeur étendu octet du milieur [15:8]
+farptrL: .blkb 1 ; pointeru étendu octet faible [7:0]
+phase:   .blkb 1 ; indique message à afficher
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;       section de la pile
@@ -96,6 +108,14 @@ main:
 ; initialisation de la pile
     ldw x,#STACK_TOP
     ldw sp,x
+; initialise la variable farptr avec message hello
+    _ld_farptr hello
+;   initialise variable phase
+    clr phase    
+; initialise le clock système
+    call clock_init
+; initialise la communication sérielle
+    call uart3_init        
 ; initialise la broche du LED2 en mode 
 ; sortie push pull
     bset PC_CR1,#LED2_BIT
@@ -109,8 +129,97 @@ main:
 ; active les interruptions
     rim 
 ; suspend le MCU en attendant l'interruption du bouton
-1$: halt
+1$: ;halt
     jra 1$
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; initialise le UART3, configuration: 115200 8N1
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+uart3_init:
+;	bset CLK_PCKENR1,#CLK_PCKENR1_UART3
+	; configure tx pin
+	bset PD_DDR,#BIT5 ; tx pin
+	bset PD_CR1,#BIT5 ; push-pull output
+	bset PD_CR2,#BIT5 ; fast output
+	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
+	mov UART3_BRR2,#0x05 ; must be loaded first
+	mov UART3_BRR1,#0x4
+	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;initialize clock, configuration HSE 8 Mhz
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+clock_init:	
+	bset CLK_SWCR,#CLK_SWCR_SWEN
+	ld a,#CLK_SWR_HSE
+	ld CLK_SWR,a
+1$:	cp a,CLK_CMSR
+	jrne 1$
+    clr CLK_CKDIVR
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;  section de code situé dans la mémoire étendue
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .area CODE_FAR (ABS)
+    .org 0x10000 ; segment 1 de la mémoire étendue
+
+;------------------------------------
+;  serial port communication routines
+;------------------------------------
+;------------------------------------
+; Transmet le caractère qui est dans A 
+; via UART3
+;------------------------------------
+uart_tx:
+	btjf UART3_SR,#UART_SR_TXE,uart_tx
+	ld UART3_DR,a
+    ret
+
+;------------------------------------
+; transmet le message via UART3
+;------------------------------------
+    USE_PTR = 1 ; mettre à 0 pour adressage direct indexé
+print_msg:
+    pushw x
+    pushw y
+    clrw y
+    .if USE_PTR
+    ; initialise farptr
+    tnz phase
+    jreq ph0 
+    btjt phase,#0,ph1
+ph2: 
+    _ld_farptr reponse
+    jra print
+ph1:
+    _ld_farptr trivia
+    jra print
+ph0:
+    _ld_farptr hello         
+print:
+     ldf a,([farptr],y) ; addressage par pointer en RAM
+    .else    
+print:
+	ldf a,(hello,y)  ; adressage indexé avec offset étendu
+    .endif
+	jreq 9$
+	call uart_tx
+	incw y
+	jra print
+9$:
+    .if USE_PTR
+    inc phase
+    ld a,#3
+    cp a,phase
+    jrne 10$
+    clr phase
+    .endif
+10$:    
+    popw y
+    popw x
+    ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;	gestionnaire d'interruption pour
@@ -125,9 +234,10 @@ NonHandledInterrupt:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;       gestionnaire d'interruption pour le bouton USER
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    DEBOUNCE = 1 ; mettre à zéro pour annule le code anti-rebond.
+    DEBOUNCE = 0 ; mettre à zéro pour annule le code anti-rebond.
 usr_btn_isr:
-    _led_toggle
+    _ledon
+    call print_msg
     .if DEBOUNCE
 ; anti-rebond
 ; attend que le bouton soit relâché
@@ -141,6 +251,22 @@ usr_btn_isr:
     jreq 3$
     btjt USR_BTN_PORT,#USR_BTN_BIT,2$
     jra 1$
-    .endif; DEBOUNCE  
+    .endif; DEBOUNCE
+    _ledoff  
 3$: iret
+
+
+
+    hello:
+        .byte   12
+        .asciz  "Hello from exented memory.\n"
+    trivia:
+        .byte 12
+        .ascii "Trivia:\n"
+        .ascii "Quel personnage d'une serie culte des annees 60 a dit:\n"
+        .byte '"'
+        .ascii "Je ne suis pas un numero, je suis un homme libre."
+        .byte '"','\n',0
+    reponse:
+        .asciz "\nLe prisonnier, serie tv de ce titre, acteur: Patrick McGoohan\n"
 
