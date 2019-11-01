@@ -128,8 +128,11 @@ main:
     bset PE_CR2,#USR_BTN_BIT
 ; active les interruptions
     rim 
-; suspend le MCU en attendant l'interruption du bouton
-1$: ;halt
+; boucle vide. Tout est fait par l'interruption.
+; puisque le CPU ne fait entre les interruption
+; l'instrcution WFI  (Wait For Interrupt) est utilisée
+; pour diminuer la consommation électrique.
+1$: wfi
     jra 1$
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -159,15 +162,23 @@ clock_init:
     clr CLK_CKDIVR
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    pointeur constant installé dans la mémoire 
+;    flash. Les pointeurs ne peuvent-être que dans
+;    le segment 0 i.e. 0x0000-0xffff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+const_ptr: 
+        .byte (hello>>16),(hello>>8),hello 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  section de code situé dans la mémoire étendue
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .area CODE_FAR (ABS)
     .org 0x10000 ; segment 1 de la mémoire étendue
 
-;------------------------------------
-;  serial port communication routines
-;------------------------------------
+;------------------------------------------
+;  routines de communications port sériel
+;------------------------------------------
 ;------------------------------------
 ; Transmet le caractère qui est dans A 
 ; via UART3
@@ -179,8 +190,10 @@ uart_tx:
 
 ;------------------------------------
 ; transmet le message via UART3
+; utilise un adresse par pointeur
+; indexé par Y. 
 ;------------------------------------
-    USE_PTR = 1 ; mettre à 0 pour adressage direct indexé
+    USE_PTR = 1 ; mettre à 0 pour pointeur dans mémoire flash
 print_msg:
     pushw x
     pushw y
@@ -202,7 +215,7 @@ print:
      ldf a,([farptr],y) ; addressage par pointer en RAM
     .else    
 print:
-	ldf a,(hello,y)  ; adressage indexé avec offset étendu
+	ldf a,([const_ptr],y)  ; adressage indexé avec offset étendu
     .endif
 	jreq 9$
 	call uart_tx
@@ -269,4 +282,4 @@ usr_btn_isr:
         .byte '"','\n',0
     reponse:
         .asciz "\nLe prisonnier, serie tv de ce titre, acteur: Patrick McGoohan\n"
-
+    

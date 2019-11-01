@@ -101,12 +101,12 @@ main:
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
-; active l'interruption sur bouton utilisateur sur
-; la transition descendante seulement
+; mode d'activation de l'interruption:
+; sur la transition descendante seulement
     bset EXTI_CR2,#1    
-; active l'interruption sur PE_4 bouton utilisateur
+; active l'interruption sur PE_4 (bouton utilisateur)
     bset PE_CR2,#USR_BTN_BIT
-; active les interruptions
+; active les interruptions dans le registre CCR du CPU
     rim 
 ; suspend le MCU en attendant l'interruption du bouton
 1$: halt
