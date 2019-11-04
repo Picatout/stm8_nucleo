@@ -14,7 +14,7 @@ LED2_MASK = (1<<5) ;bit 5 mask
 ; B1 is user button
 ; connected to PE4
 ; external pullup resistor R6 4k7 and debounce capacitor C5 100nF
-BTN1_PORT = 0x5014 ; port E
+BTN1_PORT = 0x5015 ; port E IDR
 BTN1_BIT = 4
 BTN1_MASK = (1<<4) ;bit 4 mask
 
