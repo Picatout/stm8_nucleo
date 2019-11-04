@@ -1102,7 +1102,7 @@ MMSM4:
 LINK = . 
         .byte      5
         .ascii     "M/MOD"
-MSMOD:
+MSMOD:  
         CALL	DUPP
         CALL	ZLESS
         CALL	DUPP
