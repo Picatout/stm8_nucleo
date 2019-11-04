@@ -1,10 +1,9 @@
 ###########################################################
-# makefile for $(NAME)
+# makefile for MONA
 ###########################################################
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=mona02
 
 SDAS=sdasstm8
 SDCC=sdcc
@@ -15,12 +14,12 @@ FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
-OBJECTS=$(BUILD)$(NAME).rel
+OBJECTS=$(BUILD)mona.rel
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
 LISTS=$(OBJECTS:.rel=.lst)
 RSTS=$(OBJECTS:.rel=.rst)
-TARGET=$(BUILD)$(NAME).ihx
+TARGET=$(BUILD)mona.ihx
 MAP=$(TARGET:.ihx=.map)
 LK=$(TARGET:.ihx=.lk)
 CDB=$(TARGET:.ihx=.cdb)
@@ -36,12 +35,12 @@ flash: $(TARGET)
 	@echo "***************"
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
-%.rel: $(NAME).asm  $(INC)stm8s208.inc
+%.rel: mona.asm  $(INC)stm8s208.inc
 	@echo
 	@echo "***************"
 	@echo "   assembling  "
 	@echo "***************"
-	$(SDAS) -g -l -o $(BUILD)$(NAME).rel $(NAME).asm 
+	$(SDAS) -g -l -o $(BUILD)mona.rel mona.asm 
 	
 $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo
