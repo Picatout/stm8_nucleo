@@ -1216,7 +1216,7 @@ fetch:
 	pushw y
 	call number
 	ld a,pad
-	jreq fetch_exit ; pas d'adresse 
+	jreq fetch_miss_arg ; pas d'adresse 
 	ldw x,#acc24
 	ldw y,#farptr
 	call copy_var24
@@ -1232,6 +1232,9 @@ fetch:
 1$: ld a,#16	
 2$:	clrw x  ; pour farptr[0]
 	call peek
+	jra fetch_exit
+fetch_miss_arg:
+	call error_print	
 fetch_exit:	
 	popw y
 	popw x 
@@ -1245,7 +1248,7 @@ store:
 	pushw y
 	call number
 	ld a,pad 
-	jreq store_exit ; pas d'argument adresse 
+	jreq store_miss_arg ; pas d'argument adresse 
 	ldw x,#acc24
 	ldw y,#farptr
 	call copy_var24  ; farptr=acc24 
@@ -1257,6 +1260,8 @@ store:
 	call write_byte
 	incw x ; x++
 	jra 1$
+store_miss_arg:
+	call error_print	
 store_exit:	
 	popw y
 	popw x
@@ -1269,11 +1274,15 @@ help:
 	ldw y, #HELP
 	call uart_print
 	ret
-	; convert from one numeric base to the other
-	;  b n|$n
+
+;-------------------------------------------
+;  b n|$n
+; convert from one numeric base to the other
+;-------------------------------------------
 base_convert:
     call number
     ld a,pad
+	jreq base_miss_arg 
     cp a,#'$
     jrne 1$
     ld a,#10
@@ -1282,7 +1291,10 @@ base_convert:
 2$: call itoa
     call uart_print
     ret
-        	
+base_miss_arg:
+	call error_print
+	ret
+	
 ;------------------------------------
 ; c addr mask, clear bitmask 
 ;------------------------------------
@@ -1291,18 +1303,20 @@ clear_bits:
 	pushw y 
 	call number
 	ld a, pad 
-	jreq 9$ ; pas d'adresse 
+	jreq 8$ ; pas d'adresse 
 	ldw x, #acc24 
 	ldw y, #farptr 
 	call copy_var24 
 	call number
 	ld a, pad 
-	jreq 9$ ; pas de masque 
+	jreq 8$ ; pas de masque 
 	cpl acc24+2 ; inverse masque de bits 
 	ldf a,[farptr]
 	and a,acc24+2
 	clrw x 
-	call write_byte 
+	call write_byte
+	jra 9$
+8$: call error_print	 
 9$:	popw y 
 	popw x
     ret
@@ -1318,7 +1332,7 @@ hexdump:
 	sub sp,#LOCAL_SIZE
 	call next_word
 	ld a, pad 
-	jreq hdump_exit ; adresse manquante
+	jreq hdump_missing_arg ; adresse manquante
 	ld a,#16
 	call atoi ; acc24=addr 
 	; farptr = addr 
@@ -1370,6 +1384,9 @@ row:
 	call uart_getchar
 	cp a,#SPACE
 	jreq row_init
+	jra hdump_exit 
+hdump_missing_arg:
+	call error_print 	
 hdump_exit:	
     addw sp,#LOCAL_SIZE
     ret
@@ -1384,7 +1401,7 @@ move_memory:
 	sub sp,#LOCAL_SIZE
 	call number 
 	ld a, pad 
-	jreq move_exit ; pas d'arguments 
+	jreq move_missing_arg ; pas d'arguments 
 	; save source address on stack
 	ld a, acc24+2
 	ld (SOURCE+2,sp),a
@@ -1394,14 +1411,14 @@ move_memory:
 	ld (SOURCE,sp),a
 	call number
 	ld a,pad
-	jreq move_exit ; dest count manquant 
+	jreq move_missing_arg ; dest count manquant 
 	; copy dest address in farptr
 	mov farptr+2,acc24+2
 	mov farptr+1,acc24+1
 	mov farptr,acc24
     call number 
 	ld a, pad 
-	jreq move_exit ; count manquant 
+	jreq move_missing_arg ; count manquant 
 	ld a, acc24+1 
 	ld yh, a
 	ld a, acc24+2 
@@ -1424,6 +1441,9 @@ move_loop:
 	jreq move_exit
     ldw (COUNT,sp),y
     jra move_loop
+	jra move_exit
+move_missing_arg:
+	call error_print 	
 move_exit:
     addw sp,#LOCAL_SIZE
     ret
@@ -1436,17 +1456,19 @@ set_bits:
 	pushw y 
 	call number 
 	ld a, pad 
-	jreq 9$ ; arguments manquant
+	jreq 8$ ; arguments manquant
 	ldw x, #acc24
 	ldw y, #farptr 
 	call copy_var24 
 	call number  
 	ld a, pad 
-	jreq 9$ ; mask manquant
+	jreq 8$ ; mask manquant
 	ldf a,[farptr]
 	or a, acc24+2
 	clrw x 
 	call write_byte 
+	jp 9$
+8$: call error_print
 9$:
 	popw y 
 	popw x 
@@ -1460,17 +1482,19 @@ toggle_bits:
 	pushw y 
 	call number
 	ld a, pad
-	jreq 9$  ; pas d'adresse 
+	jreq 8$  ; pas d'adresse 
 	ldw x,#acc24 
 	ldw y,#farptr
 	call copy_var24
     call number
 	ld a, pad 
-	jreq 9$ ; pas de masque 
+	jreq 8$ ; pas de masque 
 	ldf a,[farptr]
     xor a,acc24+2
     clrw x 
 	call write_byte 
+	jp 9$
+8$: call error_print
 9$:
 	popw y
  	popw x 
@@ -1483,7 +1507,7 @@ toggle_bits:
 execute:
 	call number
 	ld a, pad 
-	jreq 9$ ; addr manquante 
+	jreq error_print ; addr manquante 
 	tnz acc24
 	jrne 9$ ; adresse > 0xFFFF ; adresse invalide.
 	ld a, acc24+1
@@ -1493,8 +1517,18 @@ execute:
 	ld a,acc24+2 
 	ld yl,a 
 	jp (y)
-9$:
-    ret
+9$: inc a
+
+error_print:
+	cp a,#0 ; missing argment
+	jrne 1$
+	ldw y, #MISS_ARG
+	jra 9$
+1$: ldw y, #BAD_ARG
+
+9$:	call uart_print 
+	ret
+
 
 ;------------------------
 ;  run time CONSTANTS
@@ -1524,6 +1558,8 @@ HELP: .ascii "commands:\n"
 	  .ascii "s addr bitmask, set bits at address\n"
 	  .ascii "t addr bitmask, toggle bits at address\n"
 	  .asciz "x addr, execute  code at address\n"
+MISS_ARG: .asciz "Missing arguments\n"
+BAD_ARG:  .asciz "bad arguments\n"
 
 ; following flash memory is not used by MONA
 flash_free:
