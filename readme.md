@@ -17,7 +17,9 @@ En même temps que j'apprends à programmer les STM8 en assembleur en utilisant 
 
 ## Tutoriel
 ### Chapitre 1 [blink.asm](ch1_blink/readme.md)
-
+### Chapitre 2 [button.asm](ch2_btn/readme.md)
+### Chapitre 3 [hello.asm](ch3_hello/readme.md)
+### Chapitre 4 [arguments et variables locales](ch4/readme.md)
 
 ## fichiers à consulter
 

@@ -1,8 +1,8 @@
-# Tutoriel assembleur sdas
+# Analyse du programme MONA
 
 ## présentation
 
-Utilisation du fichier [mona.asm](mona.asm) comme tutoriel de programmation en assembleur pour STM8 en utilisant sdas. Les deux documents requis pour suivre ce ditactitiel sont dans le dossier **docs**. Il s'agit de [asmlnk.txt](../docs/asmlnk.txt) qui documente l'assembleur et le linker. L'autre est le [manuel de programmation du STM8](../docs/pm0044_stm8_programming.pdf) qui est la référence pour la progammation des STM8. 
+Analyse du fichier [mona02.asm](mona02.asm). Les deux documents requis pour suivre ce didactitiel sont dans le dossier **docs**. Il s'agit de [asmlnk.txt](../docs/asmlnk.txt) qui documente l'assembleur et le linker. L'autre est le [manuel de programmation du STM8](../docs/pm0044_stm8_programming.pdf) qui est la référence pour la progammation des STM8. 
 
 Un programme en assembleur contient les éléments suivants:
 * Des commentaires.

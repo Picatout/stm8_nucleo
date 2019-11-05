@@ -1701,7 +1701,6 @@ error_print:
 9$:	call uart_print 
 	ret
 
-
 ;------------------------
 ;  run time CONSTANTS
 ;------------------------
@@ -1720,7 +1719,7 @@ EEPROM_MSG: .ascii " - $27FFF\n"
 BAD_CMD:    .asciz " is not a command\n"	
 HELP: .ascii "commands:\n"
 	  .ascii "@ addr, display content at address\n"
-	  .ascii "! addr byte [byte ]*, store bytes at addr++\n"
+	  .ascii "! addr byte|string [byte|string ]*, store bytes or string at addr++\n"
 	  .ascii "?, diplay command help\n"
 	  .ascii "b n|$n, convert n in the other base\n"
 	  .ascii "c addr bitmask, clear bits at address\n"

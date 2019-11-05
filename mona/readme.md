@@ -14,6 +14,7 @@ commandes:
 * **?** Commande **help**. Affiche la liste des commandes.
 * **b n|$n|0xhh[hh]** Commande **base convert**. Convertie l'entier dans l'autre base. i.e. dec->hex | hex->dec.
 * **c addr bitmask**. Commande **bit clear**. Met les bits masqués à zéro, **addr** adresse de l'octet à modifié.
+* **e addr count**. Commande **erase** permet de mettre à zéro une plage de mémoire RAM, EEPROM ou FLASH.
 * **h addr**. Commande **hex dump**. Affiche le contenu de la mémoire en hexadécimal par rangée de 8 octets. Pause à chaque rangée. &lt;ESPACE&gt; continue, autre touche termine.
 * **m src dest count** Commande **move**. Copie le bloc mémoire de **src** vers **dest**, **count** est le nombre d'octets à copier.
 * **r** Commande **reset**. Réinitialise le MCU.
@@ -29,7 +30,7 @@ commandes:
   
   Personnellement je travaille sur un poste en Ubuntu 18.04 et j'utilise **gtkTerm** comme émulateur de terminal. GtkTerm doit-être configuré pour **CRLF auto** . 
   
-  ![capture écran MONA](screenshot.png)
+  ![capture écran MONA](capture_ecran_mona02.png)
   
   Le moniteur bloque l'écriture dans la mémoire **FLASH** occupée par le moniteur ainsi que la mémoire **RAM** utilisée par celui-ci.
   
@@ -37,4 +38,4 @@ commandes:
   l'utilise au début de la saisie. Par exemple si après avoir exécuter une fois la commande **t $500a 32** on fait des **&lt;CTRL-R&gt;** suivit de **&lt;ENTER&gt;**
   on peut basculer l'état de la LED2 rapidement.
   
-  Pour une description du code source de MONA consulter le document suivant  [MONA.md](MONA.md).
+  Pour une description du code source de MONA consulter le document suivant  [mona.md](mona.md).
