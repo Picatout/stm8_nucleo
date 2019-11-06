@@ -30,12 +30,17 @@
 ;				and jump to it instead of entering MONA shell. The user button
 ;				can be used to fallback to MONA shell.
 ;
+;				Change behavior of 'x' command. If no address given and 
+;				there is an application installed jump to that application.
+;
 ;   2019-11-04  version 0.2
 ;				Added 'e'rase command.
 ;				! command accept .asciz argument 
 ;
 ;	2019-10-28  starting work on version 0.2 to remove
 ; 				version 0.1 adressing range limitation.
+;               version 0.1 was adapted from 
+;			https://github.com/Picatout/stm8s-discovery/tree/master/mona
 ;
 ;-------------------------------------------------------
 
@@ -1463,10 +1468,16 @@ store:
 	ldw y,#farptr
 	call copy_var24  ; farptr=acc24 
 	clrw x ; index pour farptr[x]
+	call number
+	ld a,pad 
+	jrne str01 ; missing data
+	call error_print
+	jp store_exit  
 store_loop:
 	call number
 	ld a, pad
 	jreq store_exit ; pas d'octet à écrire.
+str01:	
 	cp a,#'"'
 	jreq store_string	
 	ld a,acc24+2 ; octet à écrire.
@@ -1840,7 +1851,7 @@ toggle_bits:
 execute:
 	call number
 	ld a, pad 
-	jreq error_print ; addr manquante 
+	jreq no_addr ; addr manquante 
 	tnz acc24
 	jrne 9$ ; adresse > 0xFFFF ; adresse invalide.
 	ld a, acc24+1
@@ -1852,6 +1863,10 @@ execute:
 	jp (y)
 9$: inc a
 
+no_addr:
+	ld a,[flash_free_base]
+	jreq error_print 
+	jp [flash_free_base]
 error_print:
 	cp a,#0 ; missing argment
 	jrne 1$
