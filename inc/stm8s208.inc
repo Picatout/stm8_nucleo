@@ -1013,4 +1013,11 @@ B921600=9
  INT_VECTOR_TIM4_OVF = 0x8064
  INT_VECTOR_FLASH = 0x8068
 
- 
+; Condition code register bits
+CC_V = 7  ; overflow flag 
+CC_I1= 5  ; interrupt bit 1
+CC_H = 4  ; half carry 
+CC_I0 = 3 ; interrupt bit 0
+CC_N = 2 ;  negative flag 
+CC_Z = 1 ;  zero flag  
+CC_C = 0 ; carry bit 

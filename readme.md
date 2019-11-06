@@ -20,6 +20,7 @@ En même temps que j'apprends à programmer les STM8 en assembleur en utilisant 
 ### Chapitre 2 [button.asm](ch2_btn/readme.md)
 ### Chapitre 3 [hello.asm](ch3_hello/readme.md)
 ### Chapitre 4 [arguments et variables locales](ch4/readme.md)
+### Chapitre 5 [C et assembleur](ch5/readme.md)
 
 ## fichiers à consulter
 

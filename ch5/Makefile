@@ -4,7 +4,7 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=mona03
+NAME=
 
 SDAS=sdasstm8
 SDCC=sdcc
@@ -41,7 +41,7 @@ flash: $(TARGET)
 	@echo "***************"
 	@echo "   assembling  "
 	@echo "***************"
-	$(SDAS) -g -l -s -o $(BUILD)$(NAME).rel $(NAME).asm 
+	$(SDAS) -g -l -o $(BUILD)$(NAME).rel $(NAME).asm 
 	
 $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo
