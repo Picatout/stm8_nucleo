@@ -319,5 +319,5 @@ Dans cet exemple je copie le programme **blink** dans la mémoire RAM à l'adres
 
 ## Conclusion
 
-J'ai plein d'idées pour améliorer MONA. Par exemple je pourrais include un désassembleur, un assembleur et même transformer MONA en un mini système d'exploitation qui offrirait des services aux applications.
+J'ai plein d'idées pour améliorer MONA. Par exemple je pourrais inclure un désassembleur, un assembleur et même transformer MONA en un mini système d'exploitation qui offrirait des services aux applications.
 
