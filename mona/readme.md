@@ -99,13 +99,13 @@ $8000=$82
 >
 ```
 
-Affiche le contenu d'une location mémoire. Cette commande n'accepte qu'un seul paramètre, soit l'adresse à examiner. Le contenu est affiché dans la même base que l'adresse fournie.
+Commande *fetch*, affiche le contenu d'une location mémoire. Cette commande n'accepte qu'un seul paramètre, soit l'adresse à examiner. Le contenu est affiché dans la même base que l'adresse fournie.
 
 ### __! byte|string [byte|string]*__
 ```
 >! $c0 "hello world" 0 "bonjour le monde" 0
 ```
-Cette commande est utlisée pour modifier le contenu de la mémoire. On peut modifier tous les types de mémoires: RAM,EEPROM,FLASH,OPTION. Cette commande accepte une liste d'octets ou de chaînes entre guillemets. Les 2 types de données peuvent-être présent en même temps sur la ligne de commande. Notez que MONA n'ajoute pas de **0** à la fin des chaînes. Le nombre de paramètres fournis est limité par la taille maximale d'une ligne de commande qui de 80 caractères.
+Commande *store*, est utlisée pour modifier le contenu de la mémoire. On peut modifier tous les types de mémoires: RAM,EEPROM,FLASH,OPTION. Cette commande accepte une liste d'octets ou de chaînes entre guillemets. Les 2 types de données peuvent-être présent en même temps sur la ligne de commande. Notez que MONA n'ajoute pas de **0** à la fin des chaînes. Le nombre de paramètres fournis est limité par la taille maximale d'une ligne de commande qui de 80 caractères.
 
 ### **b n|$n
 ```
@@ -115,7 +115,7 @@ $0A
 10 
 ```
 
-Cette commande converti un entier dans l'autre base. Si le paramètre fourni est en décimal l'entier est affiché en hexadécimal et vice-versa.
+Commande *base*, convertit un entier dans l'autre base. Si le paramètre fourni est en décimal l'entier est affiché en hexadécimal et vice-versa.
 
 ### **c addr mask**
 ```
@@ -127,7 +127,7 @@ Cette commande converti un entier dans l'autre base. Si le paramètre fourni est
 $c0=$EE 
 ```
 
-Cette commande sert à mettre à zéro les bits indiqués par le paramètre **mask**. **mask** est un octet. Les bits de cet octet qui sont à **1** seront mis à zéro dans l'octet à l'adresse indiquée par **addr**.
+Commande *clear*, sert à mettre à zéro les bits indiqués par le paramètre **mask**. **mask** est un octet. Les bits de cet octet qui sont à **1** seront mis à zéro dans l'octet à l'adresse indiquée par **addr**.
 
 ### **e addr count**
 ```
@@ -149,7 +149,7 @@ $D0  $00 $00 $00 $00 $00 $00 $00 $00
 $D8  $00 $00 $00 $00 $00 $00 $00 $00           
 ```
 
-Cette commande sert à mettre à zéro une plage mémoire. Les types de mémoires qui peuvent être mis à zéro sont RAM,FLASH et EEPROM. **addr** est l'adresse début de la plage et **count** est le nombre d'octets à effacer. Le maximum est de 65535 octets. 
+Commande **erase**, sert à mettre à zéro une plage mémoire. Les types de mémoires qui peuvent être mis à zéro sont RAM,FLASH et EEPROM. **addr** est l'adresse début de la plage et **count** est le nombre d'octets à effacer. Le maximum est de 65535 octets. 
 
 ### **h addr**
 ```
@@ -171,7 +171,7 @@ $8068  $82 $00 $81 $EE $82 $00 $81 $EE
 $8070  $82 $00 $81 $EE $82 $00 $81 $EE           
 $8078  $82 $00 $81 $EE $82 $00 $81 $EE           
 ```
-Cette commande affiche le contenu d'une plage mémoire en hexadécimal. 8 adresses sont affichées par ligne. Les valeurs qui sont dans l'intervalle **{32..127} voit leur représentation ASCII affiché au bout de la ligne. Dans l'example ci-haut c'est la table des vecteurs d'interruption de MONA qui est affichée.
+Commande **hex dump**, affiche le contenu d'une plage mémoire en hexadécimal. 8 adresses sont affichées par ligne. Les valeurs qui sont dans l'intervalle **{32..127} voit leur représentation ASCII affiché au bout de la ligne. Dans l'example ci-haut c'est la table des vecteurs d'interruption de MONA qui est affichée.
 
 ### m src dest count
 ```
@@ -189,11 +189,11 @@ $C8  $72 $6C $64 $00 $00 $00 $00 $00   rld
 $D0  $68 $65 $6C $6C $6F $20 $77 $6F   hello wo
 $D8  $72 $6C $64 $00 $00 $00 $00 $00   rld     
 ```
-Cette commande copie le contenue de la plage mémoire débutant à l'adresse **src** vers la plage débutant à l'adresse **dest**. **count** est le nombre d'octets à copier.
+Commande *move*, copie le contenue de la plage mémoire débutant à l'adresse **src** vers la plage débutant à l'adresse **dest**. **count** est le nombre d'octets à copier.
  
 ### **q**
 
-Cette commande n'est utilisée que lorsqu'une application utilise l'interruption logicielle **trap**.  Autrement elle n'a aucun effet.
+Commande *resume* (le 'q' était déjà utilisé), ne que lorsqu'une application utilise l'interruption logicielle **trap**.  Autrement elle n'a aucun effet.
 Il s'agit d'un ajout de la version 0.3 de MONA. Lorsque l'interruption **TrapHandler** est activée. L'application est interrompue et un message est affiché en conséquence. Eusuite le contenu des registes empilés par l'interruption soit EPC,Y,X,A et CC est affiché puis on se retrouve sur la ligne de commande de MONA. Ceci permet d'examiné les variables de l'application ou même de modifier le code de l'application. On peut par exemple remplacé l'instrcution **trap** par une instruction **nop** et redémarrer l'application à son point d'arrêt avec la commande. **q**.
 
 À titre d'exemple j'ai assemblé avec MONA 0.3 un petit progamme **blink**
@@ -271,7 +271,7 @@ Le bouton vide la pile et donc le programme doit-être relancé avec la comamnde
 
 ### **r**
 
-Cette commande ne prend aucun paramètre. Elle réinitialise simplement le MCU comme si on avait enfoncé le bouton **RESET** sur la carte.
+Commande *reboot*, réinitilise le MCU comme si on avait enfoncé le bouton **RESET** sur la carte. La commande n'accepte aucun paramètre.
 
 ### s addr mask
 ```
@@ -284,7 +284,7 @@ $c0=$11
 >
 ```
 
-La commande **set** , m'est à **1** les bits indiquées par **mask** pour l'octet qui est situé à l'adressse **addr**.  C'est l'inverse de la commande **c**. Pour allumer la LED2 sur la carte on peut faire:
+Commande **set** , m'est à **1** les bits indiquées par **mask** pour l'octet qui est situé à l'adressse **addr**.  C'est l'inverse de la commande **c**. Pour allumer la LED2 sur la carte on peut faire:
 ```
 >s $500a $20
 ```
@@ -293,7 +293,7 @@ La commande **set** , m'est à **1** les bits indiquées par **mask** pour l'oct
 ```
 >t $500a 32
 ```
-La commange **toggle** inverse l'état des bits indiqués par **mask** pour l'octet qui se trouve à l'adresse **addr**. Dans l'exemple c-haut l'état de la LED2 est inversé. C'est à dire que s'il est éteint il s'allume ou inversement il s'éteint. 
+Commande **toggle**, inverse l'état des bits indiqués par **mask** pour l'octet qui se trouve à l'adresse **addr**. Dans l'exemple c-haut l'état de la LED2 est inversé. C'est à dire que s'il est éteint il s'allume ou inversement il s'éteint. 
 
 ### **x [addr]
 ```
@@ -314,7 +314,7 @@ $D8  $E7 $00 $00 $00 $00 $00 $00 $00
 >x $c0
 
 ```
-La commande **execute** permet de lancer un programme inscris en mémoire ROM,FLASH ou RAM.  Depuis la version 0.3 le paramètre **addr** est facultatif s'il y a une application d'installée à l'adresse **$8e80**. Mais on peut inscrire une application en RAM et la lancer comme illustré ci-haut.
+Commande **execute**, permet de lancer un programme inscris en mémoire ROM,FLASH ou RAM.  Depuis la version 0.3 le paramètre **addr** est facultatif s'il y a une application d'installée à l'adresse **$8e80**. Mais on peut inscrire une application en RAM et la lancer comme illustré ci-haut.
 Dans cet exemple je copie le programme **blink** dans la mémoire RAM à l'adresse **$C0** pour ensuite l'exécuté  avec la commande **x $c0**.
 
 ## Conclusion
