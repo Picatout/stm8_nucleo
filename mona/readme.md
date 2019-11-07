@@ -294,7 +294,7 @@ Commande **set**. Met à **1** les bits indiquées par **mask** pour l'octet qui
 ```
 Commande **toggle**. Inverse l'état des bits indiqués par **mask** pour l'octet qui se trouve à l'adresse **addr**. Dans l'exemple c-haut l'état de la LED2 est inversé. C'est à dire que s'il est éteint il s'allume ou inversement il s'éteint. 
 
-### **x [addr]
+### **x [addr]**
 ```
 >h $8e80
 $8E80  $C6 $50 $0A $A8 $20 $C7 $50 $0A    P    P 
