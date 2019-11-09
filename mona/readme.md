@@ -109,7 +109,7 @@ Commande **fetch**. Affiche le contenu d'une location mémoire. Cette commande n
 ```
 Commande **store**. Utlisée pour modifier le contenu de la mémoire. On peut modifier tous les types de mémoires: RAM,EEPROM,FLASH,OPTION. Cette commande accepte une liste d'octets ou de chaînes entre guillemets. Les 2 types de données peuvent-être présent en même temps sur la ligne de commande. Notez que MONA n'ajoute pas de **0** à la fin des chaînes. Le nombre de paramètres fournis est limité par la taille maximale d'une ligne de commande qui de 80 caractères.
 
-### **b n|$n
+### **b n|$n**
 ```
 >b 10
 $0A 
