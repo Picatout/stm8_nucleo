@@ -1,6 +1,6 @@
 MONA, manuel de l'utilisateur
 ====
-### mise à jour de la version 0.3
+### mise à jour de la version 0.4
 
 Moniteur écris en assembleur.
 
@@ -17,6 +17,7 @@ commandes:
 * **b n|$n|0xhh[hh]** Commande **base convert**. Convertie l'entier dans l'autre base. i.e. dec->hex | hex->dec.
 * **c addr bitmask**. Commande **bit clear**. Met les bits masqués à zéro, **addr** adresse de l'octet à modifié.
 * **e addr count**. Commande **erase** permet de mettre à zéro une plage de mémoire RAM, EEPROM ou FLASH.
+* **f addr string**. Commande find recherche une chaîne ASCII dans la mémoire.
 * **h addr**. Commande **hex dump**. Affiche le contenu de la mémoire en hexadécimal par rangée de 8 octets. Pause à chaque rangée. &lt;ESPACE&gt; continue, autre touche termine.
 * **m src dest count** Commande **move**. Copie le bloc mémoire de **src** vers **dest**, **count** est le nombre d'octets à copier.
 * **q**. Commande **resume**. Cette commande est utilisée pour redémarrer l'application qui a été suspendue par une instruction **trap**.
@@ -33,7 +34,7 @@ commandes:
   
   Personnellement je travaille sur un poste en Ubuntu 18.04 et j'utilise **gtkTerm** comme émulateur de terminal. GtkTerm doit-être configuré pour **CRLF auto** . 
   
-  ![capture écran MONA](capture_ecran_mona03.png)
+  ![capture écran MONA](capture_ecran_mona04.png)
   
   Le moniteur bloque l'écriture dans la mémoire **FLASH** occupée par le moniteur ainsi que la mémoire **RAM** utilisée par celui-ci.
   
@@ -79,6 +80,7 @@ commands:
 b n|$n, convert n in the other base
 c addr bitmask, clear bits at address
 e addr count, clear memory range
+f addr string, find string in memory
 h addr, hex dump memory starting at address
 m src dest count, move memory block
 q , quit MONA after a trap entry.
@@ -150,6 +152,23 @@ $D8  $00 $00 $00 $00 $00 $00 $00 $00
 ```
 
 Commande **erase**. Sert à mettre à zéro une plage mémoire. Les types de mémoires qui peuvent être mis à zéro sont RAM,FLASH et EEPROM. **addr** est l'adresse début de la plage et **count** est le nombre d'octets à effacer. Le maximum est de 65535 octets. 
+
+### **f addr string**
+```
+>f $8080 "commands"
+Found at address: $8CCB
+>h $8ccb
+$8CCE  $63 $6F $6D $6D $61 $6E $64 $73   commands
+$8CD6  $3A $0A $40 $20 $61 $64 $64 $72   : @ addr
+
+>f $8080 "Commands"    
+String not found.
+>f $8080 i "Commands"
+Found at address: $8CCB 
+>h $8ccb
+$8CCB  $63 $6F $6D $6D $61 $6E $64 $73   commands
+```
+Commande **find**. Sert à rechercher une chaîne ASCII dans la mémoire. La recherche débute à l'adresse **addr** et se termine à la première occurence trouvée ou bien lorsque fin de la mémoire a étée atteinte. La recherche distingue les majuscules des minuscules à moins que l'option **i** soit utililsée.
 
 ### **h addr**
 ```

@@ -4,7 +4,7 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=mona03
+NAME=mona04
 
 SDAS=sdasstm8
 SDCC=sdcc
