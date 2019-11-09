@@ -9,7 +9,10 @@
 
 ;-------------------------------------------------------
 ; History:
-;   2019-11-10  version 0.4
+;	2019-11-09	vesrion 0.5
+;				Ajout de la commande 'd' pour désasembleur.
+;				
+;   2019-11-08  version 0.4
 ;				Added 'f' command to search string. 
 ;
 ;				parser rework.
@@ -882,30 +885,6 @@ to_lower:
 	jrugt 9$
 	add a,#32
 9$: ret
-
-;------------------------------------
-; copy n character from (x) to (y)
-; input:
-;   	x   source pointer
-;       idx_x index in (x)
-;       y   destination pointer
-;       idx_y  index in (y)
-;       a   number of character to copy
-;------------------------------------
-strcpyn:
-	N = 1 ; local variable count
-	push a
-1$: ld a,(N,sp)		
-	jreq 2$ 
-	ld a,([idx_x],x)
-	ld ([idx_y],y),a
-	inc idx_x+1
-	inc idx_y+1
-	dec (N,sp)
-	jra 1$
-2$: clr ([idx_y],y)
-	pop a
-	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;        arithmetic operations

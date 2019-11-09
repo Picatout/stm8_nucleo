@@ -156,17 +156,15 @@ Commande **erase**. Sert à mettre à zéro une plage mémoire. Les types de mé
 ### **f addr string**
 ```
 >f $8080 "commands"
-Found at address: $8CCB
->h $8ccb
-$8CCE  $63 $6F $6D $6D $61 $6E $64 $73   commands
-$8CD6  $3A $0A $40 $20 $61 $64 $64 $72   : @ addr
+Found at address: $8CAE 
+>h $8cae
+$8CAE  $63 $6F $6D $6D $61 $6E $64 $73   commands
 
->f $8080 "Commands"    
+>f $8080 "Commands"
 String not found.
 >f $8080 i "Commands"
-Found at address: $8CCB 
->h $8ccb
-$8CCB  $63 $6F $6D $6D $61 $6E $64 $73   commands
+Found at address: $8CAE 
+>
 ```
 Commande **find**. Sert à rechercher une chaîne ASCII dans la mémoire. La recherche débute à l'adresse **addr** et se termine à la première occurence trouvée ou bien lorsque fin de la mémoire a étée atteinte. La recherche distingue les majuscules des minuscules à moins que l'option **i** soit utililsée.
 
