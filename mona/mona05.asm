@@ -1,9 +1,28 @@
+;;
+; Copyright Jacques Deschênes 2019 
+; This file is part of MONA 
+;
+;     MONA is free software: you can redistribute it and/or modify
+;     it under the terms of the GNU General Public License as published by
+;     the Free Software Foundation, either version 3 of the License, or
+;     (at your option) any later version.
+;
+;     MONA is distributed in the hope that it will be useful,
+;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;     GNU General Public License for more details.
+;
+;     You should have received a copy of the GNU General Public License
+;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+;;
+
 ;  MONA   MONitor written in Assembly
 	.module MONA 
     .optsdcc -mstm8
 ;	.nlist
 	.include "../inc/nucleo_8s208.inc"
 	.include "../inc/stm8s208.inc"
+	.include "../inc/ascii.inc"
 ;	.list
 	.page
 
@@ -49,41 +68,7 @@
 ;
 ;-------------------------------------------------------
 
-;-------------------------------------------------------
-;     vt100 CTRL_x  values
-;-------------------------------------------------------
-		CTRL_A = 1
-		CTRL_B = 2
-		CTRL_C = 3
-		CTRL_D = 4
-		CTRL_E = 5
-		CTRL_F = 6
-		CTRL_G = 7
-		CTRL_H = 8
-		CTRL_I = 9
-		CTRL_J = 10
-		CTRL_K = 11
-		CTRL_L = 12
-		CTRL_M = 13
-		CTRL_N = 14
-		CTRL_O = 15
-		CTRL_P = 16
-		CTRL_Q = 17
-		CTRL_R = 18
-		CTRL_S = 19
-		CTRL_T = 20
-		CTRL_U = 21
-		CTRL_V = 22
-		CTRL_W = 23
-		CTRL_X = 24
-		CTRL_Y = 25
-		CTRL_Z = 26
-		ESC = 27
-		NL = CTRL_J
-		CR = CTRL_M
-		BSP = CTRL_H
-		SPACE = 32
-		
+
 ;--------------------------------------------------------
 ;      MACROS
 ;--------------------------------------------------------
@@ -141,9 +126,9 @@ count:  .blkb 1; length of string in tib
 idx_x:  .blkw 1; index for table pointed by x
 idx_y:  .blkw 1; index for table pointed by y
 tib:	.blkb TIB_SIZE ; transaction input buffer
-pad:	.blkb PAD_SIZE ; working pad
-acc24:  .blkb 3; 24 bits accumulator
-farptr: .blkb 3; 24 bits pointer
+pad::	.blkb PAD_SIZE ; working pad
+acc24:: .blkb 3; 24 bits accumulator
+farptr:: .blkb 3; 24 bits pointer
 flags:  .blkb 1; boolean flags
 trap_sp: .blkw 1; value of sp at trap entry point.
 ram_free_base: .blkw 1
@@ -541,7 +526,7 @@ REG_CC:  .asciz "\nCC: "
 ; transmit character in a via UART3
 ; character to transmit on (3,sp)
 ;------------------------------------
-uart_tx:
+uart_tx::
 	tnz UART3_SR
 	jrpl uart_tx
 	ld UART3_DR,a
@@ -551,7 +536,7 @@ uart_tx:
 ; send string via UART2
 ; y is pointer to str
 ;------------------------------------
-uart_print:
+uart_print:: 
 	ld a,(y)
 	jreq 1$
 	call uart_tx
@@ -562,7 +547,7 @@ uart_print:
 ;------------------------------------
 ; check if char available
 ;------------------------------------
-uart_qchar:
+uart_qchar::
 	tnz rx_char
 	jreq 1$
     ret
@@ -573,14 +558,14 @@ uart_qchar:
 ;------------------------------------
 ; return char in A to queue
 ;------------------------------------
-ungetchar: 
+ungetchar:: 
 	ld rx_char,a
     ret
     
 ;------------------------------------
 ; wait for character from uart3
 ;------------------------------------
-uart_getchar:
+uart_getchar::
 ; if there is a char in rx_char return it.
 	ld a,rx_char 
 	jreq 1$
@@ -840,7 +825,7 @@ convert_escape:
 ; output:
 ;   pad 	token as .asciz  
 ;------------------------------------
-next_word:
+next_word::
 	pushw x 
 	pushw y 
 	ldw x, #pad 
@@ -875,7 +860,7 @@ next_word:
 ; output:
 ;   A		result 
 ;----------------------------------
-to_lower:
+to_lower::
 	cp a,#'A
 	jrult 9$
 	cp a,#'Z 
@@ -883,6 +868,22 @@ to_lower:
 	add a,#32
 9$: ret
 
+;------------------------------------
+; convert alpha to uppercase
+; input:
+;    a  character to convert
+; output:
+;    a  uppercase character
+;------------------------------------
+to_upper::
+	cp a,#'a
+	jrpl 1$
+0$:	ret
+1$: cp a,#'z	
+	jrugt 0$
+	sub a,#32
+	ret
+	
 ;------------------------------------
 ; copy n character from (x) to (y)
 ; input:
@@ -892,7 +893,7 @@ to_lower:
 ;       idx_y  index in (y)
 ;       a   number of character to copy
 ;------------------------------------
-strcpyn:
+strcpyn::
 	N = 1 ; local variable count
 	push a
 1$: ld a,(N,sp)		
@@ -925,7 +926,7 @@ strcpyn:
 	OVFL = 2  ; multiplicaton overflow low byte
 	OVFH = 1  ; multiplication overflow high byte
 	LOCAL_SIZE = 3
-mulu24_8:
+mulu24_8::
 	pushw x    ; save X
 	; local variables
 	push a     ; U8
@@ -979,7 +980,7 @@ mulu24_8:
 ; offset  on sp of arguments and locals
 	U8   = 1   ; divisor on stack
 	LOCAL_SIZE =1
-divu24_8:
+divu24_8::
 	pushw x ; save x
 	push a 
 	; ld dividend UU:MM bytes in X
@@ -1014,7 +1015,7 @@ divu24_8:
 ;  output:
 ;		acc24 variable
 ;-------------------------------------
-neg_acc24:
+neg_acc24::
 	cpl acc24+2
 	cpl acc24+1
 	cpl acc24
@@ -1037,7 +1038,7 @@ neg_acc24:
 ; output:
 ;	aucun 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-inc_var24:
+inc_var24::
 	add a, (2,x)
 	ld (2,x),a
 	clr a
@@ -1057,7 +1058,7 @@ inc_var24:
 ; output:
 ;   dest = src
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-copy_var24:
+copy_var24::
 	ld a,(0,x)
 	ld (0,y),a 
 	ld a,(1,x)
@@ -1077,7 +1078,7 @@ copy_var24:
 	SIGN=1  ; local variable 
 	BASE=2  ; local variable
 	LOCAL_SIZE=2  ;locals size
-itoa:
+itoa::
 	pushw x
 	sub sp,#LOCAL_SIZE
 	ld (BASE,sp), a  ; base
@@ -1143,7 +1144,7 @@ itoa_loop:
 ; output:
 ;    A  0|1
 ;------------------------------------
-is_digit:
+is_digit::
 	cp a,#'0
 	jrpl 1$
 0$:	clr a
@@ -1160,7 +1161,7 @@ is_digit:
 ; output:
 ;   a   0|1 
 ;------------------------------------
-is_hex:
+is_hex::
 	push a
 	call is_digit
 	cp a,#1
@@ -1181,22 +1182,6 @@ is_hex:
     ret
             	
 ;------------------------------------
-; convert alpha to uppercase
-; input:
-;    a  character to convert
-; output:
-;    a  uppercase character
-;------------------------------------
-a_upper:
-	cp a,#'a
-	jrpl 1$
-0$:	ret
-1$: cp a,#'z	
-	jrugt 0$
-	sub a,#32
-	ret
-	
-;------------------------------------
 ; convert pad content in integer
 ; input:
 ;    pad		.asciz to convert
@@ -1208,7 +1193,7 @@ a_upper:
 	BASE=2 ; 1 byte, numeric base used in conversion
 	TEMP=3 ; 1 byte, temporary storage
 	LOCAL_SIZE=3 ; 3 bytes reserved for local storage
-atoi:
+atoi::
 	pushw x ;save x
 	sub sp,#LOCAL_SIZE
 	; acc24=0 
@@ -1273,7 +1258,7 @@ atoi_exit:
 ; output:
 ;	a   length  < 256
 ;------------------------------------
-strlen:
+strlen::
 	LEN=1
     pushw y
     push #0
@@ -1297,10 +1282,10 @@ strlen:
 ; output:
 ;    print byte value at this address
 ;------------------------------------
-peek:
+peek::
 	pushw y
     push a   ; base numérique pour la conversion
-	; A=farptr[x]
+; A=farptr[x]
 	ldf a,([farptr],x)
     ld acc24+2,a
     clr acc24 
@@ -1318,7 +1303,7 @@ peek:
 ;  output:
 ;    acc24   int24_t 
 ;------------------------------------
-number:
+number::
 	call next_word
 	call atoi
 	ret
@@ -1453,7 +1438,12 @@ eval:
 	jrne 21$
 	jp clear_bits
 21$:
-    cp a,#'e 
+	cp a,#'d
+	jrne 23$
+	call dasm
+	ret 
+23$:
+	cp a,#'e 
 	jrne 25$
 	jp erase
 25$:
@@ -1976,13 +1966,20 @@ no_addr:
 	ld a,[flash_free_base]
 	jreq error_print 
 	jp [flash_free_base]
-error_print:
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; print error messages
+; input:
+;	A 		error code 
+; output:
+;	none 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+error_print::
 	cp a,#0 ; missing argment
 	jrne 1$
 	ldw y, #MISS_ARG
 	jra 9$
 1$: ldw y, #BAD_ARG
-
 9$:	call uart_print 
 	ret
 
@@ -2020,7 +2017,6 @@ HELP: .ascii "commands:\n"
 MISS_ARG: .asciz "Missing arguments\n"
 BAD_ARG:  .asciz "bad arguments\n"
 
-	.include "mnemonics.inc"
 
 	.bndry 128 ; align on FLASH block.
 
@@ -2034,6 +2030,32 @@ flash_free:
 .else
 	nop 
 .endif
+jrxx_dasm_test:
+	jra flash_free 
+	jrf flash_free
+	jrugt flash_free 
+	jrule flash_free
+	jrnc flash_free
+	jrc flash_free
+	jrne flash_free
+	jreq flash_free
+	jrnv .
+	jrv .
+	jrpl .
+	jrmi .
+	jrsgt .
+	jrsle .
+	jrsge .
+	jrslt .
+	jruge .
+	jrt .
+	jrult .
+	jrnh blink
+	jrh blink
+	jrnm blink
+	jrm blink 
+	jril blink
+	jrih blink 
 blink:
 	ld a,LED2_PORT
 	xor a,#LED2_MASK

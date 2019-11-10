@@ -1,3 +1,5 @@
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
+
 # processeur STM8
 
 Ce document est une brève présentation du CPU STM8 au coeur des microcontrôleurs 8 bits de ST Microelectronics.

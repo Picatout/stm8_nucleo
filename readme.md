@@ -1,6 +1,7 @@
 [//]: # (auteur: Jacques Deschênes)
 [//]: # (Date: 2019/10/30)
 [//]: # (Copyright Jacques Deschênes, 2019)
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
 
 # STM8 Nucleo
 En même temps que j'apprends à programmer les STM8 en assembleur en utilisant **sdasstm8** et la carte  [NUCLEO-8S208RB](https://www.st.com/en/evaluation-tools/nucleo-8s208rb.html), j'ai décidé d'en faire un tutoriel. Cette carte a des connecteurs (CN4,CN5,CN7 et CN8) qui sont compatible avec les cartes d'extension Arduino. Les connecteurs CN1 et CN2 permettent l'installation de cartes d'extension vendu par STMicroelectronics.

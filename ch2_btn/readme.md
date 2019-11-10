@@ -1,3 +1,5 @@
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
+
 # Chapitre 2, interruption et mode HALT
 
 Dans cette expérience je voulais vérifier les interruptions externes en utilisant le bouton utilisateur sur la carte (bouton bleu) qui est branché sur le GPIO PE_4. J'ai programmé PE_4 pour déclencher une interruption externe lorsque le bouton est enfoncé. Les interruptions externes sur le port PE déclenchent **EXTI4**. 

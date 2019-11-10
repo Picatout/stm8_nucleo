@@ -1,21 +1,40 @@
+;;
+; Copyright Jacques Deschênes 2019 
+; This file is part of MONA 
+;
+;     MONA is free software: you can redistribute it and/or modify
+;     it under the terms of the GNU General Public License as published by
+;     the Free Software Foundation, either version 3 of the License, or
+;     (at your option) any later version.
+;
+;     MONA is distributed in the hope that it will be useful,
+;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;     GNU General Public License for more details.
+;
+;     You should have received a copy of the GNU General Public License
+;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;    STM8  mnemonics table
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+    .area CODE 
+
 ; char **mnemo_table 
 ; table de pointeurs vers les mnémoniques
 mnemo_table:
-    .word   M.ADC
-    .word   M.ADD
-    .word   M.ADDW
-    .word   M.AND
-    .word   M.BCCM
-    .word   M.BCP
-    .word   M.BCPL
-    .word   M.BREAK
-    .word   M.BRES
-    .word   M.BSET 
-    .word   M.BTJF
+    .word   M.ADC       
+    .word   M.ADD       
+    .word   M.ADDW      
+    .word   M.AND       
+    .word   M.BCCM      
+    .word   M.BCP       
+    .word   M.BCPL      
+    .word   M.BREAK     
+    .word   M.BRES      
+    .word   M.BSET      
+    .word   M.BTJF      
     .word   M.BTJT 
     .word   M.CALL 
     .word   M.CALLF 
@@ -40,30 +59,41 @@ mnemo_table:
     .word   M.IRET 
     .word   M.JP 
     .word   M.JPF 
-    .word   M.JRA
-    .word   M.JRC
-    .word   M.JREQ
-    .word   M.JRF 
-    .word   M.JRH 
-    .word   M.JRIH
-    .word   M.JRIL
-    .word   M.JRM 
-    .word   M.JRMI
-    .word   M.JRNC
-    .word   M.JRNE 
-    .word   M.JRNH 
-    .word   M.JRNM
-    .word   M.JRNV 
-    .word   M.JRPL 
-    .word   M.JRSGE 
-    .word   M.JRSGT 
-    .word   M.JRSLE 
-    .word   M.JRSLT 
-    .word   M.JRT 
-    .word   M.JRUGE 
-    .word   M.JRULE 
-    .word   M.JRULT
-    .word   M.JRV 
+
+jrxx: ; 16 codes
+; keep in this order, table indexed by lower nibble of opcode
+    .word   M.JRA       ; 0x20
+    .word   M.JRF       ; 0x21
+    .word   M.JRUGT     ; 0x22
+    .word   M.JRULE     ; 0x23
+    .word   M.JRNC      ; 0x24    
+    .word   M.JRC       ; 0x25
+    .word   M.JRNE      ; 0x26
+    .word   M.JREQ      ; 0x27
+    .word   M.JRNV      ; 0x28
+    .word   M.JRV       ; 0x29 
+    .word   M.JRPL      ; 0x2a
+    .word   M.JRMI      ; 0x2b
+    .word   M.JRSGT     ; 0x2c
+    .word   M.JRSLE     ; 0x2d
+    .word   M.JRSGE     ; 0x2e
+    .word   M.JRSLT     ; 0x2f
+; equivalent mnemonics for jrxx
+    .word   M.JRT       ; 0x20  == JRA
+    .word   M.JRUGE     ; 0x24  == JRNC
+    .word   M.JRULT     ; 0x25  == JRC 
+
+; relative jump with 0x90 precode
+jrxx90: ; 6 codes 
+    .word   M.JRNH      ; 0x90 0x28
+    .word   M.JRH       ; 0x90 0x29
+    .word   0,0         ; 0x2a, 0x2b not used
+    .word   M.JRNM      ; 0x90 0x2c
+    .word   M.JRM       ; 0x90 0x2d
+    .word   M.JRIL      ; 0x90 0x2e
+    .word   M.JRIH      ; 0x90 0x2f
+
+
     .word   M.LD 
     .word   M.LDF 
     .word   M.LDW 
@@ -110,9 +140,43 @@ mnemo_table:
     .word   M.WFI 
     .word   M.XOR 
 
-; noms des instructions
-; utilisés par l'assembleur
-mnemo_str:
+;-----------------------------------------------
+; Instructions names used by assembler.
+; Keep in same order than pointer tables above
+; for cross reference between tables.
+;-----------------------------------------------
+; relative jump names table. 
+mnemo_jrxx: 
+M.JRA:  .asciz "JRA"
+M.JRF:   .asciz "JRF"
+M.JRUGT: .asciz "JRUGT"
+M.JRULE:   .asciz "JRULE"
+M.JRNC:  .asciz "JRNC"
+M.JRC:  .asciz "JRC"
+M.JRNE:  .asciz  "JRNE"
+M.JREQ:  .asciz "JREQ"
+M.JRNV:   .asciz "JRNV"
+M.JRV:   .asciz "JRV"
+M.JRPL:   .asciz "JRPL"
+M.JRMI:  .asciz "JRMI"
+M.JRSGT:   .asciz "JRSGT"
+M.JRSLE:   .asciz "JRSLE"
+M.JRSGE:   .asciz "JRSGE"
+M.JRSLT:   .asciz "JRSLT"
+M.JRUGE:   .asciz "JRUGE"
+M.JRT:   .asciz "JRT"
+M.JRULT:  .asciz "JRULT"
+mnemo_jrxx90:
+M.JRNH:   .asciz "JRNH"
+M.JRH:   .asciz "JRH"
+M.RES01:  .asciz "RES1" ; empty slots in jrxx90 table 
+M.RES02:  .asciz "RES2" ; empty slots in jrxx90 table 
+M.JRNM:  .asciz "JRNM"
+M.JRM:   .asciz "JRM"
+M.JRIL:  .asciz "JRIL"
+M.JRIH:  .asciz "JRIH"
+
+
 M.ADC: .asciz "ADC"
 M.ADD: .asciz "ADD"
 M.ADDW: .asciz "ADDW"
@@ -148,30 +212,6 @@ M.INT:  .asciz "INT"
 M.IRET: .asciz "IRET"
 M.JP:   .asciz "JP"
 M.JPF:  .asciz "JPF"
-M.JRA:  .asciz "JRA"
-M.JRC:  .asciz "JRC"
-M.JREQ:  .asciz "JREQ"
-M.JRF:   .asciz "JRF"
-M.JRH:   .asciz "JRH"
-M.JRIH:  .asciz "JRIH"
-M.JRIL:  .asciz "JRIL"
-M.JRM:   .asciz "JRM"
-M.JRMI:  .asciz "JRMI"
-M.JRNC:  .asciz "JRNC"
-M.JRNE:  .asciz  "JRNE"
-M.JRNH:   .asciz "JRNH"
-M.JRNM:  .asciz "JRNM"
-M.JRNV:   .asciz "JRNV"
-M.JRPL:   .asciz "JRPL"
-M.JRSGE:   .asciz "JRSGE"
-M.JRSGT:   .asciz "JRSGT"
-M.JRSLE:   .asciz "JRSLE"
-M.JRSLT:   .asciz "JRSLT"
-M.JRT:   .asciz "JRT"
-M.JRUGE:   .asciz "JRUGE"
-M.JRULE:   .asciz "JRULE"
-M.JRULT:  .asciz "JRULT"
-M.JRV:   .asciz "JRV"
 M.LD:   .asciz "LD"
 M.LDF:   .asciz "LDF"
 M.LDW:   .asciz "LDW"

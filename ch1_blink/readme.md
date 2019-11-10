@@ -1,3 +1,5 @@
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
+
 # Chapitre 1, programme blink.asm
 
 Ce programme est le plus simple qu'on puisse imanginer mais il va nous permettre d'introduire plusieurs éléments d'un fichier source assembleur pour sdasstm8.

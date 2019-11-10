@@ -4,7 +4,7 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=mona04
+NAME=mona05
 
 SDAS=sdasstm8
 SDCC=sdcc
@@ -15,7 +15,7 @@ FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
-OBJECTS=$(BUILD)$(NAME).rel
+OBJECTS=$(BUILD)$(NAME).rel $(BUILD)mona_dasm.rel 
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
 LISTS=$(OBJECTS:.rel=.lst)
@@ -36,14 +36,15 @@ flash: $(TARGET)
 	@echo "***************"
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
-%.rel: $(NAME).asm  $(INC)stm8s208.inc
+%.rel: $(NAME).asm  $(INC)stm8s208.inc $(INC)ascii.inc $(INC)nucleo_8s208.inc mona_dasm.asm mnemonics.inc 
 	@echo
 	@echo "***************"
 	@echo "   assembling  "
 	@echo "***************"
-	$(SDAS) -g -l -s -o $(BUILD)$(NAME).rel $(NAME).asm 
+	$(SDAS) -g -l -s -o $(BUILD)$(NAME).rel $(NAME).asm
+	$(SDAS) -g -l -s -o $(BUILD)mona_dasm.rel mona_dasm.asm
 	
-$(TARGET): $(OBJECTS) $(INCLUDES)
+$(TARGET): $(OBJECTS) $(INCLUDES) mona_dasm.asm 
 	@echo
 	@echo "***************"
 	@echo "linking files"

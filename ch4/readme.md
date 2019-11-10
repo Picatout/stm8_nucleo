@@ -1,3 +1,5 @@
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
+
 # Paramètres et variables locales
 
 Dans ce chapitre j'examine le passage des paramètres aux sous-routines ainsi que l'utilisation de variables locale à celles-ci.

@@ -1,3 +1,5 @@
+[licence: CC-BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/fr/) 
+
 # Chapitre 3,  mémoire étendue.
 
 Démonstration de l'utilisation de la mémoire étendue aussi bien pour les données que pour le code.
