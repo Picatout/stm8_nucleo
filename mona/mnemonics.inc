@@ -93,60 +93,47 @@ jrxx90: ; 6 codes
     .word   M.JRIL      ; 0x90 0x2e
     .word   M.JRIH      ; 0x90 0x2f
 
-
-    .word   M.LD 
-    .word   M.LDF 
-    .word   M.LDW 
-    .word   M.MOV 
-    .word   M.MUL 
-    .word   M.NEG 
-    .word   M.NEGW 
-    .word   M.NOP 
-    .word   M.OR 
-    .word   M.POP 
-    .word   M.POPW 
-    .word   M.PUSH 
-    .word   M.PUSHW 
-    .word   M.RCF 
-    .word   M.RET 
-    .word   M.RETF 
-    .word   M.RIM
-    .word   M.RLC 
-    .word   M.RLCW 
-    .word   M.RLWA 
-    .word   M.RRC 
-    .word   M.RRCW 
-    .word   M.RRWA 
-    .word   M.RVF 
-    .word   M.SBC 
-    .word   M.SCF 
-    .word   M.SIM 
-    .word   M.SLA
-    .word   M.SLL
-    .word   M.SLAW 
-    .word   M.SLLW
-    .word   M.SRA 
-    .word   M.SRAW 
-    .word   M.SRL 
-    .word   M.SRLW 
-    .word   M.SUB 
-    .word   M.SUBW 
-    .word   M.SWAP 
-    .word   M.SWAPW
-    .word   M.TNZ 
-    .word   M.TNZW
-    .word   M.TRAP 
-    .word   M.WFE 
-    .word   M.WFI 
-    .word   M.XOR 
+; misc100 group names pointers char**
+; keep it in opcode order, table indexed by 5 lower bits 
+misc100_ptr: ; 32 codes 
+    .word M.IRET  ;0x80  
+    .word M.RET   ;0x81
+    .word M.INT 
+    .word M.TRAP
+    .word M.POP     ; 0X84 POP A 
+    .word M.POPW    ; 0x85/0x90 0x85  POPW X/Y
+    .word M.POP     ; 0x86  POP CC 
+    .word M.RETF    
+    .word M.PUSH    ; 0x88 PUSH A 
+    .word M.PUSHW   ; 0x89/0x90 0x89  PUSHW X/Y 
+    .word M.PUSH    ; 0x8A  PUSH CC 
+    .word M.BREAK 
+    .word M.CCF 
+    .word M.CALLF   ; 0x8D/0x92 0x8D  CALLF addr24/CALLF [addr16]
+    .word M.HALT 
+    .word M.WFI 
+    .word M.NULL ; used as prefix 0x90
+    .word M.NULL ; used as prefix 0x91
+    .word M.NULL ; uase as prefix 0x92 
+    .word M.LDW  ; 0x93/0x90 0x93  LDW X,Y/Y,X 
+    .word M.LDW  ; 0x94/0x90 0x94  LDW SP,X/Y 
+    .word M.LD   ; 0x95/0x90 0x95  LD XH/YH,A 
+    .word M.LDW  ; 0x96/0x90 0x96  LDW X/Y,SP 
+    .word M.LD   ; 0x97/0x90 0x97  LD XL/YL,A 
+    .word M.RCF 
+    .word M.SCF 
+    .word M.RIM 
+    .word M.SIM 
+    .word M.RVF 
+    .word M.NOP ; 
+    .word M.LD  ; 0x9e/0x90 0x9e LD A,XH/YH 
+    .word M.LD  ; 0x9f/0x90 0x9f LD A,XL/YL
+    .word M.WFE ; 0x72 0x8F 
 
 ;-----------------------------------------------
 ; Instructions names used by assembler.
-; Keep in same order than pointer tables above
-; for cross reference between tables.
 ;-----------------------------------------------
 ; relative jump names table. 
-mnemo_jrxx: 
 M.JRA:  .asciz "JRA"
 M.JRF:   .asciz "JRF"
 M.JRUGT: .asciz "JRUGT"
@@ -166,17 +153,18 @@ M.JRSLT:   .asciz "JRSLT"
 M.JRUGE:   .asciz "JRUGE"
 M.JRT:   .asciz "JRT"
 M.JRULT:  .asciz "JRULT"
-mnemo_jrxx90:
+; mnemo jrxx90:
 M.JRNH:   .asciz "JRNH"
 M.JRH:   .asciz "JRH"
-M.RES01:  .asciz "RES1" ; empty slots in jrxx90 table 
-M.RES02:  .asciz "RES2" ; empty slots in jrxx90 table 
 M.JRNM:  .asciz "JRNM"
 M.JRM:   .asciz "JRM"
 M.JRIL:  .asciz "JRIL"
 M.JRIH:  .asciz "JRIH"
 
 
+
+; instructionn mnemonics 
+M.NULL: .asciz "" 
 M.ADC: .asciz "ADC"
 M.ADD: .asciz "ADD"
 M.ADDW: .asciz "ADDW"
@@ -258,6 +246,59 @@ M.WFE:   .asciz "WFE"
 M.WFI:   .asciz "WFI"
 M.XOR:   .asciz "XOR"
 
+; registers names
+; pointers to string char**
+reg_ptr:
+    .word R.NULL ; 0 no register argument used
+    .word R.A   ; 1
+    .word R.CC  ; 2
+    .word R.XH  ; 3
+    .word R.YH  ; 4
+    .word R.XL  ; 5
+    .word R.YL  ; 6
+    .word R.X   ; 7
+    .word R.Y   ; 8
+    .word R.SP  ; 9
+    .word R.XY  ; 10
+    .word R.YX  ; 11 
+    .word R.SPX ; 12
+    .word R.SPY ; 13 
+    .word R.XSP  ; 14
+    .word R.YSP  ; 15
+    .word R.AXL ; 16
+    .word R.AYL ; 17
+    .word R.AXH ; 18
+    .word R.AYH ; 19
+    .word R.XLA ; 20
+    .word R.YLA ; 21
+    .word R.XHA ; 22
+    .word R.YHA ; 23
 
 
+; instruction arguments string 
+registers:
+R.NULL: .asciz "" 
+R.A: .asciz "A"
+R.CC: .asciz "CC" 
+R.XH: .asciz "XH"
+R.YH: .asciz "YH" 
+R.XL: .asciz "XL"
+R.YL: .asciz "YL" 
+R.X:  .asciz "X" 
+R.Y:  .asciz "Y"
+R.SP: .asciz "SP"
+R.XY: .asciz "X,Y"
+R.YX: .asciz "Y,X"
+R.SPX: .asciz "SP,X"
+R.SPY: .asciz "SP,Y"
+R.XSP: .asciz "X,SP"
+R.YSP: .asciz "Y,SP"
+R.AXL: .asciz "A,XL"
+R.AYL: .asciz "A,YL" 
+R.AXH: .asciz "A,XH"
+R.AYH: .asciz "A,YH"
+R.XLA: .asciz "XL,A"
+R.YLA: .asciz "YL,A"
+R.XHA: .asciz "XH,A"
+R.YHA: .asciz "YH,A"
 

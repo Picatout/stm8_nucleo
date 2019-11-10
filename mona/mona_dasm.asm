@@ -111,10 +111,16 @@ decode:
     and a,(OPCODE,sp)
     cp  a,#0X20
     jrne 2$
-    ldw y, (1,sp) ; yh = PRE_CODE, yl=OPCODE 
     jp reljump ; this is a relative jump
-    jra decode_exit 
-2$:         
+2$:
+    ld a,#0xe0
+    and a,(OPCODE,sp)
+    cp a,#0x80
+    jrne 3$
+    jp misc100
+3$:
+
+
 decode_exit:    
     addw sp,#LOCAL_SIZE 
     ret
@@ -144,7 +150,7 @@ reljump:
     ld a,#TAB
     call uart_tx
 ; jrxx condition in lower nibble 
-; jrxx table index = y+(cond_code*2)    
+; str= precode!=0x90 ? jrxx[y+(cond_code*2)] : jrxx90[y+(cond_code-8)*2]
     ldw y,#jrxx
     ld a,#0xf 
     and a,(OPCODE,sp)
@@ -153,7 +159,7 @@ reljump:
     ld a,#0x90
     cp a,(PRE_CODE,sp)
     jrne 0$
-; if precode==0x90 increment index.    
+; if precode==0x90  sub 8 to index and change table
     ld a, acc24+2 
     sub a,#8
     ld acc24+2,a
@@ -161,43 +167,42 @@ reljump:
 0$: clr acc24+1
     sll acc24+2 
     addw y, acc24+1
+; Y= instruction mnemonnic pointer     
     ldw y,(y)
-; print instruction name 
+; print instruction mnnemonic  
     call uart_print
 ; get relative address byte     
     ldf a, ([farptr],x)
     incw x
-; compute absolute address    
-    sub sp,#4
-    ; x offset extended to 24 bits 
-    ldw (3,sp), x ; offset {15:0}
-    clr (2,sp)    ; offset (23:16)
-    ld (1,sp),a   ; rel jump distance {-128..127}
+; compute absolute address
+; local variable 
+    JR = 1    ; jrxx address extended to 24 bits 
+    LOCAL_SIZE=3
+    pushw x   ; preserve X 
+    sub sp,#LOCAL_SIZE ;
+    ld (JR+2,sp),a 
+; sign extend to 24 bits 
+    clr (JR+1,sp)   ; rel jump 15:8 
+    clr (JR,sp)     ; rel jump 23:16       
     cp a,#128
     jrult 1$
-    ld a,#255
-    ld (2,sp),a 
-; copy farptr to acc24 
-1$: ldw x, #farptr 
-    ldw y, #acc24 
-    call copy_var24
-; add instruction bytes count to acc24.     
-    ldw x, (3,sp) 
-    addw x, acc24+1
-    clr a  
-    adc a, acc24
-    ld acc24,a
-    ldw acc24+1, x
-    ld a,(1,sp)  ; relative address 
-    ld xl,a
-    ld a,(2,sp)
-    ld xh,a
-    addw x, acc24+1 
-    adc a, acc24 
-    ld acc24,a
-    ldw acc24+1,x 
-    popw x ; drop rel and bit 23:16 of X offset
-    popw x ; restore offset 
+; A<0 then sign extend negative
+    cpl (JR+1,sp)
+    cpl (JR,sp)
+;  copy X in acc24 , signt extend to 24 bits      
+1$: ldw acc24+1,x 
+    clr acc24    
+; first skip after this instruction bytes     
+    ldw x,#acc24 
+    ldw y,#farptr
+    call add24 
+;target address = acc24+(JR,sp) 
+    ldw x, #acc24  
+    ldw y, sp 
+    incw y   ; now Y point to (JR,sp)
+    call add24   ; acc24=acc24+(JR,sp)
+    addw sp, #LOCAL_SIZE ; drop JR  
+    popw x ; restore X initial value  
 ; print jrxx target address     
     ld a,#SPACE 
     call uart_tx 
@@ -206,59 +211,168 @@ reljump:
     call uart_print
     jp decode_exit
 
+; group with opcode beginning with 0b100
+; table indexed by 5 least significant bits
+misc100:
+    ld a,#0x1f ; 5 bits mask
+    and a,(OPCODE,sp)
+    cp a,#0x2
+    jrne 1$
+    jp opcode_int
+1$: cp a,#0xd
+    jrne 2$
+    jp opcode_callf
+2$: ; these opcodes have implicit arguments 
+    ldw y,#misc100_ptr 
+    ld acc24+2,a 
+    ld a,#0x72
+    cp a,(PRE_CODE,sp)
+    jrne 3$
+    ld a,#32
+    ld acc24+2,a
+3$: clr acc24+1 
+    sll acc24+2
+    addw y,acc24+1
+    ld a,#TAB 
+    call uart_tx 
+    ldw y,(y)
+    call uart_print ; print menonic 
+    ld a,#SPACE 
+    call uart_tx 
+    ld a,#0x1f 
+    and a,(OPCODE,sp)
+    ld acc24+2,a
+    ldw y,#misc100.r.idx
+    addw y,acc24+1
+    ld a,(y)
+    ld acc24+2,a 
+    ld a,#0x90 
+    cp a,(PRE_CODE,sp)
+    jrne 4$
+    inc acc24+2 
+4$: sll acc24+2
+    ldw y,#reg_ptr 
+    addw y,acc24+1
+    ldw y,(y)
+    call uart_print   
+    jp decode_exit
 
-;prefix code 72
-pre72:
+; registers table 
+; association between 5 lower bits of misc100 group and registers table
+; for each code from 0..31 this table give reg_ptr table entry 
+misc100.r.idx:
+    .byte 0,0,0,0,1,7,2,0,1,7,2,0,0,0,0,0,0,0,0,10,12,22,14,20,0,0,0,0,0,0,18,16
 
-    jp dasm_exit
+; take 3 bytes address
+opcode_int:
+    call get_addr24 
+    ldw y,#M.INT 
+    call uart_print
+    ld a,#SPACE 
+    call uart_tx
+    ld a,#16 
+    call itoa 
+    call uart_print 
+    jp decode_exit 
 
-;prefix code 90
-pre90:
+opcode_callf:
+    ld a,#0x92
+    cp a,(PRE_CODE,sp)
+    jreq 1$
+    call get_addr24 
+    jra 2$
+1$: call get_addr16 
+2$: ldw y,#M.CALLF 
+    call uart_print
+    ld a,#SPACE 
+    call uart_tx
+    ld a,#0x92 
+    cp a,(PRE_CODE,sp)
+    jrne 3$
+    ld a,#'[ 
+    ld (PRE_CODE,sp),a 
+    ld a,#'] 
+    ld (OPCODE,sp),a
+    jra 4$
+3$: ld a,#SPACE 
+    ld (PRE_CODE,sp),a 
+    ld (OPCODE,sp),a 
+4$: ld a,(PRE_CODE,sp)
+    call uart_tx 
+    ld a,#16
+    call itoa 
+    call uart_print
+    ld a,(OPCODE,sp)
+    call uart_tx  
+    jp decode_exit
 
-    jp dasm_exit 
+; read two bytes address in acc24
+;  print bytes 
+; input:
+;   farptr      pointer to code 
+;   X           index for farptr 
+; output:
+;   acc24       16 bits address   
+;   X           incremented by 2
+    ADDR16 = 1
+    LOCAL_SIZE = 2
+get_addr16:
+    sub sp,#LOCAL_SIZE
+    ld a,#16 
+    call peek 
+    ldf a,([farptr],x)
+    ld (ADDR16,sp),a 
+    incw x 
+    ld a,#16 
+    call peek 
+    ldf a,([farptr],x)
+    ld (ADDR16+1,sp),a 
+    incw x 
+    ldw y, (ADDR16,sp)
+    ldw acc24+1,y
+    clr acc24
+    addw sp,#LOCAL_SIZE 
+    ld a,#TAB 
+    call uart_tx 
+    ret 
 
-;prefix code 91
-pre91:
-
-    jp dasm_exit 
-
-;prefix code 92
-pre92:
-
-    jp dasm_exit
-
-;inherent addressing
-inherent:
-
-;immediate addressing
-immed:
-
-;indexed addressing
-indexed:
-
-;indirect addressing
-indirect:
-
-;indirect indexed addressing
-indirectx:
-
-;relative addressing
-reljmp:
-
-
-;bit operation
-bitop:
-
+;  read 3 bytes address in acc24 
+;  print bytes 
+; input:
+;   farptr      pointer to code 
+;   X           index for farptr 
+; output:
+;   acc24       16 bits address   
+;   X           incremented by 3
+    ADDR24 = 1 
+    LOCAL_SIZE=3
+get_addr24:
+    sub sp,#LOCAL_SIZE
+    ld a,#16 
+    call peek 
+    ldf a,([farptr],x)
+    ld (ADDR24,sp),a 
+    incw x 
+    ld a,#16 
+    call peek 
+    ldf a,([farptr],x)
+    ld (ADDR24+1,sp),a 
+    incw x 
+    ld a,#16 
+    call peek 
+    ldf a,([farptr],x)
+    ld (ADDR24+2,sp),a 
+    incw x 
+    ldW y,(ADDR24,sp)
+    ldw acc24,y 
+    ld a, (ADDR24+2,sp)
+    ld acc24+2,a 
+    addw sp,#LOCAL_SIZE
+    ld a,#TAB 
+    call uart_tx 
+    ret 
 
 ; opcode prefixes 
 prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0  
 
-
-; opcodes without variable fields 
-; table format: opcode, number of extra bytes, Mnemonic pointer, format string where XX,YY,ZZ are replace by extra bytes 
-const_ops:
-OP_INT: 
-    .byte 0x82, 3 
-    .word M.INT
-    .asciz "INT XXYYZZ"
 

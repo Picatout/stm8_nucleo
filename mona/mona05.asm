@@ -913,6 +913,27 @@ strcpyn::
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;--------------------------------------
+;	24 bit integers addition
+; input:
+;	X 		*v1 
+;	Y 		*v2 
+; output:
+;	X 		*v1+=*v2 
+;--------------------------------------
+add24::
+	ld a,(2,x)
+	add a,(2,y)
+	ld (2,x),a 
+	ld a,(1,x)
+	adc a,(1,y)
+	ld (1,x),a 
+	ld a,(x)
+	adc a,(y)
+	ld (x),a 
+	ret 
+
+
+;--------------------------------------
 ; unsigned multiply uint24_t by uint8_t
 ; use to convert numerical string to uint24_t
 ; input:
@@ -2030,7 +2051,8 @@ flash_free:
 .else
 	nop 
 .endif
-jrxx_dasm_test:
+dasm_test:
+	nop 
 	jra flash_free 
 	jrf flash_free
 	jrugt flash_free 
@@ -2055,7 +2077,46 @@ jrxx_dasm_test:
 	jrnm blink
 	jrm blink 
 	jril blink
-	jrih blink 
+	jrih blink
+	callf blink
+	callf [farptr]
+	iret 
+	ret 
+	pop a 
+	popw x
+	popw y 
+	pop cc 
+	retf 
+	push a 
+	pushw x 
+	pushw y 
+	pop cc 
+	break 
+	ccf 
+	halt 
+	wfi 
+	wfe 
+	ldw x,y 
+	ldw y,x 
+	ldw sp,x 
+	ldw sp,y 
+	ld xh,a 
+	ld yh,a 
+	ldw x,sp 
+	ldw y,sp 
+	ld xl,a 
+	ld yl,a 
+	rcf 
+	scf 
+	rim 
+	sim 
+	rvf 
+	nop 
+	ld a,xh 
+	ld a,yh 
+	ld a,xl 
+	ld a,yl	
+	
 blink:
 	ld a,LED2_PORT
 	xor a,#LED2_MASK
