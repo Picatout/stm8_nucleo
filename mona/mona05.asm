@@ -127,7 +127,9 @@ idx_x:  .blkw 1; index for table pointed by x
 idx_y:  .blkw 1; index for table pointed by y
 tib:	.blkb TIB_SIZE ; transaction input buffer
 pad::	.blkb PAD_SIZE ; working pad
-acc24:: .blkb 3; 24 bits accumulator
+acc24:: .blkb 1; acc24:acc16:acc8 form a 24 bits accumulator
+acc16:: .blkb 1; acc16:acc8 form a 24 bits accumulator 
+acc8::  .blkb 1; acc8 an 8 bit accumulator 
 farptr:: .blkb 3; 24 bits pointer
 flags:  .blkb 1; boolean flags
 trap_sp: .blkw 1; value of sp at trap entry point.
@@ -1095,18 +1097,18 @@ copy_var24::
 ;	acc24	integer to convert
 ; output:
 ;   y  		pointer to string
+;   A 		string length 
 ;------------------------------------
-	SIGN=1  ; local variable 
-	BASE=2  ; local variable
+	SIGN=1  ; integer sign 
+	BASE=2  ; numeric base 
 	LOCAL_SIZE=2  ;locals size
 itoa::
-	pushw x
 	sub sp,#LOCAL_SIZE
 	ld (BASE,sp), a  ; base
 	clr (SIGN,sp)    ; sign
 	cp a,#10
 	jrne 1$
-	; base 10 string display with negative sign if bit 7==1
+	; base 10 string display with negative sign if bit 23==1
 	btjf acc24,#7,1$
 	cpl (SIGN,sp)
 	call neg_acc24
@@ -1114,9 +1116,6 @@ itoa::
 ; initialize string pointer 
 	ldw y,#pad+PAD_SIZE-1
 	clr (y)
-	decw y
-	ld a,#SPACE
-	ld (y),a
 itoa_loop:
     ld a,(BASE,sp)
     call divu24_8 ; acc24/A 
@@ -1128,34 +1127,21 @@ itoa_loop:
     ld (y),a
 	; if acc24==0 conversion done
 	ld a,acc24
-	or a,acc24+1
-	or a,acc24+2
+	or a,acc16
+	or a,acc8
     jrne itoa_loop
 	;conversion done, next add '$' or '-' as required
 	ld a,(BASE,sp)
 	cp a,#16
-	jrne 9$
-    call strlen
-    cp a,#3
-    jreq 8$
-    jrult 7$
-	cp a,#5
-	jreq 8$
-7$: decw y
-    ld a,#'0
-    ld (y),a
-8$:	decw y
-	ld a,#'$
-	ld (y),a
-	jra 10$
-9$: ld a,(SIGN,sp)
+	jreq 10$
+    ld a,(SIGN,sp)
     jreq 10$
     decw y
     ld a,#'-
     ld (y),a
 10$:
 	addw sp,#LOCAL_SIZE
-	popw x
+	call strlen
 	ret
 
 ;------------------------------------
@@ -1219,8 +1205,8 @@ atoi::
 	sub sp,#LOCAL_SIZE
 	; acc24=0 
 	clr acc24    
-	clr acc24+1
-	clr acc24+2
+	clr acc16
+	clr acc8 
 	ld a, pad 
 	jreq atoi_exit
 	clr (SIGN,sp)
@@ -1279,10 +1265,10 @@ atoi_exit:
 ; output:
 ;	a   length  < 256
 ;------------------------------------
-strlen::
 	LEN=1
+strlen::
     pushw y
-    push #0
+    push #0 ; length 
 0$: ld a,(y)
     jreq 1$
     inc (LEN,sp)
@@ -1292,31 +1278,117 @@ strlen::
     popw y
     ret
 
+;------------------------------------
+; print integer in acc24 
+; input:
+;	acc24 		integer to print 
+;	A 			numerical base for conversion 
+;   XL 			field width, 0 -> no fill.
+;  output:
+;    none 
+;------------------------------------
+	BASE = 2
+	WIDTH = 1
+	LOCAL_SIZE = 2
+print_int::
+	pushw y 
+	sub sp,#LOCAL_SIZE 
+	ld (BASE,sp),a 
+	ld a,xl
+	ld (WIDTH,sp),a 
+	ld a, (BASE,sp)  
+    call itoa  ; conversion entier en  .asciz
+	ld acc8,a ; string length 
+	ld a,#16
+	cp a,(BASE,sp)
+	jrne 1$
+	decw y 
+	ld a,#'$
+	ld (y),a
+	inc acc8 
+1$: ld a,(WIDTH,sp) 
+	jreq 4$
+	sub a,acc8
+	jrule 4$
+	ld (WIDTH,sp),a 
+	ld  a,#SPACE
+3$: tnz (WIDTH,sp)
+	jreq 4$
+	jrmi 4$
+	decw y 
+	ld (y),a 
+	dec (WIDTH,sp) 
+	jra 3$
+4$: call uart_print
+	ld a,#SPACE 
+	call uart_tx 
+    addw sp,#LOCAL_SIZE 
+	popw y 
+    ret	
 
 
 ;------------------------------------
-; peek addr, print byte at this address 
+; get byte address 
+; farptr[X]
+; input:
+;	 farptr   address to peek
+;    X		  farptr index 	
+; output:
+;    acc8	  value
+;    x		  incremented by 1
+;------------------------------------
+peek::
+	clr acc24 
+	clr acc16 
+	ldf a,([farptr],x)
+    ld acc8,a
+	incw x
+	ret
+
+;------------------------------------
+; get word at at address 
+; farptr[X]
+; input:
+;	 farptr   address to peek
+;    X		  farptr index 	
+; output:
+;    acc16:   value
+;	 X:		  incremented by 2 
+;------------------------------------
+peek16::
+	 clr acc24 
+	 ldf a,([farptr],x)
+	 ld acc16,a 
+	 incw x 
+	 ldf a,([farptr],x)
+	 ld acc8,a 
+	 incw x 
+	 ret 
+
+
+;------------------------------------
+; get 24 bits integer at address
+; pointed by farptr[x] 
 ; input:
 ;	 farptr   address to peek
 ;    X		  farptr index 	
 ;    A   	  numeric base for convertion
 ; output:
-;    print byte value at this address
+;    acc24 	  value
+;    x		  incremented by 3 
 ;------------------------------------
-peek::
-	pushw y
-    push a   ; base numérique pour la conversion
-; A=farptr[x]
-	ldf a,([farptr],x)
-    ld acc24+2,a
-    clr acc24 
-	clr acc24+1 
-	pop a ; base numérique pour la conversion 
-    call itoa  ; conversion entier en  .asciz
-    call uart_print
-    popw y
-    ret	
-	
+peek24::
+	 ldf a,([farptr],x)
+	 ld acc24,a 
+	 incw x 
+	 ldf a,([farptr],x)
+	 ld acc16,a 
+	 incw x 
+	 ldf a,([farptr],x)
+	 ld acc8,a 
+	 incw x 
+	 ret
+
 ;------------------------------------
 ; expect a number from command line next argument
 ;  input:
@@ -1532,9 +1604,14 @@ fetch:
 	jreq 1$
 	ld a,#10
 	jra 2$
-1$: ld a,#16	
-2$:	clrw x  ; pour farptr[0]
+1$: ld a,#16
+2$:	push a 	
+	clrw x  ; pour farptr[0]
 	call peek
+	ld a,#0 ; field width 
+	ld xl,a
+	pop a 
+	call print_int 
 	jra fetch_exit
 fetch_miss_arg:
 	call error_print	
@@ -1796,8 +1873,9 @@ hexdump:
 	sub sp,#LOCAL_SIZE
 	call next_word
 	ld a, pad 
-	jreq hdump_missing_arg ; adresse manquante
-	ld a,#16
+	jrne 1$
+	jp hdump_missing_arg ; adresse manquante
+1$:	ld a,#16
 	call atoi ; acc24=addr 
 	; farptr = addr 
 	ldw x,#acc24
@@ -1810,16 +1888,22 @@ row_init:
 	ldw x,#farptr
 	ldw y,#acc24
 	call copy_var24
+	ld a,#6
+	ld xl,a 
 	ld a,#16
-	call itoa
-	call uart_print
+	call print_int 
 	ld a,#SPACE
 	call uart_tx
 	ldw y, #pad
 	ldw x,(IDX,sp)
 row:
-	ld a,#16
+	pushw x 
 	call peek
+	ld a,#3
+	ld xl,a 
+	ld a,#16
+	call print_int
+	popw x  
 	ldf a,([farptr],x)
 	cp a,#SPACE
 	jrpl 1$
@@ -2116,7 +2200,21 @@ dasm_test:
 	ld a,yh 
 	ld a,xl 
 	ld a,yl	
-	
+	rrwa x 
+	rlwa x 
+	rrwa y
+	rlwa y 
+	neg (0,sp)
+	cpl (3,sp) 
+	srl (4,sp) 
+	rrc (6,sp)
+	sra (7,sp)
+	rlc (9,sp)
+	dec (0xa,sp)
+	inc (0xc,sp)
+	tnz (0xe,sp)
+	clr (15,sp)
+
 blink:
 	ld a,LED2_PORT
 	xor a,#LED2_MASK

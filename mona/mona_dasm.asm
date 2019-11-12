@@ -15,6 +15,13 @@
 ;     You should have received a copy of the GNU General Public License
 ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
 ;;
+;----------------------------------------------------------------------------
+;   Here how I proceded:
+; according to this table: https://en.wikipedia.org/wiki/STM8#Instruction_set
+; I tried to group opcode sharing the same common bits field. For exemple
+; jrxx instruction all begin with 0010 . Only the least 4 bits changes to
+; indicate what condition to test. So I decode them in reljump group. 
+;-----------------------------------------------------------------------------
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   MONA desassembler
@@ -107,18 +114,26 @@ decode:
     call peek 
     incw x 
 1$:
-    ld a,#0xf0
+    ld a,#0xf0 
     and a,(OPCODE,sp)
-    cp  a,#0X20
+    cp  a,#0X20 
     jrne 2$
     jp reljump ; this is a relative jump
 2$:
+    cp a,#0
+    jrne 3$
+    jp group_0sp
+3$:
+    cp a,#0x10 
+    jrne 4$
+    jp group_1sp  
+4$:
     ld a,#0xe0
     and a,(OPCODE,sp)
-    cp a,#0x80
-    jrne 3$
-    jp misc100
-3$:
+    cp a,#0x80  ; 3 most significants bits are 100
+    jrne 5$
+    jp misc_0b100
+5$:
 
 
 decode_exit:    
@@ -140,6 +155,81 @@ is_precode:
     jrne 1$  
 2$: addw sp,#1
     ret 
+
+
+; form op (off8,sp)
+group_0sp:
+    ld a,#1
+    cp a,(OPCODE,sp)
+    jrne 1$
+    ld a,#TAB 
+    call uart_tx 
+    ldw y, #M.RRWA 
+    call uart_print 
+    jra 2$
+1$: ld a,#2
+    cp a,(OPCODE,sp)
+    jrne 4$
+    ld a,#TAB 
+    call uart_tx 
+    ldw y, #M.RLWA 
+    call uart_print 
+2$: ld a,#SPACE 
+    call uart_tx 
+    ld a,#'X 
+    tnz (PRE_CODE,sp)
+    jreq 3$
+    inc a
+3$: call uart_tx
+    jp decode_exit
+4$: tnz (PRE_CODE,sp)
+    jrne 5$
+    ld a,#16 
+    call peek
+    ld a,#TAB 
+    call uart_tx     
+    ld a,(OPCODE,sp)
+    and a,#0xf
+    ld acc24+2,a  
+    sll acc24+2
+    clr acc24+1
+    ldw y, #grp_0sp_op 
+    addw y,acc24+1
+    ldw y,(y)
+    call uart_print 
+    ld a,#SPACE
+    call uart_tx 
+    ld a,#'( 
+    call uart_tx
+    ld a,#16
+    call peek
+    incw x
+    ld a,#', 
+    call uart_tx 
+    ldw y,#R.SP 
+    call uart_print  
+    ld a,#')
+    call uart_tx 
+    jp decode_exit 
+5$: 
+    
+    jp decode_exit
+
+; pointer table for group_0sp mnemonics 
+grp_0sp_op:
+    .word M.NEG,M.RRWA,M.RLWA,M.CPL,M.SRL,M.NULL,M.RRC,M.SRA,M.NULL
+    .word M.RLC,M.DEC,M.NULL,M.INC,M.TNZ,M.SWAP,M.CLR 
+
+
+; form op a,(off8,sp)
+group_1sp:
+
+
+    jp decode_exit
+; pointer table for group_1sp mnemonics 
+grp_1sp_op:
+    .word M.SUB,M.CP,M.SBC,M.CPW,M.AND,M.BCP,M.LDW,M.LDW 
+    .word M.XOR,M.ADC,M.OR,M.ADD,M.ADDW,M.SUBW,M.LDW,M.LDW 
 
 
 ;decode relative jump
@@ -213,7 +303,7 @@ reljump:
 
 ; group with opcode beginning with 0b100
 ; table indexed by 5 least significant bits
-misc100:
+misc_0b100:
     ld a,#0x1f ; 5 bits mask
     and a,(OPCODE,sp)
     cp a,#0x2
@@ -242,7 +332,7 @@ misc100:
     ld a,#0x1f 
     and a,(OPCODE,sp)
     ld acc24+2,a
-    ldw y,#misc100.r.idx
+    ldw y,#misc_0b100.r.idx
     addw y,acc24+1
     ld a,(y)
     ld acc24+2,a 
@@ -258,10 +348,13 @@ misc100:
     jp decode_exit
 
 ; registers table 
-; association between 5 lower bits of misc100 group and registers table
+; association between 5 lower bits of misc_0b100 group and registers table
 ; for each code from 0..31 this table give reg_ptr table entry 
-misc100.r.idx:
+misc_0b100.r.idx:
     .byte 0,0,0,0,1,7,2,0,1,7,2,0,0,0,0,0,0,0,0,10,12,22,14,20,0,0,0,0,0,0,18,16
+
+misc_0b0001:
+
 
 ; take 3 bytes address
 opcode_int:
