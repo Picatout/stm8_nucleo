@@ -123,8 +123,6 @@ rx_char: .blkb 1 ; last uart received char
 in.w:  .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
 in:		.blkb 1; parser position in tib
 count:  .blkb 1; length of string in tib
-idx_x:  .blkw 1; index for table pointed by x
-idx_y:  .blkw 1; index for table pointed by y
 tib:	.blkb TIB_SIZE ; transaction input buffer
 pad::	.blkb PAD_SIZE ; working pad
 acc24:: .blkb 1; acc24:acc16:acc8 form a 24 bits accumulator
@@ -256,7 +254,7 @@ clear_all_free_ram:
 ;  information printed at reset
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 print_mona_info:
-	ld a,#CTRL_L
+	ld a,#FF 
 	call uart_tx
 	ldw y,#VERSION
 	call uart_print
@@ -275,9 +273,9 @@ print_mona_info:
 	clr acc24
 	mov acc24+1,ram_free_base
 	mov acc24+2,ram_free_base+1 
+	clrw x
 	ld a,#16
-	call itoa
-	call uart_print
+	call print_int 
 	ldw y,#RAM_LAST_FREE_MSG
 	call uart_print
 	ldw y,#FLASH_FREE_MSG
@@ -285,8 +283,8 @@ print_mona_info:
 	ld a,#16
 	mov acc24+1,flash_free_base
 	mov acc24+2,flash_free_base+1 
-	call itoa
-	call uart_print
+	clrw x 
+	call print_int 
 	ldw y,#EEPROM_MSG
 	call uart_print
 	ret
@@ -411,7 +409,7 @@ UserButtonHandler:
 	jp repl
 
 
-; affiche les registres sauvargés
+; affiche les registres sauvegardés
 ; par l'interruption sur la pile.
 print_registers:
 	ldw y,#STATES
@@ -424,10 +422,10 @@ print_registers:
 	ld a, (10,sp) 
 	ld acc24+1,a 
 	ld a,(9,sp) 
-	ld acc24,a 
+	ld acc24,a
+	clrw x  
 	ld a,#16
-	call itoa 
-	call uart_print 
+	call print_int  
 ; print Y 
 	ldw y,#REG_Y
 	call uart_print 
@@ -437,8 +435,7 @@ print_registers:
 	ld a,(7,sp)
 	ld acc24+1,a 
 	ld a,#16 
-	call itoa 
-	call uart_print
+	call print_int 
 ; print X
 	ldw y,#REG_X
 	call uart_print  
@@ -447,8 +444,7 @@ print_registers:
 	ld a,(5,sp)
 	ld acc24+1,a 
 	ld a,#16 
-	call itoa 
-	call uart_print
+	call print_int 
 ; print A 
 	ldw y,#REG_A 
 	call uart_print 
@@ -456,16 +452,14 @@ print_registers:
 	ld a, (4,sp) 
 	ld acc24+2,a 
 	ld a,#16
-	call itoa 
-	call uart_print 
+	call print_int 
 ; print CC 
 	ldw y,#REG_CC 
 	call uart_print 
 	ld a, (3,sp) 
 	ld acc24+2,a
 	ld a,#16  
-	call itoa 
-	call uart_print 
+	call print_int 
 	ld a,#'\n' 
 	call uart_tx  
 	ret
@@ -886,30 +880,6 @@ to_upper::
 	sub a,#32
 	ret
 	
-;------------------------------------
-; copy n character from (x) to (y)
-; input:
-;   	x   source pointer
-;       idx_x index in (x)
-;       y   destination pointer
-;       idx_y  index in (y)
-;       a   number of character to copy
-;------------------------------------
-strcpyn::
-	N = 1 ; local variable count
-	push a
-1$: ld a,(N,sp)		
-	jreq 2$ 
-	ld a,([idx_x],x)
-	ld ([idx_y],y),a
-	inc idx_x+1
-	inc idx_y+1
-	dec (N,sp)
-	jra 1$
-2$: clr ([idx_y],y)
-	pop a
-	ret
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;        arithmetic operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1145,6 +1115,30 @@ itoa_loop:
 	ret
 
 ;------------------------------------
+; check if A containt an ASCII letter.
+; input:
+;    A 		character to test 
+; output:
+;    A 		same 
+;    C      0 not letter, 1 letter 
+;------------------------------------
+is_alpha::
+	push a 
+	or a,#32
+	cp a,#'a 
+	jrult not_alpha
+	cp a,#'z 
+	jrugt not_alpha 
+	scf 
+	pop a 
+	ret 
+not_alpha:
+	rcf 
+	pop a 
+	ret 
+
+
+;------------------------------------
 ; check if character in {'0'..'9'}
 ; input:
 ;    A  character to test
@@ -1327,8 +1321,25 @@ print_int::
     ret	
 
 
+
 ;------------------------------------
-; get byte address 
+; sign extend a byte acc8 in acc24 
+; input:
+;	acc8 	 
+; output:
+;   acc24	acc8 sign extended
+;-------------------------------------
+sex_acc8::
+	ld a,#128
+	and a,acc8 
+	jreq 1$
+	cpl a 
+1$:	ld acc16,a  
+	ld acc24,a 
+	ret 
+
+;------------------------------------
+; get byte at address 
 ; farptr[X]
 ; input:
 ;	 farptr   address to peek
@@ -1691,8 +1702,8 @@ base_convert:
     ld a,#10
     jra 2$
 1$: ld a,#16
-2$: call itoa
-    call uart_print
+2$: clrw x 
+    call print_int 
     ret
 base_miss_arg:
 	call error_print
@@ -1795,7 +1806,10 @@ find:
 	ldw x, #pad+1
 4$:	ld a,(x)
 	jreq 5$
+	call is_alpha 
+	jrnc 41$
 	or a,(CASE_SENSE,sp)
+41$:	
 	ld (x),a 
 	incw x 
 	jra 4$
@@ -1836,14 +1850,13 @@ find:
 	jra 20$		
 found:
 	ldw y,#FOUND_AT 
-	call uart_print 
-	ld a, farptr+2 
-	ld acc24+2,a 
-	ldw x, farptr 
-	ldw acc24, x 
+	call uart_print
+	ldw x,#farptr 
+	ldw y,#acc24
+	call copy_var24 
 	ld a, #16
-	call itoa 
-	call uart_print 
+	clrw x 
+	call print_int 
 	jra find_exit
 find_miss_arg:
 	call error_print
@@ -1892,8 +1905,9 @@ row_init:
 	ld xl,a 
 	ld a,#16
 	call print_int 
-	ld a,#SPACE
+	ld a,#TAB 
 	call uart_tx
+	call uart_tx 
 	ldw y, #pad
 	ldw x,(IDX,sp)
 row:
