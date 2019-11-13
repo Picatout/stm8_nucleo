@@ -161,21 +161,15 @@ group_0sp:
     ld a,#1
     cp a,(OPCODE,sp)
     jrne 1$
-    ld a,#TAB 
-    call uart_tx 
     ldw y, #M.RRWA 
-    call uart_print 
+    call print_mnemonic 
     jra 2$
 1$: ld a,#2
     cp a,(OPCODE,sp)
     jrne 4$
-    ld a,#TAB 
-    call uart_tx 
     ldw y, #M.RLWA 
-    call uart_print 
-2$: ld a,#SPACE 
-    call uart_tx 
-    ld a,#'X 
+    call print_mnemonic
+2$: ld a,#'X 
     tnz (PRE_CODE,sp)
     jreq 3$
     inc a
@@ -185,8 +179,6 @@ group_0sp:
     jrne 5$
     call peek
     call print_byte 
-    ld a,#TAB 
-    call uart_tx     
     ld a,(OPCODE,sp)
     and a,#0xf
     ld acc24+2,a  
@@ -195,9 +187,7 @@ group_0sp:
     ldw y, #grp_0sp_op 
     addw y,acc24+1
     ldw y,(y)
-    call uart_print 
-    ld a,#SPACE
-    call uart_tx 
+    call print_mnemonic 
     ld a,#'( 
     call uart_tx
     decw x 
@@ -236,8 +226,6 @@ reljump:
 ; print relative address byte 
     call peek
     call print_byte 
-    ld a,#TAB
-    call uart_tx
 ; jrxx condition in lower nibble 
 ; str= precode!=0x90 ? jrxx[y+(cond_code*2)] : jrxx90[y+(cond_code-8)*2]
     ldw y,#jrxx
@@ -259,7 +247,7 @@ reljump:
 ; Y= instruction mnemonnic pointer     
     ldw y,(y)
 ; print instruction mnnemonic  
-    call uart_print
+    call print_mnemonic
 ; get relative address byte     
     decw x 
     ldf a, ([farptr],x)
@@ -326,12 +314,8 @@ misc_0b100:
 3$: clr acc24+1 
     sll acc24+2
     addw y,acc24+1
-    ld a,#TAB 
-    call uart_tx 
     ldw y,(y)
-    call uart_print ; print menonic 
-    ld a,#SPACE 
-    call uart_tx 
+    call print_mnemonic 
     ld a,#0x1f 
     and a,(OPCODE,sp)
     ld acc24+2,a
@@ -370,14 +354,10 @@ opcode_int:
     call print_byte
     call peek
     call print_byte
-    ld a,#TAB 
-    call uart_tx 
     popw x 
     call peek24 
     ldw y,#M.INT 
-    call uart_print
-    ld a,#SPACE 
-    call uart_tx
+    call print_mnemonic
     pushw x 
     ld a,#6
     ld xl,a 
@@ -394,9 +374,7 @@ opcode_callf:
     jra 2$
 1$: call get_addr16 
 2$: ldw y,#M.CALLF 
-    call uart_print
-    ld a,#SPACE 
-    call uart_tx
+    call print_mnemonic
     ld a,#0x92 
     cp a,(PRE_CODE,sp)
     jrne 3$
@@ -449,8 +427,6 @@ get_addr16:
     ldw acc16,y
     clr acc24
     addw sp,#LOCAL_SIZE 
-    ld a,#TAB 
-    call uart_tx 
     ret 
 
 ;  read 3 bytes address in acc24 
@@ -488,9 +464,33 @@ get_addr24:
     ld a, (ADDR24+2,sp)
     ld acc8,a 
     addw sp,#LOCAL_SIZE
-    ld a,#TAB 
-    call uart_tx 
     ret 
+
+;----------------------------
+;print instruction mnemonic 
+;pad with spaces for contant 
+;8 charaters field width
+; input:
+;   y       pointer to string 
+; use:
+;   A       for field width 
+;----------------------------
+print_mnemonic:
+    push a
+    pushw x 
+    ld a,#4
+    mul x,a  
+    ld a,xl 
+    ld acc8,a 
+    ld a,#24
+    sub a,acc8  
+    call spaces 
+    popw x 
+    ld a,#6
+    call print_padded 
+    pop a 
+    ret 
+
 
 ; opcode prefixes 
 prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0  

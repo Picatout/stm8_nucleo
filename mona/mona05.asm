@@ -1364,6 +1364,42 @@ print_addr:
 	popw x 
 	ret 
 
+;------------------------------------
+; print n spaces 
+; input: 
+;   A  		number of space to print 
+; output:
+;	none 
+;------------------------------------
+spaces::
+	push a 
+	ld a,#SPACE 
+1$:	tnz (1,sp)
+	jreq 2$ 
+	call uart_tx 
+	dec (1,sp)
+	jra 1$
+2$:	pop a 
+	ret
+
+;------------------------------------
+;  print padded text with spaces 
+;  input:
+;	Y 		pointer to text 
+;   A 		field width 
+;------------------------------------
+print_padded::
+	push a 
+	pushw y 
+	call uart_print 
+	popw y 
+	call strlen 
+	ld acc8,a
+	pop a 
+	sub a,acc8 
+	jrule 2$
+	call spaces
+2$:	ret 
 
 ;------------------------------------
 ; sign extend a byte acc8 in acc24 
