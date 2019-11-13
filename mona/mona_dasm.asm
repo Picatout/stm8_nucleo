@@ -53,14 +53,15 @@ page_loop:
     ld (INST_CNTR,sp),a
 instr_loop:
 ; print address
-    ld a,#13
+    ld a,#CR 
     call uart_tx
     ldw x, #farptr
     ldw y, #acc24
     call copy_var24 
+    ld a,#6
+    ld xl,a 
     ld a,#16
-    call itoa 
-    call uart_print
+    call print_int 
     ld a,#TAB 
     call uart_tx 
     call decode
@@ -98,25 +99,23 @@ dasm_exit:
 decode:
     sub sp,#LOCAL_SIZE 
     clrw x 
-    ld a,#16
     call peek   
-    ldf a, ([farptr],x)
+    ld a, acc8
     ld (OPCODE,sp),a 
-    incw x  
+    call print_byte  
     call is_precode
     ld (PRE_CODE,sp),a 
     cp a,#0
     jreq 1$
 ; get opcode
-    ldf a,([farptr],x)
-    ld (OPCODE,sp),a  
-    ld a,#16
     call peek 
-    incw x 
+    ld a,acc8
+    ld (OPCODE,sp),a  
+    call print_byte
 1$:
     ld a,#0xf0 
     and a,(OPCODE,sp)
-    cp  a,#0X20 
+    cp  a,#0x20 
     jrne 2$
     jp reljump ; this is a relative jump
 2$:
@@ -184,8 +183,8 @@ group_0sp:
     jp decode_exit
 4$: tnz (PRE_CODE,sp)
     jrne 5$
-    ld a,#16 
     call peek
+    call print_byte 
     ld a,#TAB 
     call uart_tx     
     ld a,(OPCODE,sp)
@@ -201,9 +200,9 @@ group_0sp:
     call uart_tx 
     ld a,#'( 
     call uart_tx
-    ld a,#16
+    decw x 
     call peek
-    incw x
+    call print_byte 
     ld a,#', 
     call uart_tx 
     ldw y,#R.SP 
@@ -235,8 +234,8 @@ grp_1sp_op:
 ;decode relative jump
 reljump:
 ; print relative address byte 
-    ld a,#16
     call peek
+    call print_byte 
     ld a,#TAB
     call uart_tx
 ; jrxx condition in lower nibble 
@@ -262,6 +261,7 @@ reljump:
 ; print instruction mnnemonic  
     call uart_print
 ; get relative address byte     
+    decw x 
     ldf a, ([farptr],x)
     incw x
 ; compute absolute address
@@ -296,9 +296,12 @@ reljump:
 ; print jrxx target address     
     ld a,#SPACE 
     call uart_tx 
+    pushw x 
+    ld a,#6
+    ld xl,a 
     ld a,#16 
-    call itoa 
-    call uart_print
+    call print_int 
+    popw x 
     jp decode_exit
 
 ; group with opcode beginning with 0b100
@@ -355,17 +358,32 @@ misc_0b100.r.idx:
 
 misc_0b0001:
 
+    jp decode_exit 
+
 
 ; take 3 bytes address
 opcode_int:
-    call get_addr24 
+    pushw x 
+    call peek
+    call print_byte
+    call peek
+    call print_byte
+    call peek
+    call print_byte
+    ld a,#TAB 
+    call uart_tx 
+    popw x 
+    call peek24 
     ldw y,#M.INT 
     call uart_print
     ld a,#SPACE 
     call uart_tx
+    pushw x 
+    ld a,#6
+    ld xl,a 
     ld a,#16 
-    call itoa 
-    call uart_print 
+    call print_int  
+    popw x  
     jp decode_exit 
 
 opcode_callf:
@@ -392,37 +410,43 @@ opcode_callf:
     ld (OPCODE,sp),a 
 4$: ld a,(PRE_CODE,sp)
     call uart_tx 
+    ld a, xl
+    ld (PRE_CODE,sp),a 
+    clrw x 
     ld a,#16
-    call itoa 
-    call uart_print
+    call print_int
     ld a,(OPCODE,sp)
     call uart_tx  
+    ld a,(PRE_CODE,sp)
+    ld xl,a 
     jp decode_exit
 
-; read two bytes address in acc24
+; read two bytes address in acc16 
 ;  print bytes 
 ; input:
 ;   farptr      pointer to code 
 ;   X           index for farptr 
 ; output:
-;   acc24       16 bits address   
+;   acc16       16 bits address   
 ;   X           incremented by 2
     ADDR16 = 1
     LOCAL_SIZE = 2
 get_addr16:
     sub sp,#LOCAL_SIZE
-    ld a,#16 
     call peek 
+    call print_byte 
+    decw x 
     ldf a,([farptr],x)
     ld (ADDR16,sp),a 
     incw x 
-    ld a,#16 
     call peek 
+    call print_byte
+    decw x  
     ldf a,([farptr],x)
     ld (ADDR16+1,sp),a 
     incw x 
     ldw y, (ADDR16,sp)
-    ldw acc24+1,y
+    ldw acc16,y
     clr acc24
     addw sp,#LOCAL_SIZE 
     ld a,#TAB 
@@ -435,31 +459,34 @@ get_addr16:
 ;   farptr      pointer to code 
 ;   X           index for farptr 
 ; output:
-;   acc24       16 bits address   
+;   acc24       24 bits address   
 ;   X           incremented by 3
     ADDR24 = 1 
     LOCAL_SIZE=3
 get_addr24:
     sub sp,#LOCAL_SIZE
-    ld a,#16 
     call peek 
+    call print_byte 
+    decw x 
     ldf a,([farptr],x)
     ld (ADDR24,sp),a 
     incw x 
-    ld a,#16 
     call peek 
+    call print_byte 
+    decw x 
     ldf a,([farptr],x)
     ld (ADDR24+1,sp),a 
     incw x 
-    ld a,#16 
     call peek 
+    call print_byte 
+    decw x 
     ldf a,([farptr],x)
     ld (ADDR24+2,sp),a 
     incw x 
-    ldW y,(ADDR24,sp)
+    ldw y,(ADDR24,sp)
     ldw acc24,y 
     ld a, (ADDR24+2,sp)
-    ld acc24+2,a 
+    ld acc8,a 
     addw sp,#LOCAL_SIZE
     ld a,#TAB 
     call uart_tx 

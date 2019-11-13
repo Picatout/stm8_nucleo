@@ -1320,6 +1320,49 @@ print_int::
 	popw y 
     ret	
 
+;----------------------------
+; print byte in acc8 
+; in hexadecimal format 
+; input:
+;   acc8	byte to print 
+; use: 
+;   A       conversion base 
+;   XL		field width
+;----------------------------
+print_byte::
+	push A 
+	pushw x 
+	ld a,#3
+	ld xl,a
+	ld a,#16
+	call print_int 
+	popw x 
+	pop a 
+	ret 
+
+;------------------------------------
+; print *farptr
+; input:
+;    *farptr 
+; use:
+;	acc24	itoa conversion 
+;   A 		conversion base
+;   XL		field width 
+;------------------------------------
+print_addr:
+	pushw x
+	push a 
+	ldw x, farptr 
+	ldw acc24,x 
+	ld a,farptr+2 
+	ld acc8,a 
+	ld a,#6  
+	ld xl, a  ; field width 
+	ld a,#16 ; convert in hexadecimal 
+	call print_int 
+	pop a 
+	popw x 
+	ret 
 
 
 ;------------------------------------
@@ -1606,23 +1649,21 @@ fetch:
 	ldw x,#acc24
 	ldw y,#farptr
 	call copy_var24
-	ldw y,#pad
-	call uart_print
+	call print_addr 
 	ld a,#'=
-	call uart_tx	
+	call uart_tx
+	ld a,#SPACE 
+	call uart_tx 	
 	ld a,pad
 	cp a,#'$
 	jreq 1$
 	ld a,#10
 	jra 2$
 1$: ld a,#16
-2$:	push a 	
+2$:	
 	clrw x  ; pour farptr[0]
 	call peek
-	ld a,#0 ; field width 
-	ld xl,a
-	pop a 
-	call print_int 
+	call print_byte 
 	jra fetch_exit
 fetch_miss_arg:
 	call error_print	
@@ -1851,12 +1892,7 @@ find:
 found:
 	ldw y,#FOUND_AT 
 	call uart_print
-	ldw x,#farptr 
-	ldw y,#acc24
-	call copy_var24 
-	ld a, #16
-	clrw x 
-	call print_int 
+	call print_addr 
 	jra find_exit
 find_miss_arg:
 	call error_print
@@ -1888,7 +1924,7 @@ hexdump:
 	ld a, pad 
 	jrne 1$
 	jp hdump_missing_arg ; adresse manquante
-1$:	ld a,#16
+1$:	
 	call atoi ; acc24=addr 
 	; farptr = addr 
 	ldw x,#acc24
@@ -1898,13 +1934,7 @@ row_init:
 	clrw x 
 	ldw (IDX,sp),x
 	; affiche l'adresse en début de ligne 
-	ldw x,#farptr
-	ldw y,#acc24
-	call copy_var24
-	ld a,#6
-	ld xl,a 
-	ld a,#16
-	call print_int 
+	call print_addr 
 	ld a,#TAB 
 	call uart_tx
 	call uart_tx 
