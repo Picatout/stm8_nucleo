@@ -23,6 +23,8 @@
 	.include "../inc/nucleo_8s208.inc"
 	.include "../inc/stm8s208.inc"
 	.include "../inc/ascii.inc"
+	.include "mona.inc"
+
 ;	.list
 	.page
 
@@ -129,15 +131,10 @@ acc24:: .blkb 1; acc24:acc16:acc8 form a 24 bits accumulator
 acc16:: .blkb 1; acc16:acc8 form a 24 bits accumulator 
 acc8::  .blkb 1; acc8 an 8 bit accumulator 
 farptr:: .blkb 3; 24 bits pointer
-flags:  .blkb 1; boolean flags
+flags::  .blkb 1; boolean flags
 trap_sp: .blkw 1; value of sp at trap entry point.
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
-
-;------------------------------------------
-;    boolean flags in variable 'flags'
-;------------------------------------------
-	F_TRAP = 0  ; set by TrapHandler,cleared by 'q' command.
 
 		.area USER_RAM_BASE
 ;--------------------------------------------------------
@@ -1331,8 +1328,31 @@ print_int::
 ;----------------------------
 print_byte::
 	push A 
-	pushw x 
+	pushw x
+	clr acc24 
+	clr acc16  
 	ld a,#3
+	ld xl,a
+	ld a,#16
+	call print_int 
+	popw x 
+	pop a 
+	ret 
+
+;----------------------------
+; print word in acc16 
+; in hexadecimal format 
+; input:
+;   acc16	word to print 
+; use: 
+;   A       conversion base 
+;   XL		field width
+;----------------------------
+print_word::
+	push A 
+	pushw x 
+	clr acc24 
+	ld a,#5
 	ld xl,a
 	ld a,#16
 	call print_int 
@@ -2236,13 +2256,13 @@ dasm_test:
 	jruge .
 	jrt .
 	jrult .
-	jrnh blink
-	jrh blink
-	jrnm blink
-	jrm blink 
-	jril blink
-	jrih blink
-	callf blink
+	jrnh .
+	jrh .
+	jrnm .
+	jrm . 
+	jril .
+	jrih .
+	callf .
 	callf [farptr]
 	iret 
 	ret 
@@ -2294,6 +2314,29 @@ dasm_test:
 	inc (0xc,sp)
 	tnz (0xe,sp)
 	clr (15,sp)
+	btjt 0x8000,#0,blink 
+	btjf 0x8000,#1,blink 
+	bset 0x6000,#0
+	bres 0x6000,#0
+	bcpl 0x6000,#7
+	bccm 0x6000,#7
+	
+	sub a,(0x10,sp)
+	cp a,(0x10,sp)
+	sbc a,(0x10,sp)
+	cpw x,(0x10,sp)
+	and a,(0x10,sp)
+	bcp a,(0x10,sp)
+	ldw y,(0x10,sp)
+	ldw (0x10,sp),y 
+	xor a,(0x10,sp)
+	adc a,(0x10,sp)
+	or a,(0x10,sp) 
+	add a,(0x10,sp)
+	addw x,#0x1000
+	subw x,#0x1000
+	ldw x,(0x10,sp)
+	ldw (0x10,sp),x
 
 blink:
 	ld a,LED2_PORT
