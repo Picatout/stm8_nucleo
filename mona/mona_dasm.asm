@@ -104,16 +104,15 @@ decode:
     sub sp,#LOCAL_SIZE 
     clrw x 
     call peek   
-    ld a, acc8
     ld (OPCODE,sp),a 
-    call print_byte  
+    call print_byte
+    ld a,(OPCODE,sp)  
     call is_precode
     ld (PRE_CODE,sp),a 
     cp a,#0
     jreq 1$
 ; get opcode
     call peek 
-    ld a,acc8
     ld (OPCODE,sp),a  
     call print_byte
 1$:
@@ -195,6 +194,7 @@ group_0sp:
 4$: tnz (PRE_CODE,sp)
     jrne 5$
     call peek
+    ld (REL,sp),a 
     call print_byte 
     ld a,(OPCODE,sp)
     and a,#0xf
@@ -207,8 +207,7 @@ group_0sp:
     call print_mnemonic 
     ld a,#'( 
     call uart_tx
-    decw x 
-    call peek
+    ld a,(REL,sp)
     call print_byte 
     ld a,#', 
     call uart_tx 
@@ -227,11 +226,9 @@ group_0sp:
 ; btjt 0000bbb0
 ; btjf 0000bbb1
 btjr:
-    call get_addr16
-    ldw y, acc16
+    call get_int16
     ldw (ADR16,sp),y 
     call peek 
-    ld a,acc8 
     ld (REL,sp),a 
     call print_byte 
     ld a, (OPCODE,sp) 
@@ -241,7 +238,6 @@ btjr:
     ldw y, #M.BTJF  
 1$: call print_mnemonic
     ldw y, (ADR16,sp)
-    ldw acc16,y 
     call print_word
     ld a,#',
     call uart_tx
@@ -276,7 +272,6 @@ group_1sp:
     jp grp_1sp_with_prefix
 1$: ; no prefix 
     call peek 
-    ld a, acc8 
     ld (REL,sp),a
     call print_byte 
     ld a,#0x1c
@@ -287,7 +282,6 @@ group_1sp:
     jrne 14$
 10$:
     call peek 
-    ld a,acc8 
     ld (ADR16+1,sp),a
     call print_byte 
     ldw y,#M.ADDW 
@@ -300,9 +294,9 @@ group_1sp:
     ldw y,#addw_x_imm16 
     call uart_print
     ld a,(ADR16+1,sp)
-    ld acc8,a
+    ld yl,a
     ld a,(REL,sp)
-    ld acc16,a  
+    ld yh,a  
     call print_word 
     jp decode_exit 
 14$:    
@@ -391,8 +385,7 @@ op_ofs8_sp_close: .asciz ",SP)"
 
 ; form:  op addr16,#bit,rel  
 grp_1sp_with_prefix:
-    call get_addr16 
-    ldw y,acc16  
+    call get_int16 
     ldw (ADR16,sp),y 
     clr acc16 
     clr acc8 
@@ -416,7 +409,6 @@ grp_1sp_with_prefix:
     ldw y,(y) 
     call print_mnemonic
     ldw y, (ADR16,sp)
-    ldw acc16,y 
     call print_word 
     ld a,#',
     call uart_tx 
@@ -443,7 +435,6 @@ grp_1sp_op:
 reljump:
 ; print relative address byte 
     call peek
-    ld a, acc8
     ld (REL,sp),a 
     call print_byte 
 ; jrxx condition in lower nibble 
@@ -492,7 +483,6 @@ grp_3x:
     jp grp_3x_longmem
 not_longmem:
     call peek 
-    ld a,acc8 
     ld (REL,sp),a 
     call print_byte 
     ld a,(OPCODE,sp)
@@ -502,22 +492,19 @@ not_longmem:
     call print_byte    
     jp decode_exit
 grp_3x_72:
-    call get_addr16
-    ldw y,acc16 
+    call get_int16
     ldw (ADR16,sp),y
     ld a,(OPCODE,sp)
     call print_grp3_mnemo
     ld a,#'[
     call uart_tx 
     ldw y, (ADR16,sp)
-    ldw acc16,y 
     call print_word 
     ld a,#'] 
     call uart_tx 
     jp decode_exit
 grp_3x_92:
     call peek 
-    ld a,acc8 
     ld (REL,sp),a 
     call print_byte 
     ld a,(OPCODE,sp)
@@ -544,12 +531,10 @@ grp_3x_longmem:
     cp a,(OPCODE,sp)
     jrne 31$
     call peek 
-    ld a,acc8 
     ld (REL,sp),a 
     call print_byte 
 31$:    
-    call get_addr16
-    ldw y,acc16
+    call get_int16
     ldw (ADR16,sp),y 
 4$: 
     ld a,(OPCODE,sp)
@@ -563,7 +548,6 @@ grp_3x_longmem:
     call uart_tx 
 5$:
     ldw y,(ADR16,sp)
-    ldw acc16,y 
     call print_word
     ld a,#0x35
     cp a,(OPCODE,sp)
@@ -651,18 +635,16 @@ misc_0b0001:
 
 ; take 3 bytes address
 opcode_int:
-    pushw x 
-    call peek
-    call print_byte
-    call peek
-    call print_byte
-    call peek
-    call print_byte
-    popw x 
-    call peek24 
+    call get_int24
+    ldW (ADR24,sp),y
+    ld (ADR24+2,sp),a 
     ldw y,#M.INT 
     call print_mnemonic
     pushw x 
+    ldw y,(ADR24,sp)
+    ld a,(ADR24+2,sp)
+    ldw acc24,y 
+    ld acc8,a 
     ld a,#6
     ld xl,a 
     ld a,#16 
@@ -675,13 +657,13 @@ opcode_callf:
     ld a,#0x92
     cp a,(PRE_CODE,sp)
     jreq 1$
-    call get_addr24
+    call get_int24
     jra 2$
-1$: call get_addr16
-2$: ldw y,acc24
+1$: call get_int16
+2$: ldw y,acc24 
     ldw (ADR24,sp),y 
     ld a,acc8 
-    ld (REL,sp),a  
+    ld (ADR24+2,sp),a  
     ldw y,#M.CALLF 
     call print_mnemonic
     ld a,#0x92 
@@ -699,7 +681,7 @@ opcode_callf:
     call uart_tx 
     ldw y, (ADR24,sp)
     ldw acc24,y 
-    ld a,(REL,sp)
+    ld a,(ADR24+2,sp)
     ld acc8,a 
     pushw x 
     clrw x 
@@ -710,66 +692,60 @@ opcode_callf:
     call uart_tx  
     jp decode_exit
 
-; read two bytes address in acc16 
-;  print bytes 
+;---------------------------------
+; get_int16 
+; read two bytes as 16 bits integer  
+; print bytes separately
 ; input:
 ;   farptr      pointer to code 
 ;   X           index for farptr 
 ; output:
-;   acc16       16 bits address   
+;   Y           16 bits integer 
+;   acc24       Y zero extended    
 ;   X           incremented by 2
+;--------------------------------
     ADDR16 = 1
     LOCAL_SIZE = 2
-get_addr16:
+get_int16:
     sub sp,#LOCAL_SIZE
     call peek 
-    call print_byte 
-    decw x 
-    ldf a,([farptr],x)
     ld (ADDR16,sp),a 
-    incw x 
+    call print_byte 
     call peek 
-    call print_byte
-    decw x  
-    ldf a,([farptr],x)
     ld (ADDR16+1,sp),a 
-    incw x 
+    call print_byte
     ldw y, (ADDR16,sp)
     ldw acc16,y
-    clr acc24
+    clr acc24 
     addw sp,#LOCAL_SIZE 
     ret 
 
-;  read 3 bytes address in acc24 
-;  print bytes 
+;--------------------------------
+;  get_int24
+;  read 3 bytes as a 24 bits integer 
+;  print bytes separately
 ; input:
 ;   farptr      pointer to code 
 ;   X           index for farptr 
 ; output:
-;   acc24       24 bits address   
+;   Y           bits 23:16 of integer
+;   A           bits 7:0  of integer 
+;   acc24       24 bits integer   
 ;   X           incremented by 3
+;---------------------------------
     ADDR24 = 1 
     LOCAL_SIZE=3
-get_addr24:
+get_int24:
     sub sp,#LOCAL_SIZE
-    call peek 
-    call print_byte 
-    decw x 
-    ldf a,([farptr],x)
+    call peek
     ld (ADDR24,sp),a 
-    incw x 
-    call peek 
     call print_byte 
-    decw x 
-    ldf a,([farptr],x)
+    call peek 
     ld (ADDR24+1,sp),a 
-    incw x 
-    call peek 
     call print_byte 
-    decw x 
-    ldf a,([farptr],x)
+    call peek 
     ld (ADDR24+2,sp),a 
-    incw x 
+    call print_byte 
     ldw y,(ADDR24,sp)
     ldw acc24,y 
     ld a, (ADDR24+2,sp)

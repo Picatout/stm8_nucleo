@@ -1321,14 +1321,13 @@ print_int::
 ; print byte in acc8 
 ; in hexadecimal format 
 ; input:
-;   acc8	byte to print 
+;   A	byte to print 
 ; use: 
-;   A       conversion base 
 ;   XL		field width
 ;----------------------------
 print_byte::
-	push A 
 	pushw x
+	ld acc8,a  
 	clr acc24 
 	clr acc16  
 	ld a,#3
@@ -1336,21 +1335,21 @@ print_byte::
 	ld a,#16
 	call print_int 
 	popw x 
-	pop a 
 	ret 
 
 ;----------------------------
 ; print word in acc16 
 ; in hexadecimal format 
 ; input:
-;   acc16	word to print 
+;   Y	word to print 
 ; use: 
 ;   A       conversion base 
 ;   XL		field width
 ;----------------------------
 print_word::
 	push A 
-	pushw x 
+	pushw x
+	ldw acc16,y  
 	clr acc24 
 	ld a,#5
 	ld xl,a
@@ -1444,14 +1443,11 @@ sex_acc8::
 ;	 farptr   address to peek
 ;    X		  farptr index 	
 ; output:
-;    acc8	  value
+;	 A 		  byte from memory  
 ;    x		  incremented by 1
 ;------------------------------------
 peek::
-	clr acc24 
-	clr acc16 
 	ldf a,([farptr],x)
-    ld acc8,a
 	incw x
 	ret
 
@@ -1462,16 +1458,16 @@ peek::
 ;	 farptr   address to peek
 ;    X		  farptr index 	
 ; output:
-;    acc16:   value
+;    Y:   	  word from memory 
 ;	 X:		  incremented by 2 
 ;------------------------------------
 peek16::
 	 clr acc24 
 	 ldf a,([farptr],x)
-	 ld acc16,a 
+	 ld yh,a 
 	 incw x 
 	 ldf a,([farptr],x)
-	 ld acc8,a 
+	 ld yl,a 
 	 incw x 
 	 ret 
 
@@ -1999,10 +1995,7 @@ row_init:
 row:
 	pushw x 
 	call peek
-	ld a,#3
-	ld xl,a 
-	ld a,#16
-	call print_int
+	call print_byte 
 	popw x  
 	ldf a,([farptr],x)
 	cp a,#SPACE
