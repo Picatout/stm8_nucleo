@@ -137,7 +137,16 @@ decode:
     jrne 5$
     jp misc_0b100
 5$:
-
+    ld a,#0xf0 
+    and a,(OPCODE,sp)
+    cp a,#0x30
+    jrne 6$
+    jp grp_3x
+6$: 
+    cp a,#3 
+    jrne 7$
+    jp grp_3x 
+7$:    
     ldw y, #invalid_code
     call print_mnemonic
 decode_exit:    
@@ -470,6 +479,122 @@ reljump:
     call print_int 
     popw x 
     jp decode_exit
+
+
+;opcode beginning with 0x3n
+grp_3x:
+    ld a,#0x72
+    cp a,(PRE_CODE,sp)
+    jreq grp_3x_72
+    ld a,#0x92
+    cp a,(PRE_CODE,sp)
+    jreq grp_3x_92 
+    jp grp_3x_longmem
+not_longmem:
+    call peek 
+    ld a,acc8 
+    ld (REL,sp),a 
+    call print_byte 
+    ld a,(OPCODE,sp)
+    call print_grp3_mnemo
+    ld a,(REL,sp)
+    ld acc8,a 
+    call print_byte    
+    jp decode_exit
+grp_3x_72:
+    call get_addr16
+    ldw y,acc16 
+    ldw (ADR16,sp),y
+    ld a,(OPCODE,sp)
+    call print_grp3_mnemo
+    ld a,#'[
+    call uart_tx 
+    ldw y, (ADR16,sp)
+    ldw acc16,y 
+    call print_word 
+    ld a,#'] 
+    call uart_tx 
+    jp decode_exit
+grp_3x_92:
+    call peek 
+    ld a,acc8 
+    ld (REL,sp),a 
+    call print_byte 
+    ld a,(OPCODE,sp)
+    call print_grp3_mnemo
+    ld a,#'[ 
+    call uart_tx 
+    ld a,(REL,sp)
+    ld acc8,a 
+    call print_byte 
+    ld a,#']
+    call uart_tx 
+    jp decode_exit 
+
+grp_3x_longmem:
+    ldw y,#grp_3x_longmem_bc 
+1$: ld a,(y) 
+    jreq not_longmem        
+    cp a,(OPCODE,sp)
+    jreq 3$
+    incw y 
+    jra 1$
+3$: ; form: op longmem [,#byte]  
+    ld a,#0x35
+    cp a,(OPCODE,sp)
+    jrne 31$
+    call peek 
+    ld a,acc8 
+    ld (REL,sp),a 
+    call print_byte 
+31$:    
+    call get_addr16
+    ldw y,acc16
+    ldw (ADR16,sp),y 
+4$: 
+    ld a,(OPCODE,sp)
+    call print_grp3_mnemo
+    ld a,#0x31 
+    cp a,(OPCODE,sp)
+    jrne 5$
+    ld a,#'A 
+    call uart_tx
+    ld a,#',
+    call uart_tx 
+5$:
+    ldw y,(ADR16,sp)
+    ldw acc16,y 
+    call print_word
+    ld a,#0x35
+    cp a,(OPCODE,sp)
+    jrne 6$
+    ld a,#',
+    call uart_tx 
+    ld a,#'#
+    call uart_tx 
+    ld a,(REL,sp)
+    ld acc8,a 
+    call print_byte 
+6$: jp decode_exit 
+
+; input: A = OPCODE
+print_grp3_mnemo:
+    and a,#0xf
+    sll a 
+    ld acc8,a 
+    clr acc16 
+    ldw y,#grp_3x_mnemo
+    addw y,acc16 
+    ldw y,(y)
+    call print_mnemonic
+    ret 
+
+grp_3x_longmem_bc:
+    .byte 0x31,0x32,0x35,0x3b,0
+
+grp_3x_mnemo:
+    .word M.NEG,M.EXG,M.POP,M.CPL,M.SRL,M.MOV,M.RRC,M.SRA,M.SLL
+    .word M.RLC,M.DEC,M.PUSH,M.INC,M.TNZ,M.SWAP,M.CLR
 
 ; group with opcode beginning with 0b100
 ; table indexed by 5 least significant bits
