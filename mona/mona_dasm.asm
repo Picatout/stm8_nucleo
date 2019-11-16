@@ -107,7 +107,7 @@ decode:
     ld (OPCODE,sp),a 
     call print_byte
     ld a,(OPCODE,sp)  
-    call is_precode
+    call is_prefix 
     ld (PRE_CODE,sp),a 
     cp a,#0
     jreq 1$
@@ -116,48 +116,43 @@ decode:
     ld (OPCODE,sp),a  
     call print_byte
 1$:
+    ldw y,#adr_mode
     ld a,#0xf0 
     and a,(OPCODE,sp)
-    cp  a,#0x20 
-    jrne 2$
-    jp reljump ; this is a relative jump
-2$:
-    cp a,#0
-    jrne 3$
-    jp group_0sp
-3$:
-    cp a,#0x10 
-    jrne 4$
-    jp group_1sp  
-4$:
-    ld a,#0xe0
-    and a,(OPCODE,sp)
-    cp a,#0x80  ; 3 most significants bits are 100
-    jrne 5$
-    jp misc_0b100
-5$:
-    ld a,#0xf0 
-    and a,(OPCODE,sp)
-    cp a,#0x30
-    jrne 6$
-    jp grp_3x
-6$: 
-    cp a,#3 
-    jrne 7$
-    jp grp_3x 
-7$:    
+    swap a 
+    sll a 
+    ld acc8,a 
+    clr acc16
+    addw y,acc16     
+    ldw y,(y)
+    jp (y)
+invalid_opcode: 
     ldw y, #invalid_code
     call print_mnemonic
 decode_exit:    
     addw sp,#LOCAL_SIZE 
     ret
 
-; check if byte in A is a precode 
+invalid_code:  .asciz "?"
+
+
+; instructions grouped by addressing mode
+; hi-nibble specify addressing mode
+; lo-nibble specify operation
+; there is exceptions in this grouping that
+; must be taken care of.
+; prefix induce change in addressing mode or operation 
+adr_mode:
+    .word mode_0x,mode_1x,mode_2x,mode_3x,mode_4x,mode_5x,mode_6x,mode_7x
+    .word mode_8x,mode_9x,mode_ax,mode_bx,mode_cx,mode_dx,mode_ex,mode_fx
+
+
+; check if byte in A is a prefix  
 ; input:
 ;   A       code to check
 ; output:
 ;   A       A=0 if not precode 
-is_precode:
+is_prefix:
     push a
     ldw y, #prefixes
 1$: ld a,(y)
@@ -168,13 +163,25 @@ is_precode:
 2$: addw sp,#1
     ret 
 
+; opcode prefixes 
+prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0  
 
+;------------------------------
 ; form: op (off8,sp)
-group_0sp:
+; form with prefix 0x72 decoded seperately
+; exceptions: 
+;   0x01 -> RRWA X 
+;   0x02 -> RLWA X
+;   0x90 0x01 -> RRWA Y
+;   0x90 0x02 -> RLWA Y
+;---------------------------
+mode_0x:
     ld a,#0x72 
     cp a,(PRE_CODE,sp)
-    jreq btjr
-    ld a,#1
+    jrne 0$
+    jp btjr ; prefix 0x72 
+; code 0x01,0x02 are exceptions     
+0$: ld a,#1
     cp a,(OPCODE,sp)
     jrne 1$
     ldw y, #M.RRWA 
@@ -201,7 +208,7 @@ group_0sp:
     ld acc24+2,a  
     sll acc24+2
     clr acc24+1
-    ldw y, #grp_0sp_op 
+    ldw y, #mode_0x_mnemo
     addw y,acc24+1
     ldw y,(y)
     call print_mnemonic 
@@ -217,14 +224,22 @@ group_0sp:
     call uart_tx 
     jp decode_exit 
 5$: 
-    
-    jp decode_exit
+    jp invalid_opcode
 
+; pointer table for mode_0x mnemonics 
+mode_0x_mnemo:
+    .word M.NEG,M.RRWA,M.RLWA,M.CPL,M.SRL,M.NULL,M.RRC,M.SRA,M.NULL
+    .word M.RLC,M.DEC,M.NULL,M.INC,M.TNZ,M.SWAP,M.CLR 
+
+;--------------------------
 ; test bit and jump relative 
+; form: btj[t|f]  addr16,#bit,srel 
+; mode_0x with 0x72 prefix
 ; btjt add16,#bit,rel | btjf add16,#bit,rel  
-; prefix 0x72
 ; btjt 0000bbb0
 ; btjf 0000bbb1
+; where bbb is bit number to test {0...7}
+;-----------------------------
 btjr:
     call get_int16
     ldw (ADR16,sp),y 
@@ -259,17 +274,17 @@ btjr:
     popw x  
     jp decode_exit 
 
-; pointer table for group_0sp mnemonics 
-grp_0sp_op:
-    .word M.NEG,M.RRWA,M.RLWA,M.CPL,M.SRL,M.NULL,M.RRC,M.SRA,M.NULL
-    .word M.RLC,M.DEC,M.NULL,M.INC,M.TNZ,M.SWAP,M.CLR 
 
-
-; form: op a,(off8,sp)
-group_1sp:
+;----------------------------
+; form: op A,(off8,SP)
+; form: op X,(off8,SP)
+; form: op Y,(off8,SP)
+; prefix 0x72 and 0x90 modify operations
+;----------------------------
+mode_1x:
     ld a,(PRE_CODE,sp)
     jreq 1$
-    jp grp_1sp_with_prefix
+    jp mode_1x_with_prefix
 1$: ; no prefix 
     call peek 
     ld (REL,sp),a
@@ -305,7 +320,7 @@ group_1sp:
     sll a 
     ld acc8, a 
     clr acc16 
-    ldw y,#grp_1sp_op
+    ldw y,#mode_1x_mnemo
     addw y, acc16 
     ldw y,(y)
     call print_mnemonic
@@ -384,7 +399,7 @@ op_ofs8_sp_x: .asciz ",SP),X"
 op_ofs8_sp_close: .asciz ",SP)"
 
 ; form:  op addr16,#bit,rel  
-grp_1sp_with_prefix:
+mode_1x_with_prefix:
     call get_int16 
     ldw (ADR16,sp),y 
     clr acc16 
@@ -404,7 +419,7 @@ grp_1sp_with_prefix:
     clr a 
     adc a,acc16 
     ld acc16,a 
-2$: ldw y, #grp_1sp_prefix_mnemo
+2$: ldw y, #mode_1x_prefix_mnemo
     addw y,acc16     
     ldw y,(y) 
     call print_mnemonic
@@ -422,17 +437,19 @@ grp_1sp_with_prefix:
     jp decode_exit 
 
 ; pointer table to grp_1sp_with_prefix mnemonics
-grp_1sp_prefix_mnemo:    .word M.BSET,M.BRES,M.BCPL,M.BCCM 
+mode_1x_prefix_mnemo:    .word M.BSET,M.BRES,M.BCPL,M.BCCM 
 
 
 ; pointer table for group_1sp mnemonics 
-grp_1sp_op:
+mode_1x_mnemo:
     .word M.SUB,M.CP,M.SBC,M.CPW,M.AND,M.BCP,M.LDW,M.LDW 
     .word M.XOR,M.ADC,M.OR,M.ADD,M.ADDW,M.SUBW,M.LDW,M.LDW 
 
-
+;----------------------
 ;decode relative jump
-reljump:
+; form:  jrxx srel8 
+;----------------------
+mode_2x:
 ; print relative address byte 
     call peek
     ld (REL,sp),a 
@@ -473,7 +490,7 @@ reljump:
 
 
 ;opcode beginning with 0x3n
-grp_3x:
+mode_3x:
     ld a,#0x72
     cp a,(PRE_CODE,sp)
     jreq grp_3x_72
@@ -580,9 +597,23 @@ grp_3x_mnemo:
     .word M.NEG,M.EXG,M.POP,M.CPL,M.SRL,M.MOV,M.RRC,M.SRA,M.SLL
     .word M.RLC,M.DEC,M.PUSH,M.INC,M.TNZ,M.SWAP,M.CLR
 
-; group with opcode beginning with 0b100
+; opcode beginning with 0x3n
+; form: op adr8 
+; form: op adr16 ex. pop $1000
+; form: mov adr16,#byte 
+; form: op a,adr16 
+mode_4x:
+
+    jp decode_exit 
+
+mode_4x_mnemo:
+    .word M.NEG,M.EXG,M.POP,M.CPL,M.SRL,M.MOV,M.RRC,M.SRA,M.SLL,M.RLC,M.DEC,M.PUSH
+    .word M.INC,M.TNZ,M.SWAP,M.CLR 
+
+; group with opcode beginning with 0b100, upper nibble 8|9
 ; table indexed by 5 least significant bits
-misc_0b100:
+mode_8x:
+mode_9x:
     ld a,#0x1f ; 5 bits mask
     and a,(OPCODE,sp)
     cp a,#0x2
@@ -628,10 +659,21 @@ misc_0b100:
 misc_0b100.r.idx:
     .byte 0,0,0,0,1,7,2,0,1,7,2,0,0,0,0,0,0,0,0,10,12,22,14,20,0,0,0,0,0,0,18,16
 
-misc_0b0001:
+mode_5x:
+mode_6x:
+mode_7x:
+mode_ax:
+mode_bx:
+mode_cx:
+mode_dx:
+mode_ex:
+mode_fx:
 
-    jp decode_exit 
+    ldw y,#to.do
+    call uart_print 
+    jp decode_exit
 
+to.do: .asciz " to be done..."
 
 ; take 3 bytes address
 opcode_int:
@@ -813,10 +855,7 @@ abs_addr:
     popw x 
     ret
 
-invalid_code:  .asciz "?"
 
 
-; opcode prefixes 
-prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0  
 
 
