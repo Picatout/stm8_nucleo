@@ -2307,8 +2307,8 @@ dasm_test:
 	inc (0xc,sp)
 	tnz (0xe,sp)
 	clr (15,sp)
-	btjt 0x8000,#0,blink 
-	btjf 0x8000,#1,blink 
+	btjt 0x8000,#0,.
+	btjf 0x8000,#1,. 
 	bset 0x6000,#0
 	bres 0x6000,#0
 	bcpl 0x6000,#7
@@ -2350,7 +2350,30 @@ dasm_test:
 	clr [0xd0]
 	neg [0x8004]
 	neg [0xc0] 
-
+	mul x,a
+	mul y,a  
+	mov 0xc0,0xd0
+	mov 0x1000,0x2000 
+	push 0xaa55 
+	exg a,xl
+	neg a 
+	cpl a
+	srl a 
+	rrc a 
+	sra a 
+	sll a 
+	rlc a 
+	dec a 
+	inc a 
+	tnz a 
+	swap a 
+	clr a 
+	negw x
+	sraw y 
+	sraw x 
+	exgw x,y 
+	addw sp,#4
+	
 blink:
 	ld a,LED2_PORT
 	xor a,#LED2_MASK
