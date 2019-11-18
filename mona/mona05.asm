@@ -2373,7 +2373,30 @@ dasm_test:
 	sraw x 
 	exgw x,y 
 	addw sp,#4
+	exg a,yl 
+	div x,a 
+	.byte 0x65 
+;	div x,y 
+	ld (4,sp),a 
+	neg(0xc0,x)
+	neg ([0x1000],x)
+	neg (0xd0,y)
+	neg ([0xd0],y)
+	neg ([0xc0],x)
+	clr (0x10,x)
+	clr ([0x1001],x)
+	clr (0x10,y)
+	clr ([0x20],y)
+	clr ([0x40],x)
+	neg (x)
+	neg (y)
+	rlc (x)
+	rlc (y)
+	ld a,(8,sp)
+	swap(x)
+	swap(y)
 	
+	nop 
 blink:
 	ld a,LED2_PORT
 	xor a,#LED2_MASK
