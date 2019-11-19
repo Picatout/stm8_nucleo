@@ -246,7 +246,6 @@ clear_all_free_ram:
 	jrule 1$
 	ret
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  information printed at reset
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
