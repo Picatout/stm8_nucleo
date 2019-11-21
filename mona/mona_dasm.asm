@@ -51,9 +51,6 @@
 ;       ind    indirect address in register X|Y|SP 
 ;       rel    relative address
 ;-----------------------------------------------
-fmt_bad_op: .asciz "invalid operating code"
-fmt_r_imm8: .asciz "%s,#%b"  ; i.e. ld a,#$55
-fmt_r_imm16:  .asciz "%s,#%w"  ; i.e. ldw x,#$55aa
 fmt_r_adr8: .asciz "%s,%b"   ; i.e. ld a,$55
 fmt_adr8_r: .asciz "%a,%s"  ; i.e. ld $55,a
 fmt_r_adr16: .asciz "%s,%w"    ; i.e. ldw x,$55aa
@@ -62,40 +59,34 @@ fmt_extd: .asciz "%e"  ; i.e. int $a012, callf $17f00, jpf $26600
 fmt_adr16: .asciz "%w"  ; i.e. call $8426, jp $9027  
 fmt_adr16_b_rel: .asciz "%w,#%c,%e" ; i.e. btjt $1000,#1,4$ 
 fmt_r_ind: .asciz "%s,(%s)"  ; i.e. ld a,(x)
-fmt_r_ofs8_ind: .asciz "%s,(%b,%s)"  ; i.e. ld a,($50,x)
 fmt_r_ofs16_ind: .asciz "%s,(%w,%s)"   ; i.e. ld y,($1005,x)
 fmt_r_ptr8: .asciz "%s,[%b]"  ; i.e. ld a,[$c0]
 fmt_r_ptr16: .asciz "%s,[%w]"    ; i.e. ldw x,[$a040]
 fmt_r_ptr8_ind: .asciz "%s,([%b],%s)" ; i.e. ldw x,([$c0],x)
 fmt_r_ptr16_ind: .asciz "%s,([%w],%s)"  ; i.e. ld a,([$a000],y)
 fmt_r_r: .asciz "%s,%s"  ; i.e. exgw x,y 
-fmt_ofs8_ind: .asciz "(%b,%s)"; i.e. inc ($5,sp)
 fmt_ofs16_ind:  .asciz "(%w,%s)" ; i.e. cpl ($1000,x)
-fmt_adr16_bit: .asciz "%w,#%b" ; i.e. bset $1000,#1
-fmt_adr16_bit_rel: .asciz "%w,#%b,%w" ; i.e. btjt $1000,#7,$c0000
 
-; format index values
-    IDX.FMT_BAD_OP = 0
-    IDX.FMT_OFS8_IND = 1
-    IDX.FMT_ADR16_B_REL = 2
-
-; format indexed table 
-fmt_index:
-    .word fmt_bad_op ; 0 
-    .word fmt_ofs8_ind ; 1
-    .word fmt_adr16_b_rel ; 2
 
 
 ; decoder functions index values 
     IDX.FN_BAD_OP = 0 
     IDX.FN_OFS8_IND = 1     
     IDX.FN_ADR16_B_REL = 2
+    IDX.FN_ADR16_B = 3
+    IDX.FN_R_OFS8_R = 4 
+    IDX.FN_R_IMM8 = 5
+    IDX.FN_R_IMM16 = 6 
+
 ; decoder function indexed table
 fn_index:
     .word fn_bad_op ; 0 
     .word fn_ofs8_ind ; 1 
     .word fn_adr16_b_rel ; 2 
-
+    .word fn_adr16_bit ; 3 
+    .word fn_r_ofs8_r ; 4
+    .word fn_r_imm8 ; 5
+    .word fn_r_imm16 ; 6
 
 ;-------------------------------------
 ;  each opcode as a table entry 
@@ -105,7 +96,6 @@ fn_index:
 ;  each element of structure is an index for other tables 
 ;       .byte opcode ; operating code
 ;       .byte mnemo_idx ; instruction mnemonic index
-;       .byte  fmt_idx ; format use to print decoded instruction index
 ;       .byte fn* ;   decoder function index  
 ;       .byte dest;  destination index 
 ;       .byte src;   src index        
@@ -113,53 +103,140 @@ fn_index:
 ;-------------------------------------
     FIELD_OPCODE = 0;
     FIELD_MNEMO= 1; 
-    FIELD_FMT=2;
-    FIELD_FN=3;
-    FIELD_DEST=4;
-    FIELD_SRC=5 
-    STRUCT_SIZE=6 ;
+    FIELD_FN=2;
+    FIELD_DEST=3;
+    FIELD_SRC=4 
+    STRUCT_SIZE=5 ;
 
 
 ; table for opcodes without prefix 
 codes:
-    .byte 0,IDX.NEG,IDX.FMT_OFS8_IND,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 0,IDX.NEG,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 3,IDX.CPL,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 4,IDX.SRL,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 6,IDX.RRC,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 7,IDX.SRA,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 8,IDX.SLL,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 9,IDX.RLC,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 10,IDX.DEC,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 12,IDX.INC,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 13,IDX.TNZ,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 14,IDX.SWAP,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 15,IDX.CLR,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+    .byte 0x10,IDX.SUB,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x11,IDX.CP,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x12,IDX.SBC,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x13,IDX.CPW,IDX.FN_R_OFS8_R,IDX.X,IDX.SP
+    .byte 0x14,IDX.AND,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x15,IDX.BCP,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x16,IDX.LDW,IDX.FN_R_OFS8_R,IDX.Y,IDX.SP
+    .byte 0x18,IDX.XOR,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x19,IDX.ADC,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x1A,IDX.OR,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x1B,IDX.ADD,IDX.FN_R_OFS8_R,IDX.A,IDX.SP
+    .byte 0x1E,IDX.LDW,IDX.FN_R_OFS8_R,IDX.X,IDX.SP
 
-    .byte 0,0,0,0,0,0
+    .byte 0x60,IDX.NEG,IDX.FN_OFS8_IND,IDX.X,IDX.X 
+    .byte 0x63,IDX.CPL,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x64,IDX.SRL,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x66,IDX.RRC,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x67,IDX.SRA,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x68,IDX.SLL,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x69,IDX.RLC,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x6A,IDX.DEC,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x6C,IDX.INC,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x6D,IDX.TNZ,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x6E,IDX.SWAP,IDX.FN_OFS8_IND,IDX.X,IDX.X
+    .byte 0x6F,IDX.CLR,IDX.FN_OFS8_IND,IDX.X,IDX.X
+
+    .byte 0xa6,IDX.LD,IDX.FN_R_IMM8,IDX.A,IDX.A 
+    .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.X,IDX.X 
+
+    .byte 0,0,0,0,0
 
 ; table for opcodes with 0x72 prefix 
 p72_codes:
-    .byte 0,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 1,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 2,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 3,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 4,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 5,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 6,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 7,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 8,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 9,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 10,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 11,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 12,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 13,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 14,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 15,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0,0,0,0,0,0
+    .byte 0,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 1,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 2,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 3,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 4,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 5,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 6,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 7,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 8,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 9,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 10,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 11,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 12,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 13,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 14,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
+    .byte 15,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
+    .byte 0x10,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x11,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x12,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x13,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x14,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x15,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x16,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x17,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x18,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x19,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x1A,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x1B,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x1C,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x1D,IDX.BRES,IDX.FN_ADR16_B,0,0
+    .byte 0x1E,IDX.BSET,IDX.FN_ADR16_B,0,0
+    .byte 0x1F,IDX.BRES,IDX.FN_ADR16_B,0,0
+
+    .byte 0,0,0,0,0
 
 ; table for opcodes with 0x90 prefix 
 p90_codes:
-    .byte 0,IDX.QM,IDX.FMT_BAD_OP,IDX.FN_BAD_OP,0,0,0
-    .byte 0,0,0,0,0,0
+    .byte 0,IDX.QM,IDX.FN_BAD_OP,0,0
+    .byte 0x10,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x11,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x12,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x13,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x14,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x15,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x16,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x17,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x18,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x19,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x1A,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x1B,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x1C,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x1D,IDX.BCCM,IDX.FN_ADR16_B,0,0
+    .byte 0x1E,IDX.BCPL,IDX.FN_ADR16_B,0,0
+    .byte 0x1F,IDX.BCCM,IDX.FN_ADR16_B,0,0
+
+    .byte 0x60,IDX.NEG,IDX.FN_OFS8_IND,IDX.Y,IDX.Y 
+    .byte 0x63,IDX.CPL,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x64,IDX.SRL,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x66,IDX.RRC,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x67,IDX.SRA,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x68,IDX.SLL,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x69,IDX.RLC,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x6A,IDX.DEC,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x6C,IDX.INC,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x6D,IDX.TNZ,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x6E,IDX.SWAP,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+    .byte 0x6F,IDX.CLR,IDX.FN_OFS8_IND,IDX.Y,IDX.Y
+
+    .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.Y,IDX.Y 
+
+    .byte 0,0,0,0,0
 
 ; table for opcodes with 0x91 prefix 
 p91_codes:
 
-    .byte 0,0,0,0,0,0
+    .byte 0,0,0,0,0
 
 ; table of indexes for opcodes with 0x92 prefix 
 p92_codes:
     
-    .byte 0,0,0,0,0,0
+    .byte 0,0,0,0,0
 
 
 ;---------------------------
@@ -330,51 +407,63 @@ prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0
 ;  opcode invalid 
 ;---------------------------
 fn_bad_op:
-    ld a,(FIELD_FMT,y)
-    ldw y,#mnemo_index 
-    call ld_table_entry
+    ldw y,#M.QM 
     call uart_print 
     ret 
+
+;*******************************
+
+;----------------------------
+;  helper macros 
+;----------------------------
+    .macro _fn_entry lsize name
+    LOCAL_SIZE = lsize
+    STRUCT=3+LOCAL_SIZE
+name:
+    sub sp,#LOCAL_SIZE
+    .endm
+
+    .macro _fn_exit 
+    addw sp,#LOCAL_SIZE 
+    ret
+    .endm
+
+;******************************
+
 
 ;----------------------------
 ;  decode format: op (ofs8,r)
 ;----------------------------
-    LOCAL_SIZE=3
+fmt_ofs8_ind: .asciz "(%b,%s)"; i.e. inc ($5,sp)
+ 
     OFS8=1  ; byte offset value 
     REG=2 ; pointer to register name
-    STRUCT_PTR =3+LOCAL_SIZE 
-fn_ofs8_ind:
-    sub sp,#LOCAL_SIZE 
+_fn_entry 3 fn_ofs8_ind 
     call get_int8 
     ld (OFS8,sp),a 
-    ldw y,(STRUCT_PTR,sp)
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_MNEMO,Y)
     ldw y,#mnemo_index 
     call ld_table_entry
     call print_mnemonic
-    ldw y,(STRUCT_PTR,sp)
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
     ldw y,#reg_index 
     call ld_table_entry
     ldw (REG,sp),y 
-    ldw y,(STRUCT_PTR,sp)
-    ld a,(FIELD_FMT,y)
-    ldw y,#fmt_index
-    call ld_table_entry
+    ldw y,#fmt_ofs8_ind
     call format 
-    addw sp,#LOCAL_SIZE 
-    ret 
+    _fn_exit
 
 ;--------------------------------
 ; decode form: op adr16,#bit,rel 
 ;--------------------------------
-    LOCAL_SIZE=6
+fmt_adr16_bit_rel: .asciz "%w,#%c,%e" ; i.e. btjt $1000,#7,$c0000
+
     ADR16=1
     BIT=3
     REL=4
-    STRUCT=3+LOCAL_SIZE 
-fn_adr16_b_rel:
-    sub sp,#LOCAL_SIZE 
+_fn_entry 6 fn_adr16_b_rel 
     call get_int16
     ldw (ADR16,sp),y
     call get_int8
@@ -393,13 +482,108 @@ fn_adr16_b_rel:
     ldw y,#mnemo_index
     call ld_table_entry
     call print_mnemonic
-    ldw y,(STRUCT,sp)  
-    ld a,(FIELD_FMT,y)
-    ldw y,#fmt_index 
-    call ld_table_entry
+    ldw y,#fmt_adr16_bit_rel
     call format
-    addw sp,#LOCAL_SIZE 
-    ret
+    _fn_exit
+
+;--------------------------------------
+; decode form:  op adr16,#bit 
+;--------------------------------------
+fmt_adr16_bit: .asciz "%w,#%c" ; i.e. bset $1000,#1
+    LOCAL_SIZE=3
+    ADR16=1
+    BIT=3 
+_fn_entry 3 fn_adr16_bit 
+    call get_int16
+    ldw (ADR16,sp),y 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_OPCODE,Y)
+    srl a 
+    and a,#7 
+    add a,#'0
+    ld (BIT,sp),a
+    ld a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index
+    call ld_table_entry 
+    call print_mnemonic
+    ldw y,#fmt_adr16_bit 
+    call format 
+    _fn_exit
+
+;---------------------------------
+; decode form  op r,(ofs8,r)
+;---------------------------------
+fmt_r_ofs8_r: .asciz "%s,(%b,%s)"
+    DEST=1
+    OFS8=3
+    SRC=4 
+_fn_entry 5 fn_r_ofs8_r 
+    call get_int8
+    ld (OFS8,sp),a 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index 
+    call ld_table_entry
+    call print_mnemonic
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index
+    call ld_table_entry
+    ldw (DEST,sp),y
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_SRC,y)
+    ldw y,#reg_index
+    call ld_table_entry
+    ldw (SRC,sp),y
+    ldw y,#fmt_r_ofs8_r
+    call format 
+    _fn_exit
+    
+;---------------------------------
+;  decode form   op r,#imm8 
+;---------------------------------
+fmt_r_imm8: .asciz "%s,#%b" 
+    REG=1
+    IMM8=3
+_fn_entry 3  fn_r_imm8 
+    call get_int8
+    ld (IMM8,sp),a 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index 
+    call ld_table_entry
+    call print_mnemonic 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (REG,sp),y 
+    ldw y,#fmt_r_imm8
+    call format 
+_fn_exit
+
+;---------------------------------
+;  decode form   op r,#imm16 
+;---------------------------------
+fmt_r_imm16: .asciz "%s,#%w" 
+    REG=1
+    IMM16=3
+_fn_entry 4 fn_r_imm16
+    call get_int16
+    ldw (IMM16,sp),y 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index 
+    call ld_table_entry
+    call print_mnemonic 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (REG,sp),y 
+    ldw y,#fmt_r_imm16
+    call format 
+_fn_exit
 
 
 ;---------------------------------
