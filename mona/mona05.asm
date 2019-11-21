@@ -30,6 +30,10 @@
 
 ;-------------------------------------------------------
 ; History:
+;   2019-11-20  version 0.5
+;				Code rework and modules reorganization
+;				added 'd' command for disassembler
+;		
 ;   2019-11-10  version 0.4
 ;				Added 'f' command to search string. 
 ;
@@ -109,29 +113,18 @@
 		STACK_SIZE = 256 ; call stack size
 		STACK_BASE = RAM_SIZE-STACK_SIZE ; lowest address of stack
 		STACK_TOP = RAM_SIZE-1 ; stack top at end of ram
-		TIB_SIZE = 80 ; transaction input buffer size
-		PAD_SIZE = 80 ; workding pad size
 		; vesrion major.minor
 		VERS_MAJOR = 0 ; major version number
-		VERS_MINOR = 4 ; minor version number
+		VERS_MINOR = 5 ; minor version number
 
 ;--------------------------------------------------------
 ;   application variables 
 ;---------------------------------------------------------		
         .area DATA
-;ticks  .blkw 1 ; system ticks at every millisecond        
-;cntdwn:	.blkw 1 ; millisecond count down timer
-rx_char: .blkb 1 ; last uart received char
 in.w:  .blkb 1 ; when 16 bits is required for indexing i.e. ld a,([in.w],y) 
 in:		.blkb 1; parser position in tib
 count:  .blkb 1; length of string in tib
 tib:	.blkb TIB_SIZE ; transaction input buffer
-pad::	.blkb PAD_SIZE ; working pad
-acc24:: .blkb 1; acc24:acc16:acc8 form a 24 bits accumulator
-acc16:: .blkb 1; acc16:acc8 form a 24 bits accumulator 
-acc8::  .blkb 1; acc8 an 8 bit accumulator 
-farptr:: .blkb 3; 24 bits pointer
-flags::  .blkb 1; boolean flags
 trap_sp: .blkw 1; value of sp at trap entry point.
 ram_free_base: .blkw 1
 flash_free_base: .blkw 1
@@ -189,7 +182,7 @@ __interrupt_vect:
 	int NonHandledInterrupt ;int29  not used
 
 	.area CODE
-
+.ascii "MONA"
 	;initialize clock to use HSE 8 Mhz crystal
 clock_init:	
 	bset CLK_SWCR,#CLK_SWCR_SWEN
@@ -250,18 +243,16 @@ clear_all_free_ram:
 ;  information printed at reset
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 print_mona_info:
-	ld a,#FF 
-	call uart_tx
-	ldw y,#VERSION
-	call uart_print
+	sub sp,#2
 	ld a, #VERS_MAJOR
 	add a,#'0
-	call uart_tx
-	ld a,#'.'
-	call uart_tx
+	ld (1,sp),a 
 	ld a, #VERS_MINOR
 	add a,#'0
-	call uart_tx
+	ld (2,sp),a 
+	ldw y,#VERSION
+	call format 
+	addw sp,#2 
 	ldw y,#CPU_MODEL
 	call uart_print
 	ldw y,#RAM_FREE_MSG
@@ -309,7 +300,7 @@ init0:
 	ld yl,a
 	ldw ram_free_base,y
 	; initialize flash_free_base variable
-	ldw y,#flash_free
+	ldw y,#mona_end
 	ldw flash_free_base,y
 ; active l'interruption sur PE_4 (bouton utilisateur)
     bset PE_CR2,#USR_BTN_BIT
@@ -512,81 +503,6 @@ REG_CC:  .asciz "\nCC: "
 ;  iret
 
 ;------------------------------------
-;  serial port communication routines
-;------------------------------------
-;------------------------------------
-; transmit character in a via UART3
-; character to transmit on (3,sp)
-;------------------------------------
-uart_tx::
-	tnz UART3_SR
-	jrpl uart_tx
-	ld UART3_DR,a
-    ret
-
-;------------------------------------
-; send string via UART2
-; y is pointer to str
-;------------------------------------
-uart_print:: 
-	ld a,(y)
-	jreq 1$
-	call uart_tx
-	incw y
-	jra uart_print
-1$: ret
-
-;------------------------------------
-; check if char available
-;------------------------------------
-uart_qchar::
-	tnz rx_char
-	jreq 1$
-    ret
-1$: ld a,#UART_SR_RXNE 
-	and a,UART3_SR
-	ret 
-
-;------------------------------------
-; return char in A to queue
-;------------------------------------
-ungetchar:: 
-	ld rx_char,a
-    ret
-    
-;------------------------------------
-; wait for character from uart3
-;------------------------------------
-uart_getchar::
-; if there is a char in rx_char return it.
-	ld a,rx_char 
-	jreq 1$
-	clr rx_char
-	ret
-1$:	btjf UART3_SR,#UART_SR_RXNE,.
-	ld a, UART3_DR 
-	ret
-
-;------------------------------------
-; delete n character from input line
-;------------------------------------
-uart_delete:
-	push a ; n 
-del_loop:
-	tnz (1,sp)
-	jreq 1$
-	ld a,#BSP
-	call uart_tx
-    ld a,#SPACE
-    call uart_tx
-    ld a,#BSP
-    call uart_tx
-    dec (1,sp)
-    jra del_loop
-1$: pop a
-	ret 
-
-;------------------------------------
 ; read a line of text from terminal
 ; input:
 ;	none
@@ -600,7 +516,7 @@ del_loop:
 	; local variables
 	LEN = 1  ; accepted line length
 	RXCHAR = 2 ; last char received
-readln:
+readln::
 	push #0  ; RXCHAR 
 	push #0  ; LEN
  	ldw y,#tib ; input buffer
@@ -787,7 +703,7 @@ convert_escape:
 	ret 
 4$: cp a,#'f' 
 	jrne 5$ 
-	ld a,#0xc
+	ld a,#FF 
 	ret  
 5$: cp a,#'n' 
     jrne 6$ 
@@ -2185,8 +2101,8 @@ error_print::
 ;------------------------
 ; messages strings
 ;------------------------	
-VERSION:	.asciz "\nMONA VERSION "
-CPU_MODEL:  .asciz "\nstm8s208rb     memory map\n----------------------------\n"
+VERSION:	.asciz "\nMONA VERSION %c.%c\n"
+CPU_MODEL:  .asciz "stm8s208rb     memory map\n----------------------------\n"
 RAM_FREE_MSG: .asciz "ram free: "
 RAM_LAST_FREE_MSG: .asciz "- $16FF\n"
 FLASH_FREE_MSG: .asciz "free flash: "
@@ -2213,198 +2129,3 @@ HELP: .ascii "commands:\n"
 	  .asciz "x addr, execute  code at address\n"
 MISS_ARG: .asciz "Missing arguments\n"
 BAD_ARG:  .asciz "bad arguments\n"
-
-
-	.bndry 128 ; align on FLASH block.
-
-; following flash memory is not used by MONA
-user_app_begin: 
-	.ascii "USER_APP"
-flash_free:
-	NO_APP=1 ; 0 to execute blink
-.if NO_APP
-	.byte 0 
-.else
-	nop 
-.endif
-dasm_test:
-	nop 
-	jra flash_free 
-	jrf flash_free
-	jrugt flash_free 
-	jrule flash_free
-	jrnc flash_free
-	jrc flash_free
-	jrne flash_free
-	jreq flash_free
-	jrnv .
-	jrv .
-	jrpl .
-	jrmi .
-	jrsgt .
-	jrsle .
-	jrsge .
-	jrslt .
-	jruge .
-	jrt .
-	jrult .
-	jrnh .
-	jrh .
-	jrnm .
-	jrm . 
-	jril .
-	jrih .
-	callf .
-	callf [farptr]
-	iret 
-	ret 
-	pop a 
-	popw x
-	popw y 
-	pop cc 
-	retf 
-	push a 
-	pushw x 
-	pushw y 
-	pop cc 
-	break 
-	ccf 
-	halt 
-	wfi 
-	wfe 
-	ldw x,y 
-	ldw y,x 
-	ldw sp,x 
-	ldw sp,y 
-	ld xh,a 
-	ld yh,a 
-	ldw x,sp 
-	ldw y,sp 
-	ld xl,a 
-	ld yl,a 
-	rcf 
-	scf 
-	rim 
-	sim 
-	rvf 
-	nop 
-	ld a,xh 
-	ld a,yh 
-	ld a,xl 
-	ld a,yl	
-	rrwa x 
-	rlwa x 
-	rrwa y
-	rlwa y 
-	neg (0,sp)
-	cpl (3,sp) 
-	srl (4,sp) 
-	rrc (6,sp)
-	sra (7,sp)
-	rlc (9,sp)
-	dec (0xa,sp)
-	inc (0xc,sp)
-	tnz (0xe,sp)
-	clr (15,sp)
-	btjt 0x8000,#0,.
-	btjf 0x8000,#1,. 
-	bset 0x6000,#0
-	bres 0x6000,#0
-	bcpl 0x6000,#7
-	bccm 0x6000,#7
-
-	sub a,(0x10,sp)
-	cp a,(0x10,sp)
-	sbc a,(0x10,sp)
-	cpw x,(0x10,sp)
-	and a,(0x10,sp)
-	bcp a,(0x10,sp)
-	ldw y,(0x10,sp)
-	ldw (0x10,sp),y 
-	xor a,(0x10,sp)
-	adc a,(0x10,sp)
-	or a,(0x10,sp) 
-	add a,(0x10,sp)
-	addw x,#0x1000
-	subw x,#0x1000
-	ldw x,(0x10,sp)
-	ldw (0x10,sp),x
-	neg 0xc0 
-	exg a,0x8000 
-	pop 0x6000
-	cpl 0xc0
-	srl 0xc0
-	mov 0x6000,#32
-	rrc 0xc0
-	sra 0xc0
-	sll 0xc0
-	rlc 0xc0
-	dec 0xc0
-	push 0x6020
-	inc 0xc0
-	tnz 0xc0
-	swap 0xc0
-	clr 0xc0
-	clr [0x8080]
-	clr [0xd0]
-	neg [0x8004]
-	neg [0xc0] 
-	mul x,a
-	mul y,a  
-	mov 0xc0,0xd0
-	mov 0x1000,0x2000 
-	push 0xaa55 
-	exg a,xl
-	neg a 
-	cpl a
-	srl a 
-	rrc a 
-	sra a 
-	sll a 
-	rlc a 
-	dec a 
-	inc a 
-	tnz a 
-	swap a 
-	clr a 
-	negw x
-	sraw y 
-	sraw x 
-	exgw x,y 
-	addw sp,#4
-	exg a,yl 
-	div x,a 
-	.byte 0x65 
-;	div x,y 
-	ld (4,sp),a 
-	neg(0xc0,x)
-	neg ([0x1000],x)
-	neg (0xd0,y)
-	neg ([0xd0],y)
-	neg ([0xc0],x)
-	clr (0x10,x)
-	clr ([0x1001],x)
-	clr (0x10,y)
-	clr ([0x20],y)
-	clr ([0x40],x)
-	neg (x)
-	neg (y)
-	rlc (x)
-	rlc (y)
-	ld a,(8,sp)
-	swap(x)
-	swap(y)
-	
-	nop 
-blink:
-	ld a,LED2_PORT
-	xor a,#LED2_MASK
-	ld LED2_PORT,a 
-	ldw y,#8 
-1$: ldw x,#0xffff
-2$:	decw x 
-	jrne 2$
-    decw y 
-    jrne 1$
-	nop
-	jra blink

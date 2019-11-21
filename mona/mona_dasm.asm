@@ -26,13 +26,168 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   MONA desassembler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    .area CODE
-
+    .module DASM 
+    .nlist
     .include "../inc/ascii.inc"
 	.include "mona.inc"
     .include "mnemonics.inc"
+    .list 
+
+    .area CODE
+.ascii "DASM"
+;-----------------------------------------------
+;  addressing mode format string
+; 
+;       r      register
+;       b      bit position 
+;       imm8   byte immediate value 
+;       imm16  word immediate value 
+;       extd   24 bits address 
+;       ofs8   short offset
+;       ofs16  long offset
+;       ptr8   short pointer
+;       ptr16  long pointer 
+;       adr    direct address value 
+;       ind    indirect address in register X|Y|SP 
+;       rel    relative address
+;-----------------------------------------------
+fmt_bad_op: .asciz "invalid operating code"
+fmt_r_imm8: .asciz "%s,#%b"  ; i.e. ld a,#$55
+fmt_r_imm16:  .asciz "%s,#%w"  ; i.e. ldw x,#$55aa
+fmt_r_adr8: .asciz "%s,%b"   ; i.e. ld a,$55
+fmt_adr8_r: .asciz "%a,%s"  ; i.e. ld $55,a
+fmt_r_adr16: .asciz "%s,%w"    ; i.e. ldw x,$55aa
+fmt_adr16_r: .asciz "%w,%s" ; i.e. ldw $55aa,x  
+fmt_extd: .asciz "%e"  ; i.e. int $a012, callf $17f00, jpf $26600 
+fmt_adr16: .asciz "%w"  ; i.e. call $8426, jp $9027  
+fmt_adr16_b_rel: .asciz "%w,#%c,%e" ; i.e. btjt $1000,#1,4$ 
+fmt_r_ind: .asciz "%s,(%s)"  ; i.e. ld a,(x)
+fmt_r_ofs8_ind: .asciz "%s,(%b,%s)"  ; i.e. ld a,($50,x)
+fmt_r_ofs16_ind: .asciz "%s,(%w,%s)"   ; i.e. ld y,($1005,x)
+fmt_r_ptr8: .asciz "%s,[%b]"  ; i.e. ld a,[$c0]
+fmt_r_ptr16: .asciz "%s,[%w]"    ; i.e. ldw x,[$a040]
+fmt_r_ptr8_ind: .asciz "%s,([%b],%s)" ; i.e. ldw x,([$c0],x)
+fmt_r_ptr16_ind: .asciz "%s,([%w],%s)"  ; i.e. ld a,([$a000],y)
+fmt_r_r: .asciz "%s,%s"  ; i.e. exgw x,y 
+fmt_ofs8_ind: .asciz "(%b,%s)"; i.e. inc ($5,sp)
+fmt_ofs16_ind:  .asciz "(%w,%s)" ; i.e. cpl ($1000,x)
+fmt_adr16_bit: .asciz "%w,#%b" ; i.e. bset $1000,#1
+fmt_adr16_bit_rel: .asciz "%w,#%b,%w" ; i.e. btjt $1000,#7,$c0000
+
+; format index values
+    IDX.FMT_BAD_OP = 0
+    IDX.FMT_OFS8_IND = 1
+    IDX.FMT_ADR16_B_REL = 2
+
+; format indexed table 
+fmt_index:
+    .word fmt_bad_op ; 0 
+    .word fmt_ofs8_ind ; 1
+    .word fmt_adr16_b_rel ; 2
+
+
+; decoder functions index values 
+    IDX.FN_BAD_OP = 0 
+    IDX.FN_OFS8_IND = 1     
+    IDX.FN_ADR16_B_REL = 2
+; decoder function indexed table
+fn_index:
+    .word fn_bad_op ; 0 
+    .word fn_ofs8_ind ; 1 
+    .word fn_adr16_b_rel ; 2 
+
+
+;-------------------------------------
+;  each opcode as a table entry 
+;  that give information on how to 
+;  decode it.
+;  each entry is a structure.
+;  each element of structure is an index for other tables 
+;       .byte opcode ; operating code
+;       .byte mnemo_idx ; instruction mnemonic index
+;       .byte  fmt_idx ; format use to print decoded instruction index
+;       .byte fn* ;   decoder function index  
+;       .byte dest;  destination index 
+;       .byte src;   src index        
+;  A 0 in mnemonic field mark end of table 
+;-------------------------------------
+    FIELD_OPCODE = 0;
+    FIELD_MNEMO= 1; 
+    FIELD_FMT=2;
+    FIELD_FN=3;
+    FIELD_DEST=4;
+    FIELD_SRC=5 
+    STRUCT_SIZE=6 ;
+
+
+; table for opcodes without prefix 
+codes:
+    .byte 0,IDX.NEG,IDX.FMT_OFS8_IND,IDX.FN_OFS8_IND,IDX.SP,IDX.SP 
+
+    .byte 0,0,0,0,0,0
+
+; table for opcodes with 0x72 prefix 
+p72_codes:
+    .byte 0,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 1,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 2,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 3,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 4,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 5,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 6,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 7,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 8,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 9,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 10,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 11,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 12,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 13,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 14,IDX.BTJT,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 15,IDX.BTJF,IDX.FMT_ADR16_B_REL,IDX.FN_ADR16_B_REL,0,0  
+    .byte 0,0,0,0,0,0
+
+; table for opcodes with 0x90 prefix 
+p90_codes:
+    .byte 0,IDX.QM,IDX.FMT_BAD_OP,IDX.FN_BAD_OP,0,0,0
+    .byte 0,0,0,0,0,0
+
+; table for opcodes with 0x91 prefix 
+p91_codes:
+
+    .byte 0,0,0,0,0,0
+
+; table of indexes for opcodes with 0x92 prefix 
+p92_codes:
     
+    .byte 0,0,0,0,0,0
+
+
+;---------------------------
+; search code in table  
+; input:
+;   Y       pointer to table
+;   A       opcode to verify
+; output:
+;   Y       pointer to entry 
+;   C       carry flag set if found cleared otherwise 
+;---------------------------
+search_code:
+    push a 
+    bset flags,#F_FOUND 
+1$: ld a,(FIELD_MNEMO,y)
+    jreq 8$ 
+    ld a,(FIELD_OPCODE,y)
+    cp a,(1,sp)
+    jreq 9$
+    addw y,#STRUCT_SIZE
+    jra 1$
+8$: bres flags,#F_FOUND 
+9$: pop a 
+    ret 
+
+;-----------------------------------
+; desassembler main function
+;-----------------------------------
 ;local constants
     PAGE_CNT = 24 ; instructions per page  
 ;local variables 
@@ -67,9 +222,11 @@ instr_loop:
     call uart_tx 
     call decode
 ; here XL = decoded byte count
-    ld a,xl
-    ldw x,#farptr
-    call inc_var24
+    clr a 
+    addw x,farptr+1
+    adc a,farptr
+    ld farptr,a 
+    ldw farptr+1,x 
     dec (INST_CNTR,sp)
     jrne instr_loop
 ; pause wait spacebar for next page or other to leave
@@ -96,36 +253,45 @@ dasm_exit:
 ; local variables      
     PREFIX = 1 ; opcode prefix 
     OPCODE = 2 ; operating code 
-    ADR24 = 3  ; addr24 absolute address
-    ADR16 = 4  ; add16 absolute address 
-    REL = 6 ; addr8 relative address 
-    LOCAL_SIZE=6 ;
+    LOCAL_SIZE=2 ;
 decode:
     sub sp,#LOCAL_SIZE 
     clrw x 
-    call peek   
+    call get_int8    
     ld (OPCODE,sp),a 
-    call print_byte
-    ld a,(OPCODE,sp)  
     call is_prefix 
     ld (PREFIX,sp),a 
     cp a,#0
-    jreq 1$
+    jrne 0$
+    ldw y,#codes 
+    jra 6$
 ; get opcode
-    call peek 
+0$: call get_int8 
     ld (OPCODE,sp),a  
-    call print_byte
-1$:
-    ldw y,#adr_mode
-    ld a,#0xf0 
-    and a,(OPCODE,sp)
-    swap a 
-    sll a 
-    ld acc8,a 
-    clr acc16
-    addw y,acc16     
-    ldw y,(y)
-    jp (y)
+    ld a,(PREFIX,sp)
+1$: cp a,#0x72 
+    jrne 2$
+    ldw y,#p72_codes
+    jra 6$
+2$: cp a,#0x90
+    jrne 3$
+    ldw y,#p90_codes
+    jra 6$
+3$: cp a,#0x91 
+    jrne 4$
+    ldw y,#p91_codes
+    jra 6$ 
+4$: ldw y,#p92_codes 
+6$: ld a,(OPCODE,sp)
+    call search_code
+    btjf flags,#F_FOUND,invalid_opcode
+    pushw y 
+    ld a,(FIELD_FN,y)
+    ldw y,#fn_index
+    call ld_table_entry
+    call (y)
+    popw y 
+    jra decode_exit 
 invalid_opcode: 
     ldw y, #M.QM
     call print_mnemonic
@@ -133,18 +299,7 @@ decode_exit:
     addw sp,#LOCAL_SIZE 
     ret
 
-M.QM:  .asciz "?"
 
-
-; instructions grouped by addressing mode
-; hi-nibble specify addressing mode
-; lo-nibble specify operation
-; there is exceptions in this grouping that
-; must be taken care of.
-; prefix induce change in addressing mode or operation 
-adr_mode:
-    .word mode_0x,mode_1x,mode_2x,mode_3x,mode_4x,mode_5x,mode_6x,mode_7x
-    .word mode_8x,mode_9x,mode_ax,mode_bx,mode_cx,mode_dx,mode_ex,mode_fx
 
 ;-------------------------------
 ; check if byte is a opcode prefix  
@@ -171,996 +326,112 @@ is_prefix:
 ; opcode prefixes 
 prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0  
 
-;------------------------------
-; form: op (off8,sp)
-; form with prefix 0x72 decoded seperately
-; exceptions: 
-;   0x01 -> RRWA X 
-;   0x02 -> RLWA X
-;   0x90 0x01 -> RRWA Y
-;   0x90 0x02 -> RLWA Y
 ;---------------------------
-mode_0x:
-    ld a,#0x72 
-    cp a,(PREFIX,sp)
-    jrne 0$
-    jp btjr ; prefix 0x72 
-; code 0x01,0x02, 0x90 0x01 and 0x90 0x02 are exceptions     
-0$: ld a,#1
-    cp a,(OPCODE,sp)
-    jrne 1$
-    ldw y, #M.RRWA 
-    call print_mnemonic 
-    jra 2$
-1$: ld a,#2
-    cp a,(OPCODE,sp)
-    jrne 4$
-    ldw y, #M.RLWA 
+;  opcode invalid 
+;---------------------------
+fn_bad_op:
+    ld a,(FIELD_FMT,y)
+    ldw y,#mnemo_index 
+    call ld_table_entry
+    call uart_print 
+    ret 
+
+;----------------------------
+;  decode format: op (ofs8,r)
+;----------------------------
+    LOCAL_SIZE=3
+    OFS8=1  ; byte offset value 
+    REG=2 ; pointer to register name
+    STRUCT_PTR =3+LOCAL_SIZE 
+fn_ofs8_ind:
+    sub sp,#LOCAL_SIZE 
+    call get_int8 
+    ld (OFS8,sp),a 
+    ldw y,(STRUCT_PTR,sp)
+    ld a,(FIELD_MNEMO,Y)
+    ldw y,#mnemo_index 
+    call ld_table_entry
     call print_mnemonic
-2$: ld a,#'X 
-    tnz (PREFIX,sp)
-    jreq 3$
-    ld a,#0x90
-    cp a,(PREFIX,sp)
-    jrne 5$
-    ld a,#'Y 
-3$: call uart_tx
-    jp decode_exit
-4$: tnz (PREFIX,sp)
-    jrne 5$
-    call peek
-    ld (REL,sp),a 
-    call print_byte 
-    ld a,(OPCODE,sp)
-    ldw y, #mode_0x_mnemo
-    call print_grp_mnemo 
-    ld a,#'( 
-    call uart_tx
-    ld a,(REL,sp)
-    call print_byte 
-    ld a,#', 
-    call uart_tx 
-    ldw y,#R.SP 
-    call uart_print  
-    ld a,#')
-    call uart_tx 
-    jp decode_exit 
-5$: 
-    jp invalid_opcode
+    ldw y,(STRUCT_PTR,sp)
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (REG,sp),y 
+    ldw y,(STRUCT_PTR,sp)
+    ld a,(FIELD_FMT,y)
+    ldw y,#fmt_index
+    call ld_table_entry
+    call format 
+    addw sp,#LOCAL_SIZE 
+    ret 
 
-; pointer table for mode_0x mnemonics 
-mode_0x_mnemo:
-    .word M.NEG,M.RRWA,M.RLWA,M.CPL,M.SRL,M.NULL,M.RRC,M.SRA,M.NULL
-    .word M.RLC,M.DEC,M.NULL,M.INC,M.TNZ,M.SWAP,M.CLR 
-
-;--------------------------
-; test bit and jump relative 
-; form: btj[t|f]  addr16,#bit,srel 
-; mode_0x with 0x72 prefix
-; btjt add16,#bit,rel | btjf add16,#bit,rel  
-; btjt 0000bbb0
-; btjf 0000bbb1
-; where bbb is bit number to test {0...7}
-;-----------------------------
-btjr:
+;--------------------------------
+; decode form: op adr16,#bit,rel 
+;--------------------------------
+    LOCAL_SIZE=6
+    ADR16=1
+    BIT=3
+    REL=4
+    STRUCT=3+LOCAL_SIZE 
+fn_adr16_b_rel:
+    sub sp,#LOCAL_SIZE 
     call get_int16
-    ldw (ADR16,sp),y 
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ld a, (OPCODE,sp) 
-    ldw y, #M.BTJT
-    and a,#1
-    jreq 1$
-    ldw y, #M.BTJF  
-1$: call print_mnemonic
-    ldw y, (ADR16,sp)
-    call print_word
-    ld a,#',
-    call uart_tx
-    ld a,#'#
-    call uart_tx 
-    ld a, (OPCODE,sp)
-    srl a 
-    and a,#7 
-    add a,#'0
-    call uart_tx 
-    ld a,#',
-    call uart_tx 
-    ld a,(REL,sp)
-    call abs_addr 
-    pushw x 
-    clrw x 
-    ld a,#16
-    call print_int
-    popw x  
-    jp decode_exit 
-
-
-;----------------------------
-; adressing mode a,(off8,sp)
-; form: op A,(off8,SP)
-; form: op X,(off8,SP)
-; form: op Y,(off8,SP)
-; prefix 0x72 and 0x90 modify operations
-;----------------------------
-mode_1x:
-    ld a,(PREFIX,sp)
-    jreq 1$
-    jp mode_1x_with_prefix
-1$: ; no prefix 
-    call peek 
-    ld (REL,sp),a
-    call print_byte 
-    ld a,#0x1c
-    cp a,(OPCODE,sp)
-    jreq 10$
-    ld a,#0x1d 
-    cp a,(OPCODE,sp)
-    jrne 14$
-10$:
-    call peek 
-    ld (ADR16+1,sp),a
-    call print_byte 
-    ldw y,#M.ADDW 
-    ld a,#0x1D
-    cp a,(OPCODE,sp)
-    jrne 11$
-    ldw y,#M.SUBW
-11$:
-    call print_mnemonic
-    ldw y,#addw_x_imm16 
-    call uart_print
-    ld a,(ADR16+1,sp)
-    ld yl,a
-    ld a,(REL,sp)
-    ld yh,a  
-    call print_word 
-    jp decode_exit 
-14$:    
-    ld a,#0xf 
-    and a,(OPCODE,sp)
-    ldw y,#mode_1x_mnemo
-    call print_grp_mnemo
-    ld a,#0x16
-    cp a,(OPCODE,sp)
-    jrne 3$
-;*** ldw y,(ofs8,sp) ***
-    ldw y,#op_y_ofs8_sp
-    call uart_print 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte
-    ldw y,#op_ofs8_sp_close 
-    call uart_print 
-    jp decode_exit
-3$:
-    ld a,#0x17 
-    cp a,(OPCODE,sp)
-    jrne 4$
-;*** ldw (ofs8,sp),y ***
-    ld a,#'(
-    call uart_tx 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte
-    ldw y,#op_ofs8_sp_y  
-    call uart_print 
-    jp decode_exit 
-4$: 
-    ld a,#0x13
-    cp a,(OPCODE,sp)
-    jreq 5$
-    ld a,#0x1e 
-    cp a,(OPCODE,sp)
-    jrne 6$
-5$:
-;*** op x,(ofs8,sp) ***
-    ldw y,#op_x_ofs8_sp 
-    call uart_print 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte 
-    ldw y,#op_ofs8_sp_close
-    call uart_print 
-    jp decode_exit 
-6$:
-    ld a,#0x1f
-    cp a,(OPCODE,sp)
-    jrne 7$
-; *** ldw (ofs8,sp),x ***  
-    ld a,#'(
-    call uart_tx 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte 
-    ldw y,#op_ofs8_sp_x
-    call uart_print 
-    jp decode_exit 
-7$:
-;*** op a,(ofs8,sp)
-    ldw y,#op_a_ofs8_sp        
-    call uart_print 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte
-    ldw y,#op_ofs8_sp_close
-    call uart_print 
-    jp decode_exit 
-
-addw_x_imm16: .asciz "X,#"
-op_a_ofs8_sp: .asciz "A,("
-op_x_ofs8_sp: .asciz "X,("
-op_y_ofs8_sp: .asciz "Y,("
-op_ofs8_sp_y: .asciz ",SP),Y"
-op_ofs8_sp_x: .asciz ",SP),X"
-op_ofs8_sp_close: .asciz ",SP)"
-
-;-------------------------------
-; grp_1x with prefrix 0x72,0x90 
-; form:  op addr16,#bit 
-;-------------------------------
-mode_1x_with_prefix:
-    ld a,#0xf0
-    and a,(PREFIX,sp)
-    cp a,#9
-    jrne 0$
-    jp invalid_opcode
-0$:     
-    call get_int16 
-    ldw (ADR16,sp),y 
-    clr acc8 
-    ld a,#1
-    and a,(OPCODE,sp)
-    or a,acc8
-    ld acc8,a 
-    ld a,#0x72 
-    cp a,(PREFIX,sp)
-    jreq 1$ 
-    ld a,#2
-    or a,acc8 
-    ld acc8,a 
-1$: ld a,acc8 
-    ldw y, #mode_1x_prefix_mnemo
-    call print_grp_mnemo
-    ldw y, (ADR16,sp)
-    call print_word 
-    ld a,#',
-    call uart_tx 
-    ld a,#'# 
-    call uart_tx 
-    ld a,(OPCODE,sp)
-    srl a 
-    and a,#7 
-    add a,#'0
-    call uart_tx 
-    jp decode_exit 
-
-; pointer table to grp_1sp_with_prefix mnemonics
-mode_1x_prefix_mnemo:    .word M.BSET,M.BRES,M.BCPL,M.BCCM 
-
-; pointer table for grp_1x mnemonics 
-mode_1x_mnemo:
-    .word M.SUB,M.CP,M.SBC,M.CPW,M.AND,M.BCP,M.LDW,M.LDW 
-    .word M.XOR,M.ADC,M.OR,M.ADD,M.ADDW,M.SUBW,M.LDW,M.LDW 
-
-;----------------------
-;decode relative jump
-; form:  jrxx srel8 
-;----------------------
-mode_2x:
-    tnz (PREFIX,sp)
-    jreq 3$
-    ld a,#0x72
-    cp a,(PREFIX,sp)
-    jrne 1$
-    jp invalid_opcode
-1$: ld a,#0x91
-    cp a,(PREFIX,sp)
-    jrne 2$
-    jp invalid_opcode
-2$: ld a,#0x92
-    cp a,(PREFIX,sp)
-    jrne 3$
-    jp invalid_opcode
-3$:    
-; print relative address byte 
-    call peek
-    ld (REL,sp),a 
-    call print_byte 
-; jrxx condition in lower nibble 
-; str= precode!=0x90 ? jrxx[y+(cond_code*2)] : jrxx[y+(cond_code)*4]
-    ldw y,#jrxx
-    ld a,#0xf 
-    and a,(OPCODE,sp)
-; acc8=cond_code      
-    ld acc8,a 
-    ld a,#0x90
-    cp a,(PREFIX,sp)
-    jrne 4$
-    sll acc8 
-4$: ldw y,#jrxx 
-    ld a,acc8 
-    call print_grp_mnemo    
-; get relative address byte     
-    ld a,(REL,sp)
-; compute absolute address
+    ldw (ADR16,sp),y
+    call get_int8
     call abs_addr
-; print jrxx target address     
-    pushw x 
-    clrw x 
-    ld a,#16
-    call print_int 
-    popw x 
-    jp decode_exit
-
-jrxx: ; 16 codes
-; keep in this order, table indexed by lower nibble of opcode
-    .word   M.JRA       ; 0x20
-    .word   M.JRF       ; 0x21
-    .word   M.JRUGT     ; 0x22
-    .word   M.JRULE     ; 0x23
-    .word   M.JRNC      ; 0x24    
-    .word   M.JRC       ; 0x25
-    .word   M.JRNE      ; 0x26
-    .word   M.JREQ      ; 0x27
-    .word   M.JRNV      ; 0x28
-    .word   M.JRV       ; 0x29 
-    .word   M.JRPL      ; 0x2a
-    .word   M.JRMI      ; 0x2b
-    .word   M.JRSGT     ; 0x2c
-    .word   M.JRSLE     ; 0x2d
-    .word   M.JRSGE     ; 0x2e
-    .word   M.JRSLT     ; 0x2f
-; relative jump with 0x90 precode
-; prefix 0x90, 6 codes 
-    .word   M.JRNH      ; 0x90 0x28
-    .word   M.JRH       ; 0x90 0x29
-    .word   M.QM,M.QM   ; 0x2a, 0x2b not used
-    .word   M.JRNM      ; 0x90 0x2c
-    .word   M.JRM       ; 0x90 0x2d
-    .word   M.JRIL      ; 0x90 0x2e
-    .word   M.JRIH      ; 0x90 0x2f
-
-;---------------------------
-; opcode beginning with 0x3n
-;---------------------------
-mode_3x:
-    ld a,#0x72
-    cp a,(PREFIX,sp)
-    jreq grp_3x_72
-    ld a,#0x90
-    cp a,(PREFIX,sp)
-    jrne 1$
-    jp invalid_opcode
-1$: ld a,#0x91
-    cp a,(PREFIX,sp)
-    jrne 2$
-    jp invalid_opcode
-2$: ld a,#0x92
-    cp a,(PREFIX,sp)
-    jreq grp_3x_92 
-    jp grp_3x_longmem
-not_longmem:
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo
-    call print_grp_mnemo
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte    
-    jp decode_exit
-grp_3x_72:
-    call get_int16
-    ldw (ADR16,sp),y
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo 
-    call print_grp_mnemo
-    ld a,#'[
-    call uart_tx 
-    ldw y, (ADR16,sp)
-    call print_word 
-    ld a,#'] 
-    call uart_tx 
-    jp decode_exit
-grp_3x_92:
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo
-    call print_grp_mnemo
-    ld a,#'[ 
-    call uart_tx 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte 
-    ld a,#']
-    call uart_tx 
-    jp decode_exit 
-
-grp_3x_longmem:
-    ldw y,#grp_3x_longmem_bc 
-1$: ld a,(y) 
-    jreq not_longmem        
-    cp a,(OPCODE,sp)
-    jreq 3$
-    incw y 
-    jra 1$
-3$: ; form: op longmem [,#byte]  
-    ld a,#0x35
-    cp a,(OPCODE,sp)
-    jrne 31$
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-31$:    
-    call get_int16
-    ldw (ADR16,sp),y 
-4$: 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo
-    call print_grp_mnemo
-    ld a,#0x31 
-    cp a,(OPCODE,sp)
-    jrne 5$
-    ld a,#'A 
-    call uart_tx
-    ld a,#',
-    call uart_tx 
-5$:
-    ldw y,(ADR16,sp)
-    call print_word
-    ld a,#0x35
-    cp a,(OPCODE,sp)
-    jrne 6$
-    ld a,#',
-    call uart_tx 
-    ld a,#'#
-    call uart_tx 
-    ld a,(REL,sp)
-    ld acc8,a 
-    call print_byte 
-6$: jp decode_exit 
-
-grp_3x_longmem_bc:
-    .byte 0x31,0x32,0x35,0x3b,0
-
-grp_3x_mnemo:
-    .word M.NEG,M.EXG,M.POP,M.CPL,M.SRL,M.MOV,M.RRC,M.SRA,M.SLL
-    .word M.RLC,M.DEC,M.PUSH,M.INC,M.TNZ,M.SWAP,M.CLR
-
-;--------------------
-;  opcode beginning with 4
-;  prefixes: 0x72, 0x90
-;  exceptions: EXG,MUL,MOV,PUSH 
-;--------------------
-mode_4x:
-    ld a,#0x90
-    sub a,(PREFIX,sp)
-    jrsle 1$
-    jp invalid_opcode
-1$: ; exceptions: 0x41,0x42,0x45,0x4b 
-    ld a,#0x42 ; MUL
-    cp a,(OPCODE,sp)
-    jrne 2$
-; MUL X,A | MUL Y,A 
-    ldw y,#M.MUL 
-    call print_mnemonic
-    ld a,#'X
-    tnz (PREFIX,sp)
-    jreq 11$
-    inc a 
-11$:
-    call uart_tx 
-    ld a,#',
-    call uart_tx 
-    ld a,#'A 
-    call uart_tx     
-    jp decode_exit 
-2$: ld a,#0x45 ; MOV 
-    cp a,(OPCODE,sp)
-    jrne 3$
-; MOV adr8,adr8 
-    call peek
-    ld (ADR16,sp),a
-    call print_byte
-    call peek
-    ld (ADR16+1,sp),a
-    call print_byte 
-    ldw y,#M.MOV
-    call print_mnemonic
-    ld a,(ADR16,sp)
-    call print_byte 
-    ld a,#',
-    call uart_tx 
-    ld a,(ADR16+1,sp)
-    call print_byte 
-    jp decode_exit
-3$: 
-    ld a,#0x4b
-    jrne 4$
-; PUSH adr16   
-    call get_int16 
-    ld (ADR16,sp),a 
-    call print_byte 
-    ldw y,#M.PUSH 
-    call print_mnemonic 
-    ldw y,(ADR16,sp)
-    call print_word  
-    jp decode_exit
-4$:
-    ld a,#0x41 ;  EXG A,XL 
-    cp a,(OPCODE,sp)
-    jrne 5$
-; EXG A,XL
-    tnz (PREFIX,sp)
-    jreq 41$ 
-    jp invalid_opcode
-41$:    
-    ldw y,#exg_a_xl 
-    call print_mnemonic
-    jp decode_exit
-5$:
-    tnz (PREFIX,sp)
-    jreq 6$
-    call get_int16
-    ldw (ADR16,sp),y 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo
-    call print_grp_mnemo 
-    ld a,#'( 
-    call uart_tx 
-    ldw y, (ADR16,sp)
-    call print_word 
-    ld a, #',
-    call uart_tx 
-    ld a,#'X 
-    ld (REL,sp),a 
-    ld a,#0x72 
-    cp a,(PREFIX,sp)
-    jrne 51$ 
-    inc (REL,sp)
-51$:
-    ld a,(REL,sp)
-    call uart_tx 
-    ld a,#') 
-    call uart_tx 
-    jp decode_exit     
-6$: ; no prefix    
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo 
-    call print_grp_mnemo
-    ld a,#'A 
-    call uart_tx 
-    jp decode_exit 
-
-exg_a_xl: .asciz "EXG A,XL"    
-
-;-------------------
-; form:  opw x
-; 0x72 form: op add16 
-; 0x90 form: opw y 
-; excpetions: 
-;   0x52 EXGW X,Y
-;   0x55 MOV adr16,adr16
-;   0x5b ADDW sp,#byte 
-;-------------------
-mode_5x:
-    ld a,#0x90
-    cp a,(PREFIX,sp)
-    jrsle 1$
-    jp invalid_opcode
-1$: ; exceptions 0x52,0x55,0x5b
-    ld a,#0x52 ; EXGW X,Y
-    cp a,(OPCODE,sp)
-    jrne 3$ 
-    tnz (PREFIX,sp)
-    jrne 2$ 
-    jp invalid_opcode
-2$: ; EXGW X,Y 
-    ldw y, #exgw_x_y
-    call print_mnemonic
-    jp decode_exit
-3$: ld a,#0x55 ; MOV adr16,adr16
-    cp a,(OPCODE,sp)
-    jrne 4$
-    tnz (PREFIX,sp)
-    jreq 31$
-    jp invalid_opcode
-31$:  ; MOV adr16,adr16 
-    call get_int16
-    ldw (ADR16,sp),y
-    call get_int16 
-    ld a,yh 
-    ld (ADR24,sp),a 
-    ld a,yl 
-    ld (REL,sp),a 
-    ldw y,#M.MOV 
-    call print_mnemonic
-    ldw y, (ADR16,sp)
-    call print_word 
-    ld a,#',
-    call uart_tx 
-    ld a,(ADR24,sp)
-    ld yh,a 
-    ld a,(REL,sp)
-    ld yl,a 
-    call print_word 
-    jp decode_exit 
-4$:
-    ld a,#0x5b ; ADDW SP,#byte 
-    cp a,(OPCODE,sp)
-    jrne 6$
-; ADDW sp,#byte     
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ldw y,#addw_sp_byte 
-    call print_mnemonic
-    ld a,(REL,sp)
-    call print_byte 
-    jp decode_exit 
-6$:
-    ld a,#0x72 
-    cp a,(PREFIX,sp)
-    jrne 8$
-; op adr16 
-    call get_int16 
-    ldw (ADR16,sp),y
-    ld a,(OPCODE,sp)
-    ldw y,#grp_3x_mnemo 
-    call print_grp_mnemo
-    ldw y,(ADR16,sp)
-    call print_word 
-    jp decode_exit 
-8$:
-    ldw y,#grp_5x_w
-    ld a,(OPCODE,sp)
-    and a,#0xf 
-    sll a 
-    ld acc8,a 
-    clr acc16 
-    addw y,acc16 
-    ldw y,(y)
-    call print_mnemonic
-9$:
-    ld a,#'X 
-    ld (REL,sp),a 
-    tnz (PREFIX,sp)
-    jreq 10$ 
-    inc (REL,sp)
-10$:
-    ld a,(REL,sp)
-    call uart_tx 
-    jp decode_exit
-
-grp_5x_w: .word M.NEGW,M.EXGW,M.QM,M.CPLW,M.SRLW,M.MOV,M.RRCW,M.SRAW
-          .word M.SLLW,M.RLCW,M.DECW,M.ADDW,M.INCW,M.TNZW,M.SWAPW,M.CLRW 
-
-exgw_x_y: .asciz "EXGW X,Y"
-addw_sp_byte:  .asciz "ADDW SP,#"
-
-;------------------------
-; form: op (off8,x)
-; form_72: op ([adr16],x)
-; form_90: op (off8,y)
-; form_91: op ([adr8],y)
-; form_92: op ([adr8],x) 
-; exceptions: 
-;  0x61   EXG A,YL 
-;  0x62   DIV X,A 
-;  0x65   DIV X,Y 
-;  0x6b   LD (off8,sp),a  
-;------------------------
-mode_6x:
-; exceptions forms first.
-    ld a,#0x61
-    cp a,(OPCODE,sp)
-    jrne 2$
-; EXG A,YL 
-    ldw y,#exg_a_yl
-    call print_mnemonic
-    jp decode_exit 
-2$: ld a,#0x62
-    cp a,(OPCODE,sp)
-    jrne 4$
-; DIV X,A
-    ldw y,#div_x_a
-    call print_mnemonic
-    jp decode_exit 
-4$: ld a,#0x65
-    cp a,(OPCODE,sp)
-    jrne 6$
-; DIV X,Y
-    ldw y,#div_x_y
-    call print_mnemonic
-    jp decode_exit 
-6$: ld a,#0x6b
-    cp a,(OPCODE,sp)
-    jrne 8$
-; LD (off8,sp),a 
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ldw y,#M.LD 
-    call print_mnemonic
-    ldw y,#R.SP 
-    ld a,(REL,sp)
-    call print_off8_r 
-    ld a,#', 
-    call uart_tx 
-    ld a,#'A 
-    call uart_tx 
-    jp decode_exit
-8$: 
-    ld a,#0x72 
-    cp a,(PREFIX,sp)
-    jrne 9$
-    call get_int16
-    ldw (ADR16,sp),y
-    ld a,(OPCODE,sp)
-    ldw y,#grp_6x_mnemo
-    call print_grp_mnemo
-    ld a,(OPCODE,sp)
-    ldw y,(ADR16,sp)
-    ldw acc16,y  
-    ldw y,#R.X
-    call print_longptr_r
-    jp decode_exit 
-9$: call peek 
-    ld (REL,sp),a  
-    call print_byte 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_6x_mnemo 
-    call print_grp_mnemo
-    tnz (PREFIX,sp)
-    jrne 12$ 
-    ldw y,#R.X ; op (off8,x)
-    jra 16$
-12$:
-    ld a,#0x90 
-    cp a,(PREFIX,sp)
-    jrne 13$
-    ldw y,#R.Y 
-    jra 16$ 
-13$:
-    ld a,#0x91 
-    cp a,(PREFIX,sp)
-    jrne 14$
-    ldw y,#R.Y 
-    jra 15$ 
-14$:
-    ldw y,#R.X 
-15$:
-    ld a,(REL,sp)
-    call print_shortptr_r
-    jp decode_exit     
-16$:
-    ld a,(REL,sp)
-    call print_off8_r
-    jp decode_exit 
-
-
-grp_6x_mnemo:
-    .word M.NEG,M.EXG,M.DIV,M.CPL,M.SRL,M.DIV,M.RRC,M.SRA,M.RCF
-    .word M.RLC,M.DEC,M.LD,M.INC,M.TNZ,M.SWAP,M.CLR 
-
-exg_a_yl: .asciz "EXG A,YL"
-div_x_a: .asciz "DIV X,A" 
-div_x_y: .asciz "DIV X,Y"
-
-;--------------------------
-; form op (x|y)
-; exceptions:
-;   0x7b   LD A,(off8,sp)
-;--------------------------
-mode_7x:
-    ; prefix 0x72, 0x91,0x92 invalid 
-    tnz (PREFIX,sp)
-    jreq 2$ 
-    ld a,#0x90 
-    cp a,(PREFIX,sp)
-    jreq 2$
-    jp invalid_opcode
-2$:
-;exception
-    ld a,#0x7b 
-    cp a,(OPCODE,sp)
-    jrne 4$
-; LD A,(off8,sp)
-    call peek 
-    ld (REL,sp),a 
-    call print_byte 
-    ld a,(OPCODE,sp)
-    ldw y,#grp_7x_mnemo
-    call print_grp_mnemo 
-    ld a,(REL,sp)
-    ldw y,#R.SP
-    call print_a_off8_r
-    jp decode_exit
-4$:
-    ld a,(OPCODE,sp)
-    ldw y,#grp_7x_mnemo
-    call print_grp_mnemo
-    ld a,#'( 
-    call uart_tx 
-    ld a ,#'X
-    tnz (PREFIX,sp)
-    jreq 5$
-    inc a 
-5$: call uart_tx
-    ld a,#')
-    call uart_tx      
-    jp decode_exit 
-
-grp_7x_mnemo:
-    .word M.NEG,M.QM,M.QM,M.CPL,M.SRL,M.QM,M.RRC,M.SRA 
-    .word M.SLL,M.RLC,M.DEC,M.LD,M.INC,M.QM,M.SWAP,M.CLR
-
-; group with opcode beginning with 0b100, upper nibble 8|9
-; table indexed by 5 least significant bits
-mode_8x:
-mode_9x:
-    ld a,#0x1f ; 5 bits mask
-    and a,(OPCODE,sp)
-    cp a,#0x2
-    jrne 1$
-    jp opcode_int
-1$: cp a,#0xd
-    jrne 2$
-    jp opcode_callf
-2$: ; these opcodes have implicit arguments 
-    ldw y,#grp_8x_9x 
-    ld acc24+2,a 
-    ld a,#0x72
-    cp a,(PREFIX,sp)
-    jrne 3$
-    ld a,#32
-    ld acc24+2,a
-3$: clr acc24+1 
-    sll acc24+2
-    addw y,acc24+1
-    ldw y,(y)
-    call print_mnemonic 
-    ld a,#0x1f 
-    and a,(OPCODE,sp)
-    ld acc24+2,a
-    ldw y,#misc_0b100.r.idx
-    addw y,acc24+1
-    ld a,(y)
-    ld acc24+2,a 
-    ld a,#0x90 
-    cp a,(PREFIX,sp)
-    jrne 4$
-    inc acc24+2 
-4$: sll acc24+2
-    ldw y,#reg_ptr 
-    addw y,acc24+1
-    ldw y,(y)
-    call uart_print   
-    jp decode_exit
-
-; registers table 
-; association between 5 lower bits of misc_0b100 group and registers table
-; for each code from 0..31 this table give reg_ptr table entry 
-misc_0b100.r.idx:
-    .byte 0,0,0,0,1,7,2,0,1,7,2,0,0,0,0,0,0,0,0,10,12,22,14,20,0,0,0,0,0,0,18,16
-
-; grp_8x and grp_9x names pointers char**
-; keep it in opcode order, table indexed by 5 lower bits 
-grp_8x_9x: ; 32 codes 
-    .word M.IRET  ;0x80  
-    .word M.RET   ;0x81
-    .word M.INT 
-    .word M.TRAP
-    .word M.POP     ; 0X84 POP A 
-    .word M.POPW    ; 0x85/0x90 0x85  POPW X/Y
-    .word M.POP     ; 0x86  POP CC 
-    .word M.RETF    
-    .word M.PUSH    ; 0x88 PUSH A 
-    .word M.PUSHW   ; 0x89/0x90 0x89  PUSHW X/Y 
-    .word M.PUSH    ; 0x8A  PUSH CC 
-    .word M.BREAK 
-    .word M.CCF 
-    .word M.CALLF   ; 0x8D/0x92 0x8D  CALLF addr24/CALLF [addr16]
-    .word M.HALT 
-    .word M.WFI 
-    .word M.NULL ; used as prefix 0x90
-    .word M.NULL ; used as prefix 0x91
-    .word M.NULL ; uase as prefix 0x92 
-    .word M.LDW  ; 0x93/0x90 0x93  LDW X,Y/Y,X 
-    .word M.LDW  ; 0x94/0x90 0x94  LDW SP,X/Y 
-    .word M.LD   ; 0x95/0x90 0x95  LD XH/YH,A 
-    .word M.LDW  ; 0x96/0x90 0x96  LDW X/Y,SP 
-    .word M.LD   ; 0x97/0x90 0x97  LD XL/YL,A 
-    .word M.RCF 
-    .word M.SCF 
-    .word M.RIM 
-    .word M.SIM 
-    .word M.RVF 
-    .word M.NOP ; 
-    .word M.LD  ; 0x9e/0x90 0x9e LD A,XH/YH 
-    .word M.LD  ; 0x9f/0x90 0x9f LD A,XL/YL
-    .word M.WFE ; 0x72 0x8F 
-
-mode_ax:
-mode_bx:
-mode_cx:
-mode_dx:
-mode_ex:
-mode_fx:
-
-    ldw y,#to.do
-    call uart_print 
-    jp decode_exit
-
-to.do: .asciz " to be done..."
-
-; take 3 bytes address
-opcode_int:
-    call get_int24
-    ldW (ADR24,sp),y
-    ld (ADR24+2,sp),a 
-    ldw y,#M.INT 
-    call print_mnemonic
-    pushw x 
-    ldw y,(ADR24,sp)
-    ld a,(ADR24+2,sp)
-    ldw acc24,y 
-    ld acc8,a 
-    ld a,#6
-    ld xl,a 
-    ld a,#16 
-    call print_int  
-    popw x  
-    jp decode_exit 
-
-; callf instruction 
-opcode_callf:
-    ld a,#0x92
-    cp a,(PREFIX,sp)
-    jreq 1$
-    call get_int24
-    jra 2$
-1$: call get_int16
-2$: ldw y,acc24 
-    ldw (ADR24,sp),y 
+    ldw y,acc24
     ld a,acc8 
-    ld (ADR24+2,sp),a  
-    ldw y,#M.CALLF 
+    ldw (REL,sp),y
+    ld (REL+2,sp),a   
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_OPCODE,y)
+    srl a 
+    and a,#7 
+    add a,#'0 
+    ld (BIT,sp),a
+    ld  a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index
+    call ld_table_entry
     call print_mnemonic
-    ld a,#0x92 
-    cp a,(PREFIX,sp)
-    jrne 3$
-    ld a,#'[ 
-    ld (PREFIX,sp),a 
-    ld a,#'] 
-    ld (OPCODE,sp),a
-    jra 4$
-3$: ld a,#SPACE 
-    ld (PREFIX,sp),a 
-    ld (OPCODE,sp),a 
-4$: ld a,(PREFIX,sp)
-    call uart_tx 
-    ldw y, (ADR24,sp)
-    ldw acc24,y 
-    ld a,(ADR24+2,sp)
+    ldw y,(STRUCT,sp)  
+    ld a,(FIELD_FMT,y)
+    ldw y,#fmt_index 
+    call ld_table_entry
+    call format
+    addw sp,#LOCAL_SIZE 
+    ret
+
+
+;---------------------------------
+; get_int8 
+; read 1 byte from code 
+; print byte in hexadecimal
+; input:
+;   farptr  pointer to code 
+;   X       index for farptr 
+; output:
+;   A       byte read 
+;   acc24   A sign extended to 24 bits 
+;   X       incremented by 1
+;---------------------------------
+get_int8:
+    call peek
+    push a 
+    call print_byte 
+    pop a 
     ld acc8,a 
-    pushw x 
-    clrw x 
-    ld a,#16
-    call print_int
-    popw x 
-    ld a,(OPCODE,sp)
-    call uart_tx  
-    jp decode_exit
+    clr acc16
+    clr acc24
+    btjf acc8,#7,1$
+    cpl acc16 
+    cpl acc24 
+1$:          
+    ret
 
 ;---------------------------------
 ; get_int16 
-; read two bytes as 16 bits integer  
+; read two bytes as 16 bits integer 
+; form code space  
 ; print bytes separately
 ; input:
 ;   farptr      pointer to code 
@@ -1189,6 +460,7 @@ get_int16:
 ;--------------------------------
 ;  get_int24
 ;  read 3 bytes as a 24 bits integer 
+;  from code space 
 ;  print bytes separately
 ; input:
 ;   farptr      pointer to code 
@@ -1220,106 +492,6 @@ get_int24:
     ret 
 
 ;----------------------------
-;  print form (off8,r)
-;  r beeing a register: X,Y,SP 
-; input:
-;   A       offset value 
-;   Y       poinnter to register string 
-; output
-;   none 
-;----------------------------
-print_off8_r:
-    pushw y 
-    push a 
-    ld a,#'(
-    call uart_tx 
-    pop a 
-    call print_byte 
-print_r_name:
-    ld a,#',
-    call uart_tx 
-    popw y 
-    call uart_print 
-    ld a,#') 
-    call uart_tx 
-    ret 
-
-;----------------------------
-;  print form (off16,r)
-;  r beeing a register: X,Y 
-; input:
-;   acc16   off16 
-;   Y       poinnter to register string 
-; output
-;   none 
-;----------------------------
-print_off16_r:
-    pushw y 
-    ld a,#'(
-    ldw y,acc16 
-    call print_word 
-    jra print_r_name
-
-;----------------------------
-; print form ([adr8],r)
-; input:
-;   A       adr8 
-;   Y       register name pointer 
-; output:
-;   none 
-;----------------------------
-print_shortptr_r:
-    pushw y 
-    push a 
-    ld a,#'( 
-    call uart_tx 
-    ld a,#'[
-    call uart_tx 
-    pop a 
-    call print_byte 
-print_right_bracket:
-    ld a,#']
-    call uart_tx 
-    jra print_r_name 
-   
-
-;----------------------------
-; print form ([adr16],r)
-; input:
-;   acc16       adr16 
-;   Y           register name pointer 
-; output:
-;   none 
-;----------------------------
-print_longptr_r:
-    pushw y 
-    ld a,#'( 
-    call uart_tx 
-    ld a,#'[
-    call uart_tx 
-    ldw y, acc16 
-    call print_word 
-    jra print_right_bracket 
-
-;----------------------------
-; print form op a,(off8,r)
-; input:
-;   A       OPCODE 
-;   Y       register name pointer 
-; output:
-;   none 
-;----------------------------
-print_a_off8_r:
-    pushw y 
-    push a 
-    ld a,#'( 
-    call uart_tx 
-    pop a 
-    call print_byte 
-    jra print_r_name 
-
-
-;----------------------------
 ;print instruction mnemonic 
 ;pad with spaces for contant 
 ;8 charaters field width
@@ -1344,23 +516,6 @@ print_mnemonic:
     pop a 
     ret 
 
-;-----------------------
-; input: 
-;   A = OPCODE
-;   Y = mnemomic table
-; output:
-;   none 
-;----------------------- 
-print_grp_mnemo:
-    and a,#0xf
-    sll a 
-    ld acc8,a 
-    clr acc16 
-    addw y,acc16 
-    ldw y,(y)
-    call print_mnemonic
-    ret 
-
 ;---------------------------------
 ; compute absolute address 
 ; from relative address 
@@ -1372,30 +527,39 @@ print_grp_mnemo:
 ;   acc24    absolute address 
 ;----------------------------------
 abs_addr:
-    pushw x 
-    push a 
-    clr a 
-    addw x,farptr+1
-    adc a,farptr
-    ld acc24,a 
-    ldw acc16,x
-    pop a 
- ; sign extend a in x 
-    clrw x 
-    cp a,#128 
-    jrult 1$
-    cplw x 
-1$: add a, acc8 
+    pushw x
     ld acc8,a 
-    ld a,xl 
-    adc a,acc16 
-    ld acc16,a 
-    ld a,xh 
+    clr acc16 
+    clr acc24
+    btjf acc8,#7,1$
+    cpl acc16 
+    cpl acc24 
+1$: clr a 
+    addw x,farptr+1 
+    adc a,farptr 
+    addw x,acc16 
     adc a,acc24 
     ld acc24,a 
+    ldw acc16,x
     popw x 
     ret
 
+;--------------------------------
+; y = y[2*A]
+; input:
+;   Y     address of .word table 
+;   A     index in table 
+; output:
+;   Y     Y=Y[2*A]
+;--------------------------------
+ld_table_entry:
+    sll a 
+    ld acc8,a 
+    clr acc16 
+    addw y,acc16 
+    ldw y,(y)
+    ret 
+    
 
 
 

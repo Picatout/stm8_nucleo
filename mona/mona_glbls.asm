@@ -15,15 +15,31 @@
 ;     You should have received a copy of the GNU General Public License
 ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
 ;;
-
 ;--------------------------------------
 ;   globals sub-routines and variables
+;   module 
 ;--------------------------------------
+    .module GLOBALS 
+
+    .nlist
+	.include "../inc/nucleo_8s208.inc"
+	.include "../inc/stm8s208.inc"
+	.include "../inc/ascii.inc"
+	.include "mona.inc"
+    .list 
+
     .area DATA 
+rx_char:: .blkb 1 ; last uart received char
+pad::	.blkb PAD_SIZE ; working pad
+acc24:: .blkb 1; acc24:acc16:acc8 form a 24 bits accumulator
+acc16:: .blkb 1; acc16:acc8 form a 24 bits accumulator 
+acc8::  .blkb 1; acc8 an 8 bit accumulator 
+farptr:: .blkb 3; 24 bits pointer
+flags::  .blkb 1; boolean flags
 
 
     .area CODE 
-
+.ascii "GLOBALS"
 ;--------------------------------
 ; <format> is a simplifide version
 ; of 'C' <printf>
@@ -43,7 +59,7 @@
 ;      'b' byte parameter  (int8_t)
 ;      'c' ASCII character
 ;      'e' 24 bits integer (int24_t) parameter
-;      's' string (.asciz) parameter as far pointer (24 bits)
+;      's' string (.asciz) parameter as long pointer (16 bits)
 ;      'w' word paramter (int16_t) 
 ;      others values of 'c' are printed as is.
 ;  These are sufficient for the requirement of
@@ -114,16 +130,12 @@ format_loop:
 6$: cp a,#'s 
     jrne 8$
 ; string type parameter     
-    ld a,(x)
-    incw x 
-    ld farptr,a 
-    ld a,(x)
-    incw x 
-    ld farptr+1,a 
-    ld a,(x)
-    incw x 
-    ld farptr+2,a
-    call uart_prints 
+    pushw y
+    ldw y,x 
+    addw x,#2
+    ldw y,(y)
+    call uart_print 
+    popw y 
     jra format_loop 
 8$: cp a,#'w 
     jrne 9$
@@ -151,6 +163,81 @@ format_exit:
     popw x 
     ret 
 
+;------------------------------------
+;  serial port communication routines
+;------------------------------------
+;------------------------------------
+; transmit character in a via UART3
+; character to transmit on (3,sp)
+;------------------------------------
+uart_tx::
+	tnz UART3_SR
+	jrpl uart_tx
+	ld UART3_DR,a
+    ret
+
+;------------------------------------
+; send string via UART2
+; y is pointer to str
+;------------------------------------
+uart_print:: 
+	ld a,(y)
+	jreq 1$
+	call uart_tx
+	incw y
+	jra uart_print
+1$: ret
+
+;------------------------------------
+; check if char available
+;------------------------------------
+uart_qchar::
+	tnz rx_char
+	jreq 1$
+    ret
+1$: ld a,#UART_SR_RXNE 
+	and a,UART3_SR
+	ret 
+
+;------------------------------------
+; return char in A to queue
+;------------------------------------
+;ungetchar:: 
+	ld rx_char,a
+    ret
+    
+;------------------------------------
+; wait for character from uart3
+;------------------------------------
+uart_getchar::
+; if there is a char in rx_char return it.
+	ld a,rx_char 
+	jreq 1$
+	clr rx_char
+	ret
+1$:	btjf UART3_SR,#UART_SR_RXNE,.
+	ld a, UART3_DR 
+	ret
+
+;------------------------------------
+; delete n character from input line
+;------------------------------------
+uart_delete::
+	push a ; n 
+del_loop:
+	tnz (1,sp)
+	jreq 1$
+	ld a,#BSP
+	call uart_tx
+    ld a,#SPACE
+    call uart_tx
+    ld a,#BSP
+    call uart_tx
+    dec (1,sp)
+    jra del_loop
+1$: pop a
+	ret 
+
 ;-----------------------------------
 ; print a string (.asciz) pointed
 ; by a far pointer 
@@ -171,3 +258,4 @@ uart_prints::
 2$:
     popw y 
     ret 
+

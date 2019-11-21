@@ -26,13 +26,21 @@
 ;	.list
 	.page
 
-;----------------------------
-;   MONA common definitions
-;----------------------------
+	.macro idx_tbl name value ptr  
+		name=value
+		.word ptr 
+	.endm
+
+;-------------------------------------
+;   MONA global assembler constants 
+;-------------------------------------
+
+		TIB_SIZE = 80 ; transaction input buffer size
+		PAD_SIZE = 80 ; workding pad size
 
 ;------------------------------------------
 ;    boolean flags in variable 'flags'
 ;------------------------------------------
 	F_TRAP = 0  ; set by TrapHandler,cleared by 'q' command.
 	F_CC   = 1  ; save carry flag here 
-
+	F_FOUND = 2 ; set when a search_code succeed  
