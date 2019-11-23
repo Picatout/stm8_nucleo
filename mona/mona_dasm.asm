@@ -644,12 +644,12 @@ decode:
     jra decode_exit 
 invalid_opcode: 
     ldw y, #bad_opcode 
-    call print_mnemonic 
+    call fn_implied  
 decode_exit:    
     addw sp,#LOCAL_SIZE 
     ret
 
-bad_opcode:  .byte 0,IDX.QM 
+bad_opcode:  .byte 0,IDX.QM,IDX.FN_IMPL,0,0  
 
 ;---------------------------
 ; search code in table  
@@ -705,6 +705,8 @@ prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0
 ;----------------------------
 ;  helper macros 
 ;----------------------------
+; lsize is local variables size in bytes 
+; nomae is routine name 
     .macro _fn_entry lsize name
     LOCAL_SIZE = lsize
     STRUCT=3+LOCAL_SIZE
@@ -720,28 +722,50 @@ name:
 ;******************************
 
 ;---------------------------
-;  implied arguments opcode 
+;  forms without arguments bytes 
+;  1 or 2 bytes opcodes 
 ;---------------------------
-    STRUCT=3
-fn_implied:
+fmt_impl_no_arg: .asciz "%a%s" 
+fmt_impl_1_r: .asciz "%a%s\t%s"
+fmt_impl_2_r: .asciz "%a%s\t%s,%s" 
+fmt_select: .word fmt_impl_no_arg,fmt_impl_1_r,fmt_impl_2_r 
+
+    SPC=1
+    MNEMO=2 
+    DEST=4
+    SRC=6
+    FMT=8
+_fn_entry 8 fn_implied
+    clrw y 
+    ldw (DEST,sp),y
+    ldw (SRC,sp),y 
+    clr (FMT,sp)
+    call align 
+    ld (SPC,sp),a 
     ldw y,(STRUCT,sp)
-    call print_mnemonic 
+    ld a,(FIELD_MNEMO,y)
+    ldw y,#mnemo_index
+    call ld_table_entry
+    ldw (MNEMO,sp),y 
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
     jreq 1$
+    inc (FMT,sp)
     ldw y,#reg_index 
     call ld_table_entry
-    call uart_print 
+    ldw (DEST,sp),y 
     ldw y,(STRUCT,sp)
 1$: ld a, (FIELD_SRC,y)
     jreq 2$
-    push a 
-    ld a,#',
-    call uart_tx 
-    pop a 
-    ldw y,#reg_index 
+    inc (FMT,sp)
+    ldw y,#reg_index
     call ld_table_entry
-    call uart_print 
-2$: ret 
+    ldw (SRC,sp),y 
+2$: ldw y,#fmt_select 
+    ld a,(FMT,sp)
+    call ld_table_entry 
+    call format     
+_fn_exit 
 
 ;---------------------------
 ; form: op #imm8 
@@ -1305,17 +1329,21 @@ print_mnemonic:
     ld a,(FIELD_MNEMO,y) 
     ldw y,#mnemo_index
     call ld_table_entry
-    ld a,#4
-    mul x,a  
-    ld a,xl 
-    ld acc8,a 
-    ld a,#24
-    sub a,acc8  
+    callr align 
     call spaces 
     ld a,#6
     call print_padded 
     popw x 
     popw y 
+    ret 
+
+align:
+    ld a,xl 
+    sll a 
+    sll a 
+    ld acc8,a 
+    ld a,#24
+    sub a,acc8
     ret 
 
 ;---------------------------------

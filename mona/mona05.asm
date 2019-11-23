@@ -1299,24 +1299,6 @@ print_addr:
 	ret 
 
 ;------------------------------------
-; print n spaces 
-; input: 
-;   A  		number of space to print 
-; output:
-;	none 
-;------------------------------------
-spaces::
-	push a 
-	ld a,#SPACE 
-1$:	tnz (1,sp)
-	jreq 2$ 
-	call uart_tx 
-	dec (1,sp)
-	jra 1$
-2$:	pop a 
-	ret
-
-;------------------------------------
 ;  print padded text with spaces 
 ;  input:
 ;	Y 		pointer to text 

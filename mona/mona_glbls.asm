@@ -56,6 +56,7 @@ flags::  .blkb 1; boolean flags
 ;   to indicate parameters positision. First <%c> 
 ;   from left correspond to first paramter.
 ;   'c' is one of these: 
+;      'a' print a count of SPACE for alignement purpose     
 ;      'b' byte parameter  (int8_t)
 ;      'c' ASCII character
 ;      'e' 24 bits integer (int24_t) parameter
@@ -92,6 +93,13 @@ format_loop:
     ld a,(y)
     jreq format_exit 
     incw y
+    cp a,#'a' 
+    jrne 24$
+    ld a,(x)
+    incw x 
+    call spaces 
+    jra format_loop 
+24$:
     cp a,#'b'
     jrne 3$
 ; byte type paramter     
@@ -135,7 +143,7 @@ format_loop:
     addw x,#2
     ldw y,(y)
     call uart_print 
-    popw y 
+7$: popw y 
     jra format_loop 
 8$: cp a,#'w 
     jrne 9$
@@ -164,6 +172,25 @@ format_exit:
     ret 
 
 ;------------------------------------
+; print n spaces 
+; input: 
+;   A  		number of space to print 
+; output:
+;	none 
+;------------------------------------
+spaces::
+	push a 
+	ld a,#SPACE 
+1$:	tnz (1,sp)
+	jreq 2$ 
+	call uart_tx 
+	dec (1,sp)
+	jra 1$
+2$:	pop a 
+	ret
+
+
+;------------------------------------
 ;  serial port communication routines
 ;------------------------------------
 ;------------------------------------
@@ -180,12 +207,15 @@ uart_tx::
 ; send string via UART2
 ; y is pointer to str
 ;------------------------------------
-uart_print:: 
-	ld a,(y)
+uart_print::
+; check for null pointer  
+	cpw y,#0
+    jreq 1$ 
+0$: ld a,(y)
 	jreq 1$
 	call uart_tx
 	incw y
-	jra uart_print
+	jra 0$
 1$: ret
 
 ;------------------------------------
