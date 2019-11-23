@@ -657,7 +657,7 @@ parse_quote:
 	pop a 
 	jrne 11$
 	clr (PREV,sp)
-	call convert_escape
+	callr convert_escape
 	ld (x),a 
 	incw x 
 	jra 1$
