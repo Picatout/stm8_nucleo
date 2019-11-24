@@ -62,7 +62,7 @@
     IDX.FN_R_IMM16 = 6 
     IDX.FN_R_IDX = 7
     IDX.FN_IDX_R = 8 
-    IDX.FN_ADR8 = 9 
+    IDX.FN_REL8 = 9 
     IDX.FN_R_ADR8 = 10
     IDX.FN_R_ADR16 = 11 
     IDX.FN_IMM8 = 12 
@@ -75,6 +75,7 @@
     IDX.FN_ADR16_IMM8 = 19 
     IDX.FN_ADR16_ADR16=20
     IDX.FN_ADR8_ADR8=21 
+    IDX.FN_ADR8 = 22 
 
 ; decoder function indexed table
 fn_index:
@@ -87,7 +88,7 @@ fn_index:
     .word fn_r_imm16 ; 6
     .word fn_r_idx ; 7
     .word fn_idx_r ; 8 
-    .word fn_adr8 ; 9 
+    .word fn_rel8 ; 9 
     .word fn_r_adr8 ; 10
     .word fn_r_adr16 ; 11
     .word fn_imm8 ; 12
@@ -100,6 +101,7 @@ fn_index:
     .word fn_adr16_imm8 ; 19 
     .word fn_adr16_adr16 ; 20 
     .word fn_adr8_adr8 ; 21
+    .word fn_adr8 ; 22 
 
 
 ;-------------------------------------
@@ -281,23 +283,24 @@ codes:
     .byte 0xa3,IDX.CPW,IDX.FN_R_IMM16,IDX.X,0
     .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.X,0 
 
+    ; form op rel8 
+    .byte 0x20,IDX.JRA,IDX.FN_REL8,0,0
+    .byte 0x21,IDX.JRF,IDX.FN_REL8,0,0
+    .byte 0x22,IDX.JRUGT,IDX.FN_REL8,0,0
+    .byte 0x23,IDX.JRULE,IDX.FN_REL8,0,0
+    .byte 0x24,IDX.JRNC,IDX.FN_REL8,0,0
+    .byte 0x25,IDX.JRC,IDX.FN_REL8,0,0
+    .byte 0x26,IDX.JRNE,IDX.FN_REL8,0,0
+    .byte 0x27,IDX.JREQ,IDX.FN_REL8,0,0
+    .byte 0x28,IDX.JRNV,IDX.FN_REL8,0,0
+    .byte 0x29,IDX.JRV,IDX.FN_REL8,0,0
+    .byte 0x2A,IDX.JRPL,IDX.FN_REL8,0,0
+    .byte 0x2B,IDX.JRMI,IDX.FN_REL8,0,0
+    .byte 0x2C,IDX.JRSGT,IDX.FN_REL8,0,0
+    .byte 0x2D,IDX.JRSLE,IDX.FN_REL8,0,0
+    .byte 0x2E,IDX.JRSGE,IDX.FN_REL8,0,0
+    .byte 0x2F,IDX.JRSLT,IDX.FN_REL8,0,0
     ; form op adr8 
-    .byte 0x20,IDX.JRA,IDX.FN_ADR8,0,0
-    .byte 0x21,IDX.JRF,IDX.FN_ADR8,0,0
-    .byte 0x22,IDX.JRUGT,IDX.FN_ADR8,0,0
-    .byte 0x23,IDX.JRULE,IDX.FN_ADR8,0,0
-    .byte 0x24,IDX.JRNC,IDX.FN_ADR8,0,0
-    .byte 0x25,IDX.JRC,IDX.FN_ADR8,0,0
-    .byte 0x26,IDX.JRNE,IDX.FN_ADR8,0,0
-    .byte 0x27,IDX.JREQ,IDX.FN_ADR8,0,0
-    .byte 0x28,IDX.JRNV,IDX.FN_ADR8,0,0
-    .byte 0x29,IDX.JRV,IDX.FN_ADR8,0,0
-    .byte 0x2A,IDX.JRPL,IDX.FN_ADR8,0,0
-    .byte 0x2B,IDX.JRMI,IDX.FN_ADR8,0,0
-    .byte 0x2C,IDX.JRSGT,IDX.FN_ADR8,0,0
-    .byte 0x2D,IDX.JRSLE,IDX.FN_ADR8,0,0
-    .byte 0x2E,IDX.JRSGE,IDX.FN_ADR8,0,0
-    .byte 0x2F,IDX.JRSLT,IDX.FN_ADR8,0,0
     .byte 0x30,IDX.NEG,IDX.FN_ADR8,0,0
     .byte 0x33,IDX.NEG,IDX.FN_ADR8,0,0
     .byte 0x34,IDX.SRL,IDX.FN_ADR8,0,0
@@ -504,13 +507,13 @@ p90_codes:
     .byte 0xF7,IDX.LD,IDX.FN_IDX_R,IDX.Y,IDX.A 
     .byte 0xFF,IDX.LDW,IDX.FN_IDX_R,IDX.Y,IDX.X 
 
-    ;form op adr8 
-    .byte 0x28,IDX.JRNH,IDX.FN_ADR8,0,0
-    .byte 0x29,IDX.JRH,IDX.FN_ADR8,0,0
-    .byte 0x2C,IDX.JRNM,IDX.FN_ADR8,0,0
-    .byte 0x2D,IDX.JRM,IDX.FN_ADR8,0,0
-    .byte 0x2E,IDX.JRIL,IDX.FN_ADR8,0,0
-    .byte 0x2F,IDX.JRIH,IDX.FN_ADR8,0,0
+    ;form op rel8 
+    .byte 0x28,IDX.JRNH,IDX.FN_REL8,0,0
+    .byte 0x29,IDX.JRH,IDX.FN_REL8,0,0
+    .byte 0x2C,IDX.JRNM,IDX.FN_REL8,0,0
+    .byte 0x2D,IDX.JRM,IDX.FN_REL8,0,0
+    .byte 0x2E,IDX.JRIL,IDX.FN_REL8,0,0
+    .byte 0x2F,IDX.JRIH,IDX.FN_REL8,0,0
   
     ; form op r,#imm16 
     .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.Y,IDX.Y 
@@ -644,7 +647,9 @@ decode:
     jra decode_exit 
 invalid_opcode: 
     ldw y, #bad_opcode 
+    pushw y 
     call fn_implied  
+    popw y 
 decode_exit:    
     addw sp,#LOCAL_SIZE 
     ret
@@ -719,6 +724,13 @@ name:
     ret
     .endm
 
+; count alignment spaces 
+    .macro _align 
+    call align 
+    ld (SPC,sp),a 
+    .endm
+
+
 ;******************************
 
 ;---------------------------
@@ -740,12 +752,10 @@ _fn_entry 8 fn_implied
     ldw (DEST,sp),y
     ldw (SRC,sp),y 
     clr (FMT,sp)
-    call align 
+    _align 
     ld (SPC,sp),a 
     ldw y,(STRUCT,sp)
-    ld a,(FIELD_MNEMO,y)
-    ldw y,#mnemo_index
-    call ld_table_entry
+    call ld_mnemonic
     ldw (MNEMO,sp),y 
     ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
@@ -770,242 +780,291 @@ _fn_exit
 ;---------------------------
 ; form: op #imm8 
 ;---------------------------
-    IMM8=1
-_fn_entry 1 fn_imm8 
+fmt_op_imm8: .asciz "%a%s\t#%b"
+    SPC=1
+    MNEMO=2
+    IMM8=4
+_fn_entry 4 fn_imm8 
     call get_int8
     ld (IMM8,sp),a 
+    _align 
+    ld (SPC,sp),a 
     ldw y,(STRUCT,sp)
-    call print_mnemonic
-    ld a,(IMM8,sp)
-    ld a,#'# 
-    call uart_tx 
-    call print_byte 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,#fmt_op_imm8 
+    call format 
 _fn_exit
 
 ;----------------------------
-; form op adr8 
-; relative jp or callr 
+; form op rel8 
+; jpr or callr 
 ;----------------------------
-    ADR8 = 1
-_fn_entry 1 fn_adr8
+fmt_op_rel8: .asciz "%a%s\t%e"
+    SPC=1 
+    MNEMO=2
+    ADR24 = 4
+_fn_entry 4 fn_rel8
+    call get_int8 
+    ld (ADR24,sp),a 
+    _align 
+    ld (SPC,sp),a 
+    ldw y,(STRUCT,sp) 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ld a,(ADR24,sp)
+    call abs_addr
+    ldw (ADR24,sp),y 
+    ld (ADR24+2,sp),a 
+    ldw y,#fmt_op_rel8
+    call format  
+_fn_exit 
+
+;----------------------------
+; form op adr8 
+; exemple: clr 0xC0 
+;----------------------------
+fmt_op_adr8: .asciz "%a%s\t%b"
+    SPC=1
+    MNEMO=2
+    ADR8=4
+_fn_entry 4 fn_adr8 
     call get_int8 
     ld (ADR8,sp),a 
+    _align 
+    ld (SPC,sp),a 
     ldw y,(STRUCT,sp) 
-    call print_mnemonic
-    ld a,(ADR8,sp)
-    call abs_addr
-    pushw x
-    clrw x
-    ld a,#16  
-    call print_int 
-    popw x 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,#fmt_op_adr8 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op adr16 
 ; jp or call 
 ;----------------------------
-    ADR16=1
-_fn_entry 2 fn_adr16 
+fmt_op_adr16: .asciz "%a%s\t%w" 
+    SPC=1
+    MNEMO=2
+    ADR16=4
+_fn_entry 5 fn_adr16 
     call get_int16 
-    ldw (ADR16,sp),y
+    ldw (ADR16,sp),y 
+    _align 
+    ld (SPC,sp),a 
     ldw y,(STRUCT,sp)
-    call print_mnemonic 
-    ldw y,(ADR16,sp)
-    call print_word 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,#fmt_op_adr16 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op adr24 
 ; jpf or callf 
 ;----------------------------
-    ADR24=1 
-_fn_entry 3 fn_adr24 
+fmt_op_adr24: .asciz "%a%s\t%e"
+    SPC=1
+    MNEMO=2
+    ADR24=4 
+_fn_entry 6 fn_adr24 
     call get_int24
     ldw (ADR24,sp),y 
     ld (ADR24+2,sp),a 
+    _align 
     ldw y,(STRUCT,sp)
-    call print_mnemonic 
-    ldw y,(ADR24,sp)
-    ld a,(ADR24+2,sp)
-    ldw acc24,y 
-    ld acc8,a 
-    pushw x 
-    clrw x 
-    ld a,#16 
-    call print_int 
-    popw x 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,#fmt_op_adr24 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ;  form op adr8,r 
 ;----------------------------
-    ADR8=1 
-_fn_entry 1 fn_adr8_r 
+fmt_op_adr8_r: .asciz "%a%s\t%b,%s"
+    SPC=1
+    MNEMO=2
+    ADR8=4
+    REG=5 
+_fn_entry 6 fn_adr8_r 
     call get_int8 
-    ld (ADR8,sp),a 
+    ld (ADR8,sp),a
+    _align  
     ldw y,(STRUCT,sp)
-    call print_mnemonic
-    ld a,(ADR8,sp)
-    call print_byte
-    ld a,#',
-    call uart_tx 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
     ldw y,(STRUCT,sp)
-    ld a,(FIELD_SRC,y)
-    ldw y,#reg_index
-    call ld_table_entry 
-    call uart_print 
+    ld a,(FIELD_SRC,sp)
+    ldw y,#mnemo_index
+    call ld_table_entry
+    ldw (REG,sp),y
+    ldw y,#fmt_op_adr8_r 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op adr16,r 
 ;----------------------------
-    ADR16=1 
-_fn_entry 2  fn_adr16_r
+fmt_op_adr16_r: .asciz "%a%s\t%w,%s" 
+    SPC=1 
+    MNEMO=2
+    ADR16=4
+    REG=6 
+_fn_entry 7  fn_adr16_r
     call get_int16 
     ldw (ADR16,sp),y 
+    _align 
     ldw y,(STRUCT,sp)
-    call print_mnemonic
-    ldw y,(ADR16,sp)
-    call print_word 
-    ld a,#',
-    call uart_tx 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
     ldw y,(STRUCT,sp)
-    ld a,(FIELD_SRC,y) 
-    ldw y,#reg_index
-    call ld_table_entry 
-    call uart_print 
+    ld a,(FIELD_SRC,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (REG,sp),y 
+    ldw y,#fmt_op_adr16_r 
+    call format 
 _fn_exit
 
 ;----------------------------
 ; form op adr24,r  
 ;----------------------------
-    ADR24=1
-_fn_entry 3 fn_adr24_r 
+fmt_op_adr24_r: .asciz "%a%s\t%e,%s" 
+    SPC=1
+    MNEMO=2
+    ADR24=4
+    REG=7
+_fn_entry 8 fn_adr24_r 
     call get_int24 
     ldw (ADR24,sp),y 
     ld (ADR24+2,sp),a 
+    _align 
     ldw y,(STRUCT,sp)
-    call print_mnemonic 
-    ldw y,(ADR24,sp)
-    ld a,(ADR24+2,sp)
-    ldw acc24,y 
-    ld acc8,a 
-    pushw x 
-    clrw x 
-    ld a,#16  
-    call print_int 
-    popw x 
-    ld a,#',
-    call uart_tx 
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
     ldw y,(STRUCT,sp)
     ld a,(FIELD_SRC,y)
-    ldw y,#reg_index
-    call ld_table_entry 
-    call uart_print 
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (REG,sp),y 
+    ldw y,#fmt_op_adr24_r 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op r,adr8 
 ; exemple:  ldw x,$50
 ;----------------------------
-    ADR8 = 1
-_fn_entry 1 fn_r_adr8
+fmt_op_r_adr8: .asciz "%a%s\t%s,%b"
+    SPC=1
+    MNEMO=2
+    REG=4
+    ADR8 = 6
+_fn_entry 6 fn_r_adr8
     call get_int8 
     ld (ADR8,sp),a 
+    _align 
     ldw y,(STRUCT,sp) 
-    call print_mnemonic
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
     ldw y,#reg_index 
     call ld_table_entry
-    call uart_print 
-    ld a,#', 
-    call uart_tx 
-    ld a,(ADR8,sp)
-    call print_byte 
+    ldw (REG,sp),y 
+    ldw y,#fmt_op_r_adr8 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op r,adr16 
 ; exemple:  ldw x,$5000 
 ;----------------------------
-    ADR16 = 1
-_fn_entry 2 fn_r_adr16
+fmt_op_r_adr16: .asciz "%a%s\t%s,%w" 
+    SPC=1
+    MNEMO=2
+    REG=6
+    ADR16 = 4
+_fn_entry 7 fn_r_adr16
     call get_int16 
     ldw (ADR16,sp),y 
+    _align 
     ldw y,(STRUCT,sp) 
-    call print_mnemonic
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
     ldw y,#reg_index 
     call ld_table_entry
-    call uart_print 
-    ld a,#', 
-    call uart_tx 
-    ldw y,(ADR16,sp)
-    call print_word 
+    ldw (REG,sp),y 
+    ldw y,#fmt_op_r_adr16 
+    call format 
 _fn_exit 
 
 ;----------------------------
 ; form op r,adr24 
 ; exemple:  ldf a,$12000  
 ;----------------------------
-    ADR24 = 1
-_fn_entry 3 fn_r_adr24 
+fmt_op_r_adr24: .asciz "%a%s\t%s,%e" 
+    SPC=1
+    MNEMO=2
+    REG=4    
+    ADR24 = 6
+_fn_entry 8 fn_r_adr24 
     call get_int24 
     ldw (ADR24,sp),y
     ld (ADR24+2,sp),a  
+    _align 
     ldw y,(STRUCT,sp) 
-    call print_mnemonic
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_DEST,y)
     ldw y,#reg_index
     call ld_table_entry
-    call uart_print 
-    ld a,#', 
-    call uart_tx 
-    ldw y,(ADR24,sp)
-    ld a,(ADR24+2,sp)
-    ldw acc24,y 
-    ld acc8,a 
-    pushw x 
-    clrw x 
-    ld a,#16 
-    call print_int
-    popw x 
+    ldw (REG,sp),y 
+    ldw y,#fmt_op_r_adr24 
+    call format 
 _fn_exit 
-
 
 ;----------------------------
 ; register indexed without offset 
 ; form: op r,(r)
 ; form: op (r)
 ;----------------------------
-    STRUCT=3
-fn_r_idx:
+fmt_op_idx: .asciz "%a%s\t(%s)"
+fmt_op_r_idx: .asciz "%a%s\t%s,(%s)"
+fmt_sel2: .word fmt_op_idx,fmt_op_r_idx 
+    SPC=1
+    MNEMO=2
+    RDEST=4
+    RSRC=6
+    FMT=8 
+_fn_entry 8 fn_r_idx
+    clr (FMT,sp)
+    _align 
     ldw y,(STRUCT,sp)
-    call print_mnemonic
+    call ld_mnemonic
+    ldw (MNEMO,sp),y 
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index
+    call ld_table_entry
+    ldw (RDEST,sp),y
+    ldw y,(STRUCT,sp)
     ld a,(FIELD_SRC,y)
     jrne 1$
-    ld a,#'(
-    call uart_tx 
-1$: ld a,(FIELD_DEST,y)    
-    ldw y,#reg_index 
+    inc (FMT,sp)
+1$: ldw y,#reg_index
     call ld_table_entry
-    call uart_print
-    ldw y,(STRUCT,sp)
-    ld a,(FIELD_SRC,y)
-    jreq 2$
-    ld a,#',
-    call uart_tx 
-    ld a,#'(
-    call uart_tx 
-    ld a,(FIELD_SRC,y)
-    ldw y,#reg_index 
-    call ld_table_entry
-    call uart_print 
-2$: ld a,#') 
-    call uart_tx 
-    ret 
-
+    ldw (RSRC,sp),y 
+    ld a,(FMT,sp)
+    ldw y,#fmt_sel2
+    call ld_table_entry 
+    call format 
+_fn_exit 
 ;----------------------------
 ; register indexed without offset 
 ; form: op (r),r
@@ -1391,7 +1450,23 @@ ld_table_entry:
     ldw y,(y)
     ret 
     
-
+;---------------------------------
+; ld mnemonic pointer in y 
+; input:
+;   Y       pointer to code structure 
+; output:
+;   Y       pointer to mnemonic string 
+;-------------------------------------
+ld_mnemonic:
+    ld a,(FIELD_MNEMO,y)
+    clr acc16 
+    sll a 
+    rlc acc16 
+    ld acc8,a
+    ldw y,#mnemo_index  
+    addw y,acc16
+    ldw y,(y)
+    ret 
 
 
 
