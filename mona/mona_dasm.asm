@@ -90,6 +90,10 @@
     IDX.FN_OFS16_IDX_R= 34 
     IDX.FN_R_OFS24_IDX=35
     IDX.FN_OFS24_IDX_R=36 
+    IDX.FN_PTR16 = 37 
+    IDX.FN_PTR8 = 38 
+    IDX.FN_PTR16_IDX=39
+    IDX.FN_PTR8_IDX=40 
 
 ; decoder function indexed table
 fn_index:
@@ -130,7 +134,10 @@ fn_index:
     .word fn_ofs16_idx_r ; 34 
     .word fn_r_ofs24_idx; 35
     .word fn_ofs24_idx_r; 36 
-
+    .word fn_ptr16; 37 
+    .word fn_ptr8 ; 38 
+    .word fn_ptr16_idx ; 39 
+    .word fn_ptr8_idx ; 40 
 ;-------------------------------------
 ;  each opcode as a table entry 
 ;  that give information on how to 
@@ -222,6 +229,7 @@ codes:
     .byte 0x40,IDX.NEG,IDX.FN_IMPL,IDX.A,0 
     .byte 0x41,IDX.EXG,IDX.FN_IMPL,IDX.A,IDX.XL
     .byte 0x42,IDX.MUL,IDX.FN_IMPL,IDX.X,IDX.A 
+    .byte 0x43,IDX.CPL,IDX.FN_IMPL,IDX.A,0
     .byte 0x44,IDX.SRL,IDX.FN_IMPL,IDX.A,0 
     .byte 0x46,IDX.RRC,IDX.FN_IMPL,IDX.A,0 
     .byte 0x47,IDX.SRA,IDX.FN_IMPL,IDX.A,0 
@@ -305,6 +313,7 @@ codes:
     .byte 0xFF,IDX.LDW,IDX.FN_IDX_R,IDX.X,IDX.Y 
 
     ; form op r,#imm8
+    .byte 0x5b,IDX.ADDW,IDX.FN_R_IMM8,IDX.SP,0
     .byte 0xa0,IDX.SUB,IDX.FN_R_IMM8,IDX.A,0
     .byte 0xa1,IDX.CP,IDX.FN_R_IMM8,IDX.A,0
     .byte 0xa2,IDX.SBC,IDX.FN_R_IMM8,IDX.A,0
@@ -316,6 +325,8 @@ codes:
     .byte 0xaA,IDX.OR,IDX.FN_R_IMM8,IDX.A,0
     .byte 0xaB,IDX.ADD,IDX.FN_R_IMM8,IDX.A,0
     ; form op r,#imm16 
+    .byte 0x1C,IDX.ADDW,IDX.FN_R_IMM16,IDX.X,0
+    .byte 0x1D,IDX.SUBW,IDX.FN_R_IMM16,IDX.X,0
     .byte 0xa3,IDX.CPW,IDX.FN_R_IMM16,IDX.X,0
     .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.X,0 
 
@@ -338,7 +349,7 @@ codes:
     .byte 0x2F,IDX.JRSLT,IDX.FN_REL8,0,0
     ; form op adr8 
     .byte 0x30,IDX.NEG,IDX.FN_ADR8,0,0
-    .byte 0x33,IDX.NEG,IDX.FN_ADR8,0,0
+    .byte 0x33,IDX.CPL,IDX.FN_ADR8,0,0
     .byte 0x34,IDX.SRL,IDX.FN_ADR8,0,0
     .byte 0x36,IDX.RRC,IDX.FN_ADR8,0,0
     .byte 0x37,IDX.SRA,IDX.FN_ADR8,0,0
@@ -349,18 +360,30 @@ codes:
     .byte 0x3D,IDX.TNZ,IDX.FN_ADR8,0,0
     .byte 0x3E,IDX.SWAP,IDX.FN_ADR8,0,0
     .byte 0x3F,IDX.CLR,IDX.FN_ADR8,0,0
-    .byte 0xAD,IDX.CALLR,IDX.FN_ADR8,0,0 
+    .byte 0xAD,IDX.CALLR,IDX.FN_ADR8,0,0
     ; form op adr16 
+    .byte 0x32,IDX.POP,IDX.FN_ADR16,0,0
+    .byte 0x3B,IDX.PUSH,IDX.FN_ADR16,0,0
+    .byte 0xcc,IDX.JP,IDX.FN_ADR16,0,0
     .byte 0xcd,IDX.CALL,IDX.FN_ADR16,0,0
-
+    ;form op r,adr16 
+    .byte 0x31,IDX.EXG,IDX.FN_R_ADR16,IDX.A,0
     ;form op adr24 
     .byte 0x82,IDX.INT,IDX.FN_ADR24,0,0
     .byte 0x8D,IDX.CALLF,IDX.FN_ADR24,0,0
     .byte 0xac,IDX.JPF,IDX.FN_ADR24,0,0
 
     ;form op r,adr8
+    .byte 0xB0,IDX.SUB,IDX.FN_R_ADR8,IDX.A,0
     .byte 0xB1,IDX.CP,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xB2,IDX.SBC,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xB4,IDX.AND,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xB5,IDX.BCP,IDX.FN_R_ADR8,IDX.A,0
     .byte 0xB6,IDX.LD,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xB8,IDX.XOR,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xB9,IDX.ADC,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xBA,IDX.OR,IDX.FN_R_ADR8,IDX.A,0
+    .byte 0xBB,IDX.ADD,IDX.FN_R_ADR8,IDX.A,0
     .byte 0xBE,IDX.LDW,IDX.FN_R_ADR8,IDX.X,0
     
     ;form op r,adr16
@@ -474,8 +497,66 @@ p72_codes:
     .byte 0xFB,IDX.ADDW,IDX.FN_R_OFS8_IDX,IDX.X,IDX.SP
     ; form op [ptr16],r 
     .byte 0xC7,IDX.LD,IDX.FN_PTR16_R,0,IDX.A 
+    .byte 0xCF,IDX.LDW,IDX.FN_PTR16_R,0,IDX.X 
+
     ; form op ([ptr16],r),r 
     .byte 0xD7,IDX.LD,IDX.FN_PTR16_IDX_R,IDX.X,IDX.A 
+    .byte 0xDF,IDX.LDW,IDX.FN_PTR16_IDX_R,IDX.X,IDX.Y 
+    ;form op [ptr16] 0x3n 
+    .byte 0x30,IDX.NEG,IDX.FN_PTR16,0,0
+    .byte 0x33,IDX.CPL,IDX.FN_PTR16,0,0
+    .byte 0x34,IDX.SRL,IDX.FN_PTR16,0,0
+    .byte 0x36,IDX.RRC,IDX.FN_PTR16,0,0
+    .byte 0x37,IDX.SRA,IDX.FN_PTR16,0,0
+    .byte 0x38,IDX.SLL,IDX.FN_PTR16,0,0
+    .byte 0x39,IDX.RLC,IDX.FN_PTR16,0,0
+    .byte 0x3A,IDX.DEC,IDX.FN_PTR16,0,0
+    .byte 0x3C,IDX.INC,IDX.FN_PTR16,0,0
+    .byte 0x3D,IDX.TNZ,IDX.FN_PTR16,0,0
+    .byte 0x3E,IDX.SWAP,IDX.FN_PTR16,0,0
+    .byte 0x3F,IDX.CLR,IDX.FN_PTR16,0,0
+    ; form op (ofs16,r) 0x4n
+    .byte 0x40,IDX.NEG,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x43,IDX.CPL,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x44,IDX.SRL,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x46,IDX.RRC,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x47,IDX.SRA,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x48,IDX.SLL,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x49,IDX.RLC,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x4A,IDX.DEC,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x4C,IDX.INC,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x4D,IDX.TNZ,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x4E,IDX.SWAP,IDX.FN_OFS16_IDX,IDX.X,0
+    .byte 0x4F,IDX.CLR,IDX.FN_OFS16_IDX,IDX.X,0
+
+    ; form op adr16 0x5n
+    .byte 0x50,IDX.NEG,IDX.FN_ADR16,0,0
+    .byte 0x53,IDX.CPL,IDX.FN_ADR16,0,0
+    .byte 0x54,IDX.SRL,IDX.FN_ADR16,0,0
+    .byte 0x56,IDX.RRC,IDX.FN_ADR16,0,0
+    .byte 0x57,IDX.SRA,IDX.FN_ADR16,0,0
+    .byte 0x58,IDX.SLL,IDX.FN_ADR16,0,0
+    .byte 0x59,IDX.RLC,IDX.FN_ADR16,0,0
+    .byte 0x5A,IDX.DEC,IDX.FN_ADR16,0,0
+    .byte 0x5C,IDX.INC,IDX.FN_ADR16,0,0
+    .byte 0x5D,IDX.TNZ,IDX.FN_ADR16,0,0
+    .byte 0x5E,IDX.SWAP,IDX.FN_ADR16,0,0
+    .byte 0x5F,IDX.CLR,IDX.FN_ADR16,0,0
+
+    ; form op ([ptr16],x)  0x6n 
+    .byte 0x60,IDX.NEG,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x63,IDX.CPL,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x64,IDX.SRL,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x66,IDX.RRC,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x67,IDX.SRA,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x68,IDX.SLL,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x69,IDX.RLC,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x6A,IDX.DEC,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x6C,IDX.INC,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x6D,IDX.TNZ,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x6E,IDX.SWAP,IDX.FN_PTR16_IDX,IDX.X,0
+    .byte 0x6F,IDX.CLR,IDX.FN_PTR16_IDX,IDX.X,0
+
     .byte 0,0,0,0,0
 
 ; table for opcodes with 0x90 prefix 
@@ -598,28 +679,57 @@ p90_codes:
     
     ; form op adr8,r 
     .byte 0xBF,IDX.LDW,IDX.FN_ADR8_R,0,IDX.Y 
-    
+    ; form op r,adr8 
+    .byte 0xBE,IDX.LDW,IDX.FN_R_ADR8,IDX.Y,0
+    ; form op r,adr16 
+    .byte 0xCE,IDX.LDW,IDX.FN_R_ADR16,IDX.Y,0
     ;form op (ofs8,r),r 
     .byte 0xE7,IDX.LD,IDX.FN_OFS8_IDX_R,IDX.Y,IDX.A 
+    .byte 0xEF,IDX.LDW,IDX.FN_OFS8_IDX_R,IDX.Y,IDX.X 
     ;form op (off16,r),r 
     .byte 0xD7,IDX.LD,IDX.FN_OFS16_IDX_R,IDX.Y,IDX.A 
-
+    .byte 0xDF,IDX.LDW,IDX.FN_OFS16_IDX_R,IDX.Y,IDX.X 
+    ; form op r,(ofs16,r)
+    .byte 0xDE,IDX.LDW,IDX.FN_R_OFS16_IDX,IDX.Y,IDX.Y 
     ; form op r,(ofs24,r) 
     .byte 0xAF,IDX.LDF,IDX.FN_R_OFS24_IDX,IDX.A,IDX.Y  
     ; form op (ofs24,r),r 
     .byte 0xA7,IDX.LDF,IDX.FN_OFS24_IDX_R,IDX.Y,IDX.A 
+    ;form op adr16,r 
+    .byte 0xCF,IDX.LDW,IDX.FN_ADR16_R,0,IDX.Y 
     .byte 0,0,0,0,0
 
 ; table for opcodes with 0x91 prefix 
 p91_codes:
     ;form op r,([ptr8],r)
     .byte 0xd6,IDX.LD,IDX.FN_R_PTR8_IDX,IDX.A,IDX.Y  
+    .byte 0xDE,IDX.LDW,IDX.FN_R_PTR8_IDX,IDX.Y,IDX.Y 
     ;form op ([ptr8,r]),r
     .byte 0xd7,IDX.LD,IDX.FN_PTR8_IDX_R,IDX.Y,IDX.A 
     ; form op r,([ptr16],r) 
     .byte 0xAF,IDX.LDF,IDX.FN_R_PTR16_IDX,IDX.A,IDX.Y 
     ; form op ([ptr16],r),r 
     .byte 0xA7,IDX.LDF,IDX.FN_PTR16_IDX_R,IDX.Y,IDX.A 
+    ;form op r,[ptr8]
+    .byte 0xCE,IDX.LDW,IDX.FN_R_PTR8,IDX.Y,0 
+    ;form op [ptr8],r 
+    .byte 0xCF,IDX.LDW,IDX.FN_PTR8_R,0,IDX.Y 
+    ;form op ([ptr8,r]),r 
+    .byte 0XDF,IDX.LDW,IDX.FN_PTR8_IDX_R,IDX.Y,IDX.X 
+    ;form op ([ptr8],r)
+    .byte 0x60,IDX.NEG,IDX.FN_PTR8_IDX,IDX.Y,0 
+    .byte 0x63,IDX.CPL,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x64,IDX.SRL,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x66,IDX.RRC,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x67,IDX.SRA,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x68,IDX.SLL,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x69,IDX.RLC,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x6A,IDX.DEC,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x6C,IDX.INC,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x6D,IDX.TNZ,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x6E,IDX.SWAP,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0x6F,IDX.CLR,IDX.FN_PTR8_IDX,IDX.Y,0
+    .byte 0xED,IDX.CALL,IDX.FN_PTR8_IDX,IDX.Y,0
 
     .byte 0,0,0,0,0
 
@@ -635,15 +745,46 @@ p92_codes:
     .byte 0xDE,IDX.LDW,IDX.FN_R_PTR8_IDX,IDX.X,IDX.X 
     ;form op [ptr8],r 
     .byte 0xC7,IDX.LD,IDX.FN_PTR8_R,0,IDX.A 
+    .byte 0xCF,IDX.LDW,IDX.FN_PTR8_R,0,IDX.X 
     ;form op ([ptr8],r),r 
     .byte 0xD7,IDX.LD,IDX.FN_PTR8_IDX_R,IDX.X,IDX.A 
-
+    .byte 0xDF,IDX.LDW,IDX.FN_PTR8_IDX_R,IDX.X,IDX.Y 
     ; form op r,([ptr16],r) 
     .byte 0xAF,IDX.LDF,IDX.FN_R_PTR16_IDX,IDX.A,IDX.X  
     ; form op ([ptr16],r),r 
     .byte 0xA7,IDX.LDF,IDX.FN_PTR16_IDX_R,IDX.X,IDX.A 
     ; form op [ptr16],r 
     .byte 0xBD,IDX.LDF,IDX.FN_PTR16_R,0,IDX.A  
+    ; form op [ptr16] 
+    .byte 0x8D,IDX.CALLF,IDX.FN_PTR16,0,0
+    .byte 0xAC,IDX.JPF,IDX.FN_PTR16,0,0 
+    ; form op [ptr8] 0x3n 
+    .byte 0x30,IDX.NEG,IDX.FN_PTR8,0,0
+    .byte 0x33,IDX.CPL,IDX.FN_PTR8,0,0
+    .byte 0x34,IDX.SRL,IDX.FN_PTR8,0,0
+    .byte 0x36,IDX.RRC,IDX.FN_PTR8,0,0
+    .byte 0x37,IDX.SRA,IDX.FN_PTR8,0,0
+    .byte 0x38,IDX.SLL,IDX.FN_PTR8,0,0
+    .byte 0x39,IDX.RLC,IDX.FN_PTR8,0,0
+    .byte 0x3A,IDX.DEC,IDX.FN_PTR8,0,0
+    .byte 0x3C,IDX.INC,IDX.FN_PTR8,0,0
+    .byte 0x3D,IDX.TNZ,IDX.FN_PTR8,0,0
+    .byte 0x3E,IDX.SWAP,IDX.FN_PTR8,0,0
+    .byte 0x3F,IDX.CLR,IDX.FN_PTR8,0,0
+    ; form op ([ptr8],r) 0x6n 
+    .byte 0x60,IDX.NEG,IDX.FN_PTR8_IDX,IDX.X,0 
+    .byte 0x63,IDX.CPL,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x64,IDX.SRL,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x66,IDX.RRC,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x67,IDX.SRA,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x68,IDX.SLL,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x69,IDX.RLC,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x6A,IDX.DEC,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x6C,IDX.INC,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x6D,IDX.TNZ,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x6E,IDX.SWAP,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0x6F,IDX.CLR,IDX.FN_PTR8_IDX,IDX.X,0
+    .byte 0xED,IDX.CALL,IDX.FN_PTR8_IDX,IDX.X,0
 
     .byte 0,0,0,0,0
 
@@ -1309,17 +1450,17 @@ _fn_exit
 fmt_r_imm16: .asciz "%a%s\t%s,#%w" 
     SPC=1
     MNEMO=2
-    REG=4
+    DEST=4
     IMM16=6
 _fn_entry 7 fn_r_imm16
     call get_int16
     ldw (IMM16,sp),y 
     ldw y,(STRUCT,sp)
     call ld_mnemonic 
-    ld a,(FIELD_DEST,sp)
+    ld a,(FIELD_DEST,y)
     ldw y,#reg_index 
     call ld_table_entry
-    ldw (REG,sp),y 
+    ldw (DEST,sp),y 
     ldw y,#fmt_r_imm16
     call format 
 _fn_exit
@@ -1707,6 +1848,81 @@ _fn_entry 10 fn_ofs24_idx_r
     ldw y,#fmt_ofs24_idx_r 
     call format 
 _fn_exit 
+
+;---------------------------------
+; form op [adr16]
+;---------------------------------
+fmt_op_ptr8: .asciz "%a%s\t%[%b]"
+    SPC=1
+    MNEMO=2
+    ADR8=4
+_fn_entry 4 fn_ptr8 
+    call get_int8
+    ld (ADR8,sp),a 
+    ldw y,(STRUCT,sp)
+    call ld_mnemonic
+    ldw y,#fmt_op_ptr8 
+    call format 
+_fn_exit 
+
+;---------------------------------
+; form op [adr16]
+;---------------------------------
+fmt_op_ptr16: .asciz "%a%s\t%[%w]"
+    SPC=1
+    MNEMO=2
+    ADR16=4
+_fn_entry 5 fn_ptr16 
+    call get_int16 
+    ldw (ADR16,sp),y 
+    ldw y,(STRUCT,sp)
+    call ld_mnemonic
+    ldw y,#fmt_op_ptr16 
+    call format 
+_fn_exit 
+
+;---------------------------------
+; form op ([ptr8],r) 
+;---------------------------------
+fmt_op_ptr8_idx: .asciz "%a%s\t([%b],%s)"
+    SPC=1
+    MNEMO=2
+    ADR8=4
+    DEST=5
+_fn_entry 6 fn_ptr8_idx 
+    call get_int8 
+    ld (ADR8,sp),a 
+    ldw y,(STRUCT,sp)
+    call ld_mnemonic
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (DEST,sp),y 
+    ldw y,#fmt_op_ptr8_idx
+    call format 
+_fn_exit 
+
+;---------------------------------
+; form op ([ptr16],r) 
+;---------------------------------
+fmt_op_ptr16_idx: .asciz "%a%s\t([%w],%s)"
+    SPC=1
+    MNEMO=2
+    ADR16=4
+    DEST=6
+_fn_entry 7 fn_ptr16_idx 
+    call get_int16 
+    ldw (ADR16,sp),y 
+    ldw y,(STRUCT,sp)
+    call ld_mnemonic
+    ld a,(FIELD_DEST,y)
+    ldw y,#reg_index 
+    call ld_table_entry
+    ldw (DEST,sp),y 
+    ldw y,#fmt_op_ptr16_idx
+    call format 
+_fn_exit 
+
 
 ;---------------------------------
 ; get_int8 
