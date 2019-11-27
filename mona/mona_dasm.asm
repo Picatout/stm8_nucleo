@@ -55,89 +55,86 @@
 ; decoder functions index values 
     IDX.FN_IMPL = 0 
     IDX.FN_OFS8_IDX = 1     
-    IDX.FN_ADR16_B_REL = 2
-    IDX.FN_ADR16_B = 3
-    IDX.FN_R_OFS8_IDX = 4 
-    IDX.FN_R_IMM8 = 5
-    IDX.FN_R_IMM16 = 6 
-    IDX.FN_R_IDX = 7
-    IDX.FN_IDX_R = 8 
-    IDX.FN_REL8 = 9 
-    IDX.FN_R_ADR8 = 10
-    IDX.FN_R_ADR16 = 11 
-    IDX.FN_IMM8 = 12 
-    IDX.FN_ADR16 = 13 
-    IDX.FN_ADR24 = 14 
-    IDX.FN_ADR8_R = 15
-    IDX.FN_ADR16_R = 16 
-    IDX.FN_ADR24_R = 17
-    IDX.FN_R_ADR24 = 18
-    IDX.FN_ADR16_IMM8 = 19 
-    IDX.FN_ADR16_ADR16=20
-    IDX.FN_ADR8_ADR8=21 
-    IDX.FN_ADR8 = 22 
-    IDX.FN_R_PTR8 = 23
-    IDX.FN_R_PTR16 = 24
-    IDX.FN_PTR8_R = 25 
-    IDX.FN_PTR16_R = 26 
-    IDX.FN_R_PTR8_IDX = 27 
-    IDX.FN_R_PTR16_IDX = 28 
-    IDX.FN_PTR8_IDX_R = 29 
-    IDX.FN_PTR16_IDX_R = 30
-    IDX.FN_OFS8_IDX_R = 31 
-    IDX.FN_OFS16_IDX = 32
-    IDX.FN_R_OFS16_IDX = 33 
-    IDX.FN_OFS16_IDX_R= 34 
-    IDX.FN_R_OFS24_IDX=35
-    IDX.FN_OFS24_IDX_R=36 
-    IDX.FN_PTR16 = 37 
-    IDX.FN_PTR8 = 38 
-    IDX.FN_PTR16_IDX=39
-    IDX.FN_PTR8_IDX=40 
+    IDX.FN_ADR16_B = 2
+    IDX.FN_R_OFS8_IDX = 3 
+    IDX.FN_R_IMM8 = 4
+    IDX.FN_R_IMM16 = 5 
+    IDX.FN_R_IDX = 6
+    IDX.FN_IDX_R = 7 
+    IDX.FN_R_ADR8 = 8
+    IDX.FN_R_ADR16 = 9 
+    IDX.FN_IMM8 = 10
+    IDX.FN_ADR16 = 11 
+    IDX.FN_ADR24 = 12 
+    IDX.FN_ADR8_R = 13
+    IDX.FN_ADR16_R = 14 
+    IDX.FN_ADR24_R = 15
+    IDX.FN_R_ADR24 = 16
+    IDX.FN_ADR16_IMM8 = 17 
+    IDX.FN_ADR16_ADR16=18
+    IDX.FN_ADR8_ADR8=19 
+    IDX.FN_ADR8 = 20 
+    IDX.FN_R_PTR8 = 21
+    IDX.FN_R_PTR16 = 22
+    IDX.FN_PTR8_R = 23
+    IDX.FN_PTR16_R = 24 
+    IDX.FN_R_PTR8_IDX = 25 
+    IDX.FN_R_PTR16_IDX = 26 
+    IDX.FN_PTR8_IDX_R = 27
+    IDX.FN_PTR16_IDX_R = 28
+    IDX.FN_OFS8_IDX_R = 29
+    IDX.FN_OFS16_IDX = 30
+    IDX.FN_R_OFS16_IDX = 31 
+    IDX.FN_OFS16_IDX_R= 32 
+    IDX.FN_R_OFS24_IDX=33
+    IDX.FN_OFS24_IDX_R=34 
+    IDX.FN_PTR16 = 35 
+    IDX.FN_PTR8 = 36
+    IDX.FN_PTR16_IDX=37
+    IDX.FN_PTR8_IDX=38 
 
 ; decoder function indexed table
 fn_index:
     .word fn_implied ; 0 
     .word fn_ofs8_idx ; 1 
-    .word fn_adr16_b_rel ; 2 
-    .word fn_adr16_bit ; 3 
-    .word fn_r_ofs8_idx ; 4
-    .word fn_r_imm8 ; 5
-    .word fn_r_imm16 ; 6
-    .word fn_r_idx ; 7
-    .word fn_idx_r ; 8 
-    .word fn_rel8 ; 9 
-    .word fn_r_adr8 ; 10
-    .word fn_r_adr16 ; 11
-    .word fn_imm8 ; 12
-    .word fn_adr16 ; 13 
-    .word fn_adr24 ; 14 
-    .word fn_adr8_r ; 15
-    .word fn_adr16_r ; 16
-    .word fn_adr24_r ; 17 
-    .word fn_r_adr24 ; 18 
-    .word fn_adr16_imm8 ; 19 
-    .word fn_adr16_adr16 ; 20 
-    .word fn_adr8_adr8 ; 21
-    .word fn_adr8 ; 22 
-    .word fn_r_ptr8 ; 23 
-    .word fn_r_ptr16 ; 24
-    .word fn_ptr8_r ; 25 
-    .word fn_ptr16_r ; 26
-    .word fn_r_ptr8_idx ; 27
-    .word fn_r_ptr16_idx ; 28 
-    .word fn_ptr8_idx_r ; 29 
-    .word fn_ptr16_idx_r ; 30 
-    .word fn_ofs8_idx_r ; 31 
-    .word fn_ofs16_idx  ; 32 
-    .word fn_r_ofs16_idx ; 33 
-    .word fn_ofs16_idx_r ; 34 
-    .word fn_r_ofs24_idx; 35
-    .word fn_ofs24_idx_r; 36 
-    .word fn_ptr16; 37 
-    .word fn_ptr8 ; 38 
-    .word fn_ptr16_idx ; 39 
-    .word fn_ptr8_idx ; 40 
+    .word fn_adr16_bit ; 2 
+    .word fn_r_ofs8_idx ; 3
+    .word fn_r_imm8 ; 4
+    .word fn_r_imm16 ; 5
+    .word fn_r_idx ; 6
+    .word fn_idx_r ; 7 
+    .word fn_r_adr8 ; 8
+    .word fn_r_adr16 ; 9
+    .word fn_imm8 ; 10
+    .word fn_adr16 ; 11 
+    .word fn_adr24 ; 12 
+    .word fn_adr8_r ; 13
+    .word fn_adr16_r ; 14
+    .word fn_adr24_r ; 15 
+    .word fn_r_adr24 ; 16 
+    .word fn_adr16_imm8 ; 17 
+    .word fn_adr16_adr16 ; 18 
+    .word fn_adr8_adr8 ; 19
+    .word fn_adr8 ; 20
+    .word fn_r_ptr8 ; 21 
+    .word fn_r_ptr16 ; 22
+    .word fn_ptr8_r ; 23 
+    .word fn_ptr16_r ; 24
+    .word fn_r_ptr8_idx ; 25
+    .word fn_r_ptr16_idx ; 26 
+    .word fn_ptr8_idx_r ; 27 
+    .word fn_ptr16_idx_r ; 28 
+    .word fn_ofs8_idx_r ; 29 
+    .word fn_ofs16_idx  ; 30 
+    .word fn_r_ofs16_idx ; 31 
+    .word fn_ofs16_idx_r ; 32 
+    .word fn_r_ofs24_idx; 33
+    .word fn_ofs24_idx_r; 34 
+    .word fn_ptr16; 35 
+    .word fn_ptr8 ; 36 
+    .word fn_ptr16_idx ; 37 
+    .word fn_ptr8_idx ; 38
+
 ;-------------------------------------
 ;  each opcode as a table entry 
 ;  that give information on how to 
@@ -918,10 +915,11 @@ decode:
     ld (PREFIX,sp),a 
     cp a,#0
     jrne 0$
+; no prefix     
     ld a,#0xf0 
     and a,(OPCODE,sp)
     cp a,#0x20
-    jrne 00$
+    jrne 10$
     ld a,(OPCODE,sp)
     and a,#0xf 
     call fn_rel8 
