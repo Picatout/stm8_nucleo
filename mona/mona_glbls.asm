@@ -117,22 +117,16 @@ format_loop:
 4$: cp a,#'e 
     jrne 6$
 ; int24_t parameter     
+    pushw y 
+    ld a,(x)
+    ld yh,a 
+    incw x
+    ld a,(x)
+    ld yl,a 
+    incw x 
     ld a,(x)
     incw x 
-    ld acc24,a 
-    ld a,(x)
-    incw x 
-    ld acc16,a 
-    ld a,(x)
-    incw x 
-    ld acc8,a
-    pushw y  
-    ld a,#16 
-    call itoa
-    decw y 
-    ld a,#'$
-    ld (y),a 
-    call uart_print 
+    call print_extd
     popw y  
     jra format_loop
 6$: cp a,#'s 
@@ -338,7 +332,7 @@ print_int::
     ret	
 
 ;----------------------------
-; print byte in acc8 
+; print byte in A 
 ; in hexadecimal format 
 ; input:
 ;   A	byte to print 
@@ -358,7 +352,7 @@ print_byte::
 	ret 
 
 ;----------------------------
-; print word in acc16 
+; print word in Y  
 ; in hexadecimal format 
 ; input:
 ;   Y	word to print 
@@ -378,6 +372,27 @@ print_word::
 	popw x 
 	pop a 
 	ret 
+
+;----------------------------
+; print 24 bits integer in Y:A 
+; in hexadecimal format 
+; input:
+;   Y	bits 23:16 
+;   A   bits 7:0
+; use: 
+;   A       conversion base 
+;   XL		field width
+;----------------------------
+print_extd::
+    ld acc8,a 
+    ldw acc24,y 
+    pushw x 
+    ld a,#7
+    ld xl,a 
+    ld a,#16 
+    call print_int 
+    popw x 
+    ret 
 
 ;------------------------------------
 ; print *farptr
@@ -402,7 +417,7 @@ print_addr::
 	pop a 
 	popw x 
 	ret 
-    
+
 ;------------------------------------
 ; convert integer to string
 ; input:
