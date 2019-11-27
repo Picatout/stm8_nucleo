@@ -335,23 +335,6 @@ codes:
     .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.X,0 
     .byte 0xCB,IDX.ADD,IDX.FN_R_IMM16,IDX.A,0 
 
-    ; form op rel8  02n
-    .byte 0x20,IDX.JRA,IDX.FN_REL8,0,0
-    .byte 0x21,IDX.JRF,IDX.FN_REL8,0,0
-    .byte 0x22,IDX.JRUGT,IDX.FN_REL8,0,0
-    .byte 0x23,IDX.JRULE,IDX.FN_REL8,0,0
-    .byte 0x24,IDX.JRNC,IDX.FN_REL8,0,0
-    .byte 0x25,IDX.JRC,IDX.FN_REL8,0,0
-    .byte 0x26,IDX.JRNE,IDX.FN_REL8,0,0
-    .byte 0x27,IDX.JREQ,IDX.FN_REL8,0,0
-    .byte 0x28,IDX.JRNV,IDX.FN_REL8,0,0
-    .byte 0x29,IDX.JRV,IDX.FN_REL8,0,0
-    .byte 0x2A,IDX.JRPL,IDX.FN_REL8,0,0
-    .byte 0x2B,IDX.JRMI,IDX.FN_REL8,0,0
-    .byte 0x2C,IDX.JRSGT,IDX.FN_REL8,0,0
-    .byte 0x2D,IDX.JRSLE,IDX.FN_REL8,0,0
-    .byte 0x2E,IDX.JRSGE,IDX.FN_REL8,0,0
-    .byte 0x2F,IDX.JRSLT,IDX.FN_REL8,0,0
     ; form op adr8 
     .byte 0x30,IDX.NEG,IDX.FN_ADR8,0,0
     .byte 0x33,IDX.CPL,IDX.FN_ADR8,0,0
@@ -460,40 +443,6 @@ codes:
 
 ; table for opcodes with 0x72 prefix 
 p72_codes:
-    ; form op adr16,#bit,reljmp 
-    .byte 0x00,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x01,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x02,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x03,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x04,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x05,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x06,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x07,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x08,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x09,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0A,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0B,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0C,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0D,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0E,IDX.BTJT,IDX.FN_ADR16_B_REL,0,0  
-    .byte 0x0F,IDX.BTJF,IDX.FN_ADR16_B_REL,0,0 
-    ; form op adr16,#bit 
-    .byte 0x10,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x11,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x12,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x13,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x14,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x15,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x16,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x17,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x18,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x19,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x1A,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x1B,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x1C,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x1D,IDX.BRES,IDX.FN_ADR16_B,0,0
-    .byte 0x1E,IDX.BSET,IDX.FN_ADR16_B,0,0
-    .byte 0x1F,IDX.BRES,IDX.FN_ADR16_B,0,0
     ;form op r,[ptr16]
     .byte 0xC6,IDX.LD,IDX.FN_R_PTR16,IDX.A,0 
     .byte 0xC9,IDX.ADC,IDX.FN_R_PTR16,IDX.A,0 
@@ -620,23 +569,6 @@ p72_codes:
 
 ; table for opcodes with 0x90 prefix 
 p90_codes:
-    ;form op adr16,#bit 
-    .byte 0x10,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x11,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x12,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x13,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x14,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x15,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x16,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x17,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x18,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x19,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x1A,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x1B,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x1C,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x1D,IDX.BCCM,IDX.FN_ADR16_B,0,0
-    .byte 0x1E,IDX.BCPL,IDX.FN_ADR16_B,0,0
-    .byte 0x1F,IDX.BCCM,IDX.FN_ADR16_B,0,0
     ; form op (ofs8,r)
     .byte 0x60,IDX.NEG,IDX.FN_OFS8_IDX,IDX.Y,0 
     .byte 0x63,IDX.CPL,IDX.FN_OFS8_IDX,IDX.Y,0
@@ -739,14 +671,6 @@ p90_codes:
     .byte 0xF7,IDX.LD,IDX.FN_IDX_R,IDX.Y,IDX.A 
     .byte 0xFF,IDX.LDW,IDX.FN_IDX_R,IDX.Y,IDX.X   
 
-    ;form op rel8 
-    .byte 0x28,IDX.JRNH,IDX.FN_REL8,0,0
-    .byte 0x29,IDX.JRH,IDX.FN_REL8,0,0
-    .byte 0x2C,IDX.JRNM,IDX.FN_REL8,0,0
-    .byte 0x2D,IDX.JRM,IDX.FN_REL8,0,0
-    .byte 0x2E,IDX.JRIL,IDX.FN_REL8,0,0
-    .byte 0x2F,IDX.JRIH,IDX.FN_REL8,0,0
-  
     ; form op r,#imm16 
     .byte 0xae,IDX.LDW,IDX.FN_R_IMM16,IDX.Y,IDX.Y 
     ; from op r,(ofs8,r)
@@ -914,7 +838,7 @@ p92_codes:
 
     .byte 0,0,0,0,0
 
-
+;*****************************************************
 
 ;-----------------------------------
 ; desassembler main function
@@ -994,6 +918,15 @@ decode:
     ld (PREFIX,sp),a 
     cp a,#0
     jrne 0$
+    ld a,#0xf0 
+    and a,(OPCODE,sp)
+    cp a,#0x20
+    jrne 00$
+    ld a,(OPCODE,sp)
+    and a,#0xf 
+    call fn_rel8 
+    jp decode_exit 
+10$:
     ldw y,#codes 
     jra 6$
 ; get opcode
@@ -1002,10 +935,39 @@ decode:
     ld a,(PREFIX,sp)
 1$: cp a,#0x72 
     jrne 2$
+    ld a,(OPCODE,sp)
+    and a,#0xf0 
+    jrne 11$
+    ld a,(OPCODE,sp)
+    and a,#0xf 
+    call fn_adr16_b_rel
+    jp decode_exit 
+11$:
+    cp a,#0x10  
+    jrne 12$
+    ld a,(OPCODE,sp)
+    and a,#0xf 
+    call fn_adr16_bit
+    jp decode_exit 
+12$:    
     ldw y,#p72_codes
     jra 6$
 2$: cp a,#0x90
     jrne 3$
+    ld a,(OPCODE,sp)
+    and a,#0xf0 
+    cp a,#0x10 
+    jrne 21$
+    ld a,(OPCODE,sp) 
+    call fn_adr16_bit 
+    jp decode_exit 
+21$: 
+    cp a,#0x20 
+    jrne 22$
+    ld a,(OPCODE,sp)
+    call fn_rel8 
+    jra decode_exit 
+22$:
     ldw y,#p90_codes
     jra 6$
 3$: cp a,#0x91 
@@ -1164,19 +1126,47 @@ _fn_exit
 ; form op rel8 
 ; jpr or callr 
 ;----------------------------
+jrxx_opcode: 
+    .word M.JRA,M.JRF,M.JRUGT,M.JRULE,M.JRNC,M.JRC,M.JRNE,M.JREQ
+    .word M.JRNV,M.JRV,M.JRPL,M.JRMI,M.JRSGT,M.JRSLE,M.JRSGE,M.JRSLT
+jrxx_90_opcode:  
+    .word M.JRNH,M.JRH,0,0,M.JRNM,M.JRM,M.JRIL,M.JRIH    
 fmt_op_rel8: .asciz "%a%s\t%e"
     SPC=1 
     MNEMO=2
     ADR24 = 4
-_fn_entry 6 fn_rel8
+    CODE=7
+_fn_entry 7 fn_rel8
+    ld (CODE,sp),a
+    swap a 
+    and a,#0xf 
+    jreq 0$
+    ld a,#12
+    jra 3$
+0$: ld a,#16
+3$: ld (SPC,sp),a 
     call get_int8 
     call abs_addr
     ldw y,acc24 
     ld a,acc8 
     ldw (ADR24,sp),y 
-    ld (ADR24+2,sp),a 
-    ldw y,(STRUCT,sp) 
-    call ld_mnemonic
+    ld (ADR24+2,sp),a
+    ldw y,#jrxx_opcode 
+    ld a,(CODE,sp)
+    and a,#0xf0 
+    jreq 1$
+    ldw y,#jrxx_90_opcode
+1$: ld a,(CODE,sp)
+    and a,#0xf
+    cpw y,#jrxx_opcode 
+    jreq 2$
+    sub a,#8
+2$: sll a 
+    ld acc8,a 
+    clr acc16 
+    addw y,acc16 
+    ldw y,(y)
+    ldw (MNEMO,sp),y 
     ldw y,#fmt_op_rel8
     call format  
 _fn_exit 
@@ -1447,13 +1437,14 @@ _fn_entry 6 fn_ofs8_idx
 ;--------------------------------
 ; decode form: op adr16,#bit,rel 
 ;--------------------------------
-fmt_op_adr16_bit_rel: .asciz "%a%s\t%w,#%c,%e" ; i.e. btjt $1000,#7,$c0000
+fmt_op_adr16_bit_rel: .asciz "%a%s\t%w,#%c,%e" 
     SPC=1
     MNEMO=2
     ADR16=4
     BIT=6
     REL=7
 _fn_entry 9 fn_adr16_b_rel 
+    ld (BIT,sp),a 
     call get_int16
     ldw (ADR16,sp),y
     call get_int8
@@ -1461,14 +1452,21 @@ _fn_entry 9 fn_adr16_b_rel
     ldw y,acc24
     ld a,acc8 
     ldw (REL,sp),y
-    ld (REL+2,sp),a   
-    ldw y,(STRUCT,sp)
-    ld a,(FIELD_OPCODE,y)
+    ld (REL+2,sp),a
+    ld a,#4
+    ld (SPC,sp),a 
+    ld a,(BIT,sp)
+    and a,#1
+    jreq 2$
+    ldw y,#M.BTJF 
+    jra 3$
+2$: ldw y,#M.BTJT    
+3$: ldw (MNEMO,sp),y   
+    ld a,(BIT,sp)
     srl a 
     and a,#7 
     add a,#'0 
     ld (BIT,sp),a
-    call ld_mnemonic
     ldw y,#fmt_op_adr16_bit_rel
     call format
 _fn_exit
@@ -1476,21 +1474,34 @@ _fn_exit
 ;--------------------------------------
 ; decode form:  op adr16,#bit 
 ;--------------------------------------
+bitop: .word M.BSET,M.BRES,M.BCPL,M.BCCM 
 fmt_adr16_bit: .asciz "%a%s\t%w,#%c" ;
     SPC=1
     MNEMO=2
     ADR16=4
     BIT=6 
 _fn_entry 6 fn_adr16_bit 
+    ld (BIT,sp),a
+    ld a,#8
+    ld (SPC,sp),a  
     call get_int16
     ldw (ADR16,sp),y 
-    ldw y,(STRUCT,sp)
-    ld a,(FIELD_OPCODE,Y)
+    ldw y,#bitop 
+    ld a,(BIT,sp)
+    and a,#1 
+    jreq 1$
+    addw y,#2 
+1$: ld a,(BIT,sp)
+    and a,#0xf0 
+    jreq 2$
+    addw y,#4
+2$: ldw y,(y)
+    ldw (MNEMO,sp),y 
+    ld a,(BIT,sp)  
     srl a 
     and a,#7 
     add a,#'0
     ld (BIT,sp),a
-    call ld_mnemonic
     ldw y,#fmt_adr16_bit 
     call format 
 _fn_exit
