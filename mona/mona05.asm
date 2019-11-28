@@ -317,7 +317,9 @@ main:
 	jreq 1$
 	ldw y, #APP_MSG
 	call uart_print
-	jp [flash_free_base]		
+	ldw y,flash_free_base
+	incw y
+	jp 	(y)	
 ; information printed at mcu reset.	
 1$:	call print_mona_info
 ; Read Execute Print Loop
@@ -340,7 +342,7 @@ repl:
 ; start over	
 	jra repl  ; loop
 
-APP_MSG: .ascii "Application dectected, running it.\n"
+APP_MSG: .ascii "\nApplication dectected, running it.\n"
 		 .asciz "Press USER button to fallback to MONA shell.\n"
 
 ;------------------------------------
@@ -1334,6 +1336,7 @@ write_exit:
 ;   ?  diplay command help
 ;   b  n    convert n in the other base
 ;	c  addr bitmask  clear  bits at address
+;	d addr  desassemble code starting at addr
 ;   h  addr hex dump memory starting at address
 ;   m  src dest count,  move memory block
 ;   r  reset MCU
@@ -1891,9 +1894,11 @@ execute:
 9$: inc a
 
 no_addr:
-	ld a,[flash_free_base]
+	ldw y,flash_free_base
+	incw y
+	ld a,(y)
 	jreq error_print 
-	jp [flash_free_base]
+	jp (y)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; print error messages

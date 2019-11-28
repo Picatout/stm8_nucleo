@@ -2,6 +2,8 @@
 
 MONA, manuel de l'utilisateur
 ====
+### 2019-11-27 mise à jour pour la version 0.5
+
 ### mise à jour de la version 0.4
 
 Moniteur écris en assembleur.
@@ -18,6 +20,7 @@ commandes:
 * **?** Commande **help**. Affiche la liste des commandes.
 * **b n|$n|0xhh[hh]** Commande **base convert**. Convertie l'entier dans l'autre base. i.e. dec->hex | hex->dec.
 * **c addr bitmask**. Commande **bit clear**. Met les bits masqués à zéro, **addr** adresse de l'octet à modifié.
+* **d addr**. Comamnde **desassemble** permet de désassembler du code binaire.
 * **e addr count**. Commande **erase** permet de mettre à zéro une plage de mémoire RAM, EEPROM ou FLASH.
 * **f addr string**. Commande find recherche une chaîne ASCII dans la mémoire.
 * **h addr**. Commande **hex dump**. Affiche le contenu de la mémoire en hexadécimal par rangée de 8 octets. Pause à chaque rangée. &lt;ESPACE&gt; continue, autre touche termine.
@@ -81,6 +84,7 @@ commands:
 ?, diplay command help
 b n|$n, convert n in the other base
 c addr bitmask, clear bits at address
+d addr, desassemble
 e addr count, clear memory range
 f addr string, find string in memory
 h addr, hex dump memory starting at address
@@ -132,6 +136,40 @@ $c0=$EE
 ```
 
 Commande **clear**. Sert à mettre à **0** les bits indiqués par le paramètre **mask**. **mask** est un octet. Les bits de cet octet qui sont à **1** seront mis à zéro dans l'octet à l'adresse indiquée par **addr**.
+
+### **d addr**
+``` 
+>d $6000
+
+ $6000 	$9B                     SIM
+ $6001 	$AD  $C                 CALLR	 $C 
+ $6003 	$25 $19                 JRC	  $601E 
+ $6005 	$CE $48 $7E             LDW	X,$487E 
+ $6008 	$A3 $55 $AA             CPW	X,#$55AA 
+ $600B 	$27 $11                 JREQ	  $601E 
+ $600D 	$20 $16                 JRA	  $6025 
+ $600F 	$C6 $80  $0             LD	A,$8000 
+ $6012 	$A1 $82                 CP	A,#$82 
+ $6014 	$27  $6                 JREQ	  $601C 
+ $6016 	$A1 $AC                 CP	A,#$AC 
+ $6018 	$27  $2                 JREQ	  $601C 
+ $601A 	$99                     SCF
+ $601B 	$81                     RET
+ $601C 	$98                     RCF
+ $601D 	$81                     RET
+ $601E 	$C6 $48  $0             LD	A,$4800 
+ $6021 	$A1 $AA                 CP	A,#$AA 
+ $6023 	$26  $9                 JRNE	  $602E 
+ $6025 	$5F                     CLRW	X
+ $6026 	$4F                     CLR	A
+ $6027 	$4B $28                 PUSH	#$28 
+ $6029 	$86                     POP	CC
+ $602A 	$AC  $0 $80  $0         JPF	  $8000 
+
+```
+Le désasembleur décode les instructions machines pour afficher l'instruction assembleur correspondante. Dans exemple ci-haut on aperçoit les premières instructions du **boot rom**.  Le désassembleur fait une pause à chaque écran. Pour voir la suite il faut enfoncer la barre d'espacement. Toute autre touche retourne à la ligne de commande de MONA.
+
+Tous les entiers sont affichés en hexadécimal. Le champ de gauche est l'adresse mémoire où se situe l'instruction suivit des octets du code de l'instruction. Viens ensuite la traduction en assembleur du code.
 
 ### **e addr count**
 ```
@@ -335,7 +373,65 @@ $D8  $E7 $00 $00 $00 $00 $00 $00 $00
 Commande **execute**. Permet de lancer un programme inscris en mémoire ROM,FLASH ou RAM.  Depuis la version 0.3 le paramètre **addr** est facultatif s'il y a une application d'installée à l'adresse **$8e80**. Mais on peut inscrire une application en RAM et la lancer comme illustré ci-haut.
 Dans cet exemple je copie le programme **blink** dans la mémoire RAM à l'adresse **$C0** pour ensuite l'exécuté  avec la commande **x $c0**.
 
-## Conclusion
+## ajout d'une application
 
-J'ai plein d'idées pour améliorer MONA. Par exemple je pourrais inclure un désassembleur, un assembleur et même transformer MONA en un mini système d'exploitation qui offrirait des services aux applications.
+MONA avec le désassembleur occupe environ 10Ko octets sur les 128Ko. Il reste donc amplement d'espace pour ajouter une application à la suite de MONA. 
+
+### procédure
+ Créer une fichier assembleur semblable à [app_test.asm](app_test.asm) et assemblez le avec MONA. Modifiez le fichier [Makefile](Makefile) pour que la variable **APP** porte le nom de votre fichier assembleur. 
+
+ Le début de votre fichier doit ressembler à ceci.
+ ```
+ 	.module APPLICATION_TEST 
+
+	.nlist
+	.include "../inc/nucleo_8s208.inc"
+	.include "../inc/stm8s208.inc"
+	.include "../inc/ascii.inc"
+	.include "mona.inc"
+	.list
+	.page
+
+    .area CODE 
+
+
+	.ascii "USER_APP"
+; following flash memory is not used by MONA
+mona_end::
+	NO_APP=1 ; 0 to execute your application at reset.
+.if NO_APP
+	.byte 0 
+.else
+	nop 
+.endif
+```
+Votre application va être assemblée à l'adresse indiquée par l'information **flash free** au démarrage de MONA. exemple:
+```
+MONA VERSION 0.5
+stm8s208rb     memory map
+----------------------------
+ram free: $C0 - $16FF
+free flash: $A982  - $27FFF
+eeprom: $4000 - $47ff
+option: $4800 - $487f
+SFR: $5000 - $57FF
+boot ROM: $6000 - $67FF
+```
+Dans cet exemple l'application débute à **0xA983**. l'adresse **0xA982** étant réservé par MONA comme indicateur de démarrage automatique. En effet si vous voulez que votre application démarre automatiquement lors de la mise sous tension de la carte ou après un **RESET** mettez la valeur de **AUTO_APP** à **1**. Au démarre MONA vérifie le contenu de l'adresse **0XA982** et si c'est différent de zéro fait un saut à l'adresse **A983** qui doit-être le point d'entrée de votre application.
+
+Par défaut l'application **blink** est installée mais ne démarre pas automatiquement mais la commande **x** sans adresse permet de la démarrer. 
+
+Le bouton **USER** sur la carte permet de quitter l'application pour revenir à la ligne de commande de MONA.
+
+Vous pouvez insérer des instructions **TRAP** dans votre application pour stopper celle-ci en revenant sur la ligne de commande de MONA. Vous pouvez la redémarrer avec la commande **q**. 
+
+Votre applicaton peut bien sur utiliser les sous-routines de MONA définies comme globales, c'est à dire celles dont l'étiquette est terminée par **::**.  Cependant votre application ne devrait pas utiliser les variables globales de MONA. Celles-ci étant modifiées par MONA le redémarrage de votre application donnerait des résultats aléatoires. 
+
+
+## Conclusion
+L'ajout du désassembleur gonfle considérablement la taille de MONA. Le jeu d'instruction du STM8 est complexe à décoder. J'avais commencer le travail en essayant de réduire la taille des données mais après une semaine de travail je n'était pas satisfait du programme. Je trouvais que le code manquait de simplicité. J'ai donc recommencer en me basant sur une base de donnée constituée des tables **codes**, **p72_codes**, **p90_codes**, **p91_codes** ainsi que **p92_codes**. Malheuresement ces tables prennent beaucoup d'espace mémoire. Par contre je trouve le code plus propre. Il s'agit essentiellement d'une série de sous-routine une pour chaque modèle d'instruction basé sur le type d'adressage. 
+
+Je songeais à ajouter un assembleur à MONA mais je vais abandonner cette idée. Le programme est déjà suffissemment gros comme ça. Un asssembleur serait aussi complexe sinon plus que le désassembleur.
+
+
 
