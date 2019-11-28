@@ -1173,14 +1173,27 @@ _fn_exit
 ; form op adr8 
 ; exemple: clr 0xC0 
 ;----------------------------
-fmt_op_adr8: .asciz "%a%s\t%b"
+fmt_op_adr8: .asciz "%a%s\t%e"
     SPC=1
     MNEMO=2
     ADR8=4
-_fn_entry 4 fn_adr8 
+_fn_entry 6 fn_adr8 
     call get_int8 
-    ld (ADR8,sp),a 
-    ldw y,(STRUCT,sp) 
+    ld (ADR8+2,sp),a
+    clrw y 
+    ldw (ADR8,sp),y  
+    ldw y,(STRUCT,sp)
+    ld a,(FIELD_MNEMO,y)
+    cp a,#IDX.CALLR 
+    jrne 1$
+    ld a,(ADR8+2,sp)
+    call abs_addr
+    ldw y,acc24  
+    ldw (ADR8,sp),y 
+    ld a,acc24+2 
+    ld (ADR8+2,sp),a 
+    ldw y,(STRUCT,sp)
+1$:     
     call ld_mnemonic
     ldw y,#fmt_op_adr8 
     call format 
