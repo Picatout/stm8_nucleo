@@ -1,0 +1,2830 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 1.
+Hexadecimal [24-Bits]
+
+
+
+                                      1 ;;
+                                      2 ; Copyright Jacques Deschênes 2019 
+                                      3 ; This file is part of MONA 
+                                      4 ;
+                                      5 ;     MONA is free software: you can redistribute it and/or modify
+                                      6 ;     it under the terms of the GNU General Public License as published by
+                                      7 ;     the Free Software Foundation, either version 3 of the License, or
+                                      8 ;     (at your option) any later version.
+                                      9 ;
+                                     10 ;     MONA is distributed in the hope that it will be useful,
+                                     11 ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                     12 ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                     13 ;     GNU General Public License for more details.
+                                     14 ;
+                                     15 ;     You should have received a copy of the GNU General Public License
+                                     16 ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                     17 ;;
+                                     18 
+                                     19 ;  MONA   MONitor written in Assembly
+                                     20 	.module APPLICATION_TEST 
+                                     21 
+                                        	.include "../inc/nucleo_8s208.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        ; NUCLEO-8S208RB board specific definitions
+                                        ; Date: 2019/10/29
+                                        ; author: Jacques Deschênes, copyright 2018,2019
+                                        ; licence: GPLv3
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        
+                                        ; mcu on board is stm8s208rbt6
+                                        
+                                        ; crystal on board is 8Mhz
+                                 
+                                        
+                                        ; LED2 is user LED
+                                        ; connected to PC5 via Q2 -> 2N7002 MOSFET
+                                 
+                                 
+                                 
+                                        
+                                        ; B1 on schematic is user button
+                                        ; connected to PE4
+                                        ; external pullup resistor R6 4k7 and debounce capacitor C5 100nF
+                                 
+                                 
+                                 
+                                        
+                                        
+                                        	.include "../inc/stm8s208.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        ; 2019/10/18
+                                        ; STM8S208RB µC registers map
+                                        ; sdas source file
+                                        ; author: Jacques Deschênes, copyright 2018,2019
+                                        ; licence: GPLv3
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        	.module stm8s208rb
+                                        
+                                        ;;;;;;;;;;;;
+                                        ; bits
+                                        ;;;;;;;;;;;;
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                         	
+                                        ;;;;;;;;;;;;
+                                        ; bits masks
+                                        ;;;;;;;;;;;;
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; HSI oscillator frequency 16Mhz
+                                 
+                                        ; LSI oscillator frequency 128Khz
+                                 
+                                        
+                                        ; controller memory regions
+                                 
+                                 
+                                        ; STM8S208RB have 128K flash
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; options bytes
+                                        ; this one can be programmed only from SWIM  (ICP)
+                                 
+                                        ; these can be programmed at runtime (IAP)
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; option registers usage
+                                        ; read out protection, value 0xAA enable ROP
+                                 
+                                        ; user boot code, {0..0x3e} 512 bytes row
+                                 
+                                 
+                                        ; alternate function register
+                                 
+                                 
+                                        ; miscelinous options
+                                 
+                                 
+                                        ; clock options
+                                 
+                                 
+                                        ; HSE clock startup delay
+                                 
+                                 
+                                        ; flash wait state
+                                 
+                                 
+                                        
+                                        ; watchdog options bits
+                                 
+                                 
+                                 
+                                 
+                                        ; NWDGOPT bits
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; CLKOPT bits
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; AFR option, remapable functions
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; device ID = (read only)
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        
+                                 
+                                 
+                                        ; PORTS SFR OFFSET
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; GPIO
+                                        ; gpio register offset to base
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; port A
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port B
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port C
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port D
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port E
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port F
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port G
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port H not present on LQFP48/LQFP64 package
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port I ; only bit 0 on LQFP64 package, not present on LQFP48
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; input modes CR1
+                                 
+                                 
+                                        ; output mode CR1
+                                 
+                                 
+                                        ; input modes CR2
+                                 
+                                 
+                                        ; output speed CR2
+                                 
+                                 
+                                        
+                                        
+                                        ; Flash memory
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; data memory unlock keys
+                                 
+                                 
+                                        ; flash memory unlock keys
+                                 
+                                 
+                                        ; FLASH_CR1 bits
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_CR2 bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_FPR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_NFPR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_IAPSR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt control
+                                 
+                                 
+                                        
+                                        ; Reset Status
+                                 
+                                        
+                                        ; Clock Registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Peripherals clock gating
+                                        ; CLK_PCKENR1 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; CLK_PCKENR2
+                                 
+                                 
+                                 
+                                        
+                                        ; Clock bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        ; clock source
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Watchdog
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Beeper
+                                        ; beeper output is alternate function AFR7 on PD4
+                                        ; connected to CN9-6
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; SPI
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; I2C
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                        ; Precalculated values, all in KHz
+                                 
+                                 
+                                        ;
+                                        ; Fast I2C mode max rise time = 300ns
+                                        ; I2C_FREQR = 16 = (MHz) => tMASTER = 1/16 = 62.5 ns
+                                        ; TRISER = = (300/62.5) + 1 = floor(4.8) + 1 = 5.
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        ;
+                                        ; Standard I2C mode max rise time = 1000ns
+                                        ; I2C_FREQR = 16 = (MHz) => tMASTER = 1/16 = 62.5 ns
+                                        ; TRISER = = (1000/62.5) + 1 = floor(16) + 1 = 17.
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                        ; baudrate constant for brr_value table access
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART1 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART3
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART Status Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Uart Control Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; LIN mode config register
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; TIMERS
+                                        ; Timer 1 - 16-bit timer with complementary PWM outputs
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Control Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Slave Mode Control bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer External Trigger Enable bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Interrupt Enable bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Status Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Event Generation Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 1 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 1 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR1_CC1S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 2 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 2 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR2_CC2S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 3 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 3 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR3_CC3S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 4 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 4 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR4_CC4S1 = (1)
+                                 
+                                        
+                                        ; Timer 2 - 16-bit timer
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer 3
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; TIM3_CR1  fields
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; TIM3_CCR2  fields
+                                 
+                                 
+                                 
+                                        ; TIM3_CCER1 fields
+                                 
+                                 
+                                 
+                                 
+                                        ; TIM3_CCER2 fields
+                                 
+                                 
+                                        
+                                        ; Timer 4
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer 4 bitmasks
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                        
+                                 
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; ADC2
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                         
+                                        ; ADC bitmasks
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                        ; beCAN
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        
+                                        ; CPU
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; global configuration register
+                                 
+                                 
+                                 
+                                        
+                                        ; interrupt control registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; SWIM, control and status register
+                                 
+                                        ; debug registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt Numbers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt Vectors
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Condition code register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        	.include "../inc/ascii.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        
+                                        ;-------------------------------------------------------
+                                        ;     ASCII control  values
+                                        ;     CTRL_x   are VT100 keyboard values  
+                                        ;-------------------------------------------------------
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        	.include "mona.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        
+                                        ;  MONA   MONitor written in Assembly
+                                        	.module MONA 
+                                            .optsdcc -mstm8
+                                        ;	.nlist
+                                        	.include "../inc/nucleo_8s208.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        ; NUCLEO-8S208RB board specific definitions
+                                        ; Date: 2019/10/29
+                                        ; author: Jacques Deschênes, copyright 2018,2019
+                                        ; licence: GPLv3
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        
+                                        ; mcu on board is stm8s208rbt6
+                                        
+                                        ; crystal on board is 8Mhz
+                                 
+                                        
+                                        ; LED2 is user LED
+                                        ; connected to PC5 via Q2 -> 2N7002 MOSFET
+                                 
+                                 
+                                 
+                                        
+                                        ; B1 on schematic is user button
+                                        ; connected to PE4
+                                        ; external pullup resistor R6 4k7 and debounce capacitor C5 100nF
+                                 
+                                 
+                                 
+                                        
+                                        
+                                        	.include "../inc/stm8s208.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        ; 2019/10/18
+                                        ; STM8S208RB µC registers map
+                                        ; sdas source file
+                                        ; author: Jacques Deschênes, copyright 2018,2019
+                                        ; licence: GPLv3
+                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                        	.module stm8s208rb
+                                        
+                                        ;;;;;;;;;;;;
+                                        ; bits
+                                        ;;;;;;;;;;;;
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                         	
+                                        ;;;;;;;;;;;;
+                                        ; bits masks
+                                        ;;;;;;;;;;;;
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; HSI oscillator frequency 16Mhz
+                                 
+                                        ; LSI oscillator frequency 128Khz
+                                 
+                                        
+                                        ; controller memory regions
+                                 
+                                 
+                                        ; STM8S208RB have 128K flash
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; options bytes
+                                        ; this one can be programmed only from SWIM  (ICP)
+                                 
+                                        ; these can be programmed at runtime (IAP)
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; option registers usage
+                                        ; read out protection, value 0xAA enable ROP
+                                 
+                                        ; user boot code, {0..0x3e} 512 bytes row
+                                 
+                                 
+                                        ; alternate function register
+                                 
+                                 
+                                        ; miscelinous options
+                                 
+                                 
+                                        ; clock options
+                                 
+                                 
+                                        ; HSE clock startup delay
+                                 
+                                 
+                                        ; flash wait state
+                                 
+                                 
+                                        
+                                        ; watchdog options bits
+                                 
+                                 
+                                 
+                                 
+                                        ; NWDGOPT bits
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; CLKOPT bits
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; AFR option, remapable functions
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; device ID = (read only)
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        
+                                 
+                                 
+                                        ; PORTS SFR OFFSET
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; GPIO
+                                        ; gpio register offset to base
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; port A
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port B
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port C
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port D
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port E
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port F
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port G
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port H not present on LQFP48/LQFP64 package
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; port I ; only bit 0 on LQFP64 package, not present on LQFP48
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; input modes CR1
+                                 
+                                 
+                                        ; output mode CR1
+                                 
+                                 
+                                        ; input modes CR2
+                                 
+                                 
+                                        ; output speed CR2
+                                 
+                                 
+                                        
+                                        
+                                        ; Flash memory
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; data memory unlock keys
+                                 
+                                 
+                                        ; flash memory unlock keys
+                                 
+                                 
+                                        ; FLASH_CR1 bits
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_CR2 bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_FPR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_NFPR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; FLASH_IAPSR bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt control
+                                 
+                                 
+                                        
+                                        ; Reset Status
+                                 
+                                        
+                                        ; Clock Registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Peripherals clock gating
+                                        ; CLK_PCKENR1 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; CLK_PCKENR2
+                                 
+                                 
+                                 
+                                        
+                                        ; Clock bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        ; clock source
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Watchdog
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Beeper
+                                        ; beeper output is alternate function AFR7 on PD4
+                                        ; connected to CN9-6
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; SPI
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; I2C
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                        ; Precalculated values, all in KHz
+                                 
+                                 
+                                        ;
+                                        ; Fast I2C mode max rise time = 300ns
+                                        ; I2C_FREQR = 16 = (MHz) => tMASTER = 1/16 = 62.5 ns
+                                        ; TRISER = = (300/62.5) + 1 = floor(4.8) + 1 = 5.
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        ;
+                                        ; Standard I2C mode max rise time = 1000ns
+                                        ; I2C_FREQR = 16 = (MHz) => tMASTER = 1/16 = 62.5 ns
+                                        ; TRISER = = (1000/62.5) + 1 = floor(16) + 1 = 17.
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                        ; baudrate constant for brr_value table access
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART1 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART3
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; UART Status Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Uart Control Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; LIN mode config register
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; TIMERS
+                                        ; Timer 1 - 16-bit timer with complementary PWM outputs
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Control Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Slave Mode Control bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer External Trigger Enable bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Interrupt Enable bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Status Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer Event Generation Register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 1 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 1 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR1_CC1S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 2 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 2 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR2_CC2S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 3 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 3 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR3_CC3S1 = (1)
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 4 - channel configured in output
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Capture/Compare Mode Register 4 - channel configured in input
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;  TIM1_CCMR4_CC4S1 = (1)
+                                 
+                                        
+                                        ; Timer 2 - 16-bit timer
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer 3
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; TIM3_CR1  fields
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ; TIM3_CCR2  fields
+                                 
+                                 
+                                 
+                                        ; TIM3_CCER1 fields
+                                 
+                                 
+                                 
+                                 
+                                        ; TIM3_CCER2 fields
+                                 
+                                 
+                                        
+                                        ; Timer 4
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Timer 4 bitmasks
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                        
+                                 
+                                        
+                                 
+                                        
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; ADC2
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                         
+                                        ; ADC bitmasks
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                        ; beCAN
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        
+                                        ; CPU
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; global configuration register
+                                 
+                                 
+                                 
+                                        
+                                        ; interrupt control registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; SWIM, control and status register
+                                 
+                                        ; debug registers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt Numbers
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Interrupt Vectors
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; Condition code register bits
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        	.include "../inc/ascii.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of MONA 
+                                        ;
+                                        ;     MONA is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     MONA is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with MONA.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        
+                                        ;-------------------------------------------------------
+                                        ;     ASCII control  values
+                                        ;     CTRL_x   are VT100 keyboard values  
+                                        ;-------------------------------------------------------
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                        
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        ;	.list
+                                        
+                                        	.macro idx_tbl name value ptr  
+                                        
+                                        ;-------------------------------------
+                                        ;   MONA global assembler constants 
+                                        ;-------------------------------------
+                                        
+                                 
+                                 
+                                        
+                                        ;------------------------------------------
+                                        ;    boolean flags in variable 'flags'
+                                        ;------------------------------------------
+                                 
+                                 
+                                 
+                                     27 	.list
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
+Hexadecimal [24-Bits]
+
+
+
+                                     29 
+                                     30     .area CODE 
+                                     31 
+                                     32 
+      00A997 55 53 45 52 5F 41 50    33 	.ascii "USER_APP"
+             50
+                                     34 ;	.bndry 128 ; align on FLASH block.
+                                     35 ; following flash memory is not used by MONA
+      00A99F                         36 mona_end::
+                           000000    37 	AUTO_APP=0 ; 1 to execute application at reset 
+                           000000    38 .if AUTO_APP
+                                     39 	nop  
+                           000001    40 .else
+      00A99F 00                      41 	.byte 0
+                                     42 .endif
+      00A9A0                         43 blink:
+      00A9A0 90 AE A9 BF      [ 2]   44 	ldw y,#hello
+      00A9A4 CD 8F 37         [ 4]   45 	call uart_print 
+      00A9A7                         46 blink_loop:	
+      00A9A7 C6 50 0A         [ 1]   47 	ld a,LED2_PORT
+      00A9AA A8 20            [ 1]   48 	xor a,#LED2_MASK
+      00A9AC C7 50 0A         [ 1]   49 	ld LED2_PORT,a 
+      00A9AF 90 AE 00 08      [ 2]   50 	ldw y,#8 
+      00A9B3 AE FF FF         [ 2]   51 1$: ldw x,#0xffff
+      00A9B6 5A               [ 2]   52 2$:	decw x 
+      00A9B7 26 FD            [ 1]   53 	jrne 2$
+      00A9B9 90 5A            [ 2]   54     decw y 
+      00A9BB 26 F6            [ 1]   55     jrne 1$
+      00A9BD 20 E8            [ 2]   56 	jra blink_loop 
+                                     57 
+      00A9BF 48 65 6C 6C 6F 20 66    58 hello: .asciz "Hello from blinky\n"
+             72 6F 6D 20 62 6C 69
+             6E 6B 79 0A 00
+                                     59 
+                           000000    60 	TEST=0 ; set to 1 to assemble dams test code.
+                           000000    61 .if TEST=1 
+                                     62 dasm_test:
+                                     63 	jra . 
+                                     64 	jrf .
+                                     65 	jrugt .
+                                     66 	jrule .
+                                     67 	jrnc .
+                                     68 	jrc .
+                                     69 	jrne .
+                                     70 	jreq .
+                                     71 	jrnv .
+                                     72 	jrv .
+                                     73 	jrpl .
+                                     74 	jrmi .
+                                     75 	jrsgt .
+                                     76 	jrsle .
+                                     77 	jrsge .
+                                     78 	jrslt .
+                                     79 	jruge .
+                                     80 	jrt .
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
+Hexadecimal [24-Bits]
+
+
+
+                                     81 	jrult .
+                                     82 	jrnh .
+                                     83 	jrh .
+                                     84 	jrnm .
+                                     85 	jrm . 
+                                     86 	jril .
+                                     87 	jrih .
+                                     88 	btjt 0x1000,#0,.
+                                     89 	btjf 0x1000,#0,.
+                                     90 	btjt 0x1000,#7,.
+                                     91 	btjf 0x1000,#7,.
+                                     92 	bset 0x2000,#0
+                                     93 	bres 0x2000,#0
+                                     94 	bset 0x2000,#7
+                                     95 	bres 0x2000,#7
+                                     96 	bcpl 0x3000,#0
+                                     97 	bccm 0x3000,#0
+                                     98 	bcpl 0x3000,#7
+                                     99 	bccm 0x3000,#7
+                                    100 
+                                    101 	jpf 0x210000
+                                    102 	callf 0x20000
+                                    103 	neg a 
+                                    104 	cpl a 
+                                    105 	srl a 
+                                    106 	rrc a 
+                                    107 	sra a 
+                                    108 	sll a 
+                                    109 	rlc a 
+                                    110 	dec a 
+                                    111 	inc a 
+                                    112 	tnz a 
+                                    113 	swap a 
+                                    114 	clr a 
+                                    115 	jp(y)
+                                    116 	call(y)
+                                    117 	jp ([0xc0],x)
+                                    118 	call ([0xc0],x)
+                                    119 
+                                    120 	adc a,0x1000
+                                    121 	bcp a,(x)
+                                    122 	sub a,0x1000
+                                    123 	sbc a,0x2000
+                                    124 	jp (0x1000,x)
+                                    125 	call (0x1000,x)
+                                    126 	jp (0x10,x)
+                                    127 	call (0x10,x)
+                                    128 	subw y,#0x1000
+                                    129 	addw y,#0x2000
+                                    130 	subw x,0x1000
+                                    131 	subw y,0x1000
+                                    132 	addw x,0x1000
+                                    133 	addw y,0x1000
+                                    134 	sub a,([0xc000],x)
+                                    135 	cp a,([0xc000],x)
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
+Hexadecimal [24-Bits]
+
+
+
+                                    136 	sbc a,([0xc000],x)
+                                    137 	cpw y,([0xc000],x)
+                                    138 	sub a,([0xc000],x)
+                                    139 	and a,([0xc000],x)
+                                    140 	bcp a,([0xc000],x)
+                                    141 	ld a,([0xc000],x)
+                                    142 	xor a,([0xc000],x)
+                                    143 	adc a,([0xc000],x)
+                                    144 	or a,([0xc000],x)
+                                    145 	add a,([0xc000],x)
+                                    146 	ldw x,([0xc000],x)
+                                    147 
+                                    148 	add a,#0x55
+                                    149 	add a,0x10
+                                    150 	add a,0x1000
+                                    151 	add a,(x)
+                                    152 	add a,(0x10,x)
+                                    153 	add a,(0x1000,x)
+                                    154 	add a,(y)
+                                    155 	add a,(0x10,y)
+                                    156 	add a,(0x1000,y)
+                                    157 	add a,(0x10,sp)
+                                    158 	add a,[0x10]
+                                    159 	add a,[0x2000]
+                                    160 	add a,([0xa0],x)
+                                    161 	add a,([0x1000],x)
+                                    162 	add a,([0x10],y)
+                                    163 
+                                    164 	add a,(y)
+                                    165 	addw x,#0x1000
+                                    166 	addw x,0x1000
+                                    167 	addw x,(0x10,sp)
+                                    168 	addw y,#0x2000
+                                    169 	addw y,0x3000
+                                    170 	addw y,(0x20,sp)
+                                    171 	addw sp,#9
+                                    172 	ld a,#0x55
+                                    173 	ld a,0x55
+                                    174 	ld a,0x5000
+                                    175 	ld a,(x)
+                                    176 	ld a,(0x55,x)
+                                    177 	ld a,(0x55aa,x)
+                                    178 	ld a,(y)
+                                    179 	ld a,(0x50,y)
+                                    180 	ld a,(0x5000,y)
+                                    181 	ld a,(0x50,sp)
+                                    182 	ld a,[0x50]
+                                    183 	ld a,[0x5000]
+                                    184 	ld a,([0x50],x)
+                                    185 	ld a,([0x5000],x)
+                                    186 	ld a,([0x50],y)
+                                    187 	ld 0x50,a 
+                                    188 	ld 0x5000,a 
+                                    189 	ld (x),a 
+                                    190 	ld (0x50,x),a 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
+Hexadecimal [24-Bits]
+
+
+
+                                    191 	ld (0x5000,x),a 
+                                    192 	ld (y),a 
+                                    193 	ld (0x50,y),a 
+                                    194 	ld (0x5000,y),a 
+                                    195 	ld (0x50,sp),a 
+                                    196 	ld [0x50],a 
+                                    197 	ld [0x5000],a 
+                                    198 	ld ([0x50],x),a 
+                                    199 	ld ([0x5000],x),a 
+                                    200 	ld ([0x50],y),a 
+                                    201 	ld xl,a 
+                                    202 	ld a,xl 
+                                    203 	ld yl,a 
+                                    204 	ld a,yl 
+                                    205 	ld xh,a 
+                                    206 	ld a,xh 
+                                    207 	ld yh,a 
+                                    208 	ld a,yh 
+                                    209 	ldf a,0x50000 
+                                    210 	ldf a,(0x50000,x)
+                                    211 	ldf a,(0x50000,y)
+                                    212 	ldf a,([0x5000],x)
+                                    213 	ldf a,([0x5000],y)
+                                    214 	ldf a,[0x5000]
+                                    215 	ldf 0x50000,a 
+                                    216 	ldf (0x50000,x),a 
+                                    217 	ldf (0x50000,y),a 
+                                    218 	ldf ([0x5000],x),a 
+                                    219 	ldf ([0x5000],y),a 
+                                    220 	ldf [0x5000],a
+                                    221 	ldw x,#0x55aa 
+                                    222 	ldw x,0x50 
+                                    223 	ldw x,0x5000
+                                    224 	ldw x,(x)
+                                    225 	ldw x,(0x50,x)
+                                    226 	ldw x,(0x5000,x)
+                                    227 	ldw x,(0x50,sp)
+                                    228 	ldw x,[0x50]
+                                    229 	ldw x,[0x5000]
+                                    230 	ldw x,([0x50],x)
+                                    231 	ldw x,([0x5000],x)
+                                    232 	ldw 0x50,x 
+                                    233 	ldw 0x5000,x 
+                                    234 	ldw (x),y 
+                                    235 	ldw (0x50,x),y 
+                                    236 	ldw (0x5000,x),y 
+                                    237 	ldw (0x50,sp),x 
+                                    238 	ldw [0x50],x 
+                                    239 	ldw [0x5000],x 
+                                    240 	ldw ([0x50],x),y 
+                                    241 	ldw ([0x5000],x),y 
+                                    242 	ldw y,#0x55aa 
+                                    243 	ldw y,0x50 
+                                    244 	ldw y,0x5000 
+                                    245 	ldw y,(y)
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
+Hexadecimal [24-Bits]
+
+
+
+                                    246 	ldw y,(0x50,y)
+                                    247 	ldw y,(0x5000,y)
+                                    248 	ldw y,(0x50,sp)
+                                    249 	ldw y,[0x50]
+                                    250 	ldw y,([0x50],y)
+                                    251 	ldw 0x50,y 
+                                    252 	ldw 0x5000,y 
+                                    253 	ldw (y),x 
+                                    254 	ldw (0x50,y),x 
+                                    255 	ldw (0x5000,y),x 
+                                    256 	ldw (0x50,sp),y 
+                                    257 	ldw [0x50],y 
+                                    258 	ldw ([0x50],y),x 
+                                    259 	ldw y,x 
+                                    260 	ldw x,y 
+                                    261 	ldw x,sp 
+                                    262 	ldw sp,x 
+                                    263 	ldw y,sp 
+                                    264 	ldw sp,y 
+                                    265 	neg (0x10,sp)
+                                    266 	cpl (0x10,sp)
+                                    267 	srl (0x10,sp)
+                                    268 	rrc (0x10,sp)
+                                    269 	sra (0x10,sp)
+                                    270 	sll (0x10,sp)
+                                    271 	rlc (0x10,sp)
+                                    272 	dec (0x10,sp)
+                                    273 	inc (0x10,sp)
+                                    274 	tnz (0x10,sp)
+                                    275 	swap (0x10,sp)
+                                    276 	clr (0x10,sp)
+                                    277 	neg (0x20,x)
+                                    278 	neg (0x30,y)
+                                    279 	ccf 
+                                    280 	clr a 
+                                    281 	exgw x,y 
+                                    282 	neg (x)
+                                    283 	neg (y)
+                                    284 	adc a,(x)
+                                    285 	adc a,(y)
+                                    286 	cpw x,(y)
+                                    287 	cpw y,(x)
+                                    288 	callr . 
+                                    289 	sub a,(0x10,sp)
+                                    290 	cpw x,(0x20,sp)
+                                    291 	bset 0x1000,#1
+                                    292 	bres 0x1000,#7
+                                    293 	bcpl 0x1000,#6
+                                    294 	bccm 0x600,#1
+                                    295 	mov 0x2000,#0x55 
+                                    296 	mov 0xc0,0xf0 
+                                    297 	mov 0x1234,0x5678
+                                    298 	ld a,#64
+                                    299 	cpw y,(0x10,x)
+                                    300 	jpf 0x12345
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
+Hexadecimal [24-Bits]
+
+
+
+                                    301 	callf 0x56789 
+                                    302 	exgw x,y
+                                    303 	exg a,xl 
+                                    304 	cplw X 
+                                    305 	cplw y 
+                                    306 	iret
+                                    307 	ccf
+                                    308 	scf
+                                    309 	sim
+                                    310 	rim
+                                    311 	btjf 0x1000,#0,.
+                                    312 	btjt 0x1000,#0,.  
+                                    313 	btjf 0x1000,#1,.
+                                    314 	btjt 0x1000,#1,.  
+                                    315 	btjf 0x1000,#2,.
+                                    316 	btjt 0x1000,#2,.  
+                                    317 	btjf 0x1000,#3,.
+                                    318 	btjt 0x1000,#3,.  
+                                    319 	btjf 0x1000,#4,.
+                                    320 	btjt 0x1000,#4,.  
+                                    321 	btjf 0x1000,#5,.
+                                    322 	btjt 0x1000,#5,.  
+                                    323 	btjf 0x1000,#6,.
+                                    324 	btjt 0x1000,#6,.  
+                                    325 	btjf 0x1000,#7,.
+                                    326 	btjt 0x1000,#7,.  
+                                    327 	push #0x44
+                                    328 	callf .
+                                    329 	callf [farptr]
+                                    330 	iret 
+                                    331 	ret 
+                                    332 	pop a 
+                                    333 	popw x
+                                    334 	popw y 
+                                    335 	pop cc 
+                                    336 	retf 
+                                    337 	push a 
+                                    338 	pushw x 
+                                    339 	pushw y 
+                                    340 	pop cc 
+                                    341 	break 
+                                    342 	ccf 
+                                    343 	halt 
+                                    344 	wfi 
+                                    345 	wfe 
+                                    346 	rcf 
+                                    347 	scf 
+                                    348 	rim 
+                                    349 	sim 
+                                    350 	rvf 
+                                    351 	nop 
+                                    352 	rrwa x 
+                                    353 	rlwa x 
+                                    354 	rrwa y
+                                    355 	rlwa y 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+Hexadecimal [24-Bits]
+
+
+
+                                    356 	neg (0,sp)
+                                    357 	cpl (3,sp) 
+                                    358 	srl (4,sp) 
+                                    359 	rrc (6,sp)
+                                    360 	sra (7,sp)
+                                    361 	rlc (9,sp)
+                                    362 	dec (0xa,sp)
+                                    363 	inc (0xc,sp)
+                                    364 	tnz (0xe,sp)
+                                    365 	clr (15,sp)
+                                    366 	bset 0x6000,#0
+                                    367 	bres 0x6000,#0
+                                    368 	bcpl 0x6000,#7
+                                    369 	bccm 0x6000,#7
+                                    370 	sub a,(0x10,sp)
+                                    371 	cp a,(0x10,sp)
+                                    372 	sbc a,(0x10,sp)
+                                    373 	cpw x,(0x10,sp)
+                                    374 	and a,(0x10,sp)
+                                    375 	bcp a,(0x10,sp)
+                                    376 	xor a,(0x10,sp)
+                                    377 	adc a,(0x10,sp)
+                                    378 	or a,(0x10,sp) 
+                                    379 	add a,(0x10,sp)
+                                    380 	addw x,#0x1000
+                                    381 	subw x,#0x1000
+                                    382 	neg 0xc0 
+                                    383 	exg a,0x8000 
+                                    384 	pop 0x6000
+                                    385 	cpl 0xc0
+                                    386 	srl 0xc0
+                                    387 	mov 0x6000,#32
+                                    388 	rrc 0xc0
+                                    389 	sra 0xc0
+                                    390 	sll 0xc0
+                                    391 	rlc 0xc0
+                                    392 	dec 0xc0
+                                    393 	push 0x6020
+                                    394 	inc 0xc0
+                                    395 	tnz 0xc0
+                                    396 	swap 0xc0
+                                    397 	clr 0xc0
+                                    398 	clr [0x8080]
+                                    399 	clr [0xd0]
+                                    400 	neg [0x8004]
+                                    401 	neg [0xc0] 
+                                    402 	mul x,a
+                                    403 	mul y,a  
+                                    404 	mov 0xc0,0xd0
+                                    405 	mov 0x1000,0x2000 
+                                    406 	push 0xaa55 
+                                    407 	exg a,xl
+                                    408 	neg a 
+                                    409 	cpl a
+                                    410 	srl a 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
+Hexadecimal [24-Bits]
+
+
+
+                                    411 	rrc a 
+                                    412 	sra a 
+                                    413 	sll a 
+                                    414 	rlc a 
+                                    415 	dec a 
+                                    416 	inc a 
+                                    417 	tnz a 
+                                    418 	swap a 
+                                    419 	clr a 
+                                    420 	negw x
+                                    421 	sraw y 
+                                    422 	sraw x 
+                                    423 	exgw x,y 
+                                    424 	addw sp,#4
+                                    425 	exg a,yl 
+                                    426 	div x,a 
+                                    427 	div x,y 
+                                    428 	neg(0xc0,x)
+                                    429 	neg ([0x1000],x)
+                                    430 	neg (0xd0,y)
+                                    431 	neg ([0xd0],y)
+                                    432 	neg ([0xc0],x)
+                                    433 	clr (0x10,x)
+                                    434 	clr ([0x1001],x)
+                                    435 	clr (0x10,y)
+                                    436 	clr ([0x20],y)
+                                    437 	clr ([0x40],x)
+                                    438 	neg (x)
+                                    439 	neg (y)
+                                    440 	rlc (x)
+                                    441 	rlc (y)
+                                    442 	ld a,(8,sp)
+                                    443 	swap(x)
+                                    444 	swap(y)
+                                    445 	nop 
+                                    446 .endif 

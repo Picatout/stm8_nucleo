@@ -1,0 +1,125 @@
+ASxxxx Linker V03.00 + NoICE + sdld,  page 1.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+.  .ABS.                            00000000    00000000 =           0. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     FFFFFFFF  s_SSEG                          
+     00000000  .__.ABS.                           APPLICATION_TEST
+     00000000  l_SSEG                          
+     00000000  l_USER_RAM_BASE                 
+     00000000  l__CODE                         
+     00000000  s_SSEG0                         
+     00000000  s__CODE                         
+     00000001  s_DATA                          
+     00000080  l_HOME                          
+     000000B1  l_DATA                          
+     000000B2  s_USER_RAM_BASE                 
+     00000100  l_SSEG0                         
+     00002952  l_CODE                          
+     00008000  s_HOME                          
+     00008080  s_CODE                          
+ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+DATA                                00000001    000000B1 =         177. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     0000005A  rx_char                            GLOBALS
+     0000005B  pad                                GLOBALS
+     000000AB  acc24                              GLOBALS
+     000000AC  acc16                              GLOBALS
+     000000AD  acc8                               GLOBALS
+     000000AE  farptr                             GLOBALS
+     000000B1  flags                              GLOBALS
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 3.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+SSEG0                               00000000    00000100 =         256. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 4.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+HOME                                00008000    00000080 =         128. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 5.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+CODE                                00008080    00002952 =       10578. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     00008344  readln                             MONA
+     0000847C  next_word                          MONA
+     000084B2  to_lower                           MONA
+     000084BD  to_upper                           MONA
+     000084C9  add24                              MONA
+     000084DC  mulu24_8                           MONA
+     00008516  divu24_8                           MONA
+     0000853E  neg_acc24                          MONA
+     00008561  inc_var24                          MONA
+     0000856E  copy_var24                         MONA
+     0000857E  is_alpha                           MONA
+     0000858F  is_digit                           MONA
+     0000859C  is_hex                             MONA
+     000085BB  atoi                               MONA
+     0000862C  strlen                             MONA
+     0000863E  print_padded                       MONA
+     00008656  sex_acc8                           MONA
+     00008665  peek                               MONA
+     0000866B  peek16                             MONA
+     0000867E  peek24                             MONA
+     00008697  number                             MONA
+     00008B45  error_print                        MONA
+     00008E7E  format                             GLOBALS
+     00008F1D  spaces                             GLOBALS
+     00008F2D  uart_tx                            GLOBALS
+     00008F37  uart_print                         GLOBALS
+     00008F49  uart_qchar                         GLOBALS
+     00008F5A  uart_getchar                       GLOBALS
+     00008F6D  uart_delete                        GLOBALS
+     00008F87  uart_prints                        GLOBALS
+     00008F9B  print_int                          GLOBALS
+     00008FE4  print_byte                         GLOBALS
+     00008FFA  print_word                         GLOBALS
+     0000900F  print_extd                         GLOBALS
+     00009021  print_addr                         GLOBALS
+     0000903A  itoa                               GLOBALS
+     00009E9A  dasm                               DASM
+     0000A99F  mona_end                           APPLICATION_TEST
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
+
+Files Linked                              [ module(s) ]
+
+build/mona05.rel                          [ MONA ]
+build/mona_glbls.rel                      [ GLOBALS ]
+build/mona_dasm.rel                       [ DASM ]
+build/app_test.rel                        [ APPLICATION_TEST ]
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
+
+User Base Address Definitions
+
+HOME = 0x8000
+DATA = 0x0001
+SSEG = 0xffffffff
+
+

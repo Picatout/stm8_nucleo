@@ -1,0 +1,23 @@
+XH3
+H 6 areas 2 global symbols
+M CH4_DEMO
+S .__.ABS. Def000000
+S neg24 Ref000000
+A _CODE size 0 flags 0 addr 0
+A DATA size 0 flags 0 addr 0
+A SSEG size 0 flags 8 addr 0
+A SSEG0 size 100 flags 8 addr 1700
+A HOME size 2 flags 0 addr 0
+A CODE size 8 flags 0 addr 0
+T 00 17 00
+R 00 00 00 03
+T 00 17 00
+R 00 00 00 03
+T 00 17 00
+R 00 00 00 03
+T 00 00 00 00 00
+R 00 00 00 04 00 03 00 05
+T 00 00 00
+R 00 00 00 05
+T 00 00 00 B6 12 CE 34 56 CD 00 00
+R 00 00 00 05 02 09 00 01

@@ -15,5 +15,48 @@
     .nlist
     .include "../inc/nucleo_8s208.inc"
     .include "../inc/stm8s208.inc"
-    .include "../math24.asm
     .list 
+
+;--------------------------------------------------------
+;some constants used by this program.
+;--------------------------------------------------------
+		STACK_SIZE = 256 ; call stack size
+		STACK_BASE = RAM_SIZE-STACK_SIZE ; lowest address of stack
+		STACK_TOP = RAM_SIZE-1 ; stack top at end of ram
+
+;--------------------------------------------------------
+;   data segment 
+;--------------------------------------------------------
+
+    .area DATA
+
+
+;--------------------------------------------------------
+;  stack segment
+;--------------------------------------------------------
+       .area SSEG  (ABS)
+	   .org RAM_SIZE-STACK_SIZE
+ __stack_bottom:
+	   .ds  STACK_SIZE 
+
+
+
+;--------------------------------------------------------
+;  interrupt vector table
+;--------------------------------------------------------
+    .area HOME 
+    .word init0
+;--------------------------------------------------------
+; code segment 
+;--------------------------------------------------------
+
+    .area CODE
+
+init0:
+
+    ld a,0x12
+    ldw x,0x3456
+    call neg24
+
+    
+

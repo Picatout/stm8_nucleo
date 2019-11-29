@@ -16,8 +16,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .module MATH24
     .nlist
-    .include "../inc/nucleo_8s208.inc"
-    .include "../inc/stm8s208.inc"
+    .include "../../inc/nucleo_8s208.inc"
+    .include "../../inc/stm8s208.inc"
     .list 
 
 ; NOTE: pour l'assembleur sdas une étiquette terminée par **::** est une 

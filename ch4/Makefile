@@ -4,7 +4,7 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=math24
+NAME=ch4_demo
 SDAS=sdasstm8
 SDCC=sdcc
 SDLD=sdld
@@ -14,10 +14,11 @@ FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
+LIB="../lib/math24.lib" 
 OBJECTS=$(BUILD)$(NAME).rel
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
-LISTS=$(OBJECTS:.rel=.lst)
+LISTS=$(OBJECTS:.rel=.lst) 
 RSTS=$(OBJECTS:.rel=.rst)
 TARGET=$(BUILD)$(NAME).ihx
 MAP=$(TARGET:.ihx=.map)
@@ -47,7 +48,7 @@ $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo "***************"
 	@echo "linking files"
 	@echo "***************"
-	$(SDCC) -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
+	$(SDCC) -l$(LIB) -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
 	@ls -gG $(TARGET)
 	
     	

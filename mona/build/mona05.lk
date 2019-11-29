@@ -1,0 +1,16 @@
+-muwx
+-i build/mona05.ihx
+-Y
+-b HOME = 0x8000
+-b DATA = 0x0001
+-b SSEG = 0xffffffff
+-k /usr/local/bin/../share/sdcc/lib/stm8
+-k /usr/local/share/sdcc/lib/stm8
+-l stm8
+-l stm8
+build/mona05.rel
+build/mona_glbls.rel
+build/mona_dasm.rel
+build/app_test.rel
+
+-e

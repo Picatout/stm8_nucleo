@@ -1,0 +1,76 @@
+ASxxxx Linker V03.00 + NoICE + sdld,  page 1.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+.  .ABS.                            00000000    00000000 =           0. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     FFFFFFFF  s_SSEG                          
+     00000000  .__.ABS.                           MATH24
+     00000000  l_DATA                          
+     00000000  l_SSEG                          
+     00000000  l__CODE                         
+     00000000  s_SSEG0                         
+     00000000  s__CODE                         
+     00000001  s_DATA                          
+     00000002  l_HOME                          
+     000000D6  l_CODE                          
+     00000100  l_SSEG0                         
+     00008000  s_HOME                          
+     00008002  s_CODE                          
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+SSEG0                               00000000    00000100 =         256. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 3.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+HOME                                00008000    00000002 =           2. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 4.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+CODE                                00008002    000000D6 =         214. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     0000800A  add24                              MATH24
+     00008017  sub24                              MATH24
+     00008024  mul24_8u                           MATH24
+     0000808A  div24_16u                          MATH24
+     000080D0  neg24                              MATH24
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 5.
+
+Files Linked                              [ module(s) ]
+
+build/ch4_demo.rel                        [ CH4_DEMO ]
+
+
+Libraries Linked                          [ object file ]
+
+../lib/math24.lib                         [ math24.rel ]
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
+
+User Base Address Definitions
+
+HOME = 0x8000
+DATA = 0x0001
+SSEG = 0xffffffff
+
+
