@@ -1,10 +1,11 @@
 #############################
-# librairies make file
+# uart make file
 #############################
-NAME=math24
+NAME=uart
 LIBNAME=$(NAME).lib 
 SDAS=sdasstm8
 SDCC=sdcc
+SDLD=sdldstm8
 SDAR=sdar
 CFLAGS=
 INC=../inc/
@@ -36,11 +37,10 @@ archive: $(LIBREL)
  
 $(NAME).rel:
 	@echo
-	@echo "**********************"
-	@echo "assembling $(ASM_SRC)       "
-	@echo "**********************"
+	@echo "*****************"
+	@echo "assembling $(ASM_SRC)"
+	@echo "*****************"
 	$(SDAS) -l -o $(OBJECTS) $(ASM_SRC)
-
 
 .PHONY: title
 title:

@@ -1,7 +1,7 @@
 #############################
-# librairies make file
+# uart make file
 #############################
-NAME=math24
+NAME=strings
 LIBNAME=$(NAME).lib 
 SDAS=sdasstm8
 SDCC=sdcc
@@ -33,14 +33,6 @@ archive: $(LIBREL)
 	@echo "****************************"
 	$(SDAR) -rc $(LIB) $(BUILD)$(LIBREL)
 
- 
-$(NAME).rel:
-	@echo
-	@echo "**********************"
-	@echo "assembling $(ASM_SRC)       "
-	@echo "**********************"
-	$(SDAS) -l -o $(OBJECTS) $(ASM_SRC)
-
 
 .PHONY: title
 title:
@@ -48,6 +40,14 @@ title:
 	@echo "*****************"
 	@echo "creating $(NAME)"
 	@echo "*****************"
+
+ 
+$(NAME).rel:
+	@echo
+	@echo "*****************"
+	@echo "assembling $(ASM_SRC)"
+	@echo "*****************"
+	$(SDAS) -l -o $(OBJECTS) $(ASM_SRC)
 
 
 .PHONY: clean 

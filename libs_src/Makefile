@@ -2,7 +2,7 @@
 #   make all libraries
 ###############################
 
-SUBDIRS=math24
+SUBDIRS=math24  uart
 
 .PHONY: subdirs $(SUBDIRS)
 

@@ -14,7 +14,8 @@ FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
-LIB="../lib/math24.lib" 
+LIB_PATH=../lib/
+USE_LIB= 
 OBJECTS=$(BUILD)$(NAME).rel
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
@@ -48,15 +49,18 @@ $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo "***************"
 	@echo "linking files"
 	@echo "***************"
-	$(SDCC) -l$(LIB) -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
+	$(SDCC) -L$(LIB_PATH) -lmath24 -luart -lstrings -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
 	@ls -gG $(TARGET)
 	
     	
-clean:
+clean: build 
 	@echo
 	@echo "***************"
 	@echo "cleaning files"
 	@echo "***************"
 	rm -f $(BUILD)*
+
+build:
+	mkdir build
 
 .PHONY: all clean flash

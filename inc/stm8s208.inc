@@ -493,6 +493,7 @@ PG = 30
  I2C_WRITE = 0
 
 ; baudrate constant for brr_value table access
+; to be used by uart_init 
 B2400=0
 B4800=1
 B9600=2
@@ -504,7 +505,36 @@ B230400=7
 B460800=8
 B921600=9
 
+; UART registers offset from
+; base address 
+UART_SR=0
+UART_DR=1
+UART_BRR1=2
+UART_BRR2=3
+UART_CR1=4
+UART_CR2=5
+UART_CR3=6
+UART_CR4=7
+UART_CR5=8
+UART_GTR=9
+UART_PSCR=10
+UART_CR6=9
+
+; uart identifier
+; to be used by uart_init
+ UART1 = 0
+ UART3 = 1
+; pins used by uart 
+UART1_TX_PIN=BIT5
+UART1_RX_PIN=BIT4
+UART3_TX_PIN=BIT6
+UART3_RX_PIN=BIT5
+; uart port base address 
+UART1_PORT=PA 
+UART3_PORT=PD
+
 ; UART1 
+ UART1_BASE  = (0x5330)
  UART1_SR    = (0x5230)
  UART1_DR    = (0x5231)
  UART1_BRR1  = (0x5232)
@@ -518,6 +548,7 @@ B921600=9
  UART1_PSCR  = (0x523A)
 
 ; UART3
+ UART3_BASE  = (0x5240)
  UART3_SR    = (0x5240)
  UART3_DR    = (0x5241)
  UART3_BRR1  = (0x5242)
