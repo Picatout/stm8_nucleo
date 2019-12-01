@@ -6,7 +6,7 @@
 ;   licence:  CC-BY-SA version 2 ou ultérieure
 ;
 ;   Description: 
-;       Utilise la librairie math24.asm 
+;       Utilise la librairie uart.lib 
 ;       pour démontrer le passage d'arguments sur la pile
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

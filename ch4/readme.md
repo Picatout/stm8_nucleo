@@ -204,7 +204,9 @@ Notez que l'argument **b** est plus haut sur la pile car le compilateur empile l
 
 ## Programme de démonstration
 
-*à faire...*
+le programme [ch4_demo](ch4_demo.asm)  se lie avec la librairie **uart.lib** que j'ai créé et démontre comment passer des arguments sur la pile. J'ai commencer à créer des librairies de fonctions. Le code source des librairies est dans **stm8_nucleo/libs_src**. Chaque librairie a son propre dossier. Les fichiers **.lib** quant à eux sont dans le dossier **lib**. 
+
+
 
 
 
