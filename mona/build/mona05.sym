@@ -292,84 +292,91 @@ Symbol Table
     TIM_CR1_=  000000     |     TIM_CR1_=  000006     |     TIM_CR1_=  000005 
     TIM_CR1_=  000004     |     TIM_CR1_=  000003     |     TIM_CR1_=  000001 
     TIM_CR1_=  000002     |   6 TrapHand   000166 R   |     U8      =  000001 
-    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
-    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
-    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
-    UART1_PS=  00523A     |     UART1_SR=  005230     |     UART3_BR=  005242 
-    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
-    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
+    UART1   =  000000     |     UART1_BA=  005230     |     UART1_BR=  005232 
+    UART1_BR=  005233     |     UART1_CR=  005234     |     UART1_CR=  005235 
+    UART1_CR=  005236     |     UART1_CR=  005237     |     UART1_CR=  005238 
+    UART1_DR=  005231     |     UART1_GT=  005239     |     UART1_PO=  000000 
+    UART1_PS=  00523A     |     UART1_RX=  000004     |     UART1_SR=  005230 
+    UART1_TX=  000005     |     UART2   =  000001     |     UART3   =  000001 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    UART3_DR=  005241     |     UART3_SR=  005240     |     UART_CR1=  000004 
-    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
-    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
-    UART_CR1=  000003     |     UART_CR2=  000004     |     UART_CR2=  000002 
+    UART3_BA=  005240     |     UART3_BR=  005242     |     UART3_BR=  005243 
+    UART3_CR=  005244     |     UART3_CR=  005245     |     UART3_CR=  005246 
+    UART3_CR=  005247     |     UART3_CR=  004249     |     UART3_DR=  005241 
+    UART3_PO=  00000F     |     UART3_RX=  000005     |     UART3_SR=  005240 
+    UART3_TX=  000006     |     UART_BRR=  000002     |     UART_BRR=  000003 
+    UART_CR1=  000004     |     UART_CR1=  000004     |     UART_CR1=  000002 
+    UART_CR1=  000000     |     UART_CR1=  000001     |     UART_CR1=  000007 
+    UART_CR1=  000006     |     UART_CR1=  000005     |     UART_CR1=  000003 
+    UART_CR2=  000005     |     UART_CR2=  000004     |     UART_CR2=  000002 
     UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
     UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
-    UART_CR3=  000003     |     UART_CR3=  000001     |     UART_CR3=  000002 
-    UART_CR3=  000000     |     UART_CR3=  000006     |     UART_CR3=  000004 
-    UART_CR3=  000005     |     UART_CR4=  000000     |     UART_CR4=  000001 
-    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
-    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000003 
+    UART_CR3=  000006     |     UART_CR3=  000003     |     UART_CR3=  000001 
+    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
+    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000007 
+    UART_CR4=  000000     |     UART_CR4=  000001     |     UART_CR4=  000002 
+    UART_CR4=  000003     |     UART_CR4=  000004     |     UART_CR4=  000006 
+    UART_CR4=  000005     |     UART_CR5=  000008     |     UART_CR5=  000003 
     UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
-    UART_CR5=  000005     |     UART_CR6=  000004     |     UART_CR6=  000007 
-    UART_CR6=  000001     |     UART_CR6=  000002     |     UART_CR6=  000000 
-    UART_CR6=  000005     |     UART_SR_=  000001     |     UART_SR_=  000004 
-    UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
-    UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
-    UBC     =  004801     |   6 USER_ABO   000253 R   |     USR_BTN_=  000004 
-    USR_BTN_=  000010     |     USR_BTN_=  005015     |   6 UserButt   0001B5 R
-  6 VERSION    000AD7 R   |     VERS_MAJ=  000000     |     VERS_MIN=  000005 
-    VT      =  00000B     |     WDGOPT  =  004805     |     WDGOPT_I=  000002 
-    WDGOPT_L=  000003     |     WDGOPT_W=  000000     |     WDGOPT_W=  000001 
-    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |   5 __interr   000000 R
-  4 __stack_   001700 R   |   2 _user_ra   000000 R   |     acc16      ****** GX
-    acc24      ****** GX  |     acc8       ****** GX  |   6 accept_c   000317 R
-  6 add24      000449 GR  |   6 app_resu   00017D R   |   6 atoi       00053B GR
-  6 atoi_exi   0005A8 R   |   6 base_con   0007F9 R   |   6 base_mis   000810 R
-  6 cancel     000350 R   |   6 clear_al   00002C R   |   6 clear_bi   000814 R
-  6 clock_in   000004 R   |   6 convert_   0003BD R   |   6 copy_var   0004EE GR
-  1 count      000002 R   |     dasm       ****** GX  |   6 del_back   000306 R
-  6 del_line   0002F5 R   |   6 divu24_8   000496 GR  |   6 erase      000849 R
-  6 erase_ex   000881 R   |   6 erase_mi   00087E R   |   6 error_pr   000AC5 GR
-  6 eval       0006BF R   |   6 execute    000A99 R   |     farptr     ****** GX
-  6 fetch      00075E R   |   6 fetch_ex   000799 R   |   6 fetch_mi   000796 R
-  6 find       000887 R   |   6 find_bad   000912 R   |   6 find_exi   000920 R
-  6 find_fai   000919 R   |   6 find_mis   00090D R   |     flags      ****** GX
-  1 flash_fr   000057 R   |     format     ****** GX  |   6 found      000901 R
-  6 hdump_ex   0009C4 R   |   6 hdump_mi   0009C1 R   |   6 help       0007F1 R
-  6 hexdump    000947 R   |   1 in         000001 R   |   1 in.w       000000 R
-  6 inc_var2   0004E1 GR  |   6 init0      000096 R   |   6 is_alpha   0004FE GR
-  6 is_digit   00050F GR  |   6 is_hex     00051C GR  |   6 main       0000DA R
-    mona_end   ****** GX  |   6 move_exi   000A32 R   |   6 move_loo   000A1B R
-  6 move_mem   0009C7 R   |   6 move_mis   000A2F R   |   6 mulu24_8   00045C GR
-  6 neg_acc2   0004BE GR  |   6 next_wor   0003FC GR  |   6 no_addr    000AB9 R
-  6 not_alph   00050C R   |   6 number     000617 GR  |     pad        ****** GX
-  6 parse_qu   00038B R   |   6 peek       0005E5 GR  |   6 peek16     0005EB GR
-  6 peek24     0005FE GR  |     print_ad   ****** GX  |     print_by   ****** GX
-    print_in   ****** GX  |   6 print_mo   000037 R   |   6 print_pa   0005BE GR
-  6 print_re   0001D4 R   |   1 ram_free   000055 R   |   6 readln     0002C4 GR
-  6 readln_l   0002CC R   |   6 readln_q   00035A R   |   6 readln_q   00035F R
-  6 repl       0000F3 R   |   6 reprint    00032C R   |   6 row        000975 R
-  6 row_init   000961 R   |     rx_char    ****** GX  |   6 scan       000379 R
-  6 set_bits   000A35 R   |   6 sex_acc8   0005D6 GR  |   6 skip       000367 R
-    spaces     ****** GX  |   6 store      00079D R   |   6 store_ex   0007ED R
-  6 store_lo   0007C1 R   |   6 store_mi   0007EA R   |   6 store_st   0007D6 R
+    UART_CR5=  000005     |     UART_CR6=  000009     |     UART_CR6=  000004 
+    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
+    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_DR =  000001 
+    UART_GTR=  000009     |     UART_PSC=  00000A     |     UART_SR =  000000 
+    UART_SR_=  000001     |     UART_SR_=  000004     |     UART_SR_=  000002 
+    UART_SR_=  000003     |     UART_SR_=  000000     |     UART_SR_=  000005 
+    UART_SR_=  000006     |     UART_SR_=  000007     |     UBC     =  004801 
+  6 USER_ABO   000253 R   |     USR_BTN_=  000004     |     USR_BTN_=  000010 
+    USR_BTN_=  005015     |   6 UserButt   0001B5 R   |   6 VERSION    000AD7 R
+    VERS_MAJ=  000000     |     VERS_MIN=  000005     |     VT      =  00000B 
+    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
+    WWDG_WR =  0050D2     |   5 __interr   000000 R   |   4 __stack_   001700 R
+  2 _user_ra   000000 R   |     acc16      ****** GX  |     acc24      ****** GX
+    acc8       ****** GX  |   6 accept_c   000317 R   |   6 add24      000449 GR
+  6 app_resu   00017D R   |   6 atoi       00053B GR  |   6 atoi_exi   0005A8 R
+  6 base_con   0007F9 R   |   6 base_mis   000810 R   |   6 cancel     000350 R
+  6 clear_al   00002C R   |   6 clear_bi   000814 R   |   6 clock_in   000004 R
+  6 convert_   0003BD R   |   6 copy_var   0004EE GR  |   1 count      000002 R
+    dasm       ****** GX  |   6 del_back   000306 R   |   6 del_line   0002F5 R
+  6 divu24_8   000496 GR  |   6 erase      000849 R   |   6 erase_ex   000881 R
+  6 erase_mi   00087E R   |   6 error_pr   000AC5 GR  |   6 eval       0006BF R
+  6 execute    000A99 R   |     farptr     ****** GX  |   6 fetch      00075E R
+  6 fetch_ex   000799 R   |   6 fetch_mi   000796 R   |   6 find       000887 R
+  6 find_bad   000912 R   |   6 find_exi   000920 R   |   6 find_fai   000919 R
+  6 find_mis   00090D R   |     flags      ****** GX  |   1 flash_fr   000057 R
+    format     ****** GX  |   6 found      000901 R   |   6 hdump_ex   0009C4 R
+  6 hdump_mi   0009C1 R   |   6 help       0007F1 R   |   6 hexdump    000947 R
+  1 in         000001 R   |   1 in.w       000000 R   |   6 inc_var2   0004E1 GR
+  6 init0      000096 R   |   6 is_alpha   0004FE GR  |   6 is_digit   00050F GR
+  6 is_hex     00051C GR  |   6 main       0000DA R   |     mona_end   ****** GX
+  6 move_exi   000A32 R   |   6 move_loo   000A1B R   |   6 move_mem   0009C7 R
+  6 move_mis   000A2F R   |   6 mulu24_8   00045C GR  |   6 neg_acc2   0004BE GR
+  6 next_wor   0003FC GR  |   6 no_addr    000AB9 R   |   6 not_alph   00050C R
+  6 number     000617 GR  |     pad        ****** GX  |   6 parse_qu   00038B R
+  6 peek       0005E5 GR  |   6 peek16     0005EB GR  |   6 peek24     0005FE GR
+    print_ad   ****** GX  |     print_by   ****** GX  |     print_in   ****** GX
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-  6 str01      0007C9 R   |   6 str_loop   0007DA R   |   6 strlen     0005AC GR
-  1 tib        000003 R   |   6 to_lower   000432 GR  |   6 to_upper   00043D GR
-  6 toggle_b   000A67 R   |   1 trap_sp    000053 R   |   6 uart3_in   000013 R
-    uart_del   ****** GX  |     uart_get   ****** GX  |     uart_pri   ****** GX
-    uart_tx    ****** GX  |   6 write_by   00061E R   |   6 write_ch   0007E4 R
-  6 write_ee   00067C R   |   6 write_ex   0006BA R   |   6 write_fl   00065C R
-  6 write_ra   000654 R
+  6 print_mo   000037 R   |   6 print_pa   0005BE GR  |   6 print_re   0001D4 R
+  1 ram_free   000055 R   |   6 readln     0002C4 GR  |   6 readln_l   0002CC R
+  6 readln_q   00035A R   |   6 readln_q   00035F R   |   6 repl       0000F3 R
+  6 reprint    00032C R   |   6 row        000975 R   |   6 row_init   000961 R
+    rx_char    ****** GX  |   6 scan       000379 R   |   6 set_bits   000A35 R
+  6 sex_acc8   0005D6 GR  |   6 skip       000367 R   |     spaces     ****** GX
+  6 store      00079D R   |   6 store_ex   0007ED R   |   6 store_lo   0007C1 R
+  6 store_mi   0007EA R   |   6 store_st   0007D6 R   |   6 str01      0007C9 R
+  6 str_loop   0007DA R   |   6 strlen     0005AC GR  |   1 tib        000003 R
+  6 to_lower   000432 GR  |   6 to_upper   00043D GR  |   6 toggle_b   000A67 R
+  1 trap_sp    000053 R   |   6 uart3_in   000013 R   |     uart_del   ****** GX
+    uart_get   ****** GX  |     uart_pri   ****** GX  |     uart_tx    ****** GX
+  6 write_by   00061E R   |   6 write_ch   0007E4 R   |   6 write_ee   00067C R
+  6 write_ex   0006BA R   |   6 write_fl   00065C R   |   6 write_ra   000654 R
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]

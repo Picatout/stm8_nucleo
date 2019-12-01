@@ -18,6 +18,11 @@
 ;--------------------------------------
 ;   UART peripherals module
 ;   DATE: 2019-11-29
+;   NOTE: global routines interface designed 
+;         to be callable from C with the
+;         prototype given. SDCC for stm8 
+;         pass functions arguments on stack
+;         pushed from right to left.
 ;--------------------------------------
     .module UART
 
@@ -33,8 +38,6 @@
 .asciz "UART"
 ; contain uarts registers base address
 uart_regs: .word UART1_BASE,UART3_BASE 
-uart_port: .byte UART1_PORT,UART3_PORT
-uart_tx_pin: .byte (1<<UART1_TX_PIN), (1<<UART3_TX_PIN)
 
 ; baud rate constants for BRR1 and BRR2 
 ; Fcy=8Mhz , HSI
@@ -61,110 +64,83 @@ baud_fcy16:
     .byte 0x02,0x03 ; 460800
     .byte 0x01,0x01 ; 921600 
 
+;--------------------------------------
+; select uart base register
+; private function 
+; input:
+;   A       UART_ID 
+; output:
+;   X       uart register base address
+;-------------------------------------
+    ACC16=1
+    LOCAL_SIZE=2
+select_uart:
+    sub sp,#LOCAL_SIZE
+    sll a 
+    ld (ACC16+1,sp),a 
+    clr (ACC16,sp) 
+    ldw x,#uart_regs 
+    addw x,(ACC16,sp)
+    ldw x,(x)
+    addw sp,#LOCAL_SIZE 
+    ret
+
 ;----------------------------------------------
 ; initialize UART peripheral
 ; initilialize config: 8N1 no flow control
+; C prototype:  void uart_init(uint8_t baud,uint8_t uart_id)
 ; input:
-;   baud        uint8_t baud rate constant 
-;   uart_nbr    uin8t_t uart selector {UART1,UART3}  
+;   baud        uint8_t baud
+;   uart_id     uin8t_t uart selector {UART1,UART3}
 ; output:
 ;   none
 ;---------------------------------------------
-    ARG_OFS=2
+    ARG_OFS=4  
     BAUD=ARG_OFS+1 
-    UART_ID=ARG_OFS+2
+    UART=ARG_OFS+2
+; local var 
+    ACC16=1
+    LOCAL_SIZE=2     
 uart_init::
-;configure port 
-    ldw x,#GPIO_BASE
-    ld a,(UART_ID,sp)
-    ldw y,#uart_port 
-    add a,yl
-    jrnc 1$
-    inc yh
-1$: ld yl,a 
-    ld a,(y)
-    add a,xl
-    jrnc 2$
-    inc xh 
-2$: ld xl,a 
-    ldw y,#uart_tx_pin 
-    ld a,(UART_ID,sp)
-    add a,yl 
-    jrnc 3$
-    inc xh 
-3$: ld yl,a 
-    ld a,(y)
-    or a,(GPIO_DDR,x)
-    ld (GPIO_DDR,x),a 
-    ld a,(y)
-    or a,(GPIO_CR1,x)
-    ld (GPIO_CR1,x),a 
-    ld a,(y)
-    or a,(GPIO_CR2,x)
-    ld (GPIO_CR2,x),a 
-;configure baud rate 
-    ldw x,#uart_regs 
-    ld a,(UART_ID,sp)
-    sll a 
-    add a,xl 
-    jrnc 4$
-    inc xh 
-4$: ld xl,a 
-    ldw x,(x)
-    ld a,#0xB4 ; HSE clock 8Mhz 
-    cp a,CLK_SWR
-    jrne fcy16 
-fcy8:
+    sub sp,#LOCAL_SIZE 
+    clr (ACC16,sp)
+;configure port
+    ld a,(UART,sp)
+    jrne uart3
+uart1:
+	bset PA_DDR,#UART1_TX_PIN ; tx pin
+	bset PA_CR1,#UART1_TX_PIN ; push-pull output
+	bset PA_CR2,#UART1_TX_PIN ; fast output
+    jra config_baud 
+uart3:
+	bset PD_DDR,#UART3_TX_PIN ; tx pin
+	bset PD_CR1,#UART3_TX_PIN ; push-pull output
+	bset PD_CR2,#UART3_TX_PIN ; fast output
+config_baud:
+    call select_uart 
+; check whick clock is active    
+    ld a,#CLK_SWR_HSE ; HSE clock 8Mhz 
+    cp a,CLK_CMSR
+    jrne 4$ 
     ldw y,#baud_fcy8
     jra 5$
-fcy16:
-    ldw y,#baud_fcy16 
+4$: ldw y,#baud_fcy16 
 5$: ld a,(BAUD,sp)
     sll a 
-    add a,yl 
-    jrnc 6$
-    inc yh 
-6$: ld yl,a 
+    ld (ACC16+1,sp),a 
+    addw y,(ACC16,sp) 
+; now Y point to baud rate values for BRR1
+; ***** BRR2 must be loaded before BRR1 *****
+    ld a,(1,y)
+    ld (UART_BRR2,x),a  
     ld a,(y)
     ld (UART_BRR1,x),a 
-    incw y 
-    ld a,(y)
-    ld (UART_BBR2,x),a 
+; enable TX and RX but no interrupts
     ld a,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
     ld (UART_CR2,x),a 
+    addw sp,#LOCAL_SIZE 
     ret
 
-; initialize UART3, 115200 8N1
-uart3_init::
-	; configure tx pin
-	bset PD_DDR,#BIT5 ; tx pin
-	bset PD_CR1,#BIT5 ; push-pull output
-	bset PD_CR2,#BIT5 ; fast output
-	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
-	mov UART3_BRR2,#0x05 ; must be loaded first
-	mov UART3_BRR1,#0x4
-	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
-	ret
-	
-
-
-;------------------------------------
-; print n spaces 
-; input: 
-;   A  		number of space to print 
-; output:
-;	none 
-;------------------------------------
-spaces::
-	push a 
-	ld a,#SPACE 
-1$:	tnz (1,sp)
-	jreq 2$ 
-	call uart_tx 
-	dec (1,sp)
-	jra 1$
-2$:	pop a 
-	ret
 
 
 ;------------------------------------
@@ -172,76 +148,156 @@ spaces::
 ;------------------------------------
 ;------------------------------------
 ; transmit character in a via UART3
-; character to transmit on (3,sp)
+; C prototype: char uart_putc(char c, unit8_t uart)
+; input:
+;   CHAR        stack argument 
+;   UART_ID     stack argument
+; output:
+;   none 
 ;------------------------------------
-uart_tx::
-	tnz UART3_SR
-	jrpl uart_tx
-	ld UART3_DR,a
+    ARG_OFS=2
+    CHAR=ARG_OFS+1
+    UART_ID=ARG_OFS+2
+uart_putc::
+    ld a,(UART_ID,sp)
+    call select_uart
+1$:	ld a,#(1<<UART_SR_TXE)
+    and a,(UART_SR,x)
+    jreq 1$
+    ld a,(CHAR,sp)
+	ld (UART_DR,x),a
     ret
 
 ;------------------------------------
-; send string via UART2
-; y is pointer to str
+; print n spaces 
+; C prototype: void uart_spaces(uint8_t n,uint8_t uart_id)
+; input: 
+;   n  		number of space to print 
+;   uart_id   uart selector
+; output:
+;	none 
 ;------------------------------------
-uart_print::
+    ARG_OFS=2
+    N=ARG_OFS+1
+    UART=ARG_OFS+2
+uart_spaces::
+	tnz (N,sp)
+    jreq 3$
+    ld a,(UART,sp)
+    push a 
+    ld a,#SPACE 
+    push a 
+    call uart_putc 
+    addw sp,#2 
+    dec (N,sp)
+    jra uart_spaces 
+3$: ret
+
+;------------------------------------
+; put string to uart channel
+; C prototype: void uart_puts(char *str,uint8_t uart)
+; input:
+;   str         char *string to print
+;   uart        uart identifier
+; output:
+;   none 
+;------------------------------------
+    ARG_OFS=6
+    STR=ARG_OFS+1
+    UART=ARG_OFS+3        
+uart_puts::
+    pushw x 
+    pushw y
+    ldw y,(STR,sp) 
 ; check for null pointer  
 	cpw y,#0
     jreq 1$ 
+    ld a,(UART,sp)
+    push a 
 0$: ld a,(y)
 	jreq 1$
-	call uart_tx
+	push a 
+    call uart_putc 
+    pop a  
 	incw y
 	jra 0$
-1$: ret
+1$: pop a 
+    popw y 
+    popw x 
+    ret
 
 ;------------------------------------
 ; check if char available
+; return char if available else 0 
+; C prototype: char uint8_t uart_query(uint8_t uart_id)
+; input:
+;   uart_id     uart identifier
+; output:
+;   A           0 = not char | char 
 ;------------------------------------
-uart_qchar::
-	tnz rx_char
-	jreq 1$
-    ret
-1$: ld a,#UART_SR_RXNE 
-	and a,UART3_SR
-	ret 
+    ARG_OFS=4
+    UART=ARG_OFS+1
+uart_query::
+    pushw x 
+    ld a,(UART,sp)
+    call select_uart 
+1$: ld a,#(1<<UART_SR_RXNE) 
+	and a,(UART_SR,x)
+    jreq 2$
+    ld a,(UART_DR,x)
+2$: popw x 
+    ret 
 
 ;------------------------------------
-; return char in A to queue
+; wait for character from uart
+; C prototype: char uart_getc(uint8_t uart_id)
+; input:
+;   uart_id     uart_identifier
+; output:
+;   A           character received 
 ;------------------------------------
-;ungetchar:: 
-	ld rx_char,a
+    ARG_OFS=4
+    UART=ARG_OFS+1    
+uart_getc::
+    pushw x
+    ld a,(UART,sp)
+    call select_uart  
+1$:	ld a,#(1<<UART_SR_RXNE) 
+    and a,(UART_SR,x)
+    jreq 1$
+	ld a, (UART_DR,x) 
+	popw x 
     ret
-    
-;------------------------------------
-; wait for character from uart3
-;------------------------------------
-uart_getchar::
-; if there is a char in rx_char return it.
-	ld a,rx_char 
-	jreq 1$
-	clr rx_char
-	ret
-1$:	btjf UART3_SR,#UART_SR_RXNE,.
-	ld a, UART3_DR 
-	ret
 
 ;------------------------------------
 ; delete n character from input line
+; C prototype: void uart_delete(uint8_t n,uint8_t uart_id)
+; input:
+;   n           number of characters to delete 
+;   uart_id     uart identifier
+; output:
+;   none 
 ;------------------------------------
+    ARG_OFS=2
+    N=ARG_OFS+1 
+    UART=ARG_OFS+2
 uart_delete::
-	push a ; n 
 del_loop:
-	tnz (1,sp)
+	tnz (N,sp)
 	jreq 1$
+    ld a,(UART,sp)
+    push a 
 	ld a,#BSP
-	call uart_tx
+    push a 
+	call uart_putc
     ld a,#SPACE
-    call uart_tx
+    ld (1,sp),a 
+    call uart_putc
     ld a,#BSP
-    call uart_tx
-    dec (1,sp)
+    ld (1,sp),a 
+    call uart_putc 
+    addw sp,#2 
+    dec (N,sp)
     jra del_loop
-1$: pop a
-	ret 
+1$: ret 
 

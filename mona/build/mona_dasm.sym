@@ -392,83 +392,90 @@ Symbol Table
     TIM4_SR =  005342     |     TIM4_SR_=  000000     |     TIM_CR1_=  000007 
     TIM_CR1_=  000000     |     TIM_CR1_=  000006     |     TIM_CR1_=  000005 
     TIM_CR1_=  000004     |     TIM_CR1_=  000003     |     TIM_CR1_=  000001 
-    TIM_CR1_=  000002     |     UART1_BR=  005232     |     UART1_BR=  005233 
-    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
-    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
-    UART1_GT=  005239     |     UART1_PS=  00523A     |     UART1_SR=  005230 
-    UART3_BR=  005242     |     UART3_BR=  005243     |     UART3_CR=  005244 
-    UART3_CR=  005245     |     UART3_CR=  005246     |     UART3_CR=  005247 
-    UART3_CR=  004249     |     UART3_DR=  005241     |     UART3_SR=  005240 
-    UART_CR1=  000004     |     UART_CR1=  000002     |     UART_CR1=  000000 
-    UART_CR1=  000001     |     UART_CR1=  000007     |     UART_CR1=  000006 
-    UART_CR1=  000005     |     UART_CR1=  000003     |     UART_CR2=  000004 
+    TIM_CR1_=  000002     |     UART1   =  000000     |     UART1_BA=  005230 
+    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
+    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
+    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
+    UART1_PO=  000000     |     UART1_PS=  00523A     |     UART1_RX=  000004 
+    UART1_SR=  005230     |     UART1_TX=  000005     |     UART2   =  000001 
+    UART3   =  000001     |     UART3_BA=  005240     |     UART3_BR=  005242 
+    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
+    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
+    UART3_DR=  005241     |     UART3_PO=  00000F     |     UART3_RX=  000005 
+    UART3_SR=  005240     |     UART3_TX=  000006     |     UART_BRR=  000002 
+    UART_BRR=  000003     |     UART_CR1=  000004     |     UART_CR1=  000004 
+    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
+    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
+    UART_CR1=  000003     |     UART_CR2=  000005     |     UART_CR2=  000004 
     UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
     UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
-    UART_CR2=  000007     |     UART_CR3=  000003     |     UART_CR3=  000001 
-    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
-    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000000 
-    UART_CR4=  000001     |     UART_CR4=  000002     |     UART_CR4=  000003 
-    UART_CR4=  000004     |     UART_CR4=  000006     |     UART_CR4=  000005 
+    UART_CR2=  000007     |     UART_CR3=  000006     |     UART_CR3=  000003 
+    UART_CR3=  000001     |     UART_CR3=  000002     |     UART_CR3=  000000 
+    UART_CR3=  000006     |     UART_CR3=  000004     |     UART_CR3=  000005 
+    UART_CR4=  000007     |     UART_CR4=  000000     |     UART_CR4=  000001 
+    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
+    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000008 
     UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
-    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000004 
-    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
-    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_SR_=  000001 
-    UART_SR_=  000004     |     UART_SR_=  000002     |     UART_SR_=  000003 
-    UART_SR_=  000000     |     UART_SR_=  000005     |     UART_SR_=  000006 
-    UART_SR_=  000007     |     UBC     =  004801     |     USR_BTN_=  000004 
-    USR_BTN_=  000010     |     USR_BTN_=  005015     |     VT      =  00000B 
-    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000009 
+    UART_CR6=  000004     |     UART_CR6=  000007     |     UART_CR6=  000001 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
-    WWDG_WR =  0050D2     |   1 abs_addr   0018A1 R   |     acc16      ****** GX
-    acc24      ****** GX  |     acc8       ****** GX  |   1 bad_opco   000F26 R
-  1 bitop      0012FF R   |   1 codes      000351 R   |     copy_var   ****** GX
-  1 dasm       000E14 GR  |   1 dasm_exi   000E6C R   |   1 dasm_mis   000E69 R
-  1 decode     000E72 R   |   1 decode_e   000F23 R   |     error_pr   ****** GX
-    farptr     ****** GX  |     flags      ****** GX  |   1 fmt_adr1   001307 R
-  1 fmt_impl   000F64 R   |   1 fmt_impl   000F6C R   |   1 fmt_impl   000F5F R
-  1 fmt_ofs2   001753 R   |   1 fmt_op_a   0010A5 R   |   1 fmt_op_a   001452 R
-  1 fmt_op_a   0012AD R   |   1 fmt_op_a   00142B R   |   1 fmt_op_a   001110 R
-  1 fmt_op_a   0010C3 R   |   1 fmt_op_a   00113D R   |   1 fmt_op_a   00106A R
-  1 fmt_op_a   001478 R   |   1 fmt_op_a   0010E3 R   |   1 fmt_op_i   0011F5 R
-  1 fmt_op_i   001246 R   |   1 fmt_op_i   000FBD R   |   1 fmt_op_o   001662 R
-  1 fmt_op_o   0016D1 R   |   1 fmt_op_o   00127E R   |   1 fmt_op_o   00138F R
-  1 fmt_op_p   0017B6 R   |   1 fmt_op_p   001808 R   |   1 fmt_op_p   001620 R
-  1 fmt_op_p   00152B R   |   1 fmt_op_p   001795 R   |   1 fmt_op_p   0017D7 R
-  1 fmt_op_p   0015DE R   |   1 fmt_op_p   0014FC R   |   1 fmt_op_r   001199 R
-  1 fmt_op_r   0011C6 R   |   1 fmt_op_r   00116C R   |   1 fmt_op_r   0011FF R
-  1 fmt_op_r   001691 R   |   1 fmt_op_r   001711 R   |   1 fmt_op_r   0014CD R
-  1 fmt_op_r   00159C R   |   1 fmt_op_r   00149E R   |   1 fmt_op_r   00155A R
-  1 fmt_op_r   00100C R   |   1 fmt_r_im   0013FD R   |   1 fmt_r_im   0013CF R
-  1 fmt_r_of   00134F R   |   1 fmt_sel2   00120C R   |   1 fmt_sele   000F77 R
-  1 fn_adr16   0010AD R   |   1 fn_adr16   00145D R   |   1 fn_adr16   0012BC R
-  1 fn_adr16   001313 R   |   1 fn_adr16   001437 R   |   1 fn_adr16   00111B R
-  1 fn_adr24   0010CB R   |   1 fn_adr24   001148 R   |   1 fn_adr8    001072 R
-  1 fn_adr8_   001483 R   |   1 fn_adr8_   0010EE R   |   1 fn_idx_r   001253 R
-  1 fn_imm8    000FC6 R   |   1 fn_impli   000F7D R   |   1 fn_index   000303 R
-  1 fn_ofs16   00166F R   |   1 fn_ofs16   0016E1 R   |   1 fn_ofs24   001763 R
-  1 fn_ofs8_   00128B R   |   1 fn_ofs8_   00139F R   |   1 fn_ptr16   0017C1 R
-  1 fn_ptr16   001817 R   |   1 fn_ptr16   001632 R   |   1 fn_ptr16   001538 R
-  1 fn_ptr8    0017A0 R   |   1 fn_ptr8_   0017E6 R   |   1 fn_ptr8_   0015F0 R
-  1 fn_ptr8_   001509 R   |   1 fn_r_adr   0011A4 R   |   1 fn_r_adr   0011D1 R
-  1 fn_r_adr   001177 R   |   1 fn_r_idx   001210 R   |   1 fn_r_imm   001409 R
-  1 fn_r_imm   0013DB R   |   1 fn_r_ofs   0016A1 R   |   1 fn_r_ofs   001721 R
-  1 fn_r_ofs   00135F R   |   1 fn_r_ptr   0014DA R   |   1 fn_r_ptr   0015AE R
-  1 fn_r_ptr   0014AB R   |   1 fn_r_ptr   00156C R   |   1 fn_rel8    001014 R
-    format     ****** GX  |   1 get_int1   00185A R   |   1 get_int2   001879 R
-  1 get_int8   001839 R   |   1 instr_lo   000E2F R   |   1 invalid_   000F18 R
-  1 is_prefi   000F48 R   |   1 jrxx_90_   000FFC R   |   1 jrxx_opc   000FDC R
-  1 ld_mnemo   0018E4 R   |   1 ld_table   0018D1 R   |   1 mnemo_in   000000 R
-    number     ****** GX  |   1 p72_code   0007F2 R   |   1 p90_code   0009DC R
-  1 p91_code   000C39 R   |   1 p92_code   000CDE R   |     pad        ****** GX
-  1 page_loo   000E2B R   |     peek       ****** GX  |   1 prefixes   000F5A R
-    print_by   ****** GX  |     print_in   ****** GX  |   1 reg_inde   0002BC R
-  1 register   0002D8 R   |   1 search_c   000F2B R   |     uart_get   ****** GX
-    uart_tx    ****** GX
+    UART_CR6=  000002     |     UART_CR6=  000000     |     UART_CR6=  000005 
+    UART_DR =  000001     |     UART_GTR=  000009     |     UART_PSC=  00000A 
+    UART_SR =  000000     |     UART_SR_=  000001     |     UART_SR_=  000004 
+    UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
+    UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
+    UBC     =  004801     |     USR_BTN_=  000004     |     USR_BTN_=  000010 
+    USR_BTN_=  005015     |     VT      =  00000B     |     WDGOPT  =  004805 
+    WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
+    WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
+  1 abs_addr   0018A1 R   |     acc16      ****** GX  |     acc24      ****** GX
+    acc8       ****** GX  |   1 bad_opco   000F26 R   |   1 bitop      0012FF R
+  1 codes      000351 R   |     copy_var   ****** GX  |   1 dasm       000E14 GR
+  1 dasm_exi   000E6C R   |   1 dasm_mis   000E69 R   |   1 decode     000E72 R
+  1 decode_e   000F23 R   |     error_pr   ****** GX  |     farptr     ****** GX
+    flags      ****** GX  |   1 fmt_adr1   001307 R   |   1 fmt_impl   000F64 R
+  1 fmt_impl   000F6C R   |   1 fmt_impl   000F5F R   |   1 fmt_ofs2   001753 R
+  1 fmt_op_a   0010A5 R   |   1 fmt_op_a   001452 R   |   1 fmt_op_a   0012AD R
+  1 fmt_op_a   00142B R   |   1 fmt_op_a   001110 R   |   1 fmt_op_a   0010C3 R
+  1 fmt_op_a   00113D R   |   1 fmt_op_a   00106A R   |   1 fmt_op_a   001478 R
+  1 fmt_op_a   0010E3 R   |   1 fmt_op_i   0011F5 R   |   1 fmt_op_i   001246 R
+  1 fmt_op_i   000FBD R   |   1 fmt_op_o   001662 R   |   1 fmt_op_o   0016D1 R
+  1 fmt_op_o   00127E R   |   1 fmt_op_o   00138F R   |   1 fmt_op_p   0017B6 R
+  1 fmt_op_p   001808 R   |   1 fmt_op_p   001620 R   |   1 fmt_op_p   00152B R
+  1 fmt_op_p   001795 R   |   1 fmt_op_p   0017D7 R   |   1 fmt_op_p   0015DE R
+  1 fmt_op_p   0014FC R   |   1 fmt_op_r   001199 R   |   1 fmt_op_r   0011C6 R
+  1 fmt_op_r   00116C R   |   1 fmt_op_r   0011FF R   |   1 fmt_op_r   001691 R
+  1 fmt_op_r   001711 R   |   1 fmt_op_r   0014CD R   |   1 fmt_op_r   00159C R
+  1 fmt_op_r   00149E R   |   1 fmt_op_r   00155A R   |   1 fmt_op_r   00100C R
+  1 fmt_r_im   0013FD R   |   1 fmt_r_im   0013CF R   |   1 fmt_r_of   00134F R
+  1 fmt_sel2   00120C R   |   1 fmt_sele   000F77 R   |   1 fn_adr16   0010AD R
+  1 fn_adr16   00145D R   |   1 fn_adr16   0012BC R   |   1 fn_adr16   001313 R
+  1 fn_adr16   001437 R   |   1 fn_adr16   00111B R   |   1 fn_adr24   0010CB R
+  1 fn_adr24   001148 R   |   1 fn_adr8    001072 R   |   1 fn_adr8_   001483 R
+  1 fn_adr8_   0010EE R   |   1 fn_idx_r   001253 R   |   1 fn_imm8    000FC6 R
+  1 fn_impli   000F7D R   |   1 fn_index   000303 R   |   1 fn_ofs16   00166F R
+  1 fn_ofs16   0016E1 R   |   1 fn_ofs24   001763 R   |   1 fn_ofs8_   00128B R
+  1 fn_ofs8_   00139F R   |   1 fn_ptr16   0017C1 R   |   1 fn_ptr16   001817 R
+  1 fn_ptr16   001632 R   |   1 fn_ptr16   001538 R   |   1 fn_ptr8    0017A0 R
+  1 fn_ptr8_   0017E6 R   |   1 fn_ptr8_   0015F0 R   |   1 fn_ptr8_   001509 R
+  1 fn_r_adr   0011A4 R   |   1 fn_r_adr   0011D1 R   |   1 fn_r_adr   001177 R
+  1 fn_r_idx   001210 R   |   1 fn_r_imm   001409 R   |   1 fn_r_imm   0013DB R
+  1 fn_r_ofs   0016A1 R   |   1 fn_r_ofs   001721 R   |   1 fn_r_ofs   00135F R
+  1 fn_r_ptr   0014DA R   |   1 fn_r_ptr   0015AE R   |   1 fn_r_ptr   0014AB R
+  1 fn_r_ptr   00156C R   |   1 fn_rel8    001014 R   |     format     ****** GX
+  1 get_int1   00185A R   |   1 get_int2   001879 R   |   1 get_int8   001839 R
+  1 instr_lo   000E2F R   |   1 invalid_   000F18 R   |   1 is_prefi   000F48 R
+  1 jrxx_90_   000FFC R   |   1 jrxx_opc   000FDC R   |   1 ld_mnemo   0018E4 R
+  1 ld_table   0018D1 R   |   1 mnemo_in   000000 R   |     number     ****** GX
+  1 p72_code   0007F2 R   |   1 p90_code   0009DC R   |   1 p91_code   000C39 R
+  1 p92_code   000CDE R   |     pad        ****** GX  |   1 page_loo   000E2B R
+    peek       ****** GX  |   1 prefixes   000F5A R   |     print_by   ****** GX
+    print_in   ****** GX  |   1 reg_inde   0002BC R   |   1 register   0002D8 R
+  1 search_c   000F2B R   |     uart_get   ****** GX  |     uart_tx    ****** GX
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]

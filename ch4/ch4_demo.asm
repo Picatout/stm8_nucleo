@@ -15,7 +15,41 @@
     .nlist
     .include "../inc/nucleo_8s208.inc"
     .include "../inc/stm8s208.inc"
+    .include "../inc/ascii.inc"
     .list 
+
+;--------------------------------------------------------
+;      MACROS
+;--------------------------------------------------------
+		.macro _ledenable ; set PC5 as push-pull output fast mode
+		bset PC_CR1,#LED2_BIT
+		bset PC_CR2,#LED2_BIT
+		bset PC_DDR,#LED2_BIT
+		.endm
+		
+		.macro _ledon ; turn on green LED 
+		bset PC_ODR,#LED2_BIT
+		.endm
+		
+		.macro _ledoff ; turn off green LED
+		bres PC_ODR,#LED2_BIT
+		.endm
+		
+		.macro _ledtoggle ; invert green LED state
+		ld a,#LED2_MASK
+		xor a,PC_ODR
+		ld PC_ODR,a
+		.endm
+		
+		
+		.macro  _int_enable ; enable interrupts
+		 rim
+		.endm
+		
+		.macro _int_disable ; disable interrupts
+		sim
+		.endm
+
 
 ;--------------------------------------------------------
 ;some constants used by this program.
@@ -36,7 +70,7 @@
 ;--------------------------------------------------------
        .area SSEG  (ABS)
 	   .org RAM_SIZE-STACK_SIZE
- __stack_bottom:
+ _stack_limit:
 	   .ds  STACK_SIZE 
 
 
@@ -107,137 +141,59 @@ clock_init:
     .area CODE
 
 init0:
-    ldw x,STACK_TOP
+    ldw x,#STACK_TOP
     ldw sp,x 
     call clock_init 
-    call uart3_init
-    ld a,0x12
-    ldw x,0x3456
-    call neg24
+; initialize UART3    
+    ld a,#UART3 
+    push a 
+    ld a,#B115200
+    push a 
+    call uart_init
+    SEND_OK=0
+    addw sp,#2  
+main:
+; test uart_spaces
+    ld a,#UART3 
+    push a 
+    ld a,#10
+    push a 
+    call uart_spaces
+    addw sp,#2 
+; test uart_puts 
+     ld a,#UART3
+     push a 
+     ldw x,#hello
+     pushw x
+     call uart_puts  
+     addw sp,#3
+; test uart_query,uart_getc/uart_putc
+    _ledenable
+    _ledon 
+    ld a,#UART3 
+    push a 
+1$: call uart_query 
+    jreq 1$
+    push a 
+    call uart_putc  
+    pop a 
+    call uart_getc 
+    push a 
+    call uart_putc
+    ld a,#2
+    ld (1,sp),a 
+    call uart_delete
+    addw sp,#2
+    _ledoff 
+blink:
+    ldw x,#0xffff
+    _ledtoggle
+1$: decw x 
+    jrne 1$    
+    jra blink
+
+hello: .asciz "hello world!\n"
+
 
     
 
-;--------------------------------
-; <format> is a simplifide version
-; of 'C' <printf>
-; input:
-;   Y       pointer to template string 
-;   stack   all others paramaters are on 
-;           stack. First argument is at (3,sp)
-; output:
-;   none
-; use:
-;   X       used as frame pointer  
-; Detail:
-;   template is a .asciz string with embedded <%c>
-;   to indicate parameters positision. First <%c> 
-;   from left correspond to first paramter.
-;   'c' is one of these: 
-;      'a' print a count of SPACE for alignement purpose     
-;      'b' byte parameter  (int8_t)
-;      'c' ASCII character
-;      'e' 24 bits integer (int24_t) parameter
-;      's' string (.asciz) parameter as long pointer (16 bits)
-;      'w' word paramter (int16_t) 
-;      others values of 'c' are printed as is.
-;  These are sufficient for the requirement of
-;  mona_dasm
-;--------------------------------
-    LOCAL_OFS=8 ; offset on stack of arguments frame 
-format::
-; preserve X
-    pushw x 
-; preserve farptr
-    ld a, farptr+2
-    push a 
-    ld a, farptr+1 
-    push a 
-    ld a, farptr
-    push a
-; X used as frame pointer     
-    ldw x,sp 
-    addw x,#LOCAL_OFS
-format_loop:    
-    ld a,(y)
-    jrne 1$
-    jp format_exit
-1$: incw y 
-    cp a,#'%
-    jreq 2$
-    call uart_tx
-    jra format_loop  
-2$:
-    ld a,(y)
-    jreq format_exit 
-    incw y
-    cp a,#'a' 
-    jrne 24$
-    ld a,(x)
-    incw x 
-    call spaces 
-    jra format_loop 
-24$:
-    cp a,#'b'
-    jrne 3$
-; byte type paramter     
-    ld a,(x)
-    incw x 
-    call print_byte
-    jra format_loop
-3$: cp a,#'c 
-    jrne 4$
-; ASCII character 
-    ld a,(x)
-    incw x 
-    call uart_tx 
-    jra format_loop         
-4$: cp a,#'e 
-    jrne 6$
-; int24_t parameter     
-    pushw y 
-    ld a,(x)
-    ld yh,a 
-    incw x
-    ld a,(x)
-    ld yl,a 
-    incw x 
-    ld a,(x)
-    incw x 
-    call print_extd
-    popw y  
-    jra format_loop
-6$: cp a,#'s 
-    jrne 8$
-; string type parameter     
-    pushw y
-    ldw y,x 
-    addw x,#2
-    ldw y,(y)
-    call uart_print 
-7$: popw y 
-    jra format_loop 
-8$: cp a,#'w 
-    jrne 9$
-; word type paramter     
-    pushw y 
-    ld a,(x)
-    incw x 
-    ld yh,a
-    ld a,(x)
-    incw x 
-    ld yl,a 
-    call print_word 
-    popw y 
-    jp format_loop 
-9$: call uart_tx         
-    jp format_loop 
-format_exit:
-; restore farptr 
-    pop a 
-    ld farptr,a 
-    pop a 
-    ld farptr+1,a 
-    pop a 
-    ld farptr+2,a 
-    popw x 
-    ret 

@@ -661,6 +661,7 @@ Hexadecimal [24-Bits]
                                  
                                         
                                         ; baudrate constant for brr_value table access
+                                        ; to be used by uart_init 
                                  
                                  
                                  
@@ -669,6 +670,36 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
+                                        
+                                        ; UART registers offset from
+                                        ; base address 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; uart identifier
+                                        ; to be used by uart_init
+                                 
+                                 
+                                 
+                                        
+                                        ; pins used by uart 
+                                 
+                                 
+                                 
+                                 
+                                        ; uart port base address 
                                  
                                  
                                         
@@ -684,8 +715,10 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
                                         
                                         ; UART3
+                                 
                                  
                                  
                                  

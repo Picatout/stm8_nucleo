@@ -4,9 +4,11 @@
 -b HOME = 0x8000
 -b DATA = 0x0001
 -b SSEG = 0xffffffff
+-k ../lib/
 -k /usr/local/bin/../share/sdcc/lib/stm8
 -k /usr/local/share/sdcc/lib/stm8
--l ../lib/math24.lib
+-l math24
+-l uart
 -l stm8
 -l stm8
 build/ch4_demo.rel

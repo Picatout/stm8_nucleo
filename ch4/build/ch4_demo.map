@@ -8,26 +8,19 @@ Area                                    Addr        Size        Decimal Bytes (A
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
      FFFFFFFF  s_SSEG                          
-     00000000  .__.ABS.                           MATH24
-     00000000  farptr                          
+     00000000  .__.ABS.                           UART
      00000000  l_DATA                          
      00000000  l_SSEG                          
      00000000  l__CODE                         
-     00000000  print_byte                      
-     00000000  print_extd                      
-     00000000  print_word                      
      00000000  s_SSEG0                         
      00000000  s__CODE                         
-     00000000  spaces                          
-     00000000  uart3_init                      
-     00000000  uart_print                      
-     00000000  uart_tx                         
      00000001  s_DATA                          
      00000080  l_HOME                          
      00000100  l_SSEG0                         
-     0000019C  l_CODE                          
+     000001A9  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
+
 ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
 Hexadecimal  [32-Bits]
 
@@ -51,17 +44,18 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    0000019C =         412. bytes (REL,CON)
+CODE                                00008080    000001A9 =         425. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
      00008089  NonHandledInterrupt                CH4_DEMO
-     000080AF  format                             CH4_DEMO
-     0000814E  add24                              MATH24
-     0000815B  sub24                              MATH24
-     00008168  mul24_8u                           MATH24
-     000081CE  div24_16u                          MATH24
-     00008214  neg24                              MATH24
+     00008155  uart_init                          UART
+     000081A3  uart_putc                          UART
+     000081B3  uart_spaces                        UART
+     000081C7  uart_puts                          UART
+     000081E7  uart_query                         UART
+     000081F7  uart_getc                          UART
+     00008207  uart_delete                        UART
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 5.
 
@@ -72,7 +66,7 @@ build/ch4_demo.rel                        [ CH4_DEMO ]
 
 Libraries Linked                          [ object file ]
 
-../lib/math24.lib                         [ math24.rel ]
+../lib/uart.lib                           [ uart.rel ]
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
@@ -83,18 +77,3 @@ DATA = 0x0001
 SSEG = 0xffffffff
 
 
-?ASlink-Warning-Undefined Global 'print_byte' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'print_extd' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'uart3_init' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'uart_tx' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'uart_print' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'print_word' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'farptr' referenced by module 'CH4_DEMO'
-
-?ASlink-Warning-Undefined Global 'spaces' referenced by module 'CH4_DEMO'

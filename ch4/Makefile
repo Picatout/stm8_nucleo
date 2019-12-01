@@ -15,7 +15,7 @@ INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
 LIB_PATH=../lib/
-USE_LIB= 
+USE_LIB=uart  
 OBJECTS=$(BUILD)$(NAME).rel
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
@@ -49,7 +49,7 @@ $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo "***************"
 	@echo "linking files"
 	@echo "***************"
-	$(SDCC) -L$(LIB_PATH) -lmath24 -luart -lstrings -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
+	$(SDCC) -L$(LIB_PATH) -lmath24 -luart -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
 	@ls -gG $(TARGET)
 	
     	

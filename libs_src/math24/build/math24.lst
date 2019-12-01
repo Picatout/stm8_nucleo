@@ -560,6 +560,7 @@ Hexadecimal [24-Bits]
                                  
                                         
                                         ; baudrate constant for brr_value table access
+                                        ; to be used by uart_init 
                                  
                                  
                                  
@@ -568,6 +569,35 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
+                                        
+                                        ; UART registers offset from
+                                        ; base address 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                 
+                                        
+                                        ; uart identifier
+                                        ; to be used by uart_init
+                                 
+                                 
+                                        
+                                        ; pins used by uart 
+                                 
+                                 
+                                 
+                                 
+                                        ; uart port base address 
                                  
                                  
                                         
@@ -583,8 +613,10 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
                                         
                                         ; UART3
+                                 
                                  
                                  
                                  
@@ -1106,6 +1138,11 @@ Hexadecimal [24-Bits]
                                  
                                  
                                      21     .list 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
+Hexadecimal [24-Bits]
+
+
+
                                      22 
                                      23 ; NOTE: pour l'assembleur sdas une étiquette terminée par **::** est une 
                                      24 ; étiquette globale qui peut être référencée dans un autre module.
@@ -1138,11 +1175,6 @@ Hexadecimal [24-Bits]
                                      51 ;  N1       premier argument 
                                      52 ;  N2       deuxième argument 
                                      53 ; output:
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
-Hexadecimal [24-Bits]
-
-
-
                                      54 ;   X:A     somme N1-N2 
                                      55 ;--------------------------------
                            000002    56     ARG_OFS=2
@@ -1166,6 +1198,11 @@ Hexadecimal [24-Bits]
                                      74 ;   U8          entier non signé 8 bits
                                      75 ; output:
                                      76 ;   X:A        produit U24*U8
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
+Hexadecimal [24-Bits]
+
+
+
                                      77 ; NOTE: cette routine jette le débordement
                                      78 ;       au delà du bit 23.
                                      79 ;---------------------------------------
@@ -1198,11 +1235,6 @@ Hexadecimal [24-Bits]
       000032 42               [ 4]  106     mul x,a 
                                     107 ; le contenu de xh est un débordement au delà du bit 23 
                                     108 ; donc on l'ignore. xl représente les 23:16 de ce produit partiel.    
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
-Hexadecimal [24-Bits]
-
-
-
       000033 9F               [ 1]  109     ld a,xl 
       000034 1B 01            [ 1]  110     add a,(ACC24,sp)
       000036 95               [ 1]  111     ld xh,a ; produit final bits 23:16
@@ -1226,6 +1258,11 @@ Hexadecimal [24-Bits]
                                     129 ; les arguments sont décalés de 5 octets:
                                     130 ;   2 pour l'adresse de retour 
                                     131 ;   6 pour ACC24   variable locale 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
+Hexadecimal [24-Bits]
+
+
+
                            000005   132     ARG_OFS=5
                            000006   133     N1=ARG_OFS+1  ; argument 1 
                            000009   134     N2=ARG_OFS+4  ; argument 2
@@ -1258,11 +1295,6 @@ Hexadecimal [24-Bits]
                                     161 ; additionne produit partiel 2 à produit partiel 1
                                     162 ;  xh représente un débordement après le bit 23 donc ignoré.
       000061 02               [ 1]  163     rlwa x 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
-Hexadecimal [24-Bits]
-
-
-
       000062 72 FB 02         [ 2]  164     addw x,(ACC24+1,sp)
       000065 1F 01            [ 2]  165     ldw (ACC24,sp),x 
                                     166 ; multiplie N2bits23:16 x N1     
@@ -1286,6 +1318,11 @@ Hexadecimal [24-Bits]
                                     184 
                                     185 ;-------------------------------
                                     186 ;  division non signé de U1/U2 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
+Hexadecimal [24-Bits]
+
+
+
                                     187 ; input:
                                     188 ;   U1      dividende 24 bits
                                     189 ;   U2      diviseur  16 bits 
@@ -1318,11 +1355,6 @@ Hexadecimal [24-Bits]
       000099                        216 2$:
       000099 13 0B            [ 2]  217     cpw x,(U2,sp)
       00009B 24 14            [ 1]  218     jruge 3$
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
-Hexadecimal [24-Bits]
-
-
-
                                     219 ; multiplie diviende par 2    
       00009D 7B 0A            [ 1]  220     ld a,(U1+2,sp)
       00009F 48               [ 1]  221     sll a 
@@ -1346,6 +1378,11 @@ Hexadecimal [24-Bits]
                                     239 ;    inc ( QUOT,sp)
       0000BB 20 D3            [ 2]  240     jra 1$
       0000BD 1E 01            [ 2]  241 6$: ldw x,(ACC24,sp)
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
+Hexadecimal [24-Bits]
+
+
+
       0000BF 7B 03            [ 1]  242     ld a,(ACC24+2,sp)
       0000C1 16 04            [ 2]  243     ldw y,(MOD,sp)
       0000C3 5B 05            [ 2]  244     addw sp,#LOCAL_SIZE 
@@ -1366,7 +1403,7 @@ Hexadecimal [24-Bits]
       0000CC 5C               [ 1]  259     incw x 
       0000CD 81               [ 4]  260 1$: ret 
                                     261 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1426,7 +1463,7 @@ Symbol Table
     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4     |     CLK_SWR_=  0000E1 
     CLK_SWR_=  0000D2     |     CPU_A   =  007F00     |     CPU_CCR =  007F0A 
     CPU_PCE =  007F01     |     CPU_PCH =  007F02     |     CPU_PCL =  007F03 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1486,7 +1523,7 @@ Symbol Table
     I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
     I2C_WRIT=  000000     |     INPUT_DI=  000000     |     INPUT_EI=  000001 
     INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1546,7 +1583,7 @@ Symbol Table
     PH_ODR  =  005023     |     PI_BASE =  005028     |     PI_CR1  =  00502B 
     PI_CR2  =  00502C     |     PI_DDR  =  00502A     |     PI_IDR  =  005029 
     PI_ODR  =  005028     |     QUOT    =  000001     |     RAM_BASE=  000000 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1606,7 +1643,7 @@ Symbol Table
     TIM2_CCM=  005306     |     TIM2_CCM=  005307     |     TIM2_CCR=  00530F 
     TIM2_CCR=  005310     |     TIM2_CCR=  005311     |     TIM2_CCR=  005312 
     TIM2_CCR=  005313     |     TIM2_CCR=  005314     |     TIM2_CNT=  00530A 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1636,37 +1673,50 @@ Symbol Table
     TIM_CR1_=  000006     |     TIM_CR1_=  000005     |     TIM_CR1_=  000004 
     TIM_CR1_=  000003     |     TIM_CR1_=  000001     |     TIM_CR1_=  000002 
     U1      =  000008     |     U2      =  00000B     |     U24     =  000006 
-    U8      =  000009     |     UART1_BR=  005232     |     UART1_BR=  005233 
-    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
-    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
-    UART1_GT=  005239     |     UART1_PS=  00523A     |     UART1_SR=  005230 
-    UART3_BR=  005242     |     UART3_BR=  005243     |     UART3_CR=  005244 
-    UART3_CR=  005245     |     UART3_CR=  005246     |     UART3_CR=  005247 
-    UART3_CR=  004249     |     UART3_DR=  005241     |     UART3_SR=  005240 
-    UART_CR1=  000004     |     UART_CR1=  000002     |     UART_CR1=  000000 
-    UART_CR1=  000001     |     UART_CR1=  000007     |     UART_CR1=  000006 
-    UART_CR1=  000005     |     UART_CR1=  000003     |     UART_CR2=  000004 
-    UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
-    UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
-    UART_CR2=  000007     |     UART_CR3=  000003     |     UART_CR3=  000001 
+    U8      =  000009     |     UART1   =  000000     |     UART1_BA=  005230 
+    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
+    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
+    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
+    UART1_PO=  000000     |     UART1_PS=  00523A     |     UART1_RX=  000004 
+    UART1_SR=  005230     |     UART1_TX=  000005     |     UART3   =  000001 
+    UART3_BA=  005240     |     UART3_BR=  005242     |     UART3_BR=  005243 
+    UART3_CR=  005244     |     UART3_CR=  005245     |     UART3_CR=  005246 
+    UART3_CR=  005247     |     UART3_CR=  004249     |     UART3_DR=  005241 
+    UART3_PO=  00000F     |     UART3_RX=  000006     |     UART3_SR=  005240 
+    UART3_TX=  000005     |     UART_BRR=  000002     |     UART_BRR=  000003 
+    UART_CR1=  000004     |     UART_CR1=  000004     |     UART_CR1=  000002 
+    UART_CR1=  000000     |     UART_CR1=  000001     |     UART_CR1=  000007 
+    UART_CR1=  000006     |     UART_CR1=  000005     |     UART_CR1=  000003 
+    UART_CR2=  000005     |     UART_CR2=  000004     |     UART_CR2=  000002 
+    UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
+    UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
+    UART_CR3=  000006     |     UART_CR3=  000003     |     UART_CR3=  000001 
     UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
-    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000000 
-    UART_CR4=  000001     |     UART_CR4=  000002     |     UART_CR4=  000003 
-    UART_CR4=  000004     |     UART_CR4=  000006     |     UART_CR4=  000005 
-    UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
-    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000004 
+    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000007 
+    UART_CR4=  000000     |     UART_CR4=  000001     |     UART_CR4=  000002 
+    UART_CR4=  000003     |     UART_CR4=  000004     |     UART_CR4=  000006 
+    UART_CR4=  000005     |     UART_CR5=  000008     |     UART_CR5=  000003 
+    UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
+    UART_CR5=  000005     |     UART_CR6=  000009     |     UART_CR6=  000004 
     UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
-    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_SR_=  000001 
-    UART_SR_=  000004     |     UART_SR_=  000002     |     UART_SR_=  000003 
-    UART_SR_=  000000     |     UART_SR_=  000005     |     UART_SR_=  000006 
-    UART_SR_=  000007     |     UBC     =  004801     |     USR_BTN_=  000004 
-    USR_BTN_=  000010     |     USR_BTN_=  005015     |     WDGOPT  =  004805 
-    WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
-    WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
-  1 add24      000000 GR  |   1 div24_16   000080 GR  |   1 mul24_8u   00001A GR
-  1 mult24u    00003F R   |   1 neg24      0000C6 GR  |   1 sub24      00000D GR
+    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_DR =  000001 
+    UART_GTR=  000009     |     UART_PSC=  00000A     |     UART_SR =  000000 
+    UART_SR_=  000001     |     UART_SR_=  000004     |     UART_SR_=  000002 
+    UART_SR_=  000003     |     UART_SR_=  000000     |     UART_SR_=  000005 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
+Hexadecimal [24-Bits]
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
+Symbol Table
+
+    UART_SR_=  000006     |     UART_SR_=  000007     |     UBC     =  004801 
+    USR_BTN_=  000004     |     USR_BTN_=  000010     |     USR_BTN_=  005015 
+    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
+    WWDG_WR =  0050D2     |   1 add24      000000 GR  |   1 div24_16   000080 GR
+  1 mul24_8u   00001A GR  |   1 mult24u    00003F R   |   1 neg24      0000C6 GR
+  1 sub24      00000D GR
+
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
 Hexadecimal [24-Bits]
 
 Area Table
