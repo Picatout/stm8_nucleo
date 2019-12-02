@@ -1,6 +1,9 @@
 #############################
 # librairies make file
 #############################
+BOARD=stm8s208rb
+PROGRAMMER=stlinkv21
+FLASH=stm8flash
 NAME=math24
 LIBNAME=$(NAME).lib 
 SDAS=sdasstm8
@@ -60,4 +63,19 @@ clean: build
 
 build:
 	mkdir build
+
+.PHONY: test 
+test: $(OBJECTS)
+	@echo
+	@echo "***************"
+	@echo "building test "
+	@echo "***************"
+	$(SDAS) -g -l -o $(BUILD)math24_test.rel math24_test.asm 
+	$(SDCC) -L$(LIB_PATH) -lmath24 -luart -mstm8 -lstm8 $(LDFLAGS) -o $(BUILD)math24_test.ihx $(BUILD)math24_test.rel 
+	@echo
+	@echo "***************"
+	@echo "flashing device"
+	@echo "***************"
+	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(BUILD)math24_test.ihx 
+
 

@@ -4,8 +4,7 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=
-
+NAME=math24_test
 SDAS=sdasstm8
 SDCC=sdcc
 SDLD=sdld

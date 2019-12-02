@@ -13,6 +13,10 @@
 ;       Le résultat est retourné dans X:A, les 16 bits les plus
 ;       significatifs sont dans X et les 8 moins significatifs dans
 ;       A. 
+;  NOTE:
+;       Cette librairie est pour utilisation par les progammes
+;       écris en assembleur seulement. Il n'existe pas de type
+;       entier 24 bits en C.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .module MATH24
     .nlist
@@ -36,7 +40,7 @@
     ARG_OFS=2
     N1=ARG_OFS+1
     N2=ARG_OFS+4
-add24::
+ add24::
     ldw x,(N1,sp)
     ld a,(N1+2,sp)
     add a,(N2+2,sp)
@@ -73,7 +77,7 @@ sub24::
 ;   U24         entier non signé 24 bits 
 ;   U8          entier non signé 8 bits
 ; output:
-;   X:A        produit U24*U8
+;   X:A         produit U24*U8
 ; NOTE: cette routine jette le débordement
 ;       au delà du bit 23.
 ;---------------------------------------
@@ -97,12 +101,14 @@ mul24_8u::
 ; produit U24bits15:8 x U8 
     ld a,(U24+1,sp)
     ld xl,a 
+    ld a,(U8,sp)
     mul x,a
     addw x,(ACC24,sp)
     ldw (ACC24,sp),x ; produit partiel 2
 ; produit U24bits23:16 x U8 
     ld a,(U24,sp)
-    ld xl,a 
+    ld xl,a
+    ld a,(U8,sp) 
     mul x,a 
 ; le contenu de xh est un débordement au delà du bit 23 
 ; donc on l'ignore. xl représente les 23:16 de ce produit partiel.    
@@ -126,61 +132,90 @@ mul24_8u::
 ; NOTE: cette routine jette le débordement
 ;       au delà du bit 23.
 ;--------------------------------
-; les arguments sont décalés de 5 octets:
+; les arguments sont décalés de 9 octets:
 ;   2 pour l'adresse de retour 
-;   6 pour ACC24   variable locale 
-    ARG_OFS=5
+;   7 pour LOCAL_SIZE 
+    ARG_OFS=9
     N1=ARG_OFS+1  ; argument 1 
     N2=ARG_OFS+4  ; argument 2
 ; variable locale de 24 bits
-    ACC24=1 ; 3 octets
-    LOCAL_SIZE=3
-mult24u:
+    U24 = 1 ; arg1 pour mul24_8u
+    U8 = 4  ; arg2 pour mul24_8u
+    ACC24=5 ; 3 octets
+    LOCAL_SIZE=7
+mul24u::
     sub sp,#LOCAL_SIZE
-; multiplie N2bit7:0 x N1 
+; multiplie  N1 * N2bit7:0  
     ld a,(N2+2,sp)
-    push a 
+    ld (U8,sp),a 
     ld a,(N1+2,sp)
+    ld (U24+2,sp),a 
     ldw x,(N1,sp)
-    push a 
-    pushw x 
+    ldw (U24,sp),x 
     call mul24_8u
-    addw sp,#4 ;  supprime arguments de mul24_8u
 ; produit partiel 1
     ld (ACC24+2,sp),a 
     ldw (ACC24,sp),x
-; multiplie N2bit15:8 x N1     
+; multiplie N1 * N2bit15:8     
     ld a,(N2+1,sp)
-    push a 
+    ld (U8,sp),a 
     ld a,(N1+2,sp)
+    ld (U24+2,sp),a 
     ldw x,(N1,sp)
-    push a 
-    pushw x 
+    ldw (U24,sp),x 
     call mul24_8u
-    addw sp,#4
 ; additionne produit partiel 2 à produit partiel 1
 ;  xh représente un débordement après le bit 23 donc ignoré.
     rlwa x 
-    addw x,(ACC24+1,sp)
+    addw x,(ACC24,sp)
     ldw (ACC24,sp),x 
-; multiplie N2bits23:16 x N1     
+; multiplie N1 * N2bits23:16
     ld a,(N2,sp)
-    push a 
+    ld (U8,sp),a 
     ld a,(N1+2,sp)
+    ld (U24+2,sp),a 
     ldw x,(N1,sp)
-    push a 
-    pushw x 
+    ldw (U24,sp),x 
     call mul24_8u
-    addw sp,#4
 ; additionne produit partiel 3 à acc24 
     add a,(ACC24,sp)
     ld (ACC24,sp),a 
 ; retourne le produit dans X:A 
+result: ; X:A 
     ldw x,(ACC24,sp)
     ld a,(ACC24+2,sp)
     addw sp,#LOCAL_SIZE 
     ret 
 
+
+;-------------------------------------
+; division non signée uint24_t by uint8_t
+; input:
+;	dividend    uint24_t
+;   divisor		uint8_t 
+; output:
+;    divident   quotient
+;    A          remainder 
+;------------------------------------- 
+    ARG_OFS=2
+    U24 = ARG_OFS+1
+	U8   = ARG_OFS+4
+div24_8u::
+	;dividende bits 23:8 in X
+	ldw x,(U24,sp)
+	ld a,(U8,SP) ; diviseur
+	div x,a ; 
+    ldw (U24,sp),x 
+	ld xh,a
+	ld a,(U24+2,sp)
+	ld xl,a
+	ld a,(U8,sp) ; diviseur
+	div x,a  
+	ld (U8,sp),a ; sauve reste 
+	ld a,xl
+	ld (U24+2,sp),a
+    ld a,(U8,sp)
+	ret
 
 ;-------------------------------
 ;  division non signé de U1/U2 
@@ -229,7 +264,7 @@ div24_16u::
     sllw x 
     ld (QUOT+2,sp),a 
     ldw (QUOT,sp),x 
-    jra 2$ 
+    jra 1$ 
 3$: divw x,y  
     ldw (MOD,sp),y 
     ldw y,(U2,sp) 
