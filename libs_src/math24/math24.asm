@@ -217,65 +217,112 @@ div24_8u::
     ld a,(U8,sp)
 	ret
 
+;---------------------------------------
+; compte le nombre de bits à zéro
+; avant de rencontrer un 1 à partir
+; du bit le plus significatif
+; input:
+;   X        adresse de l'entier 24 bits 
+; output:
+;   A        nombre de zéro à gauche
+;--------------------------------------    
+    LZ=1  ; compteur de zéros
+    LOCAL_SIZE=1
+clz24::
+    clr a
+    push a 
+    scf 
+1$: rrc a 
+    jrnc 2$
+    incw x
+    rrc a    
+2$: bcp a,(X)
+    jrne 3$
+    inc (LZ,sp)
+    ld yl,a 
+    ld a,#24
+    cp a,(LZ,sp)
+    jreq 3$
+    ld a,yl
+    rcf  
+    jra 1$
+3$: pop a 
+    ret
+
+
 ;-------------------------------
 ;  division non signé de U1/U2 
 ; input:
 ;   U1      dividende 24 bits
-;   U2      diviseur  16 bits 
+;   U2      diviseur  24 bits 
 ; output:
 ;   X:A     quotient U1/U2 
-;   Y       reste 
+;   U1      reste 
 ;------------------------------
-    ARG_OFS= 7
+    ARG_OFS= 4
     U1 = ARG_OFS+1
     U2 = ARG_OFS+4
 ; variable locale 
-    QUOT = 1 ; quotient
-    MOD = 4  ; reste de la division 
-    LOCAL_SIZE=5
-div24_16u::
-    sub sp,#LOCAL_SIZE 
-    clrw x 
-    ldw (MOD,sp),x 
-    ldw (QUOT,sp),x 
-    clr (QUOT+2,sp)
-    ldw y,(U2,sp)
-    tnzw y 
+    QUOT_LB = 1 ; quotient bits 7:0, 1 octets
+    SHIFT=2 ;  compteur de décalage, 1 octet
+    LOCAL_SIZE=2
+div24u::
+    sub sp,#LOCAL_SIZE
+    clr (QUOT_LB,sp)
+; si diviseur zéro gènère exception fatale
+    ld a,(U2,sp)
+    or a,(U2+1,sp)
+    or a,(U2+2,sp)
     jrne 1$
-    .byte 0x71 ; division par zéro réinitialise le MCU.
-1$: ldw x,(U1,sp) 
-    tnzw x 
-    jrne 2$
-    tnz (U1+2,sp)
-    jreq 6$ ; U1==0 , division complétée  
-2$:
-    cpw x,(U2,sp)
-    jruge 3$
-; multiplie diviende par 2    
-    ld a,(U1+2,sp)
-    sll a 
-    sllw x
-    ld (U1+2,sp),a
-    ldw (U1,sp),x 
-; multiplie quotient par 2     
-    ld a,(QUOT+2,sp)
-    ldw x,(QUOT,sp)
-    sll a 
-    sllw x 
-    ld (QUOT+2,sp),a 
-    ldw (QUOT,sp),x 
-    jra 1$ 
-3$: divw x,y  
-    ldw (MOD,sp),y 
-    ldw y,(U2,sp) 
-    addw x,(QUOT+1,sp)
-    ldw (QUOT+1,sp),x 
-;    jrnc 1$
-;    inc ( QUOT,sp)
-    jra 1$
-6$: ldw x,(ACC24,sp)
-    ld a,(ACC24+2,sp)
-    ldw y,(MOD,sp)
+    trap ; excepction division par zéro.
+1$: ; si dividende < diviseur retourne X:A=0 R=dividende
+    ldw x,sp 
+    addw x,#U1 ; dividente 
+    call clz24 
+    ld (SHIFT,sp),a 
+    ldw x,sp 
+    addw x,#U2 ; diviseur 
+    call clz24
+    cp a,(SHIFT,sp)
+    jruge 2$
+    clrw x 
+    clr a 
+    jra 9$ 
+; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
+2$: ldw y,(U2,sp)
+3$: cp a,(SHIFT,sp)
+    jreq 4$
+    sll (U2+2,sp)
+    rlcw y
+    inc a
+    incw x  
+    jra 3$
+4$: ldw (U2,sp),y 
+; SHIFT doit-être xl+1
+    ld a,xl
+    inc a  
+    ld (SHIFT,sp),a 
+; boucle de division
+    clrw x  ; quotient bits 23:16 
+    ldw y,(U1,sp); dividende bits 23:16
+5$: ld a,(U1+2,sp)
+    ldw y,(U1,sp); dividende bits 23:16
+    sub a,(U2+2,sp)
+    jrnc 6$
+    decw y 
+6$: subw y,(U2,sp)
+    jrc 7$
+    ldw (U1,sp),y 
+    ld (U1+2,sp),a 
+7$: ccf
+    rlc (QUOT_LB,sp)
+    rlcw x 
+    dec (SHIFT,sp)
+    jrne 5$
+    ld (U1+2,sp),a 
+    ldw (U1,sp),y
+    ld a,(QUOT_LB,sp)
+9$: 
     addw sp,#LOCAL_SIZE 
     ret 
 

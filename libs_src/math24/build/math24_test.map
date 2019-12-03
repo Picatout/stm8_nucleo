@@ -17,7 +17,7 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000053  l_DATA                          
      00000080  l_HOME                          
      00000100  l_SSEG0                         
-     000004D4  l_CODE                          
+     00000533  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -53,25 +53,27 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    000004D4 =        1236. bytes (REL,CON)
+CODE                                00008080    00000533 =        1331. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
-     00008090  itoa                               MATH24_TEST
-     00008355  add24                              MATH24
-     00008362  sub24                              MATH24
-     0000836F  mul24_8u                           MATH24
-     00008398  mul24u                             MATH24
-     000083DC  div24_8u                           MATH24
-     000083F2  div24_16u                          MATH24
-     00008438  neg24                              MATH24
-     00008480  uart_init                          UART
-     000084CE  uart_putc                          UART
-     000084DE  uart_spaces                        UART
-     000084F2  uart_puts                          UART
-     00008512  uart_query                         UART
-     00008522  uart_getc                          UART
-     00008532  uart_delete                        UART
+     000080BC  itoa                               MATH24_TEST
+     0000837E  add24                              MATH24
+     0000838B  sub24                              MATH24
+     00008398  mul24_8u                           MATH24
+     000083C1  mul24u                             MATH24
+     00008405  div24_8u                           MATH24
+     0000841B  clz24                              MATH24
+     00008437  div24u                             MATH24
+     00008497  neg24                              MATH24
+     000084DF  uart_init                          UART
+     0000852D  uart_putc                          UART
+     0000853D  uart_spaces                        UART
+     00008551  uart_puts                          UART
+     00008571  uart_query                         UART
+     00008581  uart_getc                          UART
+     00008591  uart_delete                        UART
+
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
 Files Linked                              [ module(s) ]

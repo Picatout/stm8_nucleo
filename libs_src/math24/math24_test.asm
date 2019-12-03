@@ -54,7 +54,7 @@ pad:   .ds PAD_SIZE
 
     .area HOME 
     INT init0
-    INT NonHandledInterrupt
+    INT exception
     INT NonHandledInterrupt
     INT NonHandledInterrupt
     INT NonHandledInterrupt
@@ -92,6 +92,21 @@ pad:   .ds PAD_SIZE
 
 NonHandledInterrupt:
     .byte 0x71  ; réinitialize le MCU
+
+div_fatal: .asciz "fatal: division par zero\n"
+
+exception:
+    tnz a 
+    jrne 1$
+    ldw x,#div_fatal
+    ld a,#UART3 
+    push a 
+    pushw x 
+    call uart_puts 
+    addw sp,#3
+1$: jra .
+    iret 
+
 
 	;initialize clock to use HSE 8 Mhz crystal
 clock_init:	
@@ -336,9 +351,9 @@ mul_test2: ; mul24u
     jra print_error
 1$: cpw x,#0xffff
     jrne 0$
-div_test: ; div24_16u 
+div_test: ; div24u 
     pushw x 
-    ldw x,#div24_16u_test
+    ldw x,#div24u_test
     call print_fn_name 
     popw x 
     call print_uint24
@@ -347,9 +362,9 @@ div_test: ; div24_16u
     ld a,#10
     clrw x  
     call print_uint24
-    ld (5,sp),a 
-    clr (4,sp)
-    call div24_16u
+    ld (6,sp),a 
+    ldw (4,sp),x 
+    call div24u
     call print_uint24
     cp a,0x99
     jreq 1$
@@ -415,6 +430,6 @@ sub24_test: .asciz "\nsub24: "
 mul24_8u_test: .asciz "\nmul24_8u: " 
 mul24u_test: .asciz "\nmul24u: "
 div24_8u_test: .asciz "\ndiv24_8u: "
-div24_16u_test: .asciz "\ndiv24_16u: "
+div24u_test: .asciz "\ndiv24u: "
 neg24_test: .asciz "\nneg24: "
 
