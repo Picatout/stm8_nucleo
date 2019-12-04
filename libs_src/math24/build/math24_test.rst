@@ -1345,7 +1345,7 @@ Hexadecimal [24-Bits]
       0080CD 03 01            [ 1]  142 	cpl (SIGN,sp)
       0080CF C6 00 03         [ 1]  143 	ld a,acc8
       0080D2 CE 00 01         [ 2]  144     ldw x,acc24 
-      0080D5 CD 86 89         [ 4]  145     call neg24
+      0080D5 CD 87 45         [ 4]  145     call neg24
       0080D8 C7 00 03         [ 1]  146     ld acc8,a 
       0080DB CF 00 01         [ 2]  147     ldw acc24,x 
       0080DE                        148 1$: 
@@ -1362,7 +1362,7 @@ Hexadecimal [24-Bits]
       0080F0 CE 00 01         [ 2]  159     ldw x,acc24 
       0080F3 88               [ 1]  160     push a 
       0080F4 89               [ 2]  161     pushw x 
-      0080F5 CD 85 CB         [ 4]  162     call div24_8u ; acc24/base
+      0080F5 CD 86 02         [ 4]  162     call div24_8u ; acc24/base
       0080F8 AB 30            [ 1]  163     add a,#'0  ; remainder of division
       0080FA A1 3A            [ 1]  164     cp a,#'9+1
       0080FC 2B 02            [ 1]  165     jrmi 2$
@@ -1522,7 +1522,7 @@ Hexadecimal [24-Bits]
       0081CC 1E 01            [ 2]  304     ldw x,(U24,sp)
       0081CE 0D 05            [ 1]  305     tnz (SIGN,sp)
       0081D0 27 03            [ 1]  306     jreq atoi_exit
-      0081D2 CD 86 89         [ 4]  307     call neg24 
+      0081D2 CD 87 45         [ 4]  307     call neg24 
       0081D5                        308 atoi_exit: 
       0081D5 5B 05            [ 2]  309 	addw sp,#LOCAL_SIZE
       0081D7 90 85            [ 2]  310 	popw y
@@ -1540,7 +1540,7 @@ Hexadecimal [24-Bits]
       0081DC 6B 01            [ 1]  322     ld (1,sp),a 
       0081DE A6 01            [ 1]  323     ld a,#UART3
       0081E0 6B 02            [ 1]  324     ld (2,sp),a 
-      0081E2 CD 87 1F         [ 4]  325     call uart_putc 
+      0081E2 CD 87 DB         [ 4]  325     call uart_putc 
       0081E5 5B 02            [ 2]  326     addw sp,#2
       0081E7 81               [ 4]  327     ret
                                     328 ;-----------------------------------
@@ -1552,7 +1552,7 @@ Hexadecimal [24-Bits]
                                     334 ;-----------------------------------
       0081E8                        335 getc:
       0081E8 4B 01            [ 1]  336     push #UART3 
-      0081EA CD 87 73         [ 4]  337     call uart_getc 
+      0081EA CD 88 2F         [ 4]  337     call uart_getc 
       0081ED 5B 01            [ 2]  338     addw sp,#1 
       0081EF 81               [ 4]  339     ret 
                                     340 
@@ -1574,7 +1574,7 @@ Hexadecimal [24-Bits]
       0081F2 A6 01            [ 1]  351     ld a,#UART3 
       0081F4 6B 03            [ 1]  352     ld (3,sp),a 
       0081F6 17 01            [ 2]  353     ldw (1,sp),y 
-      0081F8 CD 87 43         [ 4]  354     call uart_puts 
+      0081F8 CD 87 FF         [ 4]  354     call uart_puts 
       0081FB 5B 03            [ 2]  355     addw sp,#3
       0081FD 81               [ 4]  356     ret
                                     357 
@@ -1626,7 +1626,7 @@ Hexadecimal [24-Bits]
       008236 88               [ 1]  398     push a 
       008237 7B 02            [ 1]  399 	ld a,(LEN,sp)
       008239 88               [ 1]  400     push a 
-      00823A CD 87 83         [ 4]  401 	call uart_delete
+      00823A CD 88 3F         [ 4]  401 	call uart_delete
       00823D 5B 02            [ 2]  402     addw sp,#2 
       00823F 90 AE 00 57      [ 2]  403 	ldw y,#tib
       008243 72 5F 00 56      [ 1]  404 	clr count
@@ -1642,7 +1642,7 @@ Hexadecimal [24-Bits]
       008257 88               [ 1]  414     push a 
       008258 A6 01            [ 1]  415     ld a,#1
       00825A 88               [ 1]  416     push a 
-      00825B CD 87 83         [ 4]  417     call uart_delete
+      00825B CD 88 3F         [ 4]  417     call uart_delete
       00825E 5B 02            [ 2]  418     addw sp,#2
       008260 20 A6            [ 2]  419     jra readln_loop	
       008262                        420 accept_char:
@@ -1928,7 +1928,7 @@ Hexadecimal [24-Bits]
       0083A7 88               [ 1]  675     push a 
       0083A8 A6 06            [ 1]  676     ld a,#B115200
       0083AA 88               [ 1]  677     push a 
-      0083AB CD 86 D1         [ 4]  678     call uart_init
+      0083AB CD 87 8D         [ 4]  678     call uart_init
       0083AE 5B 02            [ 2]  679     addw sp,#2  
                                     680     
                            000000   681     IDX_ERR_SUM=0
@@ -2013,17 +2013,17 @@ Hexadecimal [24-Bits]
       008430 CD 81 31         [ 4]  755     call print_int24
       008433 CC 84 0D         [ 2]  756     jp eval_exit
       008436                        757 test_mul:
-      008436 90 AE 85 1B      [ 2]  758     ldw y,#mul24u_test
+      008436 90 AE 85 1B      [ 2]  758     ldw y,#mul24s_test
       00843A CD 81 F0         [ 4]  759     call puts
       00843D CD 81 48         [ 4]  760     call print_arguments
-      008440 CD 85 87         [ 4]  761     call mul24u 
+      008440 CD 85 CB         [ 4]  761     call mul24s 
       008443 CD 81 31         [ 4]  762     call print_int24
       008446 CC 84 0D         [ 2]  763     jp eval_exit
       008449                        764 test_div:
-      008449 90 AE 85 31      [ 2]  765     ldw y,#div24u_test
+      008449 90 AE 85 31      [ 2]  765     ldw y,#div24s_test
       00844D CD 81 F0         [ 4]  766     call puts
       008450 CD 81 48         [ 4]  767     call print_arguments
-      008453 CD 85 FD         [ 4]  768     call div24u 
+      008453 CD 86 C0         [ 4]  768     call div24s 
       008456 CD 81 31         [ 4]  769     call print_int24
       008459 A6 52            [ 1]  770     ld a,#'R 
       00845B CD 81 DA         [ 4]  771     call putc 
@@ -2079,11 +2079,11 @@ Hexadecimal [24-Bits]
              20 00
       00850F 0A 6D 75 6C 32 34 5F   803 mul24_8u_test: .asciz "\nmul24_8u: " 
              38 75 3A 20 00
-      00851B 0A 6D 75 6C 32 34 75   804 mul24u_test: .asciz "\nmul24u: "
+      00851B 0A 6D 75 6C 32 34 73   804 mul24s_test: .asciz "\nmul24s: "
              3A 20 00
       008525 0A 64 69 76 32 34 5F   805 div24_8u_test: .asciz "\ndiv24_8u: "
              38 75 3A 20 00
-      008531 0A 64 69 76 32 34 75   806 div24u_test: .asciz "\ndiv24u: "
+      008531 0A 64 69 76 32 34 73   806 div24s_test: .asciz "\ndiv24s: "
              3A 20 00
       00853B 0A 6E 65 67 32 34 3A   807 neg24_test: .asciz "\nneg24: "
              20 00
@@ -2418,14 +2418,14 @@ Symbol Table
   5 atoi       0000E6 GR  |   5 atoi_exi   000155 R   |   5 cancel     00021E R
   5 clock_in   00002F R   |   5 convert_   00028B R   |   1 count      000055 R
   5 del_back   0001CB R   |   5 del_line   0001B4 R   |     div24_8u   ****** GX
-  5 div24_8u   0004A5 R   |     div24u     ****** GX  |   5 div24u_t   0004B1 R
+  5 div24_8u   0004A5 R   |     div24s     ****** GX  |   5 div24s_t   0004B1 R
   5 div_fata   000001 R   |   5 erreur_a   00040E R   |   5 erreur_d   000435 R
   5 erreur_m   000428 R   |   5 erreur_n   000441 R   |   5 erreur_s   00041C R
   5 eval       000357 R   |   5 eval_exi   00038D R   |   5 exceptio   000022 R
   5 getc       000168 R   |   1 in         000054 R   |   1 in.w       000053 R
   5 init0      00031E R   |   5 itoa       00003E GR  |   5 itoa_loo   00006A R
   5 msg_erre   000404 R   |     mul24_8u   ****** GX  |   5 mul24_8u   00048F R
-    mul24u     ****** GX  |   5 mul24u_t   00049B R   |     neg24      ****** GX
+    mul24s     ****** GX  |   5 mul24s_t   00049B R   |     neg24      ****** GX
   5 neg24_te   0004BB R   |   5 new_line   0000DC R   |   5 next_wor   0002CA GR
   5 number     000317 GR  |   1 pad        000003 R   |   5 parse_qu   000259 R
   5 presenta   000330 R   |   5 print_ar   0000C8 R   |   5 print_er   0003ED R

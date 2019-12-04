@@ -2013,17 +2013,17 @@ Hexadecimal [24-Bits]
       0003B0 CD 00 B1         [ 4]  755     call print_int24
       0003B3 CC 03 8D         [ 2]  756     jp eval_exit
       0003B6                        757 test_mul:
-      0003B6 90 AE 04 9B      [ 2]  758     ldw y,#mul24u_test
+      0003B6 90 AE 04 9B      [ 2]  758     ldw y,#mul24s_test
       0003BA CD 01 70         [ 4]  759     call puts
       0003BD CD 00 C8         [ 4]  760     call print_arguments
-      0003C0 CD 00 00         [ 4]  761     call mul24u 
+      0003C0 CD 00 00         [ 4]  761     call mul24s 
       0003C3 CD 00 B1         [ 4]  762     call print_int24
       0003C6 CC 03 8D         [ 2]  763     jp eval_exit
       0003C9                        764 test_div:
-      0003C9 90 AE 04 B1      [ 2]  765     ldw y,#div24u_test
+      0003C9 90 AE 04 B1      [ 2]  765     ldw y,#div24s_test
       0003CD CD 01 70         [ 4]  766     call puts
       0003D0 CD 00 C8         [ 4]  767     call print_arguments
-      0003D3 CD 00 00         [ 4]  768     call div24u 
+      0003D3 CD 00 00         [ 4]  768     call div24s 
       0003D6 CD 00 B1         [ 4]  769     call print_int24
       0003D9 A6 52            [ 1]  770     ld a,#'R 
       0003DB CD 01 5A         [ 4]  771     call putc 
@@ -2079,11 +2079,11 @@ Hexadecimal [24-Bits]
              20 00
       00048F 0A 6D 75 6C 32 34 5F   803 mul24_8u_test: .asciz "\nmul24_8u: " 
              38 75 3A 20 00
-      00049B 0A 6D 75 6C 32 34 75   804 mul24u_test: .asciz "\nmul24u: "
+      00049B 0A 6D 75 6C 32 34 73   804 mul24s_test: .asciz "\nmul24s: "
              3A 20 00
       0004A5 0A 64 69 76 32 34 5F   805 div24_8u_test: .asciz "\ndiv24_8u: "
              38 75 3A 20 00
-      0004B1 0A 64 69 76 32 34 75   806 div24u_test: .asciz "\ndiv24u: "
+      0004B1 0A 64 69 76 32 34 73   806 div24s_test: .asciz "\ndiv24s: "
              3A 20 00
       0004BB 0A 6E 65 67 32 34 3A   807 neg24_test: .asciz "\nneg24: "
              20 00
@@ -2418,14 +2418,14 @@ Symbol Table
   5 atoi       0000E6 GR  |   5 atoi_exi   000155 R   |   5 cancel     00021E R
   5 clock_in   00002F R   |   5 convert_   00028B R   |   1 count      000055 R
   5 del_back   0001CB R   |   5 del_line   0001B4 R   |     div24_8u   ****** GX
-  5 div24_8u   0004A5 R   |     div24u     ****** GX  |   5 div24u_t   0004B1 R
+  5 div24_8u   0004A5 R   |     div24s     ****** GX  |   5 div24s_t   0004B1 R
   5 div_fata   000001 R   |   5 erreur_a   00040E R   |   5 erreur_d   000435 R
   5 erreur_m   000428 R   |   5 erreur_n   000441 R   |   5 erreur_s   00041C R
   5 eval       000357 R   |   5 eval_exi   00038D R   |   5 exceptio   000022 R
   5 getc       000168 R   |   1 in         000054 R   |   1 in.w       000053 R
   5 init0      00031E R   |   5 itoa       00003E GR  |   5 itoa_loo   00006A R
   5 msg_erre   000404 R   |     mul24_8u   ****** GX  |   5 mul24_8u   00048F R
-    mul24u     ****** GX  |   5 mul24u_t   00049B R   |     neg24      ****** GX
+    mul24s     ****** GX  |   5 mul24s_t   00049B R   |     neg24      ****** GX
   5 neg24_te   0004BB R   |   5 new_line   0000DC R   |   5 next_wor   0002CA GR
   5 number     000317 GR  |   1 pad        000003 R   |   5 parse_qu   000259 R
   5 presenta   000330 R   |   5 print_ar   0000C8 R   |   5 print_er   0003ED R

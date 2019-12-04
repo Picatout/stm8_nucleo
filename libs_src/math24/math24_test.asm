@@ -755,17 +755,17 @@ test_sub:
     call print_int24
     jp eval_exit
 test_mul:
-    ldw y,#mul24u_test
+    ldw y,#mul24s_test
     call puts
     call print_arguments
-    call mul24u 
+    call mul24s 
     call print_int24
     jp eval_exit
 test_div:
-    ldw y,#div24u_test
+    ldw y,#div24s_test
     call puts
     call print_arguments
-    call div24u 
+    call div24s 
     call print_int24
     ld a,#'R 
     call putc 
@@ -801,8 +801,8 @@ whatisit: .asciz "\nTest pour la librairie math24.\n"
 add24_test: .asciz "\nadd24: "
 sub24_test: .asciz "\nsub24: "
 mul24_8u_test: .asciz "\nmul24_8u: " 
-mul24u_test: .asciz "\nmul24u: "
+mul24s_test: .asciz "\nmul24s: "
 div24_8u_test: .asciz "\ndiv24_8u: "
-div24u_test: .asciz "\ndiv24u: "
+div24s_test: .asciz "\ndiv24s: "
 neg24_test: .asciz "\nneg24: "
 

@@ -121,7 +121,6 @@ mul24_8u::
     addw sp,#LOCAL_SIZE 
     ret 
 
-
 ;----------------------------------
 ; multiplication non signée de 24 bits
 ; input:
@@ -187,6 +186,52 @@ result: ; X:A
     addw sp,#LOCAL_SIZE 
     ret 
 
+;----------------------------------------
+; multiplication non signée d'un 
+; entier 24 bits par un entier 8 bits.
+; input:
+;   I1         entier signé 24 bits 
+;   I2          entier signé 24 bits
+; output:
+;   X:A         produit I1*I2
+; NOTE: cette routine jette le débordement
+;       au delà du bit 23.
+;---------------------------------------
+    ARG_OFS=11
+    I1=ARG_OFS+1
+    I2=ARG_OFS+4
+; local variables
+    U1=1
+    U2=4
+    SIGN=1    
+    LOCAL_SIZE=7
+mul24s::
+    pushw y 
+    sub sp,#LOCAL_SIZE 
+    clr (SIGN,sp)
+    ld a,(I1+2,sp)
+    ldw x,(I1,sp)
+    call abs24 
+    ld (U1+2,sp),a 
+    ldw (U1,sp),x
+    tnzw y  
+    jreq 1$
+    cpl (SIGN,sp)
+1$: ld a,(I2+2,sp)
+    ldw x,(I2,sp)
+    call abs24
+    ld (U2+2,sp),a 
+    ldw (U2,sp),x 
+    tnzw y 
+    jreq 2$ 
+    cpl (SIGN,sp)
+2$: call mul24u 
+    tnz (SIGN,sp)
+    jreq 3$
+    call neg24    
+3$: addw sp,#LOCAL_SIZE
+    popw y 
+    ret
 
 ;-------------------------------------
 ; division non signée uint24_t by uint8_t
@@ -350,6 +395,123 @@ div24u::
 9$: ld a,(QUOT_LB,sp) 
     addw sp,#LOCAL_SIZE 
     ret 
+
+;------------------------------------------
+; division signé int24_t/int24_t 
+; input:
+;   I1          dividende
+;   I2          diviseur
+; output:
+;   X:A         quotient 
+;   I1          reste 
+;NOTE: le reste doit toujours être positif 
+;REF: https://fr.wikipedia.org/wiki/Division_euclidienne#Extension_aux_entiers_relatifs
+;--------------------------------------------
+    ARG_OFS=14
+    I1=ARG_OFS+1 
+    I2=ARG_OFS+4
+; variables locales 
+    U1=1 
+    U2=4 
+    SIGN=7
+    UDIV=8
+    LOCAL_SIZE=10
+div24s::
+    pushw y 
+    sub sp,#LOCAL_SIZE
+    clr (SIGN,sp)
+    ld a,(I1+2,sp)
+    ldw x,(I1,sp)
+    call abs24
+    ld (U1+2,sp),a 
+    ldw (U1,sp),x 
+    ld a,yh 
+    bcp a,#0x80
+    jreq 1$
+    cpl (SIGN,sp)
+1$: ld a,(I2+2,sp)
+    ldw x,(I2,sp)
+    call abs24 
+    ld (U2+2,sp),a
+    ldw (U2,sp),x
+    ld (UDIV+2,sp),a 
+    ldw (UDIV,sp),x 
+    ld a,yh 
+    bcp a,#0x80 
+    jreq 2$ 
+    cpl (SIGN,sp)
+2$: call div24u 
+3$: ; dénominateur négatif et SIGN négatif incrémente quotient
+    ; et ajuste le reste=U2-mod(U1/U2)
+    ld (I2+2,sp),a ; sauvegarde quotient
+    ldw (I2,sp),x 
+;vérifie signe du dénominateur et du quotient 
+    ld a,(I1,sp)
+    and a,#0x80 
+    and a,(SIGN,sp)
+    jreq 5$
+    ld a,(I2+2,sp)
+    call inc24u 
+    ld (I2+2,sp),a 
+    ldw (I2,sp),x 
+; ajuste le reste UDIV-mod(U1/U2)
+    ld a,(UDIV+2,sp)
+    ldw x,(UDIV,sp)
+    sub a,(U1+2,sp)
+    jrnc 4$
+    decw x 
+4$: subw x,(U1,sp)
+    ld (U1+2,sp),a 
+    ldw (U1,sp),x 
+; si le signe est négatif ajuste le quotient
+5$:
+    ld a,(U1+2,sp)
+    ldw x,(U1,sp)
+    ld (I1+2,sp),a 
+    ldw (I1,sp),x 
+    ld a,(I2+2,sp)
+    ldw x,(I2,sp)
+    tnz (SIGN,sp)
+    jreq 6$ 
+    call neg24
+6$: 
+    addw sp,#LOCAL_SIZE 
+    popw y 
+    ret 
+
+;------------------------------------------------------
+;  retourne la valeur absolue d'un entier 24 bits
+;  input:
+;       X:A         int24_t 
+;  output:
+;       X:A         abs(X:A)
+;       Y           0 si était positif, -1 si était négatif
+;-----------------------------------------------------
+abs24:
+    clrw y 
+    push a 
+    ld a,xh 
+    bcp a,#0x80
+    pop a 
+    jreq 1$
+    call neg24 
+    cplw y 
+1$: ret 
+
+
+;-------------------------------------------
+; incrémente de 1 un entier 24 bits non signé 
+; input:
+;   X:A          entier non signér à incrémenté
+; output:
+;   X:A         entier incrémenté de 1.
+;-----------------------------------------------
+inc24u:
+    add a,#1  
+    jrnc 1$ 
+    incw x 
+1$: ret 
+
 
 ;-------------------------------------------
 ; complément à 2 
