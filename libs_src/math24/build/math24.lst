@@ -1390,102 +1390,132 @@ Hexadecimal [24-Bits]
                                     251 
                                     252 
                                     253 ;-------------------------------
-                                    254 ;  division non signé de U1/U2 
+                                    254 ;  division non signée de DVDEND/DVSOR 
                                     255 ; input:
-                                    256 ;   U1      dividende 24 bits
-                                    257 ;   U2      diviseur  24 bits 
+                                    256 ;   DVDEND      dividende 24 bits
+                                    257 ;   DVSOR      diviseur  24 bits 
                                     258 ; output:
-                                    259 ;   X:A     quotient U1/U2 
+                                    259 ;   X:A     quotient U1/DVSOR 
                                     260 ;   U1      reste 
                                     261 ;------------------------------
-                           000004   262     ARG_OFS= 4
-                           000005   263     U1 = ARG_OFS+1
-                           000008   264     U2 = ARG_OFS+4
+                           000008   262     ARG_OFS= 8
+                           000009   263     DVDEND = ARG_OFS+1
+                           00000C   264     DVSOR = ARG_OFS+4
                                     265 ; variable locale 
                            000001   266     QUOT_LB = 1 ; quotient bits 7:0, 1 octets
                            000002   267     SHIFT=2 ;  compteur de décalage, 1 octet
-                           000002   268     LOCAL_SIZE=2
-      0000B9                        269 div24u::
-      0000B9 52 02            [ 2]  270     sub sp,#LOCAL_SIZE
-      0000BB 0F 01            [ 1]  271     clr (QUOT_LB,sp)
-                                    272 ; si diviseur zéro gènère exception fatale
-      0000BD 7B 08            [ 1]  273     ld a,(U2,sp)
-      0000BF 1A 09            [ 1]  274     or a,(U2+1,sp)
-      0000C1 1A 0A            [ 1]  275     or a,(U2+2,sp)
-      0000C3 26 01            [ 1]  276     jrne 1$
-      0000C5 83               [ 9]  277     trap ; excepction division par zéro.
-      0000C6                        278 1$: ; si dividende < diviseur retourne X:A=0 R=dividende
-      0000C6 96               [ 1]  279     ldw x,sp 
-      0000C7 1C 00 05         [ 2]  280     addw x,#U1 ; dividente 
-      0000CA CD 00 9D         [ 4]  281     call clz24 
-      0000CD 6B 02            [ 1]  282     ld (SHIFT,sp),a 
-      0000CF 96               [ 1]  283     ldw x,sp 
-      0000D0 1C 00 08         [ 2]  284     addw x,#U2 ; diviseur 
-      0000D3 CD 00 9D         [ 4]  285     call clz24
-      0000D6 11 02            [ 1]  286     cp a,(SHIFT,sp)
-      0000D8 24 04            [ 1]  287     jruge 2$
-      0000DA 5F               [ 1]  288     clrw x 
-      0000DB 4F               [ 1]  289     clr a 
-      0000DC 20 38            [ 2]  290     jra 9$ 
-                                    291 ; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
-      0000DE 16 08            [ 2]  292 2$: ldw y,(U2,sp)
-      0000E0 11 02            [ 1]  293 3$: cp a,(SHIFT,sp)
-      0000E2 27 08            [ 1]  294     jreq 4$
-      0000E4 08 0A            [ 1]  295     sll (U2+2,sp)
-      0000E6 90 59            [ 2]  296     rlcw y
-      0000E8 4C               [ 1]  297     inc a
-      0000E9 5C               [ 1]  298     incw x  
-      0000EA 20 F4            [ 2]  299     jra 3$
-      0000EC 17 08            [ 2]  300 4$: ldw (U2,sp),y 
-                                    301 ; SHIFT doit-être xl+1
+                           000003   268     DIFF=3  ;  différence entre DVDEND et DVSOR, 3 octets
+                           000006   269     SHIFTR=6 ; décalage du reste vers la droite, 1 octet
+                           000006   270     LOCAL_SIZE=6
+      0000B9                        271 div24u::
+      0000B9 52 06            [ 2]  272     sub sp,#LOCAL_SIZE
+      0000BB 0F 01            [ 1]  273     clr (QUOT_LB,sp)
+                                    274 ; si diviseur zéro gènère exception fatale
+      0000BD 7B 0C            [ 1]  275     ld a,(DVSOR,sp)
+      0000BF 1A 0D            [ 1]  276     or a,(DVSOR+1,sp)
+      0000C1 1A 0E            [ 1]  277     or a,(DVSOR+2,sp)
+      0000C3 26 01            [ 1]  278     jrne 1$
+      0000C5 83               [ 9]  279     trap ; excepction division par zéro.
+      0000C6                        280 1$: ; si dividende < diviseur retourne X:A=0 R=dividende
+      0000C6 96               [ 1]  281     ldw x,sp 
+      0000C7 1C 00 09         [ 2]  282     addw x,#DVDEND ; dividente 
+      0000CA CD 00 9D         [ 4]  283     call clz24 
+      0000CD 6B 02            [ 1]  284     ld (SHIFT,sp),a 
+      0000CF 96               [ 1]  285     ldw x,sp 
+      0000D0 1C 00 0C         [ 2]  286     addw x,#DVSOR ; diviseur 
+      0000D3 CD 00 9D         [ 4]  287     call clz24
+      0000D6 11 02            [ 1]  288     cp a,(SHIFT,sp)
+      0000D8 24 04            [ 1]  289     jruge 2$
+      0000DA 5F               [ 1]  290     clrw x 
+      0000DB 4F               [ 1]  291     clr a 
+      0000DC 20 62            [ 2]  292     jra 9$ 
+                                    293 ; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
+      0000DE 10 02            [ 1]  294 2$: sub a,(SHIFT,sp)
+      0000E0 6B 02            [ 1]  295     ld (SHIFT,sp),a 
+      0000E2 6B 06            [ 1]  296     ld (SHIFTR,sp),a 
+      0000E4 16 0C            [ 2]  297     ldw y,(DVSOR,sp)
+      0000E6 4D               [ 1]  298 3$: tnz a 
+      0000E7 27 07            [ 1]  299     jreq 4$
+      0000E9 08 0E            [ 1]  300     sll (DVSOR+2,sp)
+      0000EB 90 59            [ 2]  301     rlcw y
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 
 
-      0000EE 9F               [ 1]  302     ld a,xl
-      0000EF 4C               [ 1]  303     inc a  
-      0000F0 6B 02            [ 1]  304     ld (SHIFT,sp),a 
+      0000ED 4A               [ 1]  302     dec a
+      0000EE 20 F6            [ 2]  303     jra 3$
+      0000F0 17 0C            [ 2]  304 4$: ldw (DVSOR,sp),y 
                                     305 ; boucle de division
-      0000F2 5F               [ 1]  306     clrw x  ; quotient bits 23:16 
-      0000F3 16 05            [ 2]  307     ldw y,(U1,sp); dividende bits 23:16
-      0000F5 7B 07            [ 1]  308 5$: ld a,(U1+2,sp)
-      0000F7 16 05            [ 2]  309     ldw y,(U1,sp); dividende bits 23:16
-      0000F9 10 0A            [ 1]  310     sub a,(U2+2,sp)
-      0000FB 24 02            [ 1]  311     jrnc 6$
-      0000FD 90 5A            [ 2]  312     decw y 
-      0000FF 72 F2 08         [ 2]  313 6$: subw y,(U2,sp)
-      000102 25 04            [ 1]  314     jrc 7$
-      000104 17 05            [ 2]  315     ldw (U1,sp),y 
-      000106 6B 07            [ 1]  316     ld (U1+2,sp),a 
-      000108 8C               [ 1]  317 7$: ccf
-      000109 09 01            [ 1]  318     rlc (QUOT_LB,sp)
-      00010B 59               [ 2]  319     rlcw x 
-      00010C 0A 02            [ 1]  320     dec (SHIFT,sp)
-      00010E 26 E5            [ 1]  321     jrne 5$
-      000110 6B 07            [ 1]  322     ld (U1+2,sp),a 
-      000112 17 05            [ 2]  323     ldw (U1,sp),y
-      000114 7B 01            [ 1]  324     ld a,(QUOT_LB,sp)
-      000116                        325 9$: 
-      000116 5B 02            [ 2]  326     addw sp,#LOCAL_SIZE 
-      000118 81               [ 4]  327     ret 
-                                    328 
-                                    329 ;-------------------------------------------
-                                    330 ; complément à 2 
-                                    331 ; input:
-                                    332 ;   X:A     entier 24 bits 
-                                    333 ; output:
-                                    334 ;   X:A     complément à 2 de l'entier.
-                                    335 ;------------------------------------------
-      000119                        336 neg24::
-      000119 43               [ 1]  337     cpl a 
-      00011A 53               [ 2]  338     cplw x 
-      00011B AB 01            [ 1]  339     add a,#1
-      00011D 24 01            [ 1]  340     jrnc 1$
-      00011F 5C               [ 1]  341     incw x 
-      000120 81               [ 4]  342 1$: ret 
-                                    343 
+      0000F2 5F               [ 1]  306     clrw x  ; quotient bits 23:8 
+      0000F3 7B 0B            [ 1]  307 5$: ld a,(DVDEND+2,sp) ; dividende bits 7:0
+      0000F5 16 09            [ 2]  308     ldw y,(DVDEND,sp); dividende bits 23:8
+      0000F7 10 0E            [ 1]  309     sub a,(DVSOR+2,sp) ; diviseur bits 7:0
+      0000F9 6B 05            [ 1]  310     ld (DIFF+2,sp),a
+      0000FB 90 9F            [ 1]  311     ld a,yl 
+      0000FD 12 0D            [ 1]  312     sbc a,(DVSOR+1,sp)
+      0000FF 6B 04            [ 1]  313     ld (DIFF+1,sp),a 
+      000101 90 9E            [ 1]  314     ld a,yh 
+      000103 12 0C            [ 1]  315     sbc a,(DVSOR,sp)
+      000105 6B 03            [ 1]  316     ld (DIFF,sp),a 
+      000107 25 0A            [ 1]  317     jrc 6$
+      000109 16 03            [ 2]  318     ldw y,(DIFF,sp)
+      00010B 17 09            [ 2]  319     ldw (DVDEND,sp),y
+      00010D 7B 05            [ 1]  320     ld a,(DIFF+2,sp) 
+      00010F 6B 0B            [ 1]  321     ld (DVDEND+2,sp),a 
+      000111 20 08            [ 2]  322     jra 7$
+      000113 7B 0B            [ 1]  323 6$: ld a,(DVDEND+2,sp)
+      000115 16 09            [ 2]  324     ldw y,(DVDEND,sp)
+      000117 6B 05            [ 1]  325     ld (DIFF+2,sp),a 
+      000119 17 03            [ 2]  326     ldw (DIFF,sp),y 
+      00011B 8C               [ 1]  327 7$: ccf
+      00011C 09 01            [ 1]  328     rlc (QUOT_LB,sp)
+      00011E 59               [ 2]  329     rlcw x
+      00011F 0D 02            [ 1]  330     tnz (SHIFT,sp)
+      000121 27 0A            [ 1]  331     jreq 8$ 
+      000123 08 0B            [ 1]  332     sll (DVDEND+2,sp) 
+      000125 09 0A            [ 1]  333     rlc (DVDEND+1,sp) 
+      000127 09 09            [ 1]  334     rlc (DVDEND,sp)
+      000129 0A 02            [ 1]  335     dec (SHIFT,sp)
+      00012B 20 C6            [ 2]  336     jra 5$
+      00012D 7B 05            [ 1]  337 8$: ld a,(DIFF+2,sp)
+      00012F 16 03            [ 2]  338     ldw y,(DIFF,sp) 
+      000131                        339 80$: ; réaligne le reste sur le bit 0.
+      000131 0D 06            [ 1]  340     tnz (SHIFTR,sp)
+      000133 27 07            [ 1]  341     jreq 81$
+      000135 90 54            [ 2]  342     srlw y 
+      000137 46               [ 1]  343     rrc a
+      000138 0A 06            [ 1]  344     dec (SHIFTR,sp)
+      00013A 20 F5            [ 2]  345     jra 80$ 
+      00013C                        346 81$: 
+      00013C 6B 0B            [ 1]  347     ld (DVDEND+2,sp),a 
+      00013E 17 09            [ 2]  348     ldw (DVDEND,sp),y
+                                    349 
+      000140 7B 01            [ 1]  350 9$: ld a,(QUOT_LB,sp) 
+      000142 5B 06            [ 2]  351     addw sp,#LOCAL_SIZE 
+      000144 81               [ 4]  352     ret 
+                                    353 
+                                    354 ;-------------------------------------------
+                                    355 ; complément à 2 
+                                    356 ; input:
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
+Hexadecimal [24-Bits]
+
+
+
+                                    357 ;   X:A     entier 24 bits 
+                                    358 ; output:
+                                    359 ;   X:A     complément à 2 de l'entier.
+                                    360 ;------------------------------------------
+      000145                        361 neg24::
+      000145 43               [ 1]  362     cpl a 
+      000146 53               [ 2]  363     cplw x 
+      000147 AB 01            [ 1]  364     add a,#1
+      000149 24 01            [ 1]  365     jrnc 1$
+      00014B 5C               [ 1]  366     incw x 
+      00014C 81               [ 4]  367 1$: ret 
+                                    368 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1504,7 +1534,7 @@ Symbol Table
     AFR     =  004803     |     AFR0_ADC=  000000     |     AFR1_TIM=  000001 
     AFR2_CCO=  000002     |     AFR3_TIM=  000003     |     AFR4_TIM=  000004 
     AFR5_TIM=  000005     |     AFR6_I2C=  000006     |     AFR7_BEE=  000007 
-    ARG_OFS =  000004     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
+    ARG_OFS =  000008     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
     AWU_TBR =  0050F2     |     B0_MASK =  000001     |     B115200 =  000006 
     B19200  =  000003     |     B1_MASK =  000002     |     B230400 =  000007 
     B2400   =  000000     |     B2_MASK =  000004     |     B38400  =  000004 
@@ -1545,7 +1575,7 @@ Symbol Table
     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4     |     CLK_SWR_=  0000E1 
     CLK_SWR_=  0000D2     |     CPU_A   =  007F00     |     CPU_CCR =  007F0A 
     CPU_PCE =  007F01     |     CPU_PCH =  007F02     |     CPU_PCL =  007F03 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1557,10 +1587,11 @@ Symbol Table
     DEVID_LO=  0048D4     |     DEVID_LO=  0048D5     |     DEVID_LO=  0048D6 
     DEVID_LO=  0048D7     |     DEVID_LO=  0048D8     |     DEVID_WA=  0048D1 
     DEVID_XH=  0048CE     |     DEVID_XL=  0048CD     |     DEVID_YH=  0048D0 
-    DEVID_YL=  0048CF     |     DM_BK1RE=  007F90     |     DM_BK1RH=  007F91 
-    DM_BK1RL=  007F92     |     DM_BK2RE=  007F93     |     DM_BK2RH=  007F94 
-    DM_BK2RL=  007F95     |     DM_CR1  =  007F96     |     DM_CR2  =  007F97 
-    DM_CSR1 =  007F98     |     DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A 
+    DEVID_YL=  0048CF     |     DIFF    =  000003     |     DM_BK1RE=  007F90 
+    DM_BK1RH=  007F91     |     DM_BK1RL=  007F92     |     DM_BK2RE=  007F93 
+    DM_BK2RH=  007F94     |     DM_BK2RL=  007F95     |     DM_CR1  =  007F96 
+    DM_CR2  =  007F97     |     DM_CSR1 =  007F98     |     DM_CSR2 =  007F99 
+    DM_ENFCT=  007F9A     |     DVDEND  =  000009     |     DVSOR   =  00000C 
     EEPROM_B=  004000     |     EEPROM_E=  0047FF     |     EEPROM_S=  000800 
     EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1     |     FHSE    =  7A1200 
     FHSI    =  F42400     |     FLASH_BA=  008000     |     FLASH_CR=  00505A 
@@ -1604,12 +1635,12 @@ Symbol Table
     I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
     I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
     I2C_WRIT=  000000     |     INPUT_DI=  000000     |     INPUT_EI=  000001 
-    INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
+    INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
     INT_AUAR=  000012     |     INT_AWU =  000001     |     INT_CAN_=  000008 
     INT_CAN_=  000009     |     INT_CLK =  000002     |     INT_EXTI=  000003 
     INT_EXTI=  000004     |     INT_EXTI=  000005     |     INT_EXTI=  000006 
@@ -1631,7 +1662,7 @@ Symbol Table
     ITC_SPR4=  007F73     |     ITC_SPR5=  007F74     |     ITC_SPR6=  007F75 
     ITC_SPR7=  007F76     |     ITC_SPR8=  007F77     |     IWDG_KR =  0050E0 
     IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2     |     LED2_BIT=  000005 
-    LED2_MAS=  000020     |     LED2_POR=  00500A     |     LOCAL_SI=  000002 
+    LED2_MAS=  000020     |     LED2_POR=  00500A     |     LOCAL_SI=  000006 
     LZ      =  000001     |     N1      =  00000A     |     N2      =  00000D 
     NAFR    =  004804     |     NCLKOPT =  004808     |     NFLASH_W=  00480E 
     NHSECNT =  00480A     |     NOPT1   =  004802     |     NOPT2   =  004804 
@@ -1664,146 +1695,146 @@ Symbol Table
     PH_CR2  =  005027     |     PH_DDR  =  005025     |     PH_IDR  =  005024 
     PH_ODR  =  005023     |     PI_BASE =  005028     |     PI_CR1  =  00502B 
     PI_CR2  =  00502C     |     PI_DDR  =  00502A     |     PI_IDR  =  005029 
-    PI_ODR  =  005028     |     QUOT_LB =  000001     |     RAM_BASE=  000000 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
-Hexadecimal [24-Bits]
-
-Symbol Table
-
-    RAM_END =  0017FF     |     RAM_SIZE=  001800     |     ROP     =  004800 
-    RST_SR  =  0050B3     |     SFR_BASE=  005000     |     SFR_END =  0057FF 
-    SHIFT   =  000002     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
-    SPI_CRCP=  005205     |     SPI_DR  =  005204     |     SPI_ICR =  005202 
-    SPI_RXCR=  005206     |     SPI_SR  =  005203     |     SPI_TXCR=  005207 
-    SWIM_CSR=  007F80     |     TIM1_ARR=  005262     |     TIM1_ARR=  005263 
-    TIM1_BKR=  00526D     |     TIM1_CCE=  00525C     |     TIM1_CCE=  00525D 
-    TIM1_CCM=  005258     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  005259     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  00525A     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCM=  00525B     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
-    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
-    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
-    TIM1_CCR=  005265     |     TIM1_CCR=  005266     |     TIM1_CCR=  005267 
-    TIM1_CCR=  005268     |     TIM1_CCR=  005269     |     TIM1_CCR=  00526A 
-    TIM1_CCR=  00526B     |     TIM1_CCR=  00526C     |     TIM1_CNT=  00525E 
-    TIM1_CNT=  00525F     |     TIM1_CR1=  005250     |     TIM1_CR2=  005251 
-    TIM1_CR2=  000000     |     TIM1_CR2=  000002     |     TIM1_CR2=  000004 
-    TIM1_CR2=  000005     |     TIM1_CR2=  000006     |     TIM1_DTR=  00526E 
-    TIM1_EGR=  005257     |     TIM1_EGR=  000007     |     TIM1_EGR=  000001 
-    TIM1_EGR=  000002     |     TIM1_EGR=  000003     |     TIM1_EGR=  000004 
-    TIM1_EGR=  000005     |     TIM1_EGR=  000006     |     TIM1_EGR=  000000 
-    TIM1_ETR=  005253     |     TIM1_ETR=  000006     |     TIM1_ETR=  000000 
-    TIM1_ETR=  000001     |     TIM1_ETR=  000002     |     TIM1_ETR=  000003 
-    TIM1_ETR=  000007     |     TIM1_ETR=  000004     |     TIM1_ETR=  000005 
-    TIM1_IER=  005254     |     TIM1_IER=  000007     |     TIM1_IER=  000001 
-    TIM1_IER=  000002     |     TIM1_IER=  000003     |     TIM1_IER=  000004 
-    TIM1_IER=  000005     |     TIM1_IER=  000006     |     TIM1_IER=  000000 
-    TIM1_OIS=  00526F     |     TIM1_PSC=  005260     |     TIM1_PSC=  005261 
-    TIM1_RCR=  005264     |     TIM1_SMC=  005252     |     TIM1_SMC=  000007 
-    TIM1_SMC=  000000     |     TIM1_SMC=  000001     |     TIM1_SMC=  000002 
-    TIM1_SMC=  000004     |     TIM1_SMC=  000005     |     TIM1_SMC=  000006 
-    TIM1_SR1=  005255     |     TIM1_SR1=  000007     |     TIM1_SR1=  000001 
-    TIM1_SR1=  000002     |     TIM1_SR1=  000003     |     TIM1_SR1=  000004 
-    TIM1_SR1=  000005     |     TIM1_SR1=  000006     |     TIM1_SR1=  000000 
-    TIM1_SR2=  005256     |     TIM1_SR2=  000001     |     TIM1_SR2=  000002 
-    TIM1_SR2=  000003     |     TIM1_SR2=  000004     |     TIM2_ARR=  00530D 
-    TIM2_ARR=  00530E     |     TIM2_CCE=  005308     |     TIM2_CCE=  005309 
-    TIM2_CCM=  005305     |     TIM2_CCM=  005306     |     TIM2_CCM=  005307 
-    TIM2_CCR=  00530F     |     TIM2_CCR=  005310     |     TIM2_CCR=  005311 
-    TIM2_CCR=  005312     |     TIM2_CCR=  005313     |     TIM2_CCR=  005314 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    TIM2_CNT=  00530A     |     TIM2_CNT=  00530B     |     TIM2_CR1=  005300 
-    TIM2_EGR=  005304     |     TIM2_IER=  005301     |     TIM2_PSC=  00530C 
-    TIM2_SR1=  005302     |     TIM2_SR2=  005303     |     TIM3_ARR=  00532B 
-    TIM3_ARR=  00532C     |     TIM3_CCE=  005327     |     TIM3_CCE=  000000 
-    TIM3_CCE=  000001     |     TIM3_CCE=  000004     |     TIM3_CCE=  000005 
-    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCM=  005325 
-    TIM3_CCM=  005326     |     TIM3_CCM=  000000     |     TIM3_CCM=  000004 
-    TIM3_CCM=  000003     |     TIM3_CCR=  00532D     |     TIM3_CCR=  00532E 
-    TIM3_CCR=  00532F     |     TIM3_CCR=  005330     |     TIM3_CNT=  005328 
-    TIM3_CNT=  005329     |     TIM3_CR1=  005320     |     TIM3_CR1=  000007 
-    TIM3_CR1=  000000     |     TIM3_CR1=  000003     |     TIM3_CR1=  000001 
-    TIM3_CR1=  000002     |     TIM3_EGR=  005324     |     TIM3_IER=  005321 
-    TIM3_PSC=  00532A     |     TIM3_SR1=  005322     |     TIM3_SR2=  005323 
-    TIM4_ARR=  005346     |     TIM4_CNT=  005344     |     TIM4_CR1=  005340 
-    TIM4_CR1=  000007     |     TIM4_CR1=  000000     |     TIM4_CR1=  000003 
-    TIM4_CR1=  000001     |     TIM4_CR1=  000002     |     TIM4_EGR=  005343 
-    TIM4_EGR=  000000     |     TIM4_IER=  005341     |     TIM4_IER=  000000 
-    TIM4_PSC=  005345     |     TIM4_PSC=  000000     |     TIM4_PSC=  000007 
-    TIM4_PSC=  000004     |     TIM4_PSC=  000001     |     TIM4_PSC=  000005 
-    TIM4_PSC=  000002     |     TIM4_PSC=  000006     |     TIM4_PSC=  000003 
-    TIM4_PSC=  000000     |     TIM4_PSC=  000001     |     TIM4_PSC=  000002 
-    TIM4_SR =  005342     |     TIM4_SR_=  000000     |     TIM_CR1_=  000007 
-    TIM_CR1_=  000000     |     TIM_CR1_=  000006     |     TIM_CR1_=  000005 
-    TIM_CR1_=  000004     |     TIM_CR1_=  000003     |     TIM_CR1_=  000001 
-    TIM_CR1_=  000002     |     U1      =  000005     |     U2      =  000008 
-    U24     =  000003     |     U8      =  000006     |     UART1   =  000000 
-    UART1_BA=  005230     |     UART1_BR=  005232     |     UART1_BR=  005233 
-    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
-    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
-    UART1_GT=  005239     |     UART1_PO=  000000     |     UART1_PS=  00523A 
-    UART1_RX=  000004     |     UART1_SR=  005230     |     UART1_TX=  000005 
-    UART3   =  000001     |     UART3_BA=  005240     |     UART3_BR=  005242 
-    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
-    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
-    UART3_DR=  005241     |     UART3_PO=  00000F     |     UART3_RX=  000006 
-    UART3_SR=  005240     |     UART3_TX=  000005     |     UART_BRR=  000002 
-    UART_BRR=  000003     |     UART_CR1=  000004     |     UART_CR1=  000004 
-    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
-    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
-    UART_CR1=  000003     |     UART_CR2=  000005     |     UART_CR2=  000004 
-    UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
-    UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
-    UART_CR2=  000007     |     UART_CR3=  000006     |     UART_CR3=  000003 
-    UART_CR3=  000001     |     UART_CR3=  000002     |     UART_CR3=  000000 
-    UART_CR3=  000006     |     UART_CR3=  000004     |     UART_CR3=  000005 
-    UART_CR4=  000007     |     UART_CR4=  000000     |     UART_CR4=  000001 
-    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
-    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000008 
-    UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
-    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000009 
-    UART_CR6=  000004     |     UART_CR6=  000007     |     UART_CR6=  000001 
-    UART_CR6=  000002     |     UART_CR6=  000000     |     UART_CR6=  000005 
-    UART_DR =  000001     |     UART_GTR=  000009     |     UART_PSC=  00000A 
-    UART_SR =  000000     |     UART_SR_=  000001     |     UART_SR_=  000004 
-    UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
+    PI_ODR  =  005028     |     QUOT_LB =  000001     |     RAM_BASE=  000000 
+    RAM_END =  0017FF     |     RAM_SIZE=  001800     |     ROP     =  004800 
+    RST_SR  =  0050B3     |     SFR_BASE=  005000     |     SFR_END =  0057FF 
+    SHIFT   =  000002     |     SHIFTR  =  000006     |     SPI_CR1 =  005200 
+    SPI_CR2 =  005201     |     SPI_CRCP=  005205     |     SPI_DR  =  005204 
+    SPI_ICR =  005202     |     SPI_RXCR=  005206     |     SPI_SR  =  005203 
+    SPI_TXCR=  005207     |     SWIM_CSR=  007F80     |     TIM1_ARR=  005262 
+    TIM1_ARR=  005263     |     TIM1_BKR=  00526D     |     TIM1_CCE=  00525C 
+    TIM1_CCE=  00525D     |     TIM1_CCM=  005258     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  005259     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  00525A     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  00525B     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCR=  005265     |     TIM1_CCR=  005266 
+    TIM1_CCR=  005267     |     TIM1_CCR=  005268     |     TIM1_CCR=  005269 
+    TIM1_CCR=  00526A     |     TIM1_CCR=  00526B     |     TIM1_CCR=  00526C 
+    TIM1_CNT=  00525E     |     TIM1_CNT=  00525F     |     TIM1_CR1=  005250 
+    TIM1_CR2=  005251     |     TIM1_CR2=  000000     |     TIM1_CR2=  000002 
+    TIM1_CR2=  000004     |     TIM1_CR2=  000005     |     TIM1_CR2=  000006 
+    TIM1_DTR=  00526E     |     TIM1_EGR=  005257     |     TIM1_EGR=  000007 
+    TIM1_EGR=  000001     |     TIM1_EGR=  000002     |     TIM1_EGR=  000003 
+    TIM1_EGR=  000004     |     TIM1_EGR=  000005     |     TIM1_EGR=  000006 
+    TIM1_EGR=  000000     |     TIM1_ETR=  005253     |     TIM1_ETR=  000006 
+    TIM1_ETR=  000000     |     TIM1_ETR=  000001     |     TIM1_ETR=  000002 
+    TIM1_ETR=  000003     |     TIM1_ETR=  000007     |     TIM1_ETR=  000004 
+    TIM1_ETR=  000005     |     TIM1_IER=  005254     |     TIM1_IER=  000007 
+    TIM1_IER=  000001     |     TIM1_IER=  000002     |     TIM1_IER=  000003 
+    TIM1_IER=  000004     |     TIM1_IER=  000005     |     TIM1_IER=  000006 
+    TIM1_IER=  000000     |     TIM1_OIS=  00526F     |     TIM1_PSC=  005260 
+    TIM1_PSC=  005261     |     TIM1_RCR=  005264     |     TIM1_SMC=  005252 
+    TIM1_SMC=  000007     |     TIM1_SMC=  000000     |     TIM1_SMC=  000001 
+    TIM1_SMC=  000002     |     TIM1_SMC=  000004     |     TIM1_SMC=  000005 
+    TIM1_SMC=  000006     |     TIM1_SR1=  005255     |     TIM1_SR1=  000007 
+    TIM1_SR1=  000001     |     TIM1_SR1=  000002     |     TIM1_SR1=  000003 
+    TIM1_SR1=  000004     |     TIM1_SR1=  000005     |     TIM1_SR1=  000006 
+    TIM1_SR1=  000000     |     TIM1_SR2=  005256     |     TIM1_SR2=  000001 
+    TIM1_SR2=  000002     |     TIM1_SR2=  000003     |     TIM1_SR2=  000004 
+    TIM2_ARR=  00530D     |     TIM2_ARR=  00530E     |     TIM2_CCE=  005308 
+    TIM2_CCE=  005309     |     TIM2_CCM=  005305     |     TIM2_CCM=  005306 
+    TIM2_CCM=  005307     |     TIM2_CCR=  00530F     |     TIM2_CCR=  005310 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
-    UBC     =  004801     |     USR_BTN_=  000004     |     USR_BTN_=  000010 
-    USR_BTN_=  005015     |     WDGOPT  =  004805     |     WDGOPT_I=  000002 
-    WDGOPT_L=  000003     |     WDGOPT_W=  000000     |     WDGOPT_W=  000001 
-    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |   1 add24      000000 GR
-  1 clz24      00009D GR  |   1 div24_8u   000087 GR  |   1 div24u     0000B9 GR
-  1 mul24_8u   00001A GR  |   1 mul24u     000043 GR  |   1 neg24      000119 GR
-  1 result     000080 R   |   1 sub24      00000D GR
-
+    TIM2_CCR=  005311     |     TIM2_CCR=  005312     |     TIM2_CCR=  005313 
+    TIM2_CCR=  005314     |     TIM2_CNT=  00530A     |     TIM2_CNT=  00530B 
+    TIM2_CR1=  005300     |     TIM2_EGR=  005304     |     TIM2_IER=  005301 
+    TIM2_PSC=  00530C     |     TIM2_SR1=  005302     |     TIM2_SR2=  005303 
+    TIM3_ARR=  00532B     |     TIM3_ARR=  00532C     |     TIM3_CCE=  005327 
+    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCE=  000004 
+    TIM3_CCE=  000005     |     TIM3_CCE=  000000     |     TIM3_CCE=  000001 
+    TIM3_CCM=  005325     |     TIM3_CCM=  005326     |     TIM3_CCM=  000000 
+    TIM3_CCM=  000004     |     TIM3_CCM=  000003     |     TIM3_CCR=  00532D 
+    TIM3_CCR=  00532E     |     TIM3_CCR=  00532F     |     TIM3_CCR=  005330 
+    TIM3_CNT=  005328     |     TIM3_CNT=  005329     |     TIM3_CR1=  005320 
+    TIM3_CR1=  000007     |     TIM3_CR1=  000000     |     TIM3_CR1=  000003 
+    TIM3_CR1=  000001     |     TIM3_CR1=  000002     |     TIM3_EGR=  005324 
+    TIM3_IER=  005321     |     TIM3_PSC=  00532A     |     TIM3_SR1=  005322 
+    TIM3_SR2=  005323     |     TIM4_ARR=  005346     |     TIM4_CNT=  005344 
+    TIM4_CR1=  005340     |     TIM4_CR1=  000007     |     TIM4_CR1=  000000 
+    TIM4_CR1=  000003     |     TIM4_CR1=  000001     |     TIM4_CR1=  000002 
+    TIM4_EGR=  005343     |     TIM4_EGR=  000000     |     TIM4_IER=  005341 
+    TIM4_IER=  000000     |     TIM4_PSC=  005345     |     TIM4_PSC=  000000 
+    TIM4_PSC=  000007     |     TIM4_PSC=  000004     |     TIM4_PSC=  000001 
+    TIM4_PSC=  000005     |     TIM4_PSC=  000002     |     TIM4_PSC=  000006 
+    TIM4_PSC=  000003     |     TIM4_PSC=  000000     |     TIM4_PSC=  000001 
+    TIM4_PSC=  000002     |     TIM4_SR =  005342     |     TIM4_SR_=  000000 
+    TIM_CR1_=  000007     |     TIM_CR1_=  000000     |     TIM_CR1_=  000006 
+    TIM_CR1_=  000005     |     TIM_CR1_=  000004     |     TIM_CR1_=  000003 
+    TIM_CR1_=  000001     |     TIM_CR1_=  000002     |     U24     =  000003 
+    U8      =  000006     |     UART1   =  000000     |     UART1_BA=  005230 
+    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
+    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
+    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
+    UART1_PO=  000000     |     UART1_PS=  00523A     |     UART1_RX=  000004 
+    UART1_SR=  005230     |     UART1_TX=  000005     |     UART3   =  000001 
+    UART3_BA=  005240     |     UART3_BR=  005242     |     UART3_BR=  005243 
+    UART3_CR=  005244     |     UART3_CR=  005245     |     UART3_CR=  005246 
+    UART3_CR=  005247     |     UART3_CR=  004249     |     UART3_DR=  005241 
+    UART3_PO=  00000F     |     UART3_RX=  000006     |     UART3_SR=  005240 
+    UART3_TX=  000005     |     UART_BRR=  000002     |     UART_BRR=  000003 
+    UART_CR1=  000004     |     UART_CR1=  000004     |     UART_CR1=  000002 
+    UART_CR1=  000000     |     UART_CR1=  000001     |     UART_CR1=  000007 
+    UART_CR1=  000006     |     UART_CR1=  000005     |     UART_CR1=  000003 
+    UART_CR2=  000005     |     UART_CR2=  000004     |     UART_CR2=  000002 
+    UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
+    UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
+    UART_CR3=  000006     |     UART_CR3=  000003     |     UART_CR3=  000001 
+    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
+    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000007 
+    UART_CR4=  000000     |     UART_CR4=  000001     |     UART_CR4=  000002 
+    UART_CR4=  000003     |     UART_CR4=  000004     |     UART_CR4=  000006 
+    UART_CR4=  000005     |     UART_CR5=  000008     |     UART_CR5=  000003 
+    UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
+    UART_CR5=  000005     |     UART_CR6=  000009     |     UART_CR6=  000004 
+    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
+    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_DR =  000001 
+    UART_GTR=  000009     |     UART_PSC=  00000A     |     UART_SR =  000000 
+    UART_SR_=  000001     |     UART_SR_=  000004     |     UART_SR_=  000002 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    UART_SR_=  000003     |     UART_SR_=  000000     |     UART_SR_=  000005 
+    UART_SR_=  000006     |     UART_SR_=  000007     |     UBC     =  004801 
+    USR_BTN_=  000004     |     USR_BTN_=  000010     |     USR_BTN_=  005015 
+    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
+    WWDG_WR =  0050D2     |   1 add24      000000 GR  |   1 clz24      00009D GR
+  1 div24_8u   000087 GR  |   1 div24u     0000B9 GR  |   1 mul24_8u   00001A GR
+  1 mul24u     000043 GR  |   1 neg24      000145 GR  |   1 result     000080 R
+  1 sub24      00000D GR
+
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
 Hexadecimal [24-Bits]
 
 Area Table
 
    0 _CODE      size      0   flags    0
-   1 CODE       size    121   flags    0
+   1 CODE       size    14D   flags    0
 

@@ -14,10 +14,10 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000000  s_SSEG0                         
      00000000  s__CODE                         
      00000001  s_DATA                          
-     00000053  l_DATA                          
      00000080  l_HOME                          
+     000000A6  l_DATA                          
      00000100  l_SSEG0                         
-     00000533  l_CODE                          
+     00000725  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -26,7 +26,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    00000053 =          83. bytes (REL,CON)
+DATA                                00000001    000000A6 =         166. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -53,26 +53,32 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000533 =        1331. bytes (REL,CON)
+CODE                                00008080    00000725 =        1829. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
-     000080BC  itoa                               MATH24_TEST
-     0000837E  add24                              MATH24
-     0000838B  sub24                              MATH24
-     00008398  mul24_8u                           MATH24
-     000083C1  mul24u                             MATH24
-     00008405  div24_8u                           MATH24
-     0000841B  clz24                              MATH24
-     00008437  div24u                             MATH24
-     00008497  neg24                              MATH24
-     000084DF  uart_init                          UART
-     0000852D  uart_putc                          UART
-     0000853D  uart_spaces                        UART
-     00008551  uart_puts                          UART
-     00008571  uart_query                         UART
-     00008581  uart_getc                          UART
-     00008591  uart_delete                        UART
+     000080BE  itoa                               MATH24_TEST
+     00008166  atoi                               MATH24_TEST
+     000081FE  readln                             MATH24_TEST
+     0000834A  next_word                          MATH24_TEST
+     00008380  to_lower                           MATH24_TEST
+     0000838B  to_upper                           MATH24_TEST
+     00008397  number                             MATH24_TEST
+     00008544  add24                              MATH24
+     00008551  sub24                              MATH24
+     0000855E  mul24_8u                           MATH24
+     00008587  mul24u                             MATH24
+     000085CB  div24_8u                           MATH24
+     000085E1  clz24                              MATH24
+     000085FD  div24u                             MATH24
+     00008689  neg24                              MATH24
+     000086D1  uart_init                          UART
+     0000871F  uart_putc                          UART
+     0000872F  uart_spaces                        UART
+     00008743  uart_puts                          UART
+     00008763  uart_query                         UART
+     00008773  uart_getc                          UART
+     00008783  uart_delete                        UART
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 

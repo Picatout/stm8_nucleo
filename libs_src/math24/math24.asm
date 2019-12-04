@@ -251,37 +251,39 @@ clz24::
 
 
 ;-------------------------------
-;  division non signé de U1/U2 
+;  division non signée de DVDEND/DVSOR 
 ; input:
-;   U1      dividende 24 bits
-;   U2      diviseur  24 bits 
+;   DVDEND      dividende 24 bits
+;   DVSOR      diviseur  24 bits 
 ; output:
-;   X:A     quotient U1/U2 
+;   X:A     quotient U1/DVSOR 
 ;   U1      reste 
 ;------------------------------
-    ARG_OFS= 4
-    U1 = ARG_OFS+1
-    U2 = ARG_OFS+4
+    ARG_OFS= 8
+    DVDEND = ARG_OFS+1
+    DVSOR = ARG_OFS+4
 ; variable locale 
     QUOT_LB = 1 ; quotient bits 7:0, 1 octets
     SHIFT=2 ;  compteur de décalage, 1 octet
-    LOCAL_SIZE=2
+    DIFF=3  ;  différence entre DVDEND et DVSOR, 3 octets
+    SHIFTR=6 ; décalage du reste vers la droite, 1 octet
+    LOCAL_SIZE=6
 div24u::
     sub sp,#LOCAL_SIZE
     clr (QUOT_LB,sp)
 ; si diviseur zéro gènère exception fatale
-    ld a,(U2,sp)
-    or a,(U2+1,sp)
-    or a,(U2+2,sp)
+    ld a,(DVSOR,sp)
+    or a,(DVSOR+1,sp)
+    or a,(DVSOR+2,sp)
     jrne 1$
     trap ; excepction division par zéro.
 1$: ; si dividende < diviseur retourne X:A=0 R=dividende
     ldw x,sp 
-    addw x,#U1 ; dividente 
+    addw x,#DVDEND ; dividente 
     call clz24 
     ld (SHIFT,sp),a 
     ldw x,sp 
-    addw x,#U2 ; diviseur 
+    addw x,#DVSOR ; diviseur 
     call clz24
     cp a,(SHIFT,sp)
     jruge 2$
@@ -289,40 +291,63 @@ div24u::
     clr a 
     jra 9$ 
 ; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
-2$: ldw y,(U2,sp)
-3$: cp a,(SHIFT,sp)
-    jreq 4$
-    sll (U2+2,sp)
-    rlcw y
-    inc a
-    incw x  
-    jra 3$
-4$: ldw (U2,sp),y 
-; SHIFT doit-être xl+1
-    ld a,xl
-    inc a  
+2$: sub a,(SHIFT,sp)
     ld (SHIFT,sp),a 
+    ld (SHIFTR,sp),a 
+    ldw y,(DVSOR,sp)
+3$: tnz a 
+    jreq 4$
+    sll (DVSOR+2,sp)
+    rlcw y
+    dec a
+    jra 3$
+4$: ldw (DVSOR,sp),y 
 ; boucle de division
-    clrw x  ; quotient bits 23:16 
-    ldw y,(U1,sp); dividende bits 23:16
-5$: ld a,(U1+2,sp)
-    ldw y,(U1,sp); dividende bits 23:16
-    sub a,(U2+2,sp)
-    jrnc 6$
-    decw y 
-6$: subw y,(U2,sp)
-    jrc 7$
-    ldw (U1,sp),y 
-    ld (U1+2,sp),a 
+    clrw x  ; quotient bits 23:8 
+5$: ld a,(DVDEND+2,sp) ; dividende bits 7:0
+    ldw y,(DVDEND,sp); dividende bits 23:8
+    sub a,(DVSOR+2,sp) ; diviseur bits 7:0
+    ld (DIFF+2,sp),a
+    ld a,yl 
+    sbc a,(DVSOR+1,sp)
+    ld (DIFF+1,sp),a 
+    ld a,yh 
+    sbc a,(DVSOR,sp)
+    ld (DIFF,sp),a 
+    jrc 6$
+    ldw y,(DIFF,sp)
+    ldw (DVDEND,sp),y
+    ld a,(DIFF+2,sp) 
+    ld (DVDEND+2,sp),a 
+    jra 7$
+6$: ld a,(DVDEND+2,sp)
+    ldw y,(DVDEND,sp)
+    ld (DIFF+2,sp),a 
+    ldw (DIFF,sp),y 
 7$: ccf
     rlc (QUOT_LB,sp)
-    rlcw x 
+    rlcw x
+    tnz (SHIFT,sp)
+    jreq 8$ 
+    sll (DVDEND+2,sp) 
+    rlc (DVDEND+1,sp) 
+    rlc (DVDEND,sp)
     dec (SHIFT,sp)
-    jrne 5$
-    ld (U1+2,sp),a 
-    ldw (U1,sp),y
-    ld a,(QUOT_LB,sp)
-9$: 
+    jra 5$
+8$: ld a,(DIFF+2,sp)
+    ldw y,(DIFF,sp) 
+80$: ; réaligne le reste sur le bit 0.
+    tnz (SHIFTR,sp)
+    jreq 81$
+    srlw y 
+    rrc a
+    dec (SHIFTR,sp)
+    jra 80$ 
+81$: 
+    ld (DVDEND+2,sp),a 
+    ldw (DVDEND,sp),y
+
+9$: ld a,(QUOT_LB,sp) 
     addw sp,#LOCAL_SIZE 
     ret 
 
