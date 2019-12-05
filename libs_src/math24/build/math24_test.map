@@ -17,7 +17,7 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000080  l_HOME                          
      000000A6  l_DATA                          
      00000100  l_SSEG0                         
-     000007E1  l_CODE                          
+     00000801  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -53,7 +53,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    000007E1 =        2017. bytes (REL,CON)
+CODE                                00008080    00000801 =        2049. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -64,23 +64,23 @@ CODE                                00008080    000007E1 =        2017. bytes (R
      00008380  to_lower                           MATH24_TEST
      0000838B  to_upper                           MATH24_TEST
      00008397  number                             MATH24_TEST
-     00008544  add24                              MATH24
-     00008551  sub24                              MATH24
-     0000855E  mul24_8u                           MATH24
-     00008587  mul24u                             MATH24
-     000085CB  mul24s                             MATH24
-     00008602  div24_8u                           MATH24
-     00008618  clz24                              MATH24
-     00008634  div24u                             MATH24
-     000086C0  div24s                             MATH24
-     00008745  neg24                              MATH24
-     0000878D  uart_init                          UART
-     000087DB  uart_putc                          UART
-     000087EB  uart_spaces                        UART
-     000087FF  uart_puts                          UART
-     0000881F  uart_query                         UART
-     0000882F  uart_getc                          UART
-     0000883F  uart_delete                        UART
+     0000856C  add24                              MATH24
+     00008579  sub24                              MATH24
+     00008586  mul24_8u                           MATH24
+     000085AF  mul24u                             MATH24
+     000085F3  mul24s                             MATH24
+     00008626  div24_8u                           MATH24
+     0000863C  clz24                              MATH24
+     00008658  div24u                             MATH24
+     000086E4  div24s                             MATH24
+     00008765  neg24                              MATH24
+     000087AD  uart_init                          UART
+     000087FB  uart_putc                          UART
+     0000880B  uart_spaces                        UART
+     0000881F  uart_puts                          UART
+     0000883F  uart_query                         UART
+     0000884F  uart_getc                          UART
+     0000885F  uart_delete                        UART
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
 Files Linked                              [ module(s) ]

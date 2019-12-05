@@ -197,40 +197,38 @@ result: ; X:A
 ; NOTE: cette routine jette le débordement
 ;       au delà du bit 23.
 ;---------------------------------------
-    ARG_OFS=11
+    ARG_OFS=9
     I1=ARG_OFS+1
     I2=ARG_OFS+4
 ; local variables
     U1=1
     U2=4
-    SIGN=1    
+    SIGN=7   
     LOCAL_SIZE=7
 mul24s::
-    pushw y 
     sub sp,#LOCAL_SIZE 
     clr (SIGN,sp)
     ld a,(I1+2,sp)
     ldw x,(I1,sp)
-    call abs24 
-    ld (U1+2,sp),a 
-    ldw (U1,sp),x
-    tnzw y  
-    jreq 1$
+    tnz (I1,sp)
+    jrpl 0$
     cpl (SIGN,sp)
+    call neg24
+0$: ld (U1+2,sp),a 
+    ldw (U1,sp),x
 1$: ld a,(I2+2,sp)
     ldw x,(I2,sp)
-    call abs24
-    ld (U2+2,sp),a 
-    ldw (U2,sp),x 
-    tnzw y 
-    jreq 2$ 
+    tnz (I2,sp)
+    jrpl 2$
+    call neg24
     cpl (SIGN,sp)
-2$: call mul24u 
+2$: ld (U2+2,sp),a 
+    ldw (U2,sp),x 
+    call mul24u 
     tnz (SIGN,sp)
     jreq 3$
     call neg24    
 3$: addw sp,#LOCAL_SIZE
-    popw y 
     ret
 
 ;-------------------------------------
@@ -407,7 +405,7 @@ div24u::
 ;NOTE: le reste doit toujours être positif 
 ;REF: https://fr.wikipedia.org/wiki/Division_euclidienne#Extension_aux_entiers_relatifs
 ;--------------------------------------------
-    ARG_OFS=14
+    ARG_OFS=12
     I1=ARG_OFS+1 
     I2=ARG_OFS+4
 ; variables locales 
@@ -417,34 +415,37 @@ div24u::
     UDIV=8
     LOCAL_SIZE=10
 div24s::
-    pushw y 
     sub sp,#LOCAL_SIZE
     clr (SIGN,sp)
     ld a,(I1+2,sp)
     ldw x,(I1,sp)
-    call abs24
-    ld (U1+2,sp),a 
-    ldw (U1,sp),x 
-    ld a,yh 
-    bcp a,#0x80
-    jreq 1$
+    tnz (I1,sp)
+    jrpl 1$
     cpl (SIGN,sp)
-1$: ld a,(I2+2,sp)
+    call neg24
+1$: ld (U1+2,sp),a 
+    ldw (U1,sp),x 
+    ld a,(I2+2,sp)
     ldw x,(I2,sp)
-    call abs24 
-    ld (U2+2,sp),a
+    tnz (I2,sp)
+    jrpl 2$ 
+    cpl (SIGN,sp)
+    call neg24 
+2$: ld (U2+2,sp),a
     ldw (U2,sp),x
     ld (UDIV+2,sp),a 
     ldw (UDIV,sp),x 
-    ld a,yh 
-    bcp a,#0x80 
-    jreq 2$ 
-    cpl (SIGN,sp)
-2$: call div24u 
-3$: ; dénominateur négatif et SIGN négatif incrémente quotient
+    call div24u 
+3$: ; dénominateur négatif et SIGN négatif incrémente quotient si R<>0
     ; et ajuste le reste=U2-mod(U1/U2)
-    ld (I2+2,sp),a ; sauvegarde quotient
+    ; sauvegarde quotient
+    ld (I2+2,sp),a 
     ldw (I2,sp),x 
+; si le reste est 0 on ne fait aucun ajustement.    
+    ld a,(U1,sp)
+    or a,(U1+1,sp)
+    or a,(U1+2,sp)
+    jreq 5$
 ;vérifie signe du dénominateur et du quotient 
     ld a,(I1,sp)
     and a,#0x80 
@@ -476,7 +477,6 @@ div24s::
     call neg24
 6$: 
     addw sp,#LOCAL_SIZE 
-    popw y 
     ret 
 
 ;------------------------------------------------------
@@ -488,14 +488,12 @@ div24s::
 ;       Y           0 si était positif, -1 si était négatif
 ;-----------------------------------------------------
 abs24:
-    clrw y 
     push a 
     ld a,xh 
     bcp a,#0x80
     pop a 
     jreq 1$
     call neg24 
-    cplw y 
 1$: ret 
 
 

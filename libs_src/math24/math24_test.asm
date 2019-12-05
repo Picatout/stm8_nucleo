@@ -735,7 +735,11 @@ eval:
 3$: cp a,#'/ 
     jrne 4$ 
     jp test_div 
-4$:     
+4$: cp a,#'n 
+    jrne 5$
+    jp test_neg
+5$:
+
 eval_exit:
     addw sp,#LOCAL_SIZE 
     ret 
@@ -758,7 +762,7 @@ test_mul:
     ldw y,#mul24s_test
     call puts
     call print_arguments
-    call mul24s 
+    call mul24s
     call print_int24
     jp eval_exit
 test_div:
@@ -775,7 +779,19 @@ test_div:
     ld a,(3,sp)
     call print_int24  
     jp eval_exit
-
+test_neg:
+    ldw y,#neg24_test
+    call puts 
+    call print_arguments 
+    ld a,(N1+2,sp)
+    ldw x,(N1,sp)
+    call neg24 
+    call print_int24 
+    ld a,(N2+2,sp)
+    ldw x,(N2,sp)
+    call neg24 
+    call print_int24 
+    jp eval_exit 
 
 print_error:
     ldw y,#msg_erreur

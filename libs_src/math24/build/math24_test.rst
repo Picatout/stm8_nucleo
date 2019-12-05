@@ -1345,7 +1345,7 @@ Hexadecimal [24-Bits]
       0080CD 03 01            [ 1]  142 	cpl (SIGN,sp)
       0080CF C6 00 03         [ 1]  143 	ld a,acc8
       0080D2 CE 00 01         [ 2]  144     ldw x,acc24 
-      0080D5 CD 87 45         [ 4]  145     call neg24
+      0080D5 CD 87 65         [ 4]  145     call neg24
       0080D8 C7 00 03         [ 1]  146     ld acc8,a 
       0080DB CF 00 01         [ 2]  147     ldw acc24,x 
       0080DE                        148 1$: 
@@ -1362,7 +1362,7 @@ Hexadecimal [24-Bits]
       0080F0 CE 00 01         [ 2]  159     ldw x,acc24 
       0080F3 88               [ 1]  160     push a 
       0080F4 89               [ 2]  161     pushw x 
-      0080F5 CD 86 02         [ 4]  162     call div24_8u ; acc24/base
+      0080F5 CD 86 26         [ 4]  162     call div24_8u ; acc24/base
       0080F8 AB 30            [ 1]  163     add a,#'0  ; remainder of division
       0080FA A1 3A            [ 1]  164     cp a,#'9+1
       0080FC 2B 02            [ 1]  165     jrmi 2$
@@ -1505,7 +1505,7 @@ Hexadecimal [24-Bits]
 
       0081AB 2A 1D            [ 1]  288 	jrpl 9$
       0081AD C7 00 03         [ 1]  289 5$:	ld acc8,a
-      0081B0 CD 85 5E         [ 4]  290     call mul24_8u
+      0081B0 CD 85 86         [ 4]  290     call mul24_8u
       0081B3 6B 03            [ 1]  291     ld (U24+2,sp),a 
       0081B5 1F 01            [ 2]  292     ldw (U24,sp),x
       0081B7 C6 00 03         [ 1]  293     ld a,acc8 
@@ -1522,7 +1522,7 @@ Hexadecimal [24-Bits]
       0081CC 1E 01            [ 2]  304     ldw x,(U24,sp)
       0081CE 0D 05            [ 1]  305     tnz (SIGN,sp)
       0081D0 27 03            [ 1]  306     jreq atoi_exit
-      0081D2 CD 87 45         [ 4]  307     call neg24 
+      0081D2 CD 87 65         [ 4]  307     call neg24 
       0081D5                        308 atoi_exit: 
       0081D5 5B 05            [ 2]  309 	addw sp,#LOCAL_SIZE
       0081D7 90 85            [ 2]  310 	popw y
@@ -1540,7 +1540,7 @@ Hexadecimal [24-Bits]
       0081DC 6B 01            [ 1]  322     ld (1,sp),a 
       0081DE A6 01            [ 1]  323     ld a,#UART3
       0081E0 6B 02            [ 1]  324     ld (2,sp),a 
-      0081E2 CD 87 DB         [ 4]  325     call uart_putc 
+      0081E2 CD 87 FB         [ 4]  325     call uart_putc 
       0081E5 5B 02            [ 2]  326     addw sp,#2
       0081E7 81               [ 4]  327     ret
                                     328 ;-----------------------------------
@@ -1552,7 +1552,7 @@ Hexadecimal [24-Bits]
                                     334 ;-----------------------------------
       0081E8                        335 getc:
       0081E8 4B 01            [ 1]  336     push #UART3 
-      0081EA CD 88 2F         [ 4]  337     call uart_getc 
+      0081EA CD 88 4F         [ 4]  337     call uart_getc 
       0081ED 5B 01            [ 2]  338     addw sp,#1 
       0081EF 81               [ 4]  339     ret 
                                     340 
@@ -1574,7 +1574,7 @@ Hexadecimal [24-Bits]
       0081F2 A6 01            [ 1]  351     ld a,#UART3 
       0081F4 6B 03            [ 1]  352     ld (3,sp),a 
       0081F6 17 01            [ 2]  353     ldw (1,sp),y 
-      0081F8 CD 87 FF         [ 4]  354     call uart_puts 
+      0081F8 CD 88 1F         [ 4]  354     call uart_puts 
       0081FB 5B 03            [ 2]  355     addw sp,#3
       0081FD 81               [ 4]  356     ret
                                     357 
@@ -1626,7 +1626,7 @@ Hexadecimal [24-Bits]
       008236 88               [ 1]  398     push a 
       008237 7B 02            [ 1]  399 	ld a,(LEN,sp)
       008239 88               [ 1]  400     push a 
-      00823A CD 88 3F         [ 4]  401 	call uart_delete
+      00823A CD 88 5F         [ 4]  401 	call uart_delete
       00823D 5B 02            [ 2]  402     addw sp,#2 
       00823F 90 AE 00 57      [ 2]  403 	ldw y,#tib
       008243 72 5F 00 56      [ 1]  404 	clr count
@@ -1642,7 +1642,7 @@ Hexadecimal [24-Bits]
       008257 88               [ 1]  414     push a 
       008258 A6 01            [ 1]  415     ld a,#1
       00825A 88               [ 1]  416     push a 
-      00825B CD 88 3F         [ 4]  417     call uart_delete
+      00825B CD 88 5F         [ 4]  417     call uart_delete
       00825E 5B 02            [ 2]  418     addw sp,#2
       008260 20 A6            [ 2]  419     jra readln_loop	
       008262                        420 accept_char:
@@ -1928,7 +1928,7 @@ Hexadecimal [24-Bits]
       0083A7 88               [ 1]  675     push a 
       0083A8 A6 06            [ 1]  676     ld a,#B115200
       0083AA 88               [ 1]  677     push a 
-      0083AB CD 87 8D         [ 4]  678     call uart_init
+      0083AB CD 87 AD         [ 4]  678     call uart_init
       0083AE 5B 02            [ 2]  679     addw sp,#2  
                                     680     
                            000000   681     IDX_ERR_SUM=0
@@ -1938,7 +1938,7 @@ Hexadecimal [24-Bits]
                            000004   685     IDX_ERR_NEG=4
                                     686 
       0083B0                        687 presentation:
-      0083B0 90 AE 84 DC      [ 2]  688     ldw y,#whatisit
+      0083B0 90 AE 85 04      [ 2]  688     ldw y,#whatisit
       0083B4 CD 81 F0         [ 4]  689     call puts 
       0083B7 72 5F 00 54      [ 1]  690     clr in.w
       0083BB                        691 repl:
@@ -1983,112 +1983,133 @@ Hexadecimal [24-Bits]
 
 
 
-      0083F5 CC 84 10         [ 2]  728     jp test_add
+      0083F5 CC 84 17         [ 2]  728     jp test_add
       0083F8 A1 2D            [ 1]  729 1$: cp a,#'- 
       0083FA 26 03            [ 1]  730     jrne 2$ 
-      0083FC CC 84 23         [ 2]  731     jp test_sub 
+      0083FC CC 84 2A         [ 2]  731     jp test_sub 
       0083FF A1 2A            [ 1]  732 2$: cp a,#'* 
       008401 26 03            [ 1]  733     jrne 3$ 
-      008403 CC 84 36         [ 2]  734     jp test_mul 
+      008403 CC 84 3D         [ 2]  734     jp test_mul 
       008406 A1 2F            [ 1]  735 3$: cp a,#'/ 
       008408 26 03            [ 1]  736     jrne 4$ 
-      00840A CC 84 49         [ 2]  737     jp test_div 
-      00840D                        738 4$:     
-      00840D                        739 eval_exit:
-      00840D 5B 07            [ 2]  740     addw sp,#LOCAL_SIZE 
-      00840F 81               [ 4]  741     ret 
+      00840A CC 84 50         [ 2]  737     jp test_div 
+      00840D A1 6E            [ 1]  738 4$: cp a,#'n 
+      00840F 26 03            [ 1]  739     jrne 5$
+      008411 CC 84 74         [ 2]  740     jp test_neg
+      008414                        741 5$:
                                     742 
-      008410                        743 test_add:
-      008410 90 AE 84 FD      [ 2]  744     ldw y,#add24_test
-      008414 CD 81 F0         [ 4]  745     call puts 
-      008417 CD 81 48         [ 4]  746     call print_arguments
-      00841A CD 85 44         [ 4]  747     call add24 
-      00841D CD 81 31         [ 4]  748     call print_int24
-      008420 CC 84 0D         [ 2]  749     jp eval_exit
-      008423                        750 test_sub:
-      008423 90 AE 85 06      [ 2]  751     ldw y,#sub24_test
-      008427 CD 81 F0         [ 4]  752     call puts 
-      00842A CD 81 48         [ 4]  753     call print_arguments
-      00842D CD 85 51         [ 4]  754     call sub24 
-      008430 CD 81 31         [ 4]  755     call print_int24
-      008433 CC 84 0D         [ 2]  756     jp eval_exit
-      008436                        757 test_mul:
-      008436 90 AE 85 1B      [ 2]  758     ldw y,#mul24s_test
-      00843A CD 81 F0         [ 4]  759     call puts
-      00843D CD 81 48         [ 4]  760     call print_arguments
-      008440 CD 85 CB         [ 4]  761     call mul24s 
-      008443 CD 81 31         [ 4]  762     call print_int24
-      008446 CC 84 0D         [ 2]  763     jp eval_exit
-      008449                        764 test_div:
-      008449 90 AE 85 31      [ 2]  765     ldw y,#div24s_test
-      00844D CD 81 F0         [ 4]  766     call puts
-      008450 CD 81 48         [ 4]  767     call print_arguments
-      008453 CD 86 C0         [ 4]  768     call div24s 
-      008456 CD 81 31         [ 4]  769     call print_int24
-      008459 A6 52            [ 1]  770     ld a,#'R 
-      00845B CD 81 DA         [ 4]  771     call putc 
-      00845E A6 3D            [ 1]  772     ld a,#'=
-      008460 CD 81 DA         [ 4]  773     call putc 
-      008463 1E 01            [ 2]  774     ldw x,(1,sp)
-      008465 7B 03            [ 1]  775     ld a,(3,sp)
-      008467 CD 81 31         [ 4]  776     call print_int24  
-      00846A CC 84 0D         [ 2]  777     jp eval_exit
-                                    778 
-                                    779 
-      00846D                        780 print_error:
-      00846D 90 AE 84 84      [ 2]  781     ldw y,#msg_erreur
-      008471 72 5F 00 02      [ 1]  782     clr acc16 
+      008414                        743 eval_exit:
+      008414 5B 07            [ 2]  744     addw sp,#LOCAL_SIZE 
+      008416 81               [ 4]  745     ret 
+                                    746 
+      008417                        747 test_add:
+      008417 90 AE 85 25      [ 2]  748     ldw y,#add24_test
+      00841B CD 81 F0         [ 4]  749     call puts 
+      00841E CD 81 48         [ 4]  750     call print_arguments
+      008421 CD 85 6C         [ 4]  751     call add24 
+      008424 CD 81 31         [ 4]  752     call print_int24
+      008427 CC 84 14         [ 2]  753     jp eval_exit
+      00842A                        754 test_sub:
+      00842A 90 AE 85 2E      [ 2]  755     ldw y,#sub24_test
+      00842E CD 81 F0         [ 4]  756     call puts 
+      008431 CD 81 48         [ 4]  757     call print_arguments
+      008434 CD 85 79         [ 4]  758     call sub24 
+      008437 CD 81 31         [ 4]  759     call print_int24
+      00843A CC 84 14         [ 2]  760     jp eval_exit
+      00843D                        761 test_mul:
+      00843D 90 AE 85 43      [ 2]  762     ldw y,#mul24s_test
+      008441 CD 81 F0         [ 4]  763     call puts
+      008444 CD 81 48         [ 4]  764     call print_arguments
+      008447 CD 85 F3         [ 4]  765     call mul24s
+      00844A CD 81 31         [ 4]  766     call print_int24
+      00844D CC 84 14         [ 2]  767     jp eval_exit
+      008450                        768 test_div:
+      008450 90 AE 85 59      [ 2]  769     ldw y,#div24s_test
+      008454 CD 81 F0         [ 4]  770     call puts
+      008457 CD 81 48         [ 4]  771     call print_arguments
+      00845A CD 86 E4         [ 4]  772     call div24s 
+      00845D CD 81 31         [ 4]  773     call print_int24
+      008460 A6 52            [ 1]  774     ld a,#'R 
+      008462 CD 81 DA         [ 4]  775     call putc 
+      008465 A6 3D            [ 1]  776     ld a,#'=
+      008467 CD 81 DA         [ 4]  777     call putc 
+      00846A 1E 01            [ 2]  778     ldw x,(1,sp)
+      00846C 7B 03            [ 1]  779     ld a,(3,sp)
+      00846E CD 81 31         [ 4]  780     call print_int24  
+      008471 CC 84 14         [ 2]  781     jp eval_exit
+      008474                        782 test_neg:
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
 Hexadecimal [24-Bits]
 
 
 
-      008475 48               [ 1]  783     sll a 
-      008476 C7 00 03         [ 1]  784     ld acc8,a
-      008479 72 B9 00 02      [ 2]  785     addw y,acc16 
-      00847D 90 FE            [ 2]  786     ldw y,(y)
-      00847F CD 81 F0         [ 4]  787     call puts
-      008482 20 FE            [ 2]  788     jra .
-                                    789 
-                                    790 
-      008484 84 8E 84 9C 84 A8 84   791 msg_erreur: .word erreur_add,erreur_sub,erreur_mul,erreur_div,erreur_neg
-             B5 84 C1
-                                    792 
-      00848E 65 72 72 65 75 72 20   793 erreur_add: .asciz "erreur somme\n"
+      008474 90 AE 85 63      [ 2]  783     ldw y,#neg24_test
+      008478 CD 81 F0         [ 4]  784     call puts 
+      00847B CD 81 48         [ 4]  785     call print_arguments 
+      00847E 7B 03            [ 1]  786     ld a,(N1+2,sp)
+      008480 1E 01            [ 2]  787     ldw x,(N1,sp)
+      008482 CD 87 65         [ 4]  788     call neg24 
+      008485 CD 81 31         [ 4]  789     call print_int24 
+      008488 7B 06            [ 1]  790     ld a,(N2+2,sp)
+      00848A 1E 04            [ 2]  791     ldw x,(N2,sp)
+      00848C CD 87 65         [ 4]  792     call neg24 
+      00848F CD 81 31         [ 4]  793     call print_int24 
+      008492 CC 84 14         [ 2]  794     jp eval_exit 
+                                    795 
+      008495                        796 print_error:
+      008495 90 AE 84 AC      [ 2]  797     ldw y,#msg_erreur
+      008499 72 5F 00 02      [ 1]  798     clr acc16 
+      00849D 48               [ 1]  799     sll a 
+      00849E C7 00 03         [ 1]  800     ld acc8,a
+      0084A1 72 B9 00 02      [ 2]  801     addw y,acc16 
+      0084A5 90 FE            [ 2]  802     ldw y,(y)
+      0084A7 CD 81 F0         [ 4]  803     call puts
+      0084AA 20 FE            [ 2]  804     jra .
+                                    805 
+                                    806 
+      0084AC 84 B6 84 C4 84 D0 84   807 msg_erreur: .word erreur_add,erreur_sub,erreur_mul,erreur_div,erreur_neg
+             DD 84 E9
+                                    808 
+      0084B6 65 72 72 65 75 72 20   809 erreur_add: .asciz "erreur somme\n"
              73 6F 6D 6D 65 0A 00
-      00849C 65 72 72 65 75 72 20   794 erreur_sub: .asciz "erreur sub\n"
+      0084C4 65 72 72 65 75 72 20   810 erreur_sub: .asciz "erreur sub\n"
              73 75 62 0A 00
-      0084A8 65 72 72 65 75 72 20   795 erreur_mul: .asciz "erreur mult\n"
+      0084D0 65 72 72 65 75 72 20   811 erreur_mul: .asciz "erreur mult\n"
              6D 75 6C 74 0A 00
-      0084B5 65 72 72 65 75 72 20   796 erreur_div: .asciz "erreur div\n"
+      0084DD 65 72 72 65 75 72 20   812 erreur_div: .asciz "erreur div\n"
              64 69 76 0A 00
-      0084C1 65 72 72 65 75 72 20   797 erreur_neg: .asciz "erreur neg\n"
+      0084E9 65 72 72 65 75 72 20   813 erreur_neg: .asciz "erreur neg\n"
              6E 65 67 0A 00
-                                    798 
-      0084CD 0A 61 6C 6C 20 74 65   799 test_ok: .asciz "\nall tests ok\n"
+                                    814 
+      0084F5 0A 61 6C 6C 20 74 65   815 test_ok: .asciz "\nall tests ok\n"
              73 74 73 20 6F 6B 0A
              00
-      0084DC 0A 54 65 73 74 20 70   800 whatisit: .asciz "\nTest pour la librairie math24.\n"
+      008504 0A 54 65 73 74 20 70   816 whatisit: .asciz "\nTest pour la librairie math24.\n"
              6F 75 72 20 6C 61 20
              6C 69 62 72 61 69 72
              69 65 20 6D 61 74 68
              32 34 2E 0A 00
-      0084FD 0A 61 64 64 32 34 3A   801 add24_test: .asciz "\nadd24: "
+      008525 0A 61 64 64 32 34 3A   817 add24_test: .asciz "\nadd24: "
              20 00
-      008506 0A 73 75 62 32 34 3A   802 sub24_test: .asciz "\nsub24: "
+      00852E 0A 73 75 62 32 34 3A   818 sub24_test: .asciz "\nsub24: "
              20 00
-      00850F 0A 6D 75 6C 32 34 5F   803 mul24_8u_test: .asciz "\nmul24_8u: " 
+      008537 0A 6D 75 6C 32 34 5F   819 mul24_8u_test: .asciz "\nmul24_8u: " 
              38 75 3A 20 00
-      00851B 0A 6D 75 6C 32 34 73   804 mul24s_test: .asciz "\nmul24s: "
+      008543 0A 6D 75 6C 32 34 73   820 mul24s_test: .asciz "\nmul24s: "
              3A 20 00
-      008525 0A 64 69 76 32 34 5F   805 div24_8u_test: .asciz "\ndiv24_8u: "
-             38 75 3A 20 00
-      008531 0A 64 69 76 32 34 73   806 div24s_test: .asciz "\ndiv24s: "
-             3A 20 00
-      00853B 0A 6E 65 67 32 34 3A   807 neg24_test: .asciz "\nneg24: "
-             20 00
-                                    808 
+      00854D 0A 64 69 76 32 34 5F   821 div24_8u_test: .asciz "\ndiv24_8u: "
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
+Hexadecimal  38-Bits]
+
+
+
+             38 75 3A 20 00
+      008555 75 3A 20 00 0A 64 69   822 div24s_test: .asciz "\ndiv24s: "
+             76 32 34
+      00855F 73 3A 20 00 0A 6E 65   823 neg24_test: .asciz "\nneg24: "
+             67 32
+                                    824 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2148,7 +2169,7 @@ Symbol Table
     CLK_SWCR=  000000     |     CLK_SWCR=  000001     |     CLK_SWCR=  000002 
     CLK_SWCR=  000003     |     CLK_SWIM=  0050CD     |     CLK_SWR =  0050C4 
     CLK_SWR_=  0000B4     |     CLK_SWR_=  0000E1     |     CLK_SWR_=  0000D2 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 19.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2208,7 +2229,7 @@ Symbol Table
     I2C_OARH=  000001     |     I2C_OARH=  000002     |     I2C_OARH=  000006 
     I2C_OARH=  000007     |     I2C_OARL=  005213     |     I2C_OARL=  000000 
     I2C_OAR_=  000813     |     I2C_OAR_=  000009     |     I2C_PECR=  00521E 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 19.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 20.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2268,7 +2289,7 @@ Symbol Table
     PB_DDR  =  005007     |     PB_IDR  =  005006     |     PB_ODR  =  005005 
     PC      =  00000A     |     PC_BASE =  00500A     |     PC_CR1  =  00500D 
     PC_CR2  =  00500E     |     PC_DDR  =  00500C     |     PC_IDR  =  00500B 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 20.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 21.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2328,7 +2349,7 @@ Symbol Table
     TIM1_ETR=  005253     |     TIM1_ETR=  000006     |     TIM1_ETR=  000000 
     TIM1_ETR=  000001     |     TIM1_ETR=  000002     |     TIM1_ETR=  000003 
     TIM1_ETR=  000007     |     TIM1_ETR=  000004     |     TIM1_ETR=  000005 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 21.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 22.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2388,7 +2409,7 @@ Symbol Table
     UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
     UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
     UART_CR1=  000003     |     UART_CR2=  000005     |     UART_CR2=  000004 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 22.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 23.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2414,32 +2435,33 @@ Symbol Table
     WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
     WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
   1 acc16      000001 R   |   1 acc24      000000 R   |   1 acc8       000002 R
-  5 accept_c   0001E2 R   |     add24      ****** GX  |   5 add24_te   00047D R
+  5 accept_c   0001E2 R   |     add24      ****** GX  |   5 add24_te   0004A5 R
   5 atoi       0000E6 GR  |   5 atoi_exi   000155 R   |   5 cancel     00021E R
   5 clock_in   00002F R   |   5 convert_   00028B R   |   1 count      000055 R
   5 del_back   0001CB R   |   5 del_line   0001B4 R   |     div24_8u   ****** GX
-  5 div24_8u   0004A5 R   |     div24s     ****** GX  |   5 div24s_t   0004B1 R
-  5 div_fata   000001 R   |   5 erreur_a   00040E R   |   5 erreur_d   000435 R
-  5 erreur_m   000428 R   |   5 erreur_n   000441 R   |   5 erreur_s   00041C R
-  5 eval       000357 R   |   5 eval_exi   00038D R   |   5 exceptio   000022 R
+  5 div24_8u   0004CD R   |     div24s     ****** GX  |   5 div24s_t   0004D9 R
+  5 div_fata   000001 R   |   5 erreur_a   000436 R   |   5 erreur_d   00045D R
+  5 erreur_m   000450 R   |   5 erreur_n   000469 R   |   5 erreur_s   000444 R
+  5 eval       000357 R   |   5 eval_exi   000394 R   |   5 exceptio   000022 R
   5 getc       000168 R   |   1 in         000054 R   |   1 in.w       000053 R
   5 init0      00031E R   |   5 itoa       00003E GR  |   5 itoa_loo   00006A R
-  5 msg_erre   000404 R   |     mul24_8u   ****** GX  |   5 mul24_8u   00048F R
-    mul24s     ****** GX  |   5 mul24s_t   00049B R   |     neg24      ****** GX
-  5 neg24_te   0004BB R   |   5 new_line   0000DC R   |   5 next_wor   0002CA GR
+  5 msg_erre   00042C R   |     mul24_8u   ****** GX  |   5 mul24_8u   0004B7 R
+    mul24s     ****** GX  |   5 mul24s_t   0004C3 R   |     neg24      ****** GX
+  5 neg24_te   0004E3 R   |   5 new_line   0000DC R   |   5 next_wor   0002CA GR
   5 number     000317 GR  |   1 pad        000003 R   |   5 parse_qu   000259 R
-  5 presenta   000330 R   |   5 print_ar   0000C8 R   |   5 print_er   0003ED R
+  5 presenta   000330 R   |   5 print_ar   0000C8 R   |   5 print_er   000415 R
   5 print_in   0000B1 R   |   5 putc       00015A R   |   5 puts       000170 R
   5 readln     00017E GR  |   5 readln_l   000188 R   |   5 readln_q   000228 R
   5 readln_q   00022D R   |   5 repl       00033B R   |   5 reprint    0001F7 R
   5 scan       000247 R   |   5 skip       000235 R   |     sub24      ****** GX
-  5 sub24_te   000486 R   |   5 test_add   000390 R   |   5 test_div   0003C9 R
-  5 test_mul   0003B6 R   |   5 test_ok    00044D R   |   5 test_sub   0003A3 R
-  1 tib        000056 R   |   5 to_lower   000300 GR  |   5 to_upper   00030B GR
-    uart_del   ****** GX  |     uart_get   ****** GX  |     uart_ini   ****** GX
-    uart_put   ****** GX  |     uart_put   ****** GX  |   5 whatisit   00045C R
+  5 sub24_te   0004AE R   |   5 test_add   000397 R   |   5 test_div   0003D0 R
+  5 test_mul   0003BD R   |   5 test_neg   0003F4 R   |   5 test_ok    000475 R
+  5 test_sub   0003AA R   |   1 tib        000056 R   |   5 to_lower   000300 GR
+  5 to_upper   00030B GR  |     uart_del   ****** GX  |     uart_get   ****** GX
+    uart_ini   ****** GX  |     uart_put   ****** GX  |     uart_put   ****** GX
+  5 whatisit   000484 R
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 23.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 24.
 Hexadecimal [24-Bits]
 
 Area Table
@@ -2449,5 +2471,5 @@ Area Table
    2 SSEG       size      0   flags    8
    3 SSEG0      size    100   flags    8
    4 HOME       size     80   flags    0
-   5 CODE       size    4C4   flags    0
+   5 CODE       size    4EC   flags    0
 
