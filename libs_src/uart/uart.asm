@@ -101,6 +101,7 @@ select_uart:
 ; local var 
     ACC16=1
     LOCAL_SIZE=2     
+_uart_init::
 uart_init::
     sub sp,#LOCAL_SIZE 
     clr (ACC16,sp)
@@ -158,6 +159,7 @@ config_baud:
     ARG_OFS=2
     CHAR=ARG_OFS+1
     UART_ID=ARG_OFS+2
+_uart_putc::
 uart_putc::
     ld a,(UART_ID,sp)
     call select_uart
@@ -180,6 +182,7 @@ uart_putc::
     ARG_OFS=2
     N=ARG_OFS+1
     UART=ARG_OFS+2
+_uart_spaces::
 uart_spaces::
 	tnz (N,sp)
     jreq 3$
@@ -205,6 +208,7 @@ uart_spaces::
     ARG_OFS=6
     STR=ARG_OFS+1
     UART=ARG_OFS+3        
+_uart_puts::
 uart_puts::
     pushw x 
     pushw y
@@ -237,6 +241,7 @@ uart_puts::
 ;------------------------------------
     ARG_OFS=4
     UART=ARG_OFS+1
+_uart_query::
 uart_query::
     pushw x 
     ld a,(UART,sp)
@@ -257,7 +262,8 @@ uart_query::
 ;   A           character received 
 ;------------------------------------
     ARG_OFS=4
-    UART=ARG_OFS+1    
+    UART=ARG_OFS+1 
+_uart_getc::       
 uart_getc::
     pushw x
     ld a,(UART,sp)
@@ -281,6 +287,7 @@ uart_getc::
     ARG_OFS=2
     N=ARG_OFS+1 
     UART=ARG_OFS+2
+_uart_delete:: ; pour appel à partir de 'C'.
 uart_delete::
 del_loop:
 	tnz (N,sp)

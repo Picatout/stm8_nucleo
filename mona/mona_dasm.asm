@@ -1049,7 +1049,7 @@ prefixes: .byte  0x72, 0x90, 0x91, 0x92, 0
 ;  helper macros 
 ;----------------------------
 ; lsize is local variables size in bytes 
-; nomae is routine name 
+; name is routine name 
     .macro _fn_entry lsize name
     LOCAL_SIZE = lsize
     STRUCT=3+LOCAL_SIZE

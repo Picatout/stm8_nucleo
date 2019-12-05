@@ -4,22 +4,27 @@
 
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
-NAME=math24_test
+CNAME=ch5_c
+ANAME=ch5_asm
+TNAME=ch5_demo
 SDAS=sdasstm8
 SDCC=sdcc
-SDLD=sdld
+SDLD=sdldstm8
 LDFLAGS=--out-fmt-ihx
 CFLAGS=
 FLASH=stm8flash
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
-OBJECTS=$(BUILD)$(NAME).rel
+LIB_PATH=../lib
+CREL=$(BUILD)$(CNAME).rel 
+AREL=$(BUILD)$(ANAME).rel
+OBJECTS=$(CREL) $(AREL) 
 SYMBOLS=$(OBJECTS:.rel=.sym)
 ASMS=$(OBJECTS:.rel=.asm)
 LISTS=$(OBJECTS:.rel=.lst)
 RSTS=$(OBJECTS:.rel=.rst)
-TARGET=$(BUILD)$(NAME).ihx
+TARGET=$(BUILD)$(TNAME).ihx
 MAP=$(TARGET:.ihx=.map)
 LK=$(TARGET:.ihx=.lk)
 CDB=$(TARGET:.ihx=.cdb)
@@ -35,19 +40,21 @@ flash: $(TARGET)
 	@echo "***************"
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
-%.rel: $(NAME).asm  $(INC)stm8s208.inc
+%.rel: $(ANAME).asm $(CNAME).c  $(INC)stm8s208.inc
 	@echo
-	@echo "***************"
-	@echo "   assembling  "
-	@echo "***************"
-	$(SDAS) -g -l -o $(BUILD)$(NAME).rel $(NAME).asm 
-	
+	@echo "**************"
+	@echo "  assemblage  "
+	@echo "**************"
+	$(SDAS) -g -l -o $(AREL) $(ANAME).asm 
+	$(SDCC) -c -mstm8 -o $(CREL) $(CNAME).c 
+
+
 $(TARGET): $(OBJECTS) $(INCLUDES)
 	@echo
 	@echo "***************"
 	@echo "linking files"
 	@echo "***************"
-	$(SDCC) -mstm8 -lstm8 $(LDFLAGS) -o $@ $(OBJECTS) 
+	$(SDCC)  -mstm8 -L$(LIB_PATH) -lstm8 -luart $(LDFLAGS) -o $@ $(OBJECTS) 
 	@ls -gG $(TARGET)
 	
     	
