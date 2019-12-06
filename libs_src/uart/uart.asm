@@ -203,31 +203,35 @@ uart_spaces::
 ;   str         char *string to print
 ;   uart        uart identifier
 ; output:
-;   none 
+;   len         in X  
 ;------------------------------------
     ARG_OFS=6
     STR=ARG_OFS+1
-    UART=ARG_OFS+3        
+    UART=ARG_OFS+3 
+; uart_putc arguments
+    PUTC_CHAR=1 
+    PUTC_UART=2     
+    LOCAL_SIZE=2
 _uart_puts::
 uart_puts::
-    pushw x 
     pushw y
+    sub sp,#LOCAL_SIZE 
+    clrw x 
     ldw y,(STR,sp) 
 ; check for null pointer  
 	cpw y,#0
     jreq 1$ 
     ld a,(UART,sp)
-    push a 
+    ld (PUTC_UART,sp),a  
 0$: ld a,(y)
 	jreq 1$
-	push a 
+	ld (PUTC_CHAR,sp),a 
     call uart_putc 
-    pop a  
 	incw y
+    incw x 
 	jra 0$
-1$: pop a 
+1$: addw sp,#LOCAL_SIZE 
     popw y 
-    popw x 
     ret
 
 ;------------------------------------

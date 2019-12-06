@@ -6,7 +6,7 @@
 // prototype des fonctions en assembleur 
 // fonctions dans uart.lib
 void uart_init(uint8_t baud,uint8_t uart_id);
-void uart_puts(char *str,uint8_t uart_id);
+int uart_puts(char *str,uint8_t uart_id);
 // fonctions dans ch4_demo.asm
 void clock_init(void);
 void led_init(void);

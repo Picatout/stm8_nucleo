@@ -21,15 +21,15 @@ Hexadecimal [24-Bits]
                                      16 ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
                                      17 ;;
                                      18 ;--------------------------------------
-                                     19 ;   UART peripherals module
-                                     20 ;   DATE: 2019-11-29
+                                     19 ;   console Input/Output module
+                                     20 ;   DATE: 2019-12-05
                                      21 ;   NOTE: global routines interface designed 
                                      22 ;         to be callable from C with the
                                      23 ;         prototype given. SDCC for stm8 
                                      24 ;         pass functions arguments on stack
                                      25 ;         pushed from right to left.
                                      26 ;--------------------------------------
-                                     27     .module UART
+                                     27     .module CONIO
                                      28 
                                         	.include "../../inc/nucleo_8s208.inc"
                                         ;;
@@ -1216,343 +1216,300 @@ Hexadecimal [24-Bits]
                                  
                                      33     .list 
                                      34 
-                                     35     .area DATA 
-                                     36 
-                                     37     .area CODE 
-      000000 55 41 52 54 00          38 .asciz "UART"
-                                     39 ; contain uarts registers base address
-      000005 52 30 52 40             40 uart_regs: .word UART1_BASE,UART3_BASE 
-                                     41 
-                                     42 ; baud rate constants for BRR1 and BRR2 
-                                     43 ; Fcy=8Mhz , HSI
-      000009                         44 baud_fcy8:
-      000009 D0 05                   45     .byte 0xd0,0x05 ; 2400 
-      00000B 68 03                   46     .byte 0x68,0x03 ; 4800
-      00000D 34 01                   47     .byte 0x34,0x01 ; 9600
-      00000F 1A 01                   48     .byte 0x1a,0x01 ; 19200
-      000011 0D 00                   49     .byte 0x0d,0x00 ; 38400
-      000013 08 0B                   50     .byte 0x08,0x0b ; 57600
-      000015 04 05                   51     .byte 0x04,0x05 ; 115200 
-      000017 02 03                   52     .byte 0x02,0x03 ; 230400
-      000019 01 01                   53     .byte 0x01,0x01 ; 460800 
-                                     54 ; Fcy=16Mhz, HSE maximum frequency
-      00001B                         55 baud_fcy16:
-      00001B A0 1B                   56     .byte 0xa0,0x1b ; 2400 
-      00001D D0 05                   57     .byte 0xd0,0x05 ; 4800 
-      00001F 68 03                   58     .byte 0x68,0x03 ; 9600
-      000021 34 01                   59     .byte 0x34,0x01 ; 19200
-      000023 1A 01                   60     .byte 0x1a,0x01 ; 38400
-      000025 0D 00                   61     .byte 0x0d,0x00 ; 57600
-      000027 08 0B                   62     .byte 0x08,0x0b ; 115200
-      000029 04 05                   63     .byte 0x04,0x05 ; 230400 
-      00002B 02 03                   64     .byte 0x02,0x03 ; 460800
-      00002D 01 01                   65     .byte 0x01,0x01 ; 921600 
-                                     66 
-                                     67 ;--------------------------------------
-                                     68 ; select uart base register
-                                     69 ; private function 
-                                     70 ; input:
-                                     71 ;   A       UART_ID 
-                                     72 ; output:
-                                     73 ;   X       uart register base address
-                                     74 ;-------------------------------------
-                           000001    75     ACC16=1
-                           000002    76     LOCAL_SIZE=2
+                                     35 ;------------------------------------
+                                     36 ;       MACROS
+                                     37 ;------------------------------------
+                                     38     ;release local variables space
+                                     39     ;from stack.
+                                     40     .macro _drop n 
+                                     41     addw sp,#n
+                                     42     .endm
+                                     43 
+                                     44     ; reserve local variables space 
+                                     45     ; on stack.
+                                     46     .macro _vars n 
+                                     47     sub sp,#n 
+                                     48     .endm
+                                     49 
+                                     50     ; insert function exit code
+                                     51     .macro _fn_exit 
+                                     52     _drop VSIZE 
+                                     53     ret 
+                                     54     .endm 
+                                     55 
+                                     56 ;-----------------------------------------
+                                     57     .area DATA 
+      000000                         58 std_dev: .blkb 1  ; standard device identifier
+                                     59 
+                                     60 ;------------------------------------------
+                                     61     .area CODE 
+      000000 43 4F 4E 49 4F 00       62 .asciz "CONIO"
+                                     63 
+                                     64 ;----------------------------
+                                     65 ; select standard I/O device
+                                     66 ; c prototype: void select_stdio(char dev_id)
+                                     67 ; input:
+                                     68 ;   DEV_ID     uint8_t 
+                                     69 ; output:
+                                     70 ;   none
+                                     71 ;----------------------------
+                           000002    72     ARG_OFS=2
+                           000003    73     DEV_ID=ARG_OFS+1  ; one byte 
+      000006                         74 _select_stdio::
+      000006                         75 select_stdio::
+      000006 7B 03            [ 1]   76     ld a,(DEV_ID,sp)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
 Hexadecimal [24-Bits]
 
 
 
-      00002F                         77 select_uart:
-      00002F 52 02            [ 2]   78     sub sp,#LOCAL_SIZE
-      000031 48               [ 1]   79     sll a 
-      000032 6B 02            [ 1]   80     ld (ACC16+1,sp),a 
-      000034 0F 01            [ 1]   81     clr (ACC16,sp) 
-      000036 AE 00 05         [ 2]   82     ldw x,#uart_regs 
-      000039 72 FB 01         [ 2]   83     addw x,(ACC16,sp)
-      00003C FE               [ 2]   84     ldw x,(x)
-      00003D 5B 02            [ 2]   85     addw sp,#LOCAL_SIZE 
-      00003F 81               [ 4]   86     ret
-                                     87 
-                                     88 ;----------------------------------------------
-                                     89 ; initialize UART peripheral
-                                     90 ; initilialize config: 8N1 no flow control
-                                     91 ; C prototype:  void uart_init(uint8_t baud,uint8_t uart_id)
-                                     92 ; input:
-                                     93 ;   baud        uint8_t baud
-                                     94 ;   uart_id     uin8t_t uart selector {UART1,UART3}
-                                     95 ; output:
-                                     96 ;   none
-                                     97 ;---------------------------------------------
-                           000004    98     ARG_OFS=4  
-                           000005    99     BAUD=ARG_OFS+1 
-                           000006   100     UART=ARG_OFS+2
-                                    101 ; local var 
-                           000001   102     ACC16=1
-                           000002   103     LOCAL_SIZE=2     
-      000040                        104 _uart_init::
-      000040                        105 uart_init::
-      000040 52 02            [ 2]  106     sub sp,#LOCAL_SIZE 
-      000042 0F 01            [ 1]  107     clr (ACC16,sp)
-                                    108 ;configure port
-      000044 7B 06            [ 1]  109     ld a,(UART,sp)
-      000046 26 0E            [ 1]  110     jrne uart3
-      000048                        111 uart1:
-      000048 72 1A 50 02      [ 1]  112 	bset PA_DDR,#UART1_TX_PIN ; tx pin
-      00004C 72 1A 50 03      [ 1]  113 	bset PA_CR1,#UART1_TX_PIN ; push-pull output
-      000050 72 1A 50 04      [ 1]  114 	bset PA_CR2,#UART1_TX_PIN ; fast output
-      000054 20 0C            [ 2]  115     jra config_baud 
-      000056                        116 uart3:
-      000056 72 1A 50 11      [ 1]  117 	bset PD_DDR,#UART3_TX_PIN ; tx pin
-      00005A 72 1A 50 12      [ 1]  118 	bset PD_CR1,#UART3_TX_PIN ; push-pull output
-      00005E 72 1A 50 13      [ 1]  119 	bset PD_CR2,#UART3_TX_PIN ; fast output
-      000062                        120 config_baud:
-      000062 CD 00 2F         [ 4]  121     call select_uart 
-                                    122 ; check whick clock is active    
-      000065 A6 B4            [ 1]  123     ld a,#CLK_SWR_HSE ; HSE clock 8Mhz 
-      000067 C1 50 C3         [ 1]  124     cp a,CLK_CMSR
-      00006A 26 06            [ 1]  125     jrne 4$ 
-      00006C 90 AE 00 09      [ 2]  126     ldw y,#baud_fcy8
-      000070 20 04            [ 2]  127     jra 5$
-      000072 90 AE 00 1B      [ 2]  128 4$: ldw y,#baud_fcy16 
-      000076 7B 05            [ 1]  129 5$: ld a,(BAUD,sp)
-      000078 48               [ 1]  130     sll a 
-      000079 6B 02            [ 1]  131     ld (ACC16+1,sp),a 
+      000008 C7 00 00         [ 1]   77     ld std_dev,A 
+      00000B 81               [ 4]   78     ret 
+                                     79 
+                                     80 ;----------------------------------------
+                                     81 ; output a character to standard output
+                                     82 ;  C prototype:  int putchar(int char)
+                                     83 ; input:
+                                     84 ;   CHAR        int, character to output
+                                     85 ; output:
+                                     86 ;    X          same character  
+                                     87 ;----------------------------------------
+                           000002    88     VSIZE=2
+                           000004    89     ARG_OFS=2+VSIZE
+                           000005    90     CHAR=ARG_OFS+1  ; 2 bytes 
+                                     91 ;  local variables
+                           000001    92     PUTC_CHAR=1
+                           000002    93     PUTC_UART=2
+      00000C                         94 _putchar::
+      00000C                         95 putchar::
+      00000C                         96     _vars VSIZE 
+      00000C 52 02            [ 2]    1     sub sp,#VSIZE 
+      00000E C6 00 00         [ 1]   97     ld a,std_dev
+      000011 6B 02            [ 1]   98     ld (PUTC_UART,sp),a
+      000013 7B 06            [ 1]   99     ld a,(CHAR+1,sp)
+      000015 6B 01            [ 1]  100     ld (PUTC_CHAR,sp),a 
+      000017 CD 00 00         [ 4]  101     call uart_putc 
+      00001A                        102 _fn_exit     
+      00001A                          1     _drop VSIZE 
+      00001A 5B 02            [ 2]    1     addw sp,#VSIZE
+      00001C 81               [ 4]    2     ret 
+                                    103 
+                                    104 ;------------------------------------------
+                                    105 ; wait a character from standard input 
+                                    106 ; C prototype: int getchar(void)
+                                    107 ; input:
+                                    108 ;   none
+                                    109 ; output:
+                                    110 ;   X       int character received 
+                                    111 ;--------------------------------------------
+                           000001   112     VSIZE=1
+                           000003   113     ARG_OFS=2+VSIZE
+                           000001   114     ARG_UART=1
+      00001D                        115 _getchar::
+      00001D                        116 getchar::
+      00001D                        117     _vars VSIZE 
+      00001D 52 01            [ 2]    1     sub sp,#VSIZE 
+      00001F C6 00 00         [ 1]  118     ld a,std_dev
+      000022 6B 01            [ 1]  119     ld (ARG_UART,sp),a 
+      000024 CD 00 00         [ 4]  120     call uart_getc 
+      000027 5F               [ 1]  121     clrw x
+      000028 97               [ 1]  122     ld xl,a 
+      000029                        123 _fn_exit 
+      000029                          1     _drop VSIZE 
+      000029 5B 01            [ 2]    1     addw sp,#VSIZE
+      00002B 81               [ 4]    2     ret 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
 Hexadecimal [24-Bits]
 
 
 
-      00007B 72 F9 01         [ 2]  132     addw y,(ACC16,sp) 
-                                    133 ; now Y point to baud rate values for BRR1
-                                    134 ; ***** BRR2 must be loaded before BRR1 *****
-      00007E 90 E6 01         [ 1]  135     ld a,(1,y)
-      000081 E7 03            [ 1]  136     ld (UART_BRR2,x),a  
-      000083 90 F6            [ 1]  137     ld a,(y)
-      000085 E7 02            [ 1]  138     ld (UART_BRR1,x),a 
-                                    139 ; enable TX and RX but no interrupts
-      000087 A6 0C            [ 1]  140     ld a,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
-      000089 E7 05            [ 1]  141     ld (UART_CR2,x),a 
-      00008B 5B 02            [ 2]  142     addw sp,#LOCAL_SIZE 
-      00008D 81               [ 4]  143     ret
-                                    144 
-                                    145 
-                                    146 
-                                    147 ;------------------------------------
-                                    148 ;  serial port communication routines
-                                    149 ;------------------------------------
-                                    150 ;------------------------------------
-                                    151 ; transmit character in a via UART3
-                                    152 ; C prototype: char uart_putc(char c, unit8_t uart)
-                                    153 ; input:
-                                    154 ;   CHAR        stack argument 
-                                    155 ;   UART_ID     stack argument
+                                    124 
+                                    125 ;----------------------------------------------
+                                    126 ; output a string to standard output
+                                    127 ; C prototype: int puts(const char*); 
+                                    128 ; input:
+                                    129 ;   STR         pointer to string 
+                                    130 ; output:
+                                    131 ;   X           string length
+                                    132 ;------------------------------------------------
+                           000003   133         VSIZE=3
+                           000005   134         ARG_OFS=VSIZE+2
+                           000001   135         STR=1 
+                                    136 ; uart_puts arguments
+                           000001   137         PUTS_STR=1   ; 2 bytes
+                           000003   138         PUTS_UART=3  ; 1 byte      
+      00002C                        139 _puts::
+      00002C                        140 puts::
+      00002C                        141     _vars VSIZE 
+      00002C 52 03            [ 2]    1     sub sp,#VSIZE 
+      00002E C6 00 00         [ 1]  142     ld a,std_dev 
+      000031 6B 03            [ 1]  143     ld (PUTS_UART,sp),a 
+      000033 1E 01            [ 2]  144     ldw x,(STR,sp)
+      000035 1F 01            [ 2]  145     ldw (PUTS_STR,sp),x 
+      000037 CD 00 00         [ 4]  146     call uart_puts
+      00003A                        147 _fn_exit 
+      00003A                          1     _drop VSIZE 
+      00003A 5B 03            [ 2]    1     addw sp,#VSIZE
+      00003C 81               [ 4]    2     ret 
+                                    148 
+                                    149 
+                                    150 ;------------------------------------------------
+                                    151 ; read a string from standard input. 
+                                    152 ; buffer size is limited to 80 characters
+                                    153 ; C prototype: char *gets(char *buffer)
+                                    154 ; input:
+                                    155 ;   BUFFER          char* receive buffer 
                                     156 ; output:
-                                    157 ;   none 
-                                    158 ;------------------------------------
-                           000002   159     ARG_OFS=2
-                           000003   160     CHAR=ARG_OFS+1
-                           000004   161     UART_ID=ARG_OFS+2
-      00008E                        162 _uart_putc::
-      00008E                        163 uart_putc::
-      00008E 7B 04            [ 1]  164     ld a,(UART_ID,sp)
-      000090 CD 00 2F         [ 4]  165     call select_uart
-      000093 A6 80            [ 1]  166 1$:	ld a,#(1<<UART_SR_TXE)
-      000095 E4 00            [ 1]  167     and a,(UART_SR,x)
-      000097 27 FA            [ 1]  168     jreq 1$
-      000099 7B 03            [ 1]  169     ld a,(CHAR,sp)
-      00009B E7 01            [ 1]  170 	ld (UART_DR,x),a
-      00009D 81               [ 4]  171     ret
-                                    172 
-                                    173 ;------------------------------------
-                                    174 ; print n spaces 
-                                    175 ; C prototype: void uart_spaces(uint8_t n,uint8_t uart_id)
-                                    176 ; input: 
-                                    177 ;   n  		number of space to print 
-                                    178 ;   uart_id   uart selector
-                                    179 ; output:
-                                    180 ;	none 
-                                    181 ;------------------------------------
-                           000002   182     ARG_OFS=2
-                           000003   183     N=ARG_OFS+1
-                           000004   184     UART=ARG_OFS+2
-      00009E                        185 _uart_spaces::
-      00009E                        186 uart_spaces::
+                                    157 ;   BUFFER          int line length.
+                                    158 ;-------------------------------------------------
+                           00004F   159         MAX_LEN=79 ; maximum input string length
+                           000002   160         VSIZE=2
+                           000004   161         ARG_OFS=2+VSIZE
+                           000001   162         BUFFER=1
+                                    163 	; local variables
+                           000001   164 	LEN = 1  ; accepted line length
+                           000002   165 	RXCHAR = 2 ; last char received
+      00003D                        166 _gets::
+      00003D                        167 gets::
+      00003D                        168     _vars VSIZE 
+      00003D 52 02            [ 2]    1     sub sp,#VSIZE 
+      00003F 0F 02            [ 1]  169 	clr (RXCHAR,sp) 
+      000041 0F 01            [ 1]  170 	clr (LEN,sp)
+      000043 16 01            [ 2]  171  	ldw y,(BUFFER,sp) ; input buffer
+      000045                        172 gets_loop:
+      000045 CD 00 1D         [ 4]  173 	call getchar
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-      00009E 0D 03            [ 1]  187 	tnz (N,sp)
-      0000A0 27 0F            [ 1]  188     jreq 3$
-      0000A2 7B 04            [ 1]  189     ld a,(UART,sp)
-      0000A4 88               [ 1]  190     push a 
-      0000A5 A6 20            [ 1]  191     ld a,#SPACE 
-      0000A7 88               [ 1]  192     push a 
-      0000A8 CD 00 8E         [ 4]  193     call uart_putc 
-      0000AB 5B 02            [ 2]  194     addw sp,#2 
-      0000AD 0A 03            [ 1]  195     dec (N,sp)
-      0000AF 20 ED            [ 2]  196     jra uart_spaces 
-      0000B1 81               [ 4]  197 3$: ret
-                                    198 
-                                    199 ;------------------------------------
-                                    200 ; put string to uart channel
-                                    201 ; C prototype: void uart_puts(char *str,uint8_t uart)
-                                    202 ; input:
-                                    203 ;   str         char *string to print
-                                    204 ;   uart        uart identifier
-                                    205 ; output:
-                                    206 ;   len         in X  
-                                    207 ;------------------------------------
-                           000006   208     ARG_OFS=6
-                           000007   209     STR=ARG_OFS+1
-                           000009   210     UART=ARG_OFS+3 
-                                    211 ; uart_putc arguments
-                           000001   212     PUTC_CHAR=1 
-                           000002   213     PUTC_UART=2     
-                           000002   214     LOCAL_SIZE=2
-      0000B2                        215 _uart_puts::
-      0000B2                        216 uart_puts::
-      0000B2 90 89            [ 2]  217     pushw y
-      0000B4 52 02            [ 2]  218     sub sp,#LOCAL_SIZE 
-      0000B6 5F               [ 1]  219     clrw x 
-      0000B7 16 07            [ 2]  220     ldw y,(STR,sp) 
-                                    221 ; check for null pointer  
-      0000B9 90 A3 00 00      [ 2]  222 	cpw y,#0
-      0000BD 27 12            [ 1]  223     jreq 1$ 
-      0000BF 7B 09            [ 1]  224     ld a,(UART,sp)
-      0000C1 6B 02            [ 1]  225     ld (PUTC_UART,sp),a  
-      0000C3 90 F6            [ 1]  226 0$: ld a,(y)
-      0000C5 27 0A            [ 1]  227 	jreq 1$
-      0000C7 6B 01            [ 1]  228 	ld (PUTC_CHAR,sp),a 
-      0000C9 CD 00 8E         [ 4]  229     call uart_putc 
-      0000CC 90 5C            [ 1]  230 	incw y
-      0000CE 5C               [ 1]  231     incw x 
-      0000CF 20 F2            [ 2]  232 	jra 0$
-      0000D1 5B 02            [ 2]  233 1$: addw sp,#LOCAL_SIZE 
-      0000D3 90 85            [ 2]  234     popw y 
-      0000D5 81               [ 4]  235     ret
-                                    236 
-                                    237 ;------------------------------------
-                                    238 ; check if char available
-                                    239 ; return char if available else 0 
-                                    240 ; C prototype: char uint8_t uart_query(uint8_t uart_id)
-                                    241 ; input:
+      000048 9F               [ 1]  174 	ld a,xl 
+      000049 6B 02            [ 1]  175     ld (RXCHAR,sp),a 
+      00004B A1 03            [ 1]  176 	cp a,#CTRL_C
+      00004D 26 03            [ 1]  177 	jrne 2$
+      00004F CC 00 D1         [ 2]  178 	jp cancel
+      000052 A1 12            [ 1]  179 2$:	cp a,#CTRL_R
+      000054 27 58            [ 1]  180 	jreq reprint
+      000056 A1 0D            [ 1]  181 	cp a,#CR
+      000058 26 03            [ 1]  182 	jrne 1$
+      00005A CC 00 D4         [ 2]  183 	jp gets_quit
+      00005D A1 0A            [ 1]  184 1$:	cp a,#NL
+      00005F 27 73            [ 1]  185 	jreq gets_quit
+      000061 A1 08            [ 1]  186 	cp a,#BSP
+      000063 27 1C            [ 1]  187 	jreq del_back
+      000065 A1 04            [ 1]  188 	cp a,#CTRL_D
+      000067 27 06            [ 1]  189 	jreq del_line
+      000069 A1 20            [ 1]  190 	cp a,#SPACE
+      00006B 2A 2C            [ 1]  191 	jrpl accept_char
+      00006D 20 D6            [ 2]  192 	jra gets_loop
+      00006F                        193 del_line:
+      00006F C6 00 00         [ 1]  194     ld a,std_dev
+      000072 88               [ 1]  195     push a 
+      000073 7B 01            [ 1]  196 	ld a,(LEN,sp)
+      000075 88               [ 1]  197     push a 
+      000076 CD 00 00         [ 4]  198 	call uart_delete
+      000079                        199     _drop 2 
+      000079 5B 02            [ 2]    1     addw sp,#2
+      00007B 16 01            [ 2]  200 	ldw y,(BUFFER,sp)
+      00007D 0F 01            [ 1]  201 	clr (LEN,sp)
+      00007F 20 C4            [ 2]  202 	jra gets_loop
+      000081                        203 del_back:
+      000081 0D 01            [ 1]  204     tnz (LEN,sp)
+      000083 27 C0            [ 1]  205     jreq gets_loop
+      000085 0A 01            [ 1]  206     dec (LEN,sp)
+      000087 90 5A            [ 2]  207     decw y
+      000089 90 7F            [ 1]  208     clr  (y)
+      00008B C6 00 00         [ 1]  209     ld a,std_dev
+      00008E 88               [ 1]  210     push a 
+      00008F A6 01            [ 1]  211     ld a,#1
+      000091 88               [ 1]  212     push a 
+      000092 CD 00 00         [ 4]  213     call uart_delete
+      000095                        214     _drop 2 
+      000095 5B 02            [ 2]    1     addw sp,#2
+      000097 20 AC            [ 2]  215     jra gets_loop	
+      000099                        216 accept_char:
+      000099 A6 4F            [ 1]  217 	ld a,#MAX_LEN
+      00009B 11 01            [ 1]  218 	cp a, (LEN,sp)
+      00009D 27 A6            [ 1]  219 	jreq gets_loop
+      00009F 7B 02            [ 1]  220 	ld a,(RXCHAR,sp)
+      0000A1 90 F7            [ 1]  221 	ld (y),a
+      0000A3 0C 01            [ 1]  222 	inc (LEN,sp)
+      0000A5 90 5C            [ 1]  223 	incw y
+      0000A7 90 7F            [ 1]  224 	clr (y)
+      0000A9 CD 00 0C         [ 4]  225 	call putchar 
+      0000AC 20 97            [ 2]  226 	jra gets_loop
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 
 
-                                    242 ;   uart_id     uart identifier
-                                    243 ; output:
-                                    244 ;   A           0 = not char | char 
-                                    245 ;------------------------------------
-                           000004   246     ARG_OFS=4
-                           000005   247     UART=ARG_OFS+1
-      0000D6                        248 _uart_query::
-      0000D6                        249 uart_query::
-      0000D6 89               [ 2]  250     pushw x 
-      0000D7 7B 05            [ 1]  251     ld a,(UART,sp)
-      0000D9 CD 00 2F         [ 4]  252     call select_uart 
-      0000DC A6 20            [ 1]  253 1$: ld a,#(1<<UART_SR_RXNE) 
-      0000DE E4 00            [ 1]  254 	and a,(UART_SR,x)
-      0000E0 27 02            [ 1]  255     jreq 2$
-      0000E2 E6 01            [ 1]  256     ld a,(UART_DR,x)
-      0000E4 85               [ 2]  257 2$: popw x 
-      0000E5 81               [ 4]  258     ret 
-                                    259 
-                                    260 ;------------------------------------
-                                    261 ; wait for character from uart
-                                    262 ; C prototype: char uart_getc(uint8_t uart_id)
-                                    263 ; input:
-                                    264 ;   uart_id     uart_identifier
-                                    265 ; output:
-                                    266 ;   A           character received 
-                                    267 ;------------------------------------
-                           000004   268     ARG_OFS=4
-                           000005   269     UART=ARG_OFS+1 
-      0000E6                        270 _uart_getc::       
-      0000E6                        271 uart_getc::
-      0000E6 89               [ 2]  272     pushw x
-      0000E7 7B 05            [ 1]  273     ld a,(UART,sp)
-      0000E9 CD 00 2F         [ 4]  274     call select_uart  
-      0000EC A6 20            [ 1]  275 1$:	ld a,#(1<<UART_SR_RXNE) 
-      0000EE E4 00            [ 1]  276     and a,(UART_SR,x)
-      0000F0 27 FA            [ 1]  277     jreq 1$
-      0000F2 E6 01            [ 1]  278 	ld a, (UART_DR,x) 
-      0000F4 85               [ 2]  279 	popw x 
-      0000F5 81               [ 4]  280     ret
-                                    281 
-                                    282 ;------------------------------------
-                                    283 ; delete n character from input line
-                                    284 ; C prototype: void uart_delete(uint8_t n,uint8_t uart_id)
-                                    285 ; input:
-                                    286 ;   n           number of characters to delete 
-                                    287 ;   uart_id     uart identifier
-                                    288 ; output:
-                                    289 ;   none 
-                                    290 ;------------------------------------
-                           000002   291     ARG_OFS=2
-                           000003   292     N=ARG_OFS+1 
-                           000004   293     UART=ARG_OFS+2
-      0000F6                        294 _uart_delete:: ; pour appel à partir de 'C'.
-      0000F6                        295 uart_delete::
-      0000F6                        296 del_loop:
+      0000AE                        227 reprint:
+      0000AE 0D 01            [ 1]  228 	tnz (LEN,sp)
+      0000B0 26 93            [ 1]  229 	jrne gets_loop
+      0000B2 16 01            [ 2]  230 	ldw y,(BUFFER,sp)
+      0000B4 90 89            [ 2]  231 	pushw y
+      0000B6 CD 00 2C         [ 4]  232 	call puts 
+      0000B9 90 85            [ 2]  233 	popw y
+      0000BB 9F               [ 1]  234 	ld a,xl 
+      0000BC 6B 01            [ 1]  235 	ld (LEN,sp),a
+      0000BE 90 9F            [ 1]  236 	ld a,yl
+      0000C0 1B 01            [ 1]  237 	add a,(LEN,sp)
+      0000C2 90 97            [ 1]  238 	ld yl,a
+      0000C4 24 03            [ 1]  239     jrnc 1$
+      0000C6 CC 00 45         [ 2]  240     jp gets_loop
+      0000C9 90 9E            [ 1]  241 1$: ld a,yh 
+      0000CB 4C               [ 1]  242     inc a 
+      0000CC 90 95            [ 1]  243     ld yh,a 
+      0000CE CC 00 45         [ 2]  244 	jp gets_loop
+      0000D1                        245 cancel:
+      0000D1 1E 01            [ 2]  246 	ldw x,(BUFFER,sp)
+      0000D3 7F               [ 1]  247     clr (x)
+      0000D4                        248 gets_quit:
+      0000D4 5B 00            [ 2]  249 	addw sp,#LOCAL_SIZE
+      0000D6 90 5F            [ 1]  250 	clrw y
+      0000D8 A6 0D            [ 1]  251     ld a,#CR 
+      0000DA 90 97            [ 1]  252     ld yl,a 
+      0000DC 90 89            [ 2]  253     pushw y  
+      0000DE CD 00 0C         [ 4]  254 	call putchar 
+      0000E1                        255     _drop 2 
+      0000E1 5B 02            [ 2]    1     addw sp,#2
+      0000E3 1E 01            [ 2]  256     ldw x,(BUFFER,sp)
+      0000E5                        257 _fn_exit 
+      0000E5                          1     _drop VSIZE 
+      0000E5 5B 02            [ 2]    1     addw sp,#VSIZE
+      0000E7 81               [ 4]    2     ret 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
-Hexadecimal [24-Bits]
-
-
-
-      0000F6 0D 03            [ 1]  297 	tnz (N,sp)
-      0000F8 27 1D            [ 1]  298 	jreq 1$
-      0000FA 7B 04            [ 1]  299     ld a,(UART,sp)
-      0000FC 88               [ 1]  300     push a 
-      0000FD A6 08            [ 1]  301 	ld a,#BSP
-      0000FF 88               [ 1]  302     push a 
-      000100 CD 00 8E         [ 4]  303 	call uart_putc
-      000103 A6 20            [ 1]  304     ld a,#SPACE
-      000105 6B 01            [ 1]  305     ld (1,sp),a 
-      000107 CD 00 8E         [ 4]  306     call uart_putc
-      00010A A6 08            [ 1]  307     ld a,#BSP
-      00010C 6B 01            [ 1]  308     ld (1,sp),a 
-      00010E CD 00 8E         [ 4]  309     call uart_putc 
-      000111 5B 02            [ 2]  310     addw sp,#2 
-      000113 0A 03            [ 1]  311     dec (N,sp)
-      000115 20 DF            [ 2]  312     jra del_loop
-      000117 81               [ 4]  313 1$: ret 
-                                    314 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
     .__.$$$.=  002710 L   |     .__.ABS.=  000000 G   |     .__.CPU.=  000000 L
-    .__.H$L.=  000001 L   |     ACC16   =  000001     |     ADC_CR1 =  005401 
-    ADC_CR1_=  000000     |     ADC_CR1_=  000001     |     ADC_CR1_=  000004 
-    ADC_CR1_=  000005     |     ADC_CR1_=  000006     |     ADC_CR2 =  005402 
-    ADC_CR2_=  000003     |     ADC_CR2_=  000004     |     ADC_CR2_=  000005 
-    ADC_CR2_=  000006     |     ADC_CR2_=  000001     |     ADC_CR3 =  005403 
-    ADC_CR3_=  000007     |     ADC_CR3_=  000006     |     ADC_CSR =  005400 
-    ADC_CSR_=  000006     |     ADC_CSR_=  000004     |     ADC_CSR_=  000000 
-    ADC_CSR_=  000001     |     ADC_CSR_=  000002     |     ADC_CSR_=  000003 
-    ADC_CSR_=  000007     |     ADC_CSR_=  000005     |     ADC_DRH =  005404 
-    ADC_DRL =  005405     |     ADC_TDRH=  005406     |     ADC_TDRL=  005407 
-    AFR     =  004803     |     AFR0_ADC=  000000     |     AFR1_TIM=  000001 
-    AFR2_CCO=  000002     |     AFR3_TIM=  000003     |     AFR4_TIM=  000004 
-    AFR5_TIM=  000005     |     AFR6_I2C=  000006     |     AFR7_BEE=  000007 
-    ARG_OFS =  000002     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
+    .__.H$L.=  000001 L   |     ADC_CR1 =  005401     |     ADC_CR1_=  000000 
+    ADC_CR1_=  000001     |     ADC_CR1_=  000004     |     ADC_CR1_=  000005 
+    ADC_CR1_=  000006     |     ADC_CR2 =  005402     |     ADC_CR2_=  000003 
+    ADC_CR2_=  000004     |     ADC_CR2_=  000005     |     ADC_CR2_=  000006 
+    ADC_CR2_=  000001     |     ADC_CR3 =  005403     |     ADC_CR3_=  000007 
+    ADC_CR3_=  000006     |     ADC_CSR =  005400     |     ADC_CSR_=  000006 
+    ADC_CSR_=  000004     |     ADC_CSR_=  000000     |     ADC_CSR_=  000001 
+    ADC_CSR_=  000002     |     ADC_CSR_=  000003     |     ADC_CSR_=  000007 
+    ADC_CSR_=  000005     |     ADC_DRH =  005404     |     ADC_DRL =  005405 
+    ADC_TDRH=  005406     |     ADC_TDRL=  005407     |     AFR     =  004803 
+    AFR0_ADC=  000000     |     AFR1_TIM=  000001     |     AFR2_CCO=  000002 
+    AFR3_TIM=  000003     |     AFR4_TIM=  000004     |     AFR5_TIM=  000005 
+    AFR6_I2C=  000006     |     AFR7_BEE=  000007     |     ARG_OFS =  000004 
+    ARG_UART=  000001     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
     AWU_TBR =  0050F2     |     B0_MASK =  000001     |     B115200 =  000006 
     B19200  =  000003     |     B1_MASK =  000002     |     B230400 =  000007 
     B2400   =  000000     |     B2_MASK =  000004     |     B38400  =  000004 
     B3_MASK =  000008     |     B460800 =  000008     |     B4800   =  000001 
     B4_MASK =  000010     |     B57600  =  000005     |     B5_MASK =  000020 
     B6_MASK =  000040     |     B7_MASK =  000080     |     B921600 =  000009 
-    B9600   =  000002     |     BAUD    =  000005     |     BEEP_BIT=  000004 
-    BEEP_CSR=  0050F3     |     BEEP_MAS=  000010     |     BEEP_POR=  00000F 
-    BELL    =  000007     |     BIT0    =  000000     |     BIT1    =  000001 
-    BIT2    =  000002     |     BIT3    =  000003     |     BIT4    =  000004 
-    BIT5    =  000005     |     BIT6    =  000006     |     BIT7    =  000007 
-    BOOT_ROM=  006000     |     BOOT_ROM=  007FFF     |     BSP     =  000008 
+    B9600   =  000002     |     BEEP_BIT=  000004     |     BEEP_CSR=  0050F3 
+    BEEP_MAS=  000010     |     BEEP_POR=  00000F     |     BELL    =  000007 
+    BIT0    =  000000     |     BIT1    =  000001     |     BIT2    =  000002 
+    BIT3    =  000003     |     BIT4    =  000004     |     BIT5    =  000005 
+    BIT6    =  000006     |     BIT7    =  000007     |     BOOT_ROM=  006000 
+    BOOT_ROM=  007FFF     |     BSP     =  000008     |     BUFFER  =  000001 
     CAN_DGR =  005426     |     CAN_FPSR=  005427     |     CAN_IER =  005425 
     CAN_MCR =  005420     |     CAN_MSR =  005421     |     CAN_P0  =  005428 
     CAN_P1  =  005429     |     CAN_P2  =  00542A     |     CAN_P3  =  00542B 
@@ -1564,7 +1521,7 @@ Symbol Table
     CC_C    =  000000     |     CC_H    =  000004     |     CC_I0   =  000003 
     CC_I1   =  000005     |     CC_N    =  000002     |     CC_V    =  000007 
     CC_Z    =  000001     |     CFG_GCR =  007F60     |     CFG_GCR_=  000001 
-    CFG_GCR_=  000000     |     CHAR    =  000003     |     CLKOPT  =  004807 
+    CFG_GCR_=  000000     |     CHAR    =  000005     |     CLKOPT  =  004807 
     CLKOPT_C=  000002     |     CLKOPT_E=  000003     |     CLKOPT_P=  000000 
     CLKOPT_P=  000001     |     CLK_CCOR=  0050C9     |     CLK_CKDI=  0050C6 
     CLK_CKDI=  000000     |     CLK_CKDI=  000001     |     CLK_CKDI=  000002 
@@ -1581,7 +1538,7 @@ Symbol Table
     CLK_SWCR=  000001     |     CLK_SWCR=  000002     |     CLK_SWCR=  000003 
     CLK_SWIM=  0050CD     |     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4 
     CLK_SWR_=  0000E1     |     CLK_SWR_=  0000D2     |     CPU_A   =  007F00 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1603,260 +1560,261 @@ Symbol Table
     DEVID_LO=  0048D3     |     DEVID_LO=  0048D4     |     DEVID_LO=  0048D5 
     DEVID_LO=  0048D6     |     DEVID_LO=  0048D7     |     DEVID_LO=  0048D8 
     DEVID_WA=  0048D1     |     DEVID_XH=  0048CE     |     DEVID_XL=  0048CD 
-    DEVID_YH=  0048D0     |     DEVID_YL=  0048CF     |     DM_BK1RE=  007F90 
-    DM_BK1RH=  007F91     |     DM_BK1RL=  007F92     |     DM_BK2RE=  007F93 
-    DM_BK2RH=  007F94     |     DM_BK2RL=  007F95     |     DM_CR1  =  007F96 
-    DM_CR2  =  007F97     |     DM_CSR1 =  007F98     |     DM_CSR2 =  007F99 
-    DM_ENFCT=  007F9A     |     EEPROM_B=  004000     |     EEPROM_E=  0047FF 
-    EEPROM_S=  000800     |     ESC     =  00001B     |     EXTI_CR1=  0050A0 
-    EXTI_CR2=  0050A1     |     FF      =  00000C     |     FHSE    =  7A1200 
-    FHSI    =  F42400     |     FLASH_BA=  008000     |     FLASH_CR=  00505A 
-    FLASH_CR=  000002     |     FLASH_CR=  000000     |     FLASH_CR=  000003 
-    FLASH_CR=  000001     |     FLASH_CR=  00505B     |     FLASH_CR=  000005 
-    FLASH_CR=  000004     |     FLASH_CR=  000007     |     FLASH_CR=  000000 
-    FLASH_CR=  000006     |     FLASH_DU=  005064     |     FLASH_DU=  0000AE 
-    FLASH_DU=  000056     |     FLASH_EN=  027FFF     |     FLASH_FP=  00505D 
-    FLASH_FP=  000000     |     FLASH_FP=  000001     |     FLASH_FP=  000002 
-    FLASH_FP=  000003     |     FLASH_FP=  000004     |     FLASH_FP=  000005 
-    FLASH_IA=  00505F     |     FLASH_IA=  000003     |     FLASH_IA=  000002 
-    FLASH_IA=  000006     |     FLASH_IA=  000001     |     FLASH_IA=  000000 
-    FLASH_NC=  00505C     |     FLASH_NF=  00505E     |     FLASH_NF=  000000 
-    FLASH_NF=  000001     |     FLASH_NF=  000002     |     FLASH_NF=  000003 
-    FLASH_NF=  000004     |     FLASH_NF=  000005     |     FLASH_PU=  005062 
-    FLASH_PU=  000056     |     FLASH_PU=  0000AE     |     FLASH_SI=  020000 
-    FLASH_WS=  00480D     |     FLSI    =  01F400     |     GPIO_BAS=  005000 
-    GPIO_CR1=  000003     |     GPIO_CR2=  000004     |     GPIO_DDR=  000002 
-    GPIO_IDR=  000001     |     GPIO_ODR=  000000     |     GPIO_SIZ=  000005 
-    HSECNT  =  004809     |     I2C_CCRH=  00521C     |     I2C_CCRH=  000080 
-    I2C_CCRH=  0000C0     |     I2C_CCRH=  000080     |     I2C_CCRH=  000000 
-    I2C_CCRH=  000001     |     I2C_CCRH=  000000     |     I2C_CCRL=  00521B 
-    I2C_CCRL=  00001A     |     I2C_CCRL=  000002     |     I2C_CCRL=  00000D 
-    I2C_CCRL=  000050     |     I2C_CCRL=  000090     |     I2C_CCRL=  0000A0 
-    I2C_CR1 =  005210     |     I2C_CR1_=  000006     |     I2C_CR1_=  000007 
-    I2C_CR1_=  000000     |     I2C_CR2 =  005211     |     I2C_CR2_=  000002 
-    I2C_CR2_=  000003     |     I2C_CR2_=  000000     |     I2C_CR2_=  000001 
-    I2C_CR2_=  000007     |     I2C_DR  =  005216     |     I2C_FREQ=  005212 
-    I2C_ITR =  00521A     |     I2C_ITR_=  000002     |     I2C_ITR_=  000000 
-    I2C_ITR_=  000001     |     I2C_OARH=  005214     |     I2C_OARH=  000001 
-    I2C_OARH=  000002     |     I2C_OARH=  000006     |     I2C_OARH=  000007 
-    I2C_OARL=  005213     |     I2C_OARL=  000000     |     I2C_OAR_=  000813 
-    I2C_OAR_=  000009     |     I2C_PECR=  00521E     |     I2C_READ=  000001 
+    DEVID_YH=  0048D0     |     DEVID_YL=  0048CF     |     DEV_ID  =  000003 
+    DM_BK1RE=  007F90     |     DM_BK1RH=  007F91     |     DM_BK1RL=  007F92 
+    DM_BK2RE=  007F93     |     DM_BK2RH=  007F94     |     DM_BK2RL=  007F95 
+    DM_CR1  =  007F96     |     DM_CR2  =  007F97     |     DM_CSR1 =  007F98 
+    DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A     |     EEPROM_B=  004000 
+    EEPROM_E=  0047FF     |     EEPROM_S=  000800     |     ESC     =  00001B 
+    EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1     |     FF      =  00000C 
+    FHSE    =  7A1200     |     FHSI    =  F42400     |     FLASH_BA=  008000 
+    FLASH_CR=  00505A     |     FLASH_CR=  000002     |     FLASH_CR=  000000 
+    FLASH_CR=  000003     |     FLASH_CR=  000001     |     FLASH_CR=  00505B 
+    FLASH_CR=  000005     |     FLASH_CR=  000004     |     FLASH_CR=  000007 
+    FLASH_CR=  000000     |     FLASH_CR=  000006     |     FLASH_DU=  005064 
+    FLASH_DU=  0000AE     |     FLASH_DU=  000056     |     FLASH_EN=  027FFF 
+    FLASH_FP=  00505D     |     FLASH_FP=  000000     |     FLASH_FP=  000001 
+    FLASH_FP=  000002     |     FLASH_FP=  000003     |     FLASH_FP=  000004 
+    FLASH_FP=  000005     |     FLASH_IA=  00505F     |     FLASH_IA=  000003 
+    FLASH_IA=  000002     |     FLASH_IA=  000006     |     FLASH_IA=  000001 
+    FLASH_IA=  000000     |     FLASH_NC=  00505C     |     FLASH_NF=  00505E 
+    FLASH_NF=  000000     |     FLASH_NF=  000001     |     FLASH_NF=  000002 
+    FLASH_NF=  000003     |     FLASH_NF=  000004     |     FLASH_NF=  000005 
+    FLASH_PU=  005062     |     FLASH_PU=  000056     |     FLASH_PU=  0000AE 
+    FLASH_SI=  020000     |     FLASH_WS=  00480D     |     FLSI    =  01F400 
+    GPIO_BAS=  005000     |     GPIO_CR1=  000003     |     GPIO_CR2=  000004 
+    GPIO_DDR=  000002     |     GPIO_IDR=  000001     |     GPIO_ODR=  000000 
+    GPIO_SIZ=  000005     |     HSECNT  =  004809     |     I2C_CCRH=  00521C 
+    I2C_CCRH=  000080     |     I2C_CCRH=  0000C0     |     I2C_CCRH=  000080 
+    I2C_CCRH=  000000     |     I2C_CCRH=  000001     |     I2C_CCRH=  000000 
+    I2C_CCRL=  00521B     |     I2C_CCRL=  00001A     |     I2C_CCRL=  000002 
+    I2C_CCRL=  00000D     |     I2C_CCRL=  000050     |     I2C_CCRL=  000090 
+    I2C_CCRL=  0000A0     |     I2C_CR1 =  005210     |     I2C_CR1_=  000006 
+    I2C_CR1_=  000007     |     I2C_CR1_=  000000     |     I2C_CR2 =  005211 
+    I2C_CR2_=  000002     |     I2C_CR2_=  000003     |     I2C_CR2_=  000000 
+    I2C_CR2_=  000001     |     I2C_CR2_=  000007     |     I2C_DR  =  005216 
+    I2C_FREQ=  005212     |     I2C_ITR =  00521A     |     I2C_ITR_=  000002 
+    I2C_ITR_=  000000     |     I2C_ITR_=  000001     |     I2C_OARH=  005214 
+    I2C_OARH=  000001     |     I2C_OARH=  000002     |     I2C_OARH=  000006 
+    I2C_OARH=  000007     |     I2C_OARL=  005213     |     I2C_OARL=  000000 
+    I2C_OAR_=  000813     |     I2C_OAR_=  000009     |     I2C_PECR=  00521E 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    I2C_READ=  000001     |     I2C_SR1 =  005217     |     I2C_SR1_=  000003 
+    I2C_SR1_=  000001     |     I2C_SR1_=  000002     |     I2C_SR1_=  000006 
+    I2C_SR1_=  000000     |     I2C_SR1_=  000004     |     I2C_SR1_=  000007 
+    I2C_SR2 =  005218     |     I2C_SR2_=  000002     |     I2C_SR2_=  000001 
+    I2C_SR2_=  000000     |     I2C_SR2_=  000003     |     I2C_SR2_=  000005 
+    I2C_SR3 =  005219     |     I2C_SR3_=  000001     |     I2C_SR3_=  000007 
+    I2C_SR3_=  000004     |     I2C_SR3_=  000000     |     I2C_SR3_=  000002 
+    I2C_TRIS=  00521D     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
+    I2C_TRIS=  000005     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
+    I2C_TRIS=  000011     |     I2C_WRIT=  000000     |     INPUT_DI=  000000 
+    INPUT_EI=  000001     |     INPUT_FL=  000000     |     INPUT_PU=  000001 
+    INT_ADC2=  000016     |     INT_AUAR=  000012     |     INT_AWU =  000001 
+    INT_CAN_=  000008     |     INT_CAN_=  000009     |     INT_CLK =  000002 
+    INT_EXTI=  000003     |     INT_EXTI=  000004     |     INT_EXTI=  000005 
+    INT_EXTI=  000006     |     INT_EXTI=  000007     |     INT_FLAS=  000018 
+    INT_I2C =  000013     |     INT_SPI =  00000A     |     INT_TIM1=  00000C 
+    INT_TIM1=  00000B     |     INT_TIM2=  00000E     |     INT_TIM2=  00000D 
+    INT_TIM3=  000010     |     INT_TIM3=  00000F     |     INT_TIM4=  000017 
+    INT_TLI =  000000     |     INT_UART=  000011     |     INT_UART=  000015 
+    INT_UART=  000014     |     INT_VECT=  008060     |     INT_VECT=  00800C 
+    INT_VECT=  008028     |     INT_VECT=  00802C     |     INT_VECT=  008010 
+    INT_VECT=  008014     |     INT_VECT=  008018     |     INT_VECT=  00801C 
+    INT_VECT=  008020     |     INT_VECT=  008024     |     INT_VECT=  008068 
+    INT_VECT=  008054     |     INT_VECT=  008000     |     INT_VECT=  008030 
+    INT_VECT=  008038     |     INT_VECT=  008034     |     INT_VECT=  008040 
+    INT_VECT=  00803C     |     INT_VECT=  008048     |     INT_VECT=  008044 
+    INT_VECT=  008064     |     INT_VECT=  008008     |     INT_VECT=  008004 
+    INT_VECT=  008050     |     INT_VECT=  00804C     |     INT_VECT=  00805C 
+    INT_VECT=  008058     |     ITC_SPR1=  007F70     |     ITC_SPR2=  007F71 
+    ITC_SPR3=  007F72     |     ITC_SPR4=  007F73     |     ITC_SPR5=  007F74 
+    ITC_SPR6=  007F75     |     ITC_SPR7=  007F76     |     ITC_SPR8=  007F77 
+    IWDG_KR =  0050E0     |     IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2 
+    LED2_BIT=  000005     |     LED2_MAS=  000020     |     LED2_POR=  00500A 
+    LEN     =  000001     |     LOCAL_SI   ****** GX  |     MAX_LEN =  00004F 
+    NAFR    =  004804     |     NCLKOPT =  004808     |     NFLASH_W=  00480E 
+    NHSECNT =  00480A     |     NL      =  00000A     |     NOPT1   =  004802 
+    NOPT2   =  004804     |     NOPT3   =  004806     |     NOPT4   =  004808 
+    NOPT5   =  00480A     |     NOPT6   =  00480C     |     NOPT7   =  00480E 
+    NOPTBL  =  00487F     |     NUBC    =  004802     |     NWDGOPT =  004806 
+    NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC     |     NWDGOPT_=  FFFFFFFF 
+    NWDGOPT_=  FFFFFFFE     |     OPT0    =  004800     |     OPT1    =  004801 
+    OPT2    =  004803     |     OPT3    =  004805     |     OPT4    =  004807 
+    OPT5    =  004809     |     OPT6    =  00480B     |     OPT7    =  00480D 
+    OPTBL   =  00487E     |     OPTION_B=  004800     |     OPTION_E=  00487F 
+    OUTPUT_F=  000001     |     OUTPUT_O=  000000     |     OUTPUT_P=  000001 
+    OUTPUT_S=  000000     |     PA      =  000000     |     PA_BASE =  005000 
+    PA_CR1  =  005003     |     PA_CR2  =  005004     |     PA_DDR  =  005002 
+    PA_IDR  =  005001     |     PA_ODR  =  005000     |     PB      =  000005 
+    PB_BASE =  005005     |     PB_CR1  =  005008     |     PB_CR2  =  005009 
+    PB_DDR  =  005007     |     PB_IDR  =  005006     |     PB_ODR  =  005005 
+    PC      =  00000A     |     PC_BASE =  00500A     |     PC_CR1  =  00500D 
+    PC_CR2  =  00500E     |     PC_DDR  =  00500C     |     PC_IDR  =  00500B 
+    PC_ODR  =  00500A     |     PD      =  00000F     |     PD_BASE =  00500F 
+    PD_CR1  =  005012     |     PD_CR2  =  005013     |     PD_DDR  =  005011 
+    PD_IDR  =  005010     |     PD_ODR  =  00500F     |     PE      =  000014 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    I2C_SR1 =  005217     |     I2C_SR1_=  000003     |     I2C_SR1_=  000001 
-    I2C_SR1_=  000002     |     I2C_SR1_=  000006     |     I2C_SR1_=  000000 
-    I2C_SR1_=  000004     |     I2C_SR1_=  000007     |     I2C_SR2 =  005218 
-    I2C_SR2_=  000002     |     I2C_SR2_=  000001     |     I2C_SR2_=  000000 
-    I2C_SR2_=  000003     |     I2C_SR2_=  000005     |     I2C_SR3 =  005219 
-    I2C_SR3_=  000001     |     I2C_SR3_=  000007     |     I2C_SR3_=  000004 
-    I2C_SR3_=  000000     |     I2C_SR3_=  000002     |     I2C_TRIS=  00521D 
-    I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
-    I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
-    I2C_WRIT=  000000     |     INPUT_DI=  000000     |     INPUT_EI=  000001 
-    INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
-    INT_AUAR=  000012     |     INT_AWU =  000001     |     INT_CAN_=  000008 
-    INT_CAN_=  000009     |     INT_CLK =  000002     |     INT_EXTI=  000003 
-    INT_EXTI=  000004     |     INT_EXTI=  000005     |     INT_EXTI=  000006 
-    INT_EXTI=  000007     |     INT_FLAS=  000018     |     INT_I2C =  000013 
-    INT_SPI =  00000A     |     INT_TIM1=  00000C     |     INT_TIM1=  00000B 
-    INT_TIM2=  00000E     |     INT_TIM2=  00000D     |     INT_TIM3=  000010 
-    INT_TIM3=  00000F     |     INT_TIM4=  000017     |     INT_TLI =  000000 
-    INT_UART=  000011     |     INT_UART=  000015     |     INT_UART=  000014 
-    INT_VECT=  008060     |     INT_VECT=  00800C     |     INT_VECT=  008028 
-    INT_VECT=  00802C     |     INT_VECT=  008010     |     INT_VECT=  008014 
-    INT_VECT=  008018     |     INT_VECT=  00801C     |     INT_VECT=  008020 
-    INT_VECT=  008024     |     INT_VECT=  008068     |     INT_VECT=  008054 
-    INT_VECT=  008000     |     INT_VECT=  008030     |     INT_VECT=  008038 
-    INT_VECT=  008034     |     INT_VECT=  008040     |     INT_VECT=  00803C 
-    INT_VECT=  008048     |     INT_VECT=  008044     |     INT_VECT=  008064 
-    INT_VECT=  008008     |     INT_VECT=  008004     |     INT_VECT=  008050 
-    INT_VECT=  00804C     |     INT_VECT=  00805C     |     INT_VECT=  008058 
-    ITC_SPR1=  007F70     |     ITC_SPR2=  007F71     |     ITC_SPR3=  007F72 
-    ITC_SPR4=  007F73     |     ITC_SPR5=  007F74     |     ITC_SPR6=  007F75 
-    ITC_SPR7=  007F76     |     ITC_SPR8=  007F77     |     IWDG_KR =  0050E0 
-    IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2     |     LED2_BIT=  000005 
-    LED2_MAS=  000020     |     LED2_POR=  00500A     |     LOCAL_SI=  000002 
-    N       =  000003     |     NAFR    =  004804     |     NCLKOPT =  004808 
-    NFLASH_W=  00480E     |     NHSECNT =  00480A     |     NL      =  00000A 
-    NOPT1   =  004802     |     NOPT2   =  004804     |     NOPT3   =  004806 
-    NOPT4   =  004808     |     NOPT5   =  00480A     |     NOPT6   =  00480C 
-    NOPT7   =  00480E     |     NOPTBL  =  00487F     |     NUBC    =  004802 
-    NWDGOPT =  004806     |     NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC 
-    NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE     |     OPT0    =  004800 
-    OPT1    =  004801     |     OPT2    =  004803     |     OPT3    =  004805 
-    OPT4    =  004807     |     OPT5    =  004809     |     OPT6    =  00480B 
-    OPT7    =  00480D     |     OPTBL   =  00487E     |     OPTION_B=  004800 
-    OPTION_E=  00487F     |     OUTPUT_F=  000001     |     OUTPUT_O=  000000 
-    OUTPUT_P=  000001     |     OUTPUT_S=  000000     |     PA      =  000000 
-    PA_BASE =  005000     |     PA_CR1  =  005003     |     PA_CR2  =  005004 
-    PA_DDR  =  005002     |     PA_IDR  =  005001     |     PA_ODR  =  005000 
-    PB      =  000005     |     PB_BASE =  005005     |     PB_CR1  =  005008 
-    PB_CR2  =  005009     |     PB_DDR  =  005007     |     PB_IDR  =  005006 
-    PB_ODR  =  005005     |     PC      =  00000A     |     PC_BASE =  00500A 
-    PC_CR1  =  00500D     |     PC_CR2  =  00500E     |     PC_DDR  =  00500C 
-    PC_IDR  =  00500B     |     PC_ODR  =  00500A     |     PD      =  00000F 
-    PD_BASE =  00500F     |     PD_CR1  =  005012     |     PD_CR2  =  005013 
-    PD_DDR  =  005011     |     PD_IDR  =  005010     |     PD_ODR  =  00500F 
-    PE      =  000014     |     PE_BASE =  005014     |     PE_CR1  =  005017 
+    PE_BASE =  005014     |     PE_CR1  =  005017     |     PE_CR2  =  005018 
+    PE_DDR  =  005016     |     PE_IDR  =  005015     |     PE_ODR  =  005014 
+    PF      =  000019     |     PF_BASE =  005019     |     PF_CR1  =  00501C 
+    PF_CR2  =  00501D     |     PF_DDR  =  00501B     |     PF_IDR  =  00501A 
+    PF_ODR  =  005019     |     PG      =  00001E     |     PG_BASE =  00501E 
+    PG_CR1  =  005021     |     PG_CR2  =  005022     |     PG_DDR  =  005020 
+    PG_IDR  =  00501F     |     PG_ODR  =  00501E     |     PH_BASE =  005023 
+    PH_CR1  =  005026     |     PH_CR2  =  005027     |     PH_DDR  =  005025 
+    PH_IDR  =  005024     |     PH_ODR  =  005023     |     PI_BASE =  005028 
+    PI_CR1  =  00502B     |     PI_CR2  =  00502C     |     PI_DDR  =  00502A 
+    PI_IDR  =  005029     |     PI_ODR  =  005028     |     PUTC_CHA=  000001 
+    PUTC_UAR=  000002     |     PUTS_STR=  000001     |     PUTS_UAR=  000003 
+    RAM_BASE=  000000     |     RAM_END =  0017FF     |     RAM_SIZE=  001800 
+    ROP     =  004800     |     RST_SR  =  0050B3     |     RXCHAR  =  000002 
+    SFR_BASE=  005000     |     SFR_END =  0057FF     |     SPACE   =  000020 
+    SPI_CR1 =  005200     |     SPI_CR2 =  005201     |     SPI_CRCP=  005205 
+    SPI_DR  =  005204     |     SPI_ICR =  005202     |     SPI_RXCR=  005206 
+    SPI_SR  =  005203     |     SPI_TXCR=  005207     |     STR     =  000001 
+    SWIM_CSR=  007F80     |     TAB     =  000009     |     TIM1_ARR=  005262 
+    TIM1_ARR=  005263     |     TIM1_BKR=  00526D     |     TIM1_CCE=  00525C 
+    TIM1_CCE=  00525D     |     TIM1_CCM=  005258     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  005259     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  00525A     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCM=  00525B     |     TIM1_CCM=  000000 
+    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
+    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
+    TIM1_CCM=  000003     |     TIM1_CCR=  005265     |     TIM1_CCR=  005266 
+    TIM1_CCR=  005267     |     TIM1_CCR=  005268     |     TIM1_CCR=  005269 
+    TIM1_CCR=  00526A     |     TIM1_CCR=  00526B     |     TIM1_CCR=  00526C 
+    TIM1_CNT=  00525E     |     TIM1_CNT=  00525F     |     TIM1_CR1=  005250 
+    TIM1_CR2=  005251     |     TIM1_CR2=  000000     |     TIM1_CR2=  000002 
+    TIM1_CR2=  000004     |     TIM1_CR2=  000005     |     TIM1_CR2=  000006 
+    TIM1_DTR=  00526E     |     TIM1_EGR=  005257     |     TIM1_EGR=  000007 
+    TIM1_EGR=  000001     |     TIM1_EGR=  000002     |     TIM1_EGR=  000003 
+    TIM1_EGR=  000004     |     TIM1_EGR=  000005     |     TIM1_EGR=  000006 
+    TIM1_EGR=  000000     |     TIM1_ETR=  005253     |     TIM1_ETR=  000006 
+    TIM1_ETR=  000000     |     TIM1_ETR=  000001     |     TIM1_ETR=  000002 
+    TIM1_ETR=  000003     |     TIM1_ETR=  000007     |     TIM1_ETR=  000004 
+    TIM1_ETR=  000005     |     TIM1_IER=  005254     |     TIM1_IER=  000007 
+    TIM1_IER=  000001     |     TIM1_IER=  000002     |     TIM1_IER=  000003 
+    TIM1_IER=  000004     |     TIM1_IER=  000005     |     TIM1_IER=  000006 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    PE_CR2  =  005018     |     PE_DDR  =  005016     |     PE_IDR  =  005015 
-    PE_ODR  =  005014     |     PF      =  000019     |     PF_BASE =  005019 
-    PF_CR1  =  00501C     |     PF_CR2  =  00501D     |     PF_DDR  =  00501B 
-    PF_IDR  =  00501A     |     PF_ODR  =  005019     |     PG      =  00001E 
-    PG_BASE =  00501E     |     PG_CR1  =  005021     |     PG_CR2  =  005022 
-    PG_DDR  =  005020     |     PG_IDR  =  00501F     |     PG_ODR  =  00501E 
-    PH_BASE =  005023     |     PH_CR1  =  005026     |     PH_CR2  =  005027 
-    PH_DDR  =  005025     |     PH_IDR  =  005024     |     PH_ODR  =  005023 
-    PI_BASE =  005028     |     PI_CR1  =  00502B     |     PI_CR2  =  00502C 
-    PI_DDR  =  00502A     |     PI_IDR  =  005029     |     PI_ODR  =  005028 
-    PUTC_CHA=  000001     |     PUTC_UAR=  000002     |     RAM_BASE=  000000 
-    RAM_END =  0017FF     |     RAM_SIZE=  001800     |     ROP     =  004800 
-    RST_SR  =  0050B3     |     SFR_BASE=  005000     |     SFR_END =  0057FF 
-    SPACE   =  000020     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
-    SPI_CRCP=  005205     |     SPI_DR  =  005204     |     SPI_ICR =  005202 
-    SPI_RXCR=  005206     |     SPI_SR  =  005203     |     SPI_TXCR=  005207 
-    STR     =  000007     |     SWIM_CSR=  007F80     |     TAB     =  000009 
-    TIM1_ARR=  005262     |     TIM1_ARR=  005263     |     TIM1_BKR=  00526D 
-    TIM1_CCE=  00525C     |     TIM1_CCE=  00525D     |     TIM1_CCM=  005258 
-    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  005259 
-    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  00525A 
-    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCM=  00525B 
-    TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
-    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000003     |     TIM1_CCM=  000007 
-    TIM1_CCM=  000002     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000003     |     TIM1_CCR=  005265 
-    TIM1_CCR=  005266     |     TIM1_CCR=  005267     |     TIM1_CCR=  005268 
-    TIM1_CCR=  005269     |     TIM1_CCR=  00526A     |     TIM1_CCR=  00526B 
-    TIM1_CCR=  00526C     |     TIM1_CNT=  00525E     |     TIM1_CNT=  00525F 
-    TIM1_CR1=  005250     |     TIM1_CR2=  005251     |     TIM1_CR2=  000000 
-    TIM1_CR2=  000002     |     TIM1_CR2=  000004     |     TIM1_CR2=  000005 
-    TIM1_CR2=  000006     |     TIM1_DTR=  00526E     |     TIM1_EGR=  005257 
-    TIM1_EGR=  000007     |     TIM1_EGR=  000001     |     TIM1_EGR=  000002 
-    TIM1_EGR=  000003     |     TIM1_EGR=  000004     |     TIM1_EGR=  000005 
-    TIM1_EGR=  000006     |     TIM1_EGR=  000000     |     TIM1_ETR=  005253 
-    TIM1_ETR=  000006     |     TIM1_ETR=  000000     |     TIM1_ETR=  000001 
-    TIM1_ETR=  000002     |     TIM1_ETR=  000003     |     TIM1_ETR=  000007 
-    TIM1_ETR=  000004     |     TIM1_ETR=  000005     |     TIM1_IER=  005254 
-    TIM1_IER=  000007     |     TIM1_IER=  000001     |     TIM1_IER=  000002 
-    TIM1_IER=  000003     |     TIM1_IER=  000004     |     TIM1_IER=  000005 
-    TIM1_IER=  000006     |     TIM1_IER=  000000     |     TIM1_OIS=  00526F 
-    TIM1_PSC=  005260     |     TIM1_PSC=  005261     |     TIM1_RCR=  005264 
+    TIM1_IER=  000000     |     TIM1_OIS=  00526F     |     TIM1_PSC=  005260 
+    TIM1_PSC=  005261     |     TIM1_RCR=  005264     |     TIM1_SMC=  005252 
+    TIM1_SMC=  000007     |     TIM1_SMC=  000000     |     TIM1_SMC=  000001 
+    TIM1_SMC=  000002     |     TIM1_SMC=  000004     |     TIM1_SMC=  000005 
+    TIM1_SMC=  000006     |     TIM1_SR1=  005255     |     TIM1_SR1=  000007 
+    TIM1_SR1=  000001     |     TIM1_SR1=  000002     |     TIM1_SR1=  000003 
+    TIM1_SR1=  000004     |     TIM1_SR1=  000005     |     TIM1_SR1=  000006 
+    TIM1_SR1=  000000     |     TIM1_SR2=  005256     |     TIM1_SR2=  000001 
+    TIM1_SR2=  000002     |     TIM1_SR2=  000003     |     TIM1_SR2=  000004 
+    TIM2_ARR=  00530D     |     TIM2_ARR=  00530E     |     TIM2_CCE=  005308 
+    TIM2_CCE=  005309     |     TIM2_CCM=  005305     |     TIM2_CCM=  005306 
+    TIM2_CCM=  005307     |     TIM2_CCR=  00530F     |     TIM2_CCR=  005310 
+    TIM2_CCR=  005311     |     TIM2_CCR=  005312     |     TIM2_CCR=  005313 
+    TIM2_CCR=  005314     |     TIM2_CNT=  00530A     |     TIM2_CNT=  00530B 
+    TIM2_CR1=  005300     |     TIM2_EGR=  005304     |     TIM2_IER=  005301 
+    TIM2_PSC=  00530C     |     TIM2_SR1=  005302     |     TIM2_SR2=  005303 
+    TIM3_ARR=  00532B     |     TIM3_ARR=  00532C     |     TIM3_CCE=  005327 
+    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCE=  000004 
+    TIM3_CCE=  000005     |     TIM3_CCE=  000000     |     TIM3_CCE=  000001 
+    TIM3_CCM=  005325     |     TIM3_CCM=  005326     |     TIM3_CCM=  000000 
+    TIM3_CCM=  000004     |     TIM3_CCM=  000003     |     TIM3_CCR=  00532D 
+    TIM3_CCR=  00532E     |     TIM3_CCR=  00532F     |     TIM3_CCR=  005330 
+    TIM3_CNT=  005328     |     TIM3_CNT=  005329     |     TIM3_CR1=  005320 
+    TIM3_CR1=  000007     |     TIM3_CR1=  000000     |     TIM3_CR1=  000003 
+    TIM3_CR1=  000001     |     TIM3_CR1=  000002     |     TIM3_EGR=  005324 
+    TIM3_IER=  005321     |     TIM3_PSC=  00532A     |     TIM3_SR1=  005322 
+    TIM3_SR2=  005323     |     TIM4_ARR=  005346     |     TIM4_CNT=  005344 
+    TIM4_CR1=  005340     |     TIM4_CR1=  000007     |     TIM4_CR1=  000000 
+    TIM4_CR1=  000003     |     TIM4_CR1=  000001     |     TIM4_CR1=  000002 
+    TIM4_EGR=  005343     |     TIM4_EGR=  000000     |     TIM4_IER=  005341 
+    TIM4_IER=  000000     |     TIM4_PSC=  005345     |     TIM4_PSC=  000000 
+    TIM4_PSC=  000007     |     TIM4_PSC=  000004     |     TIM4_PSC=  000001 
+    TIM4_PSC=  000005     |     TIM4_PSC=  000002     |     TIM4_PSC=  000006 
+    TIM4_PSC=  000003     |     TIM4_PSC=  000000     |     TIM4_PSC=  000001 
+    TIM4_PSC=  000002     |     TIM4_SR =  005342     |     TIM4_SR_=  000000 
+    TIM_CR1_=  000007     |     TIM_CR1_=  000000     |     TIM_CR1_=  000006 
+    TIM_CR1_=  000005     |     TIM_CR1_=  000004     |     TIM_CR1_=  000003 
+    TIM_CR1_=  000001     |     TIM_CR1_=  000002     |     UART1   =  000000 
+    UART1_BA=  005230     |     UART1_BR=  005232     |     UART1_BR=  005233 
+    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
+    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
+    UART1_GT=  005239     |     UART1_PO=  000000     |     UART1_PS=  00523A 
+    UART1_RX=  000004     |     UART1_SR=  005230     |     UART1_TX=  000005 
+    UART3   =  000001     |     UART3_BA=  005240     |     UART3_BR=  005242 
+    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
+    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
+    UART3_DR=  005241     |     UART3_PO=  00000F     |     UART3_RX=  000006 
+    UART3_SR=  005240     |     UART3_TX=  000005     |     UART_BRR=  000002 
+    UART_BRR=  000003     |     UART_CR1=  000004     |     UART_CR1=  000004 
+    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
+    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
+    UART_CR1=  000003     |     UART_CR2=  000005     |     UART_CR2=  000004 
+    UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
+    UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
+    UART_CR2=  000007     |     UART_CR3=  000006     |     UART_CR3=  000003 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    TIM1_SMC=  005252     |     TIM1_SMC=  000007     |     TIM1_SMC=  000000 
-    TIM1_SMC=  000001     |     TIM1_SMC=  000002     |     TIM1_SMC=  000004 
-    TIM1_SMC=  000005     |     TIM1_SMC=  000006     |     TIM1_SR1=  005255 
-    TIM1_SR1=  000007     |     TIM1_SR1=  000001     |     TIM1_SR1=  000002 
-    TIM1_SR1=  000003     |     TIM1_SR1=  000004     |     TIM1_SR1=  000005 
-    TIM1_SR1=  000006     |     TIM1_SR1=  000000     |     TIM1_SR2=  005256 
-    TIM1_SR2=  000001     |     TIM1_SR2=  000002     |     TIM1_SR2=  000003 
-    TIM1_SR2=  000004     |     TIM2_ARR=  00530D     |     TIM2_ARR=  00530E 
-    TIM2_CCE=  005308     |     TIM2_CCE=  005309     |     TIM2_CCM=  005305 
-    TIM2_CCM=  005306     |     TIM2_CCM=  005307     |     TIM2_CCR=  00530F 
-    TIM2_CCR=  005310     |     TIM2_CCR=  005311     |     TIM2_CCR=  005312 
-    TIM2_CCR=  005313     |     TIM2_CCR=  005314     |     TIM2_CNT=  00530A 
-    TIM2_CNT=  00530B     |     TIM2_CR1=  005300     |     TIM2_EGR=  005304 
-    TIM2_IER=  005301     |     TIM2_PSC=  00530C     |     TIM2_SR1=  005302 
-    TIM2_SR2=  005303     |     TIM3_ARR=  00532B     |     TIM3_ARR=  00532C 
-    TIM3_CCE=  005327     |     TIM3_CCE=  000000     |     TIM3_CCE=  000001 
-    TIM3_CCE=  000004     |     TIM3_CCE=  000005     |     TIM3_CCE=  000000 
-    TIM3_CCE=  000001     |     TIM3_CCM=  005325     |     TIM3_CCM=  005326 
-    TIM3_CCM=  000000     |     TIM3_CCM=  000004     |     TIM3_CCM=  000003 
-    TIM3_CCR=  00532D     |     TIM3_CCR=  00532E     |     TIM3_CCR=  00532F 
-    TIM3_CCR=  005330     |     TIM3_CNT=  005328     |     TIM3_CNT=  005329 
-    TIM3_CR1=  005320     |     TIM3_CR1=  000007     |     TIM3_CR1=  000000 
-    TIM3_CR1=  000003     |     TIM3_CR1=  000001     |     TIM3_CR1=  000002 
-    TIM3_EGR=  005324     |     TIM3_IER=  005321     |     TIM3_PSC=  00532A 
-    TIM3_SR1=  005322     |     TIM3_SR2=  005323     |     TIM4_ARR=  005346 
-    TIM4_CNT=  005344     |     TIM4_CR1=  005340     |     TIM4_CR1=  000007 
-    TIM4_CR1=  000000     |     TIM4_CR1=  000003     |     TIM4_CR1=  000001 
-    TIM4_CR1=  000002     |     TIM4_EGR=  005343     |     TIM4_EGR=  000000 
-    TIM4_IER=  005341     |     TIM4_IER=  000000     |     TIM4_PSC=  005345 
-    TIM4_PSC=  000000     |     TIM4_PSC=  000007     |     TIM4_PSC=  000004 
-    TIM4_PSC=  000001     |     TIM4_PSC=  000005     |     TIM4_PSC=  000002 
-    TIM4_PSC=  000006     |     TIM4_PSC=  000003     |     TIM4_PSC=  000000 
-    TIM4_PSC=  000001     |     TIM4_PSC=  000002     |     TIM4_SR =  005342 
-    TIM4_SR_=  000000     |     TIM_CR1_=  000007     |     TIM_CR1_=  000000 
-    TIM_CR1_=  000006     |     TIM_CR1_=  000005     |     TIM_CR1_=  000004 
-    TIM_CR1_=  000003     |     TIM_CR1_=  000001     |     TIM_CR1_=  000002 
-    UART    =  000004     |     UART1   =  000000     |     UART1_BA=  005230 
-    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
-    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
-    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
-    UART1_PO=  000000     |     UART1_PS=  00523A     |     UART1_RX=  000004 
-    UART1_SR=  005230     |     UART1_TX=  000005     |     UART3   =  000001 
-    UART3_BA=  005240     |     UART3_BR=  005242     |     UART3_BR=  005243 
-    UART3_CR=  005244     |     UART3_CR=  005245     |     UART3_CR=  005246 
-    UART3_CR=  005247     |     UART3_CR=  004249     |     UART3_DR=  005241 
-    UART3_PO=  00000F     |     UART3_RX=  000006     |     UART3_SR=  005240 
-    UART3_TX=  000005     |     UART_BRR=  000002     |     UART_BRR=  000003 
-    UART_CR1=  000004     |     UART_CR1=  000004     |     UART_CR1=  000002 
-    UART_CR1=  000000     |     UART_CR1=  000001     |     UART_CR1=  000007 
-    UART_CR1=  000006     |     UART_CR1=  000005     |     UART_CR1=  000003 
-    UART_CR2=  000005     |     UART_CR2=  000004     |     UART_CR2=  000002 
-    UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
-    UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
-    UART_CR3=  000006     |     UART_CR3=  000003     |     UART_CR3=  000001 
-    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
-Hexadecimal [24-Bits]
-
-Symbol Table
-
-    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000007 
-    UART_CR4=  000000     |     UART_CR4=  000001     |     UART_CR4=  000002 
-    UART_CR4=  000003     |     UART_CR4=  000004     |     UART_CR4=  000006 
-    UART_CR4=  000005     |     UART_CR5=  000008     |     UART_CR5=  000003 
-    UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
-    UART_CR5=  000005     |     UART_CR6=  000009     |     UART_CR6=  000004 
-    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
-    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_DR =  000001 
-    UART_GTR=  000009     |     UART_ID =  000004     |     UART_PSC=  00000A 
+    UART_CR3=  000001     |     UART_CR3=  000002     |     UART_CR3=  000000 
+    UART_CR3=  000006     |     UART_CR3=  000004     |     UART_CR3=  000005 
+    UART_CR4=  000007     |     UART_CR4=  000000     |     UART_CR4=  000001 
+    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
+    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000008 
+    UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
+    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000009 
+    UART_CR6=  000004     |     UART_CR6=  000007     |     UART_CR6=  000001 
+    UART_CR6=  000002     |     UART_CR6=  000000     |     UART_CR6=  000005 
+    UART_DR =  000001     |     UART_GTR=  000009     |     UART_PSC=  00000A 
     UART_SR =  000000     |     UART_SR_=  000001     |     UART_SR_=  000004 
     UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
     UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
     UBC     =  004801     |     USR_BTN_=  000004     |     USR_BTN_=  000010 
-    USR_BTN_=  005015     |     VT      =  00000B     |     WDGOPT  =  004805 
-    WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
-    WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
-  2 _uart_de   0000F6 GR  |   2 _uart_ge   0000E6 GR  |   2 _uart_in   000040 GR
-  2 _uart_pu   00008E GR  |   2 _uart_pu   0000B2 GR  |   2 _uart_qu   0000D6 GR
-  2 _uart_sp   00009E GR  |   2 baud_fcy   00001B R   |   2 baud_fcy   000009 R
-  2 config_b   000062 R   |   2 del_loop   0000F6 R   |   2 select_u   00002F R
-  2 uart1      000048 R   |   2 uart3      000056 R   |   2 uart_del   0000F6 GR
-  2 uart_get   0000E6 GR  |   2 uart_ini   000040 GR  |   2 uart_put   00008E GR
-  2 uart_put   0000B2 GR  |   2 uart_que   0000D6 GR  |   2 uart_reg   000005 R
-  2 uart_spa   00009E GR
+    USR_BTN_=  005015     |     VSIZE   =  000002     |     VT      =  00000B 
+    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
+    WWDG_WR =  0050D2     |   2 _getchar   00001D GR  |   2 _gets      00003D GR
+  2 _putchar   00000C GR  |   2 _puts      00002C GR  |   2 _select_   000006 GR
+  2 accept_c   000099 R   |   2 cancel     0000D1 R   |   2 del_back   000081 R
+  2 del_line   00006F R   |   2 getchar    00001D GR  |   2 gets       00003D GR
+  2 gets_loo   000045 R   |   2 gets_qui   0000D4 R   |   2 putchar    00000C GR
+  2 puts       00002C GR  |   2 reprint    0000AE R   |   2 select_s   000006 GR
+  1 std_dev    000000 R   |     uart_del   ****** GX  |     uart_get   ****** GX
+    uart_put   ****** GX  |     uart_put   ****** GX
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
 Hexadecimal [24-Bits]
 
 Area Table
 
    0 _CODE      size      0   flags    0
-   1 DATA       size      0   flags    0
-   2 CODE       size    118   flags    0
+   1 DATA       size      1   flags    0
+   2 CODE       size     E8   flags    0
 
