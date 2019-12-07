@@ -62,19 +62,44 @@ std_dev: .blkb 1  ; standard device identifier
 .asciz "CONIO"
 
 ;----------------------------
-; select standard I/O device
-; c prototype: void select_stdio(char dev_id)
+; configure uart and select standard I/O device
+; c prototype: void conio_init(uint8_t baud, uint8_t dev_id)
 ; input:
+;   BAUD       uint8_t 
 ;   DEV_ID     uint8_t 
 ; output:
-;   none
+;   std_dev
+; ASTUCE:
+;   L'appel à conio_init est court-circuité vers uart_init
+;   en ajoutant 2 à SP 
 ;----------------------------
-    ARG_OFS=2
-    DEV_ID=ARG_OFS+1  ; one byte 
-_select_stdio::
-select_stdio::
+    VSIZE=2
+    ARG_OFS=2+VSIZE
+    BAUD=ARG_OFS+1
+    DEV_ID=ARG_OFS+2  ; one byte 
+; local vars 
+    UART_BAUD=1 
+    UART_DEV=2     
+_conio_init::
+conio_init::
+    _vars VSIZE  
     ld a,(DEV_ID,sp)
-    ld std_dev,A 
+    ld std_dev,a
+    ld (UART_DEV,sp),a 
+    ld a,(BAUD,sp)
+    ld (UART_BAUD,sp),a  
+    call uart_init
+    ld a,std_dev 
+    _fn_exit
+
+
+select_dev::
+    ld a,(3,sp)
+    ld std_dev,a 
+    ret
+
+get_dev::
+    ld a,std_dev
     ret 
 
 ;----------------------------------------
@@ -87,7 +112,8 @@ select_stdio::
 ;----------------------------------------
     VSIZE=2
     ARG_OFS=2+VSIZE
-    CHAR=ARG_OFS+1  ; 2 bytes 
+    ZERO=ARG_OFS+1
+    CHAR=ARG_OFS+2  
 ;  local variables
     PUTC_CHAR=1
     PUTC_UART=2
@@ -96,9 +122,9 @@ putchar::
     _vars VSIZE 
     ld a,std_dev
     ld (PUTC_UART,sp),a
-    ld a,(CHAR+1,sp)
+    ld a,(CHAR,sp)
     ld (PUTC_CHAR,sp),a 
-    call uart_putc 
+    call uart_putc
 _fn_exit     
 
 ;------------------------------------------
@@ -131,8 +157,8 @@ _fn_exit
 ;   X           string length
 ;------------------------------------------------
         VSIZE=3
-        ARG_OFS=VSIZE+2
-        STR=1 
+        ARG_OFS=2+VSIZE
+        STR=ARG_OFS+1 
 ; uart_puts arguments
         PUTS_STR=1   ; 2 bytes
         PUTS_UART=3  ; 1 byte      
@@ -144,6 +170,7 @@ puts::
     ldw x,(STR,sp)
     ldw (PUTS_STR,sp),x 
     call uart_puts
+    
 _fn_exit 
 
 
@@ -246,7 +273,6 @@ cancel:
 	ldw x,(BUFFER,sp)
     clr (x)
 gets_quit:
-	addw sp,#LOCAL_SIZE
 	clrw y
     ld a,#CR 
     ld yl,a 

@@ -3,12 +3,13 @@
 #############################
 NAME=conio
 LIBNAME=$(NAME).lib 
-SDAS=sdasstm8
-SDCC=sdcc
-SDLD=sdldstm8
-SDAR=sdar
-CFLAGS=
-INC=../inc/
+AS=sdasstm8
+CC=sdcc
+LD=sdld
+AR=sdar
+CFLAGS=-mstm8 -DSTM8S208 -I ../../inc
+LDFLAGS=-rc
+INC=../../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
 LIB_PATH=../../lib/
@@ -20,6 +21,10 @@ LIB=$(LIB_PATH)$(LIBNAME)
 LIBREL=$(LIBNAME:.lib=.rel)
 SYMBOLS=$(OBJECTS:.rel=.sym)
 LISTS=$(OBJECTS:.rel=.lst)
+FLASH=stm8flash
+BOARD=stm8s208rb
+PROGRAMMER=stlinkv21
+TARGET=$(BUILD)conio_test.ihx 
 
 .PHONY: all
 
@@ -32,7 +37,7 @@ archive: $(LIBREL)
 	@echo "****************************"
 	@echo "creating $(LIBNAME) archives"
 	@echo "****************************"
-	$(SDAR) -rc $(LIB) $(BUILD)$(LIBREL)
+	$(AR) -rc $(LIB) $(BUILD)$(LIBREL)
 
  
 $(NAME).rel:
@@ -40,7 +45,19 @@ $(NAME).rel:
 	@echo "*****************"
 	@echo "assembling $(ASM_SRC)"
 	@echo "*****************"
-	$(SDAS) -g -l -o $(OBJECTS) $(ASM_SRC)
+	$(AS) -g -l -o $(OBJECTS) $(ASM_SRC)
+
+.PHONY: test 
+
+test: $(LIB)
+	@echo
+	@echo "*****************"
+	@echo "creating test    "
+	@echo "*****************"
+	$(AS) -g -l -o $(BUILD)conio_test.rel conio_test.asm 
+	$(CC) $(CFLAGS) -L$(LIB_PATH) -luart -lconio -o$(TARGET) $(BUILD)conio_test.rel
+	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
+
 
 .PHONY: title
 title:

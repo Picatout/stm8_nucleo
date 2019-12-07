@@ -148,7 +148,7 @@ config_baud:
 ;  serial port communication routines
 ;------------------------------------
 ;------------------------------------
-; transmit character in a via UART3
+; transmit character in a via uart 
 ; C prototype: char uart_putc(char c, unit8_t uart)
 ; input:
 ;   CHAR        stack argument 

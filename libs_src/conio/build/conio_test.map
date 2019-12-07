@@ -15,9 +15,9 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000000  s__CODE                         
      00000001  s_DATA                          
      00000080  l_HOME                          
-     000000A6  l_DATA                          
+     000000A4  l_DATA                          
      00000100  l_SSEG0                         
-     00000805  l_CODE                          
+     00000456  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -26,7 +26,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    000000A6 =         166. bytes (REL,CON)
+DATA                                00000001    000000A4 =         164. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -53,52 +53,52 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000805 =        2053. bytes (REL,CON)
+CODE                                00008080    00000456 =        1110. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
-     000080BE  itoa                               MATH24_TEST
-     00008166  atoi                               MATH24_TEST
-     000081FE  readln                             MATH24_TEST
-     0000834A  next_word                          MATH24_TEST
-     00008380  to_lower                           MATH24_TEST
-     0000838B  to_upper                           MATH24_TEST
-     00008397  number                             MATH24_TEST
-     0000856C  add24                              MATH24
-     00008579  sub24                              MATH24
-     00008586  mul24_8u                           MATH24
-     000085AF  mul24u                             MATH24
-     000085F3  mul24s                             MATH24
-     00008626  div24_8u                           MATH24
-     0000863C  clz24                              MATH24
-     00008658  div24u                             MATH24
-     000086E4  div24s                             MATH24
-     00008765  neg24                              MATH24
-     000087AD  _uart_init                         UART
-     000087AD  uart_init                          UART
-     000087FB  _uart_putc                         UART
-     000087FB  uart_putc                          UART
-     0000880B  _uart_spaces                       UART
-     0000880B  uart_spaces                        UART
-     0000881F  _uart_puts                         UART
-     0000881F  uart_puts                          UART
-     00008843  _uart_query                        UART
-     00008843  uart_query                         UART
-     00008853  _uart_getc                         UART
-     00008853  uart_getc                          UART
-     00008863  _uart_delete                       UART
-     00008863  uart_delete                        UART
+     00008179  print_int                          CONIO_TEST
+     000081D5  itoa                               CONIO_TEST
+     00008221  strlen                             CONIO_TEST
+     00008233  divu24_8                           CONIO_TEST
+     0000825B  neg_acc24                          CONIO_TEST
+     000082C4  _conio_init                        CONIO
+     000082C4  conio_init                         CONIO
+     000082DA  select_dev                         CONIO
+     000082E0  get_dev                            CONIO
+     000082E4  _putchar                           CONIO
+     000082E4  putchar                            CONIO
+     000082F5  _getchar                           CONIO
+     000082F5  getchar                            CONIO
+     00008304  _puts                              CONIO
+     00008304  puts                               CONIO
+     00008315  _gets                              CONIO
+     00008315  gets                               CONIO
+     000083FE  _uart_init                         UART
+     000083FE  uart_init                          UART
+     0000844C  _uart_putc                         UART
+     0000844C  uart_putc                          UART
+     0000845C  _uart_spaces                       UART
+     0000845C  uart_spaces                        UART
+     00008470  _uart_puts                         UART
+     00008470  uart_puts                          UART
+     00008494  _uart_query                        UART
+     00008494  uart_query                         UART
+     000084A4  _uart_getc                         UART
+     000084A4  uart_getc                          UART
+     000084B4  _uart_delete                       UART
+     000084B4  uart_delete                        UART
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
 Files Linked                              [ module(s) ]
 
-build/math24_test.rel                     [ MATH24_TEST ]
+build/conio_test.rel                      [ CONIO_TEST ]
 
 
 Libraries Linked                          [ object file ]
 
-../../lib/math24.lib                      [ math24.rel ]
+../../lib/conio.lib                       [ conio.rel ]
 ../../lib/uart.lib                        [ uart.rel ]
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 7.

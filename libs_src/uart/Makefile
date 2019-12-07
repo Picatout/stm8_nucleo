@@ -20,6 +20,10 @@ LIB=$(LIB_PATH)$(LIBNAME)
 LIBREL=$(LIBNAME:.lib=.rel)
 SYMBOLS=$(OBJECTS:.rel=.sym)
 LISTS=$(OBJECTS:.rel=.lst)
+FLASH=stm8flash
+BOARD=stm8s208rb
+PROGRAMMER=stlinkv21
+TARGET=$(BUILD)$(NAME)_test.ihx 
 
 .PHONY: all
 
@@ -49,6 +53,13 @@ title:
 	@echo "creating $(NAME)"
 	@echo "*****************"
 
+
+PHONY: test 
+
+test: $(OBJECTS)
+	$(SDAS) -g -l -o $(BUILD)uart_test.rel uart_test.asm 
+	$(SDCC) -mstm8 -lstm8 -L$(LIB_PATH) -luart -o $(BUILD)$(NAME)_test.ihx $(BUILD)$(NAME)_test.rel 
+	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
 .PHONY: clean 
 clean: build

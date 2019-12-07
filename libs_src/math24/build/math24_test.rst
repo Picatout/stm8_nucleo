@@ -1552,7 +1552,7 @@ Hexadecimal [24-Bits]
                                     334 ;-----------------------------------
       0081E8                        335 getc:
       0081E8 4B 01            [ 1]  336     push #UART3 
-      0081EA CD 88 4F         [ 4]  337     call uart_getc 
+      0081EA CD 88 53         [ 4]  337     call uart_getc 
       0081ED 5B 01            [ 2]  338     addw sp,#1 
       0081EF 81               [ 4]  339     ret 
                                     340 
@@ -1626,7 +1626,7 @@ Hexadecimal [24-Bits]
       008236 88               [ 1]  398     push a 
       008237 7B 02            [ 1]  399 	ld a,(LEN,sp)
       008239 88               [ 1]  400     push a 
-      00823A CD 88 5F         [ 4]  401 	call uart_delete
+      00823A CD 88 63         [ 4]  401 	call uart_delete
       00823D 5B 02            [ 2]  402     addw sp,#2 
       00823F 90 AE 00 57      [ 2]  403 	ldw y,#tib
       008243 72 5F 00 56      [ 1]  404 	clr count
@@ -1642,7 +1642,7 @@ Hexadecimal [24-Bits]
       008257 88               [ 1]  414     push a 
       008258 A6 01            [ 1]  415     ld a,#1
       00825A 88               [ 1]  416     push a 
-      00825B CD 88 5F         [ 4]  417     call uart_delete
+      00825B CD 88 63         [ 4]  417     call uart_delete
       00825E 5B 02            [ 2]  418     addw sp,#2
       008260 20 A6            [ 2]  419     jra readln_loop	
       008262                        420 accept_char:

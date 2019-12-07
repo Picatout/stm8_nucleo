@@ -29,12 +29,26 @@
 #ifndef CONIO_H
 #define CONIO_H
 
+#include <stdint.h>
+
+// baud rate constants
+#define B2400 (0)
+#define B4800 (1)
+#define B9600 (2)
+#define B19200 (3)
+#define B38400 (4)
+#define B57600 (5)
+#define B115200 (6)
+#define B230400 (7)
+#define B460800 (8)
+#define B921600 (9)
+
 // available stdio devices
 #define UART1 (0)
 #define UART3 (1)
 #define MAX_GETS (80) // maximum length for gets() buffer
 
-void select_stdio(char dev);
+uint8_t conio_init(uint8_t baud, uint8_t dev);
 int getchar();
 int putchar(int c);
 int puts(const char*);
