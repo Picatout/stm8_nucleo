@@ -69,35 +69,39 @@ std_dev: .blkb 1  ; standard device identifier
 ;   DEV_ID     uint8_t 
 ; output:
 ;   std_dev
-; ASTUCE:
-;   L'appel à conio_init est court-circuité vers uart_init
-;   en ajoutant 2 à SP 
 ;----------------------------
-    VSIZE=2
-    ARG_OFS=2+VSIZE
+    ARG_OFS=2
     BAUD=ARG_OFS+1
     DEV_ID=ARG_OFS+2  ; one byte 
-; local vars 
-    UART_BAUD=1 
-    UART_DEV=2     
 _conio_init::
 conio_init::
-    _vars VSIZE  
     ld a,(DEV_ID,sp)
     ld std_dev,a
-    ld (UART_DEV,sp),a 
-    ld a,(BAUD,sp)
-    ld (UART_BAUD,sp),a  
-    call uart_init
-    ld a,std_dev 
-    _fn_exit
+    jp uart_init
 
-
-select_dev::
-    ld a,(3,sp)
+;--------------------------------------
+; name: set_dev
+; desc: select standard device 
+; input:
+;   DEV_ID      device identifier
+; output:
+;   none    
+;-------------------------------------
+    ARG_OFS=2 
+    DEV_ID=ARG_OFS+1
+set_dev::
+    ld a,(DEV_ID,sp)
     ld std_dev,a 
     ret
 
+;--------------------------------------
+; name: get_dev
+; desc: give standard device id.
+; input:
+;   none 
+; output:
+;   A           std_dev
+;-------------------------------------
 get_dev::
     ld a,std_dev
     ret 
@@ -110,22 +114,18 @@ get_dev::
 ; output:
 ;    X          same character  
 ;----------------------------------------
-    VSIZE=2
+    VSIZE=0
     ARG_OFS=2+VSIZE
     ZERO=ARG_OFS+1
-    CHAR=ARG_OFS+2  
-;  local variables
-    PUTC_CHAR=1
-    PUTC_UART=2
+    CHAR=ARG_OFS+2 
+    UART_ID=CHAR  
 _putchar::
 putchar::
-    _vars VSIZE 
-    ld a,std_dev
-    ld (PUTC_UART,sp),a
     ld a,(CHAR,sp)
-    ld (PUTC_CHAR,sp),a 
-    call uart_putc
-_fn_exit     
+    ld (ZERO,sp),a 
+    ld a,std_dev 
+    ld (UART_ID,sp),a 
+    jp uart_putc 
 
 ;------------------------------------------
 ; wait a character from standard input 
@@ -135,18 +135,13 @@ _fn_exit
 ; output:
 ;   X       int character received 
 ;--------------------------------------------
-    VSIZE=1
-    ARG_OFS=2+VSIZE
-    ARG_UART=1
 _getchar::
 getchar::
-    _vars VSIZE 
     ld a,std_dev
-    ld (ARG_UART,sp),a 
+    push a 
     call uart_getc 
-    clrw x
-    ld xl,a 
-_fn_exit 
+    _drop 1 
+    ret
 
 ;----------------------------------------------
 ; output a string to standard output
@@ -170,7 +165,11 @@ puts::
     ldw x,(STR,sp)
     ldw (PUTS_STR,sp),x 
     call uart_puts
-    
+    push #CR
+    push #0 
+    call putchar
+    _drop 2  
+    clrw x 
 _fn_exit 
 
 

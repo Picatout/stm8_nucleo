@@ -139,6 +139,7 @@ config_baud:
 ; enable TX and RX but no interrupts
     ld a,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
     ld (UART_CR2,x),a 
+    ld a,(UART,sp)
     addw sp,#LOCAL_SIZE 
     ret
 
@@ -168,6 +169,8 @@ uart_putc::
     jreq 1$
     ld a,(CHAR,sp)
 	ld (UART_DR,x),a
+    clrw x 
+    ld xl,a 
     ret
 
 ;------------------------------------
@@ -259,24 +262,24 @@ uart_query::
 
 ;------------------------------------
 ; wait for character from uart
-; C prototype: char uart_getc(uint8_t uart_id)
+; C prototype: int uart_getc(uint8_t uart_id)
 ; input:
 ;   uart_id     uart_identifier
 ; output:
-;   A           character received 
+;   X           character received extended to 16 bits 
 ;------------------------------------
-    ARG_OFS=4
+    ARG_OFS=2
     UART=ARG_OFS+1 
 _uart_getc::       
 uart_getc::
-    pushw x
     ld a,(UART,sp)
     call select_uart  
 1$:	ld a,#(1<<UART_SR_RXNE) 
     and a,(UART_SR,x)
     jreq 1$
 	ld a, (UART_DR,x) 
-	popw x 
+    clrw x 
+2$: ld xl,a
     ret
 
 ;------------------------------------

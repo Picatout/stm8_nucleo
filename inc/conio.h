@@ -49,7 +49,9 @@
 #define MAX_GETS (80) // maximum length for gets() buffer
 
 uint8_t conio_init(uint8_t baud, uint8_t dev);
-int getchar();
+void set_dev(uint8_t dev);
+uint8_t get_dev(void);
+int getchar(void);
 int putchar(int c);
 int puts(const char*);
 char* gets(char *buffer);

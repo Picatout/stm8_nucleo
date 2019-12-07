@@ -31,10 +31,10 @@ Le contenu du regisrete **A** n'est jamais préservé mais les registres **X** e
 Efface **n** caractères sur le console terminal à gauche du curseur.
 l'effacement est produit par l'envoie d'une séquence de 3 caractères ASCII: **BKSP**,**SPACE**,**BKSP**. Cet séquence est envoyée **n** fois.
 
-## char uart_getc(uint8_t uart_id) 
+## int uart_getc(uint8_t uart_id) 
 
 Attend un caractère en provenance du uart désigné par **uart_id**.
-le caractère est retourné dans le registres **A**.
+le caractère est retourné dans le registre **X**.
 
 ## void uart_init(uint8_t baud,uint8_t uart_id)
 Initialise le périphérique uart désigné par **uart_id** à la vitesse indiquée par a constante **baud**. La configuration est **8N1**. Il n'y a pas de parité ni de contrôle de flux. Les interruptions ne sont pas utilisées.
