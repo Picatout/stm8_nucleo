@@ -650,604 +650,603 @@ Hexadecimal [24-Bits]
                                     523 ; uart identifier
                                     524 ; to be used by uart_init
                            000000   525  UART1 = 0
-                           000001   526  UART2 = 1
-                           000001   527  UART3 = 1
-                                    528 
-                                    529 ; pins used by uart 
-                           000005   530 UART1_TX_PIN=BIT5
-                           000004   531 UART1_RX_PIN=BIT4
-                           000006   532 UART3_TX_PIN=BIT6
-                           000005   533 UART3_RX_PIN=BIT5
-                                    534 ; uart port base address 
-                           000000   535 UART1_PORT=PA 
-                           00000F   536 UART3_PORT=PD
-                                    537 
-                                    538 ; UART1 
-                           005230   539  UART1_BASE  = (0x5230)
-                           005230   540  UART1_SR    = (0x5230)
-                           005231   541  UART1_DR    = (0x5231)
-                           005232   542  UART1_BRR1  = (0x5232)
-                           005233   543  UART1_BRR2  = (0x5233)
-                           005234   544  UART1_CR1   = (0x5234)
-                           005235   545  UART1_CR2   = (0x5235)
-                           005236   546  UART1_CR3   = (0x5236)
-                           005237   547  UART1_CR4   = (0x5237)
-                           005238   548  UART1_CR5   = (0x5238)
-                           005239   549  UART1_GTR   = (0x5239)
+                           000001   526  UART3 = 1
+                                    527 
+                                    528 ; pins used by uart 
+                           000005   529 UART1_TX_PIN=BIT5
+                           000004   530 UART1_RX_PIN=BIT4
+                           000005   531 UART3_TX_PIN=BIT5
+                           000006   532 UART3_RX_PIN=BIT6
+                                    533 ; uart port base address 
+                           000000   534 UART1_PORT=PA 
+                           00000F   535 UART3_PORT=PD
+                                    536 
+                                    537 ; UART1 
+                           005230   538  UART1_BASE  = (0x5230)
+                           005230   539  UART1_SR    = (0x5230)
+                           005231   540  UART1_DR    = (0x5231)
+                           005232   541  UART1_BRR1  = (0x5232)
+                           005233   542  UART1_BRR2  = (0x5233)
+                           005234   543  UART1_CR1   = (0x5234)
+                           005235   544  UART1_CR2   = (0x5235)
+                           005236   545  UART1_CR3   = (0x5236)
+                           005237   546  UART1_CR4   = (0x5237)
+                           005238   547  UART1_CR5   = (0x5238)
+                           005239   548  UART1_GTR   = (0x5239)
+                           00523A   549  UART1_PSCR  = (0x523A)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
 Hexadecimal [24-Bits]
 
 
 
-                           00523A   550  UART1_PSCR  = (0x523A)
-                                    551 
-                                    552 ; UART3
-                           005240   553  UART3_BASE  = (0x5240)
-                           005240   554  UART3_SR    = (0x5240)
-                           005241   555  UART3_DR    = (0x5241)
-                           005242   556  UART3_BRR1  = (0x5242)
-                           005243   557  UART3_BRR2  = (0x5243)
-                           005244   558  UART3_CR1   = (0x5244)
-                           005245   559  UART3_CR2   = (0x5245)
-                           005246   560  UART3_CR3   = (0x5246)
-                           005247   561  UART3_CR4   = (0x5247)
-                           004249   562  UART3_CR6   = (0x4249)
-                                    563 
-                                    564 ; UART Status Register bits
-                           000007   565  UART_SR_TXE = (7)
-                           000006   566  UART_SR_TC = (6)
-                           000005   567  UART_SR_RXNE = (5)
-                           000004   568  UART_SR_IDLE = (4)
-                           000003   569  UART_SR_OR = (3)
-                           000002   570  UART_SR_NF = (2)
-                           000001   571  UART_SR_FE = (1)
-                           000000   572  UART_SR_PE = (0)
-                                    573 
-                                    574 ; Uart Control Register bits
-                           000007   575  UART_CR1_R8 = (7)
-                           000006   576  UART_CR1_T8 = (6)
-                           000005   577  UART_CR1_UARTD = (5)
-                           000004   578  UART_CR1_M = (4)
-                           000003   579  UART_CR1_WAKE = (3)
-                           000002   580  UART_CR1_PCEN = (2)
-                           000001   581  UART_CR1_PS = (1)
-                           000000   582  UART_CR1_PIEN = (0)
-                                    583 
-                           000007   584  UART_CR2_TIEN = (7)
-                           000006   585  UART_CR2_TCIEN = (6)
-                           000005   586  UART_CR2_RIEN = (5)
-                           000004   587  UART_CR2_ILIEN = (4)
-                           000003   588  UART_CR2_TEN = (3)
-                           000002   589  UART_CR2_REN = (2)
-                           000001   590  UART_CR2_RWU = (1)
-                           000000   591  UART_CR2_SBK = (0)
-                                    592 
-                           000006   593  UART_CR3_LINEN = (6)
-                           000005   594  UART_CR3_STOP1 = (5)
-                           000004   595  UART_CR3_STOP0 = (4)
-                           000003   596  UART_CR3_CLKEN = (3)
-                           000002   597  UART_CR3_CPOL = (2)
-                           000001   598  UART_CR3_CPHA = (1)
-                           000000   599  UART_CR3_LBCL = (0)
-                                    600 
-                           000006   601  UART_CR4_LBDIEN = (6)
-                           000005   602  UART_CR4_LBDL = (5)
-                           000004   603  UART_CR4_LBDF = (4)
-                           000003   604  UART_CR4_ADD3 = (3)
+                                    550 
+                                    551 ; UART3
+                           005240   552  UART3_BASE  = (0x5240)
+                           005240   553  UART3_SR    = (0x5240)
+                           005241   554  UART3_DR    = (0x5241)
+                           005242   555  UART3_BRR1  = (0x5242)
+                           005243   556  UART3_BRR2  = (0x5243)
+                           005244   557  UART3_CR1   = (0x5244)
+                           005245   558  UART3_CR2   = (0x5245)
+                           005246   559  UART3_CR3   = (0x5246)
+                           005247   560  UART3_CR4   = (0x5247)
+                           004249   561  UART3_CR6   = (0x4249)
+                                    562 
+                                    563 ; UART Status Register bits
+                           000007   564  UART_SR_TXE = (7)
+                           000006   565  UART_SR_TC = (6)
+                           000005   566  UART_SR_RXNE = (5)
+                           000004   567  UART_SR_IDLE = (4)
+                           000003   568  UART_SR_OR = (3)
+                           000002   569  UART_SR_NF = (2)
+                           000001   570  UART_SR_FE = (1)
+                           000000   571  UART_SR_PE = (0)
+                                    572 
+                                    573 ; Uart Control Register bits
+                           000007   574  UART_CR1_R8 = (7)
+                           000006   575  UART_CR1_T8 = (6)
+                           000005   576  UART_CR1_UARTD = (5)
+                           000004   577  UART_CR1_M = (4)
+                           000003   578  UART_CR1_WAKE = (3)
+                           000002   579  UART_CR1_PCEN = (2)
+                           000001   580  UART_CR1_PS = (1)
+                           000000   581  UART_CR1_PIEN = (0)
+                                    582 
+                           000007   583  UART_CR2_TIEN = (7)
+                           000006   584  UART_CR2_TCIEN = (6)
+                           000005   585  UART_CR2_RIEN = (5)
+                           000004   586  UART_CR2_ILIEN = (4)
+                           000003   587  UART_CR2_TEN = (3)
+                           000002   588  UART_CR2_REN = (2)
+                           000001   589  UART_CR2_RWU = (1)
+                           000000   590  UART_CR2_SBK = (0)
+                                    591 
+                           000006   592  UART_CR3_LINEN = (6)
+                           000005   593  UART_CR3_STOP1 = (5)
+                           000004   594  UART_CR3_STOP0 = (4)
+                           000003   595  UART_CR3_CLKEN = (3)
+                           000002   596  UART_CR3_CPOL = (2)
+                           000001   597  UART_CR3_CPHA = (1)
+                           000000   598  UART_CR3_LBCL = (0)
+                                    599 
+                           000006   600  UART_CR4_LBDIEN = (6)
+                           000005   601  UART_CR4_LBDL = (5)
+                           000004   602  UART_CR4_LBDF = (4)
+                           000003   603  UART_CR4_ADD3 = (3)
+                           000002   604  UART_CR4_ADD2 = (2)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
 Hexadecimal [24-Bits]
 
 
 
-                           000002   605  UART_CR4_ADD2 = (2)
-                           000001   606  UART_CR4_ADD1 = (1)
-                           000000   607  UART_CR4_ADD0 = (0)
-                                    608 
-                           000005   609  UART_CR5_SCEN = (5)
-                           000004   610  UART_CR5_NACK = (4)
-                           000003   611  UART_CR5_HDSEL = (3)
-                           000002   612  UART_CR5_IRLP = (2)
-                           000001   613  UART_CR5_IREN = (1)
-                                    614 ; LIN mode config register
-                           000007   615  UART_CR6_LDUM = (7)
-                           000005   616  UART_CR6_LSLV = (5)
-                           000004   617  UART_CR6_LASE = (4)
-                           000002   618  UART_CR6_LHDIEN = (2) 
-                           000001   619  UART_CR6_LHDF = (1)
-                           000000   620  UART_CR6_LSF = (0)
-                                    621 
-                                    622 ; TIMERS
-                                    623 ; Timer 1 - 16-bit timer with complementary PWM outputs
-                           005250   624  TIM1_CR1  = (0x5250)
-                           005251   625  TIM1_CR2  = (0x5251)
-                           005252   626  TIM1_SMCR  = (0x5252)
-                           005253   627  TIM1_ETR  = (0x5253)
-                           005254   628  TIM1_IER  = (0x5254)
-                           005255   629  TIM1_SR1  = (0x5255)
-                           005256   630  TIM1_SR2  = (0x5256)
-                           005257   631  TIM1_EGR  = (0x5257)
-                           005258   632  TIM1_CCMR1  = (0x5258)
-                           005259   633  TIM1_CCMR2  = (0x5259)
-                           00525A   634  TIM1_CCMR3  = (0x525A)
-                           00525B   635  TIM1_CCMR4  = (0x525B)
-                           00525C   636  TIM1_CCER1  = (0x525C)
-                           00525D   637  TIM1_CCER2  = (0x525D)
-                           00525E   638  TIM1_CNTRH  = (0x525E)
-                           00525F   639  TIM1_CNTRL  = (0x525F)
-                           005260   640  TIM1_PSCRH  = (0x5260)
-                           005261   641  TIM1_PSCRL  = (0x5261)
-                           005262   642  TIM1_ARRH  = (0x5262)
-                           005263   643  TIM1_ARRL  = (0x5263)
-                           005264   644  TIM1_RCR  = (0x5264)
-                           005265   645  TIM1_CCR1H  = (0x5265)
-                           005266   646  TIM1_CCR1L  = (0x5266)
-                           005267   647  TIM1_CCR2H  = (0x5267)
-                           005268   648  TIM1_CCR2L  = (0x5268)
-                           005269   649  TIM1_CCR3H  = (0x5269)
-                           00526A   650  TIM1_CCR3L  = (0x526A)
-                           00526B   651  TIM1_CCR4H  = (0x526B)
-                           00526C   652  TIM1_CCR4L  = (0x526C)
-                           00526D   653  TIM1_BKR  = (0x526D)
-                           00526E   654  TIM1_DTR  = (0x526E)
-                           00526F   655  TIM1_OISR  = (0x526F)
-                                    656 
-                                    657 ; Timer Control Register bits
-                           000007   658  TIM_CR1_ARPE = (7)
-                           000006   659  TIM_CR1_CMSH = (6)
+                           000001   605  UART_CR4_ADD1 = (1)
+                           000000   606  UART_CR4_ADD0 = (0)
+                                    607 
+                           000005   608  UART_CR5_SCEN = (5)
+                           000004   609  UART_CR5_NACK = (4)
+                           000003   610  UART_CR5_HDSEL = (3)
+                           000002   611  UART_CR5_IRLP = (2)
+                           000001   612  UART_CR5_IREN = (1)
+                                    613 ; LIN mode config register
+                           000007   614  UART_CR6_LDUM = (7)
+                           000005   615  UART_CR6_LSLV = (5)
+                           000004   616  UART_CR6_LASE = (4)
+                           000002   617  UART_CR6_LHDIEN = (2) 
+                           000001   618  UART_CR6_LHDF = (1)
+                           000000   619  UART_CR6_LSF = (0)
+                                    620 
+                                    621 ; TIMERS
+                                    622 ; Timer 1 - 16-bit timer with complementary PWM outputs
+                           005250   623  TIM1_CR1  = (0x5250)
+                           005251   624  TIM1_CR2  = (0x5251)
+                           005252   625  TIM1_SMCR  = (0x5252)
+                           005253   626  TIM1_ETR  = (0x5253)
+                           005254   627  TIM1_IER  = (0x5254)
+                           005255   628  TIM1_SR1  = (0x5255)
+                           005256   629  TIM1_SR2  = (0x5256)
+                           005257   630  TIM1_EGR  = (0x5257)
+                           005258   631  TIM1_CCMR1  = (0x5258)
+                           005259   632  TIM1_CCMR2  = (0x5259)
+                           00525A   633  TIM1_CCMR3  = (0x525A)
+                           00525B   634  TIM1_CCMR4  = (0x525B)
+                           00525C   635  TIM1_CCER1  = (0x525C)
+                           00525D   636  TIM1_CCER2  = (0x525D)
+                           00525E   637  TIM1_CNTRH  = (0x525E)
+                           00525F   638  TIM1_CNTRL  = (0x525F)
+                           005260   639  TIM1_PSCRH  = (0x5260)
+                           005261   640  TIM1_PSCRL  = (0x5261)
+                           005262   641  TIM1_ARRH  = (0x5262)
+                           005263   642  TIM1_ARRL  = (0x5263)
+                           005264   643  TIM1_RCR  = (0x5264)
+                           005265   644  TIM1_CCR1H  = (0x5265)
+                           005266   645  TIM1_CCR1L  = (0x5266)
+                           005267   646  TIM1_CCR2H  = (0x5267)
+                           005268   647  TIM1_CCR2L  = (0x5268)
+                           005269   648  TIM1_CCR3H  = (0x5269)
+                           00526A   649  TIM1_CCR3L  = (0x526A)
+                           00526B   650  TIM1_CCR4H  = (0x526B)
+                           00526C   651  TIM1_CCR4L  = (0x526C)
+                           00526D   652  TIM1_BKR  = (0x526D)
+                           00526E   653  TIM1_DTR  = (0x526E)
+                           00526F   654  TIM1_OISR  = (0x526F)
+                                    655 
+                                    656 ; Timer Control Register bits
+                           000007   657  TIM_CR1_ARPE = (7)
+                           000006   658  TIM_CR1_CMSH = (6)
+                           000005   659  TIM_CR1_CMSL = (5)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
 Hexadecimal [24-Bits]
 
 
 
-                           000005   660  TIM_CR1_CMSL = (5)
-                           000004   661  TIM_CR1_DIR = (4)
-                           000003   662  TIM_CR1_OPM = (3)
-                           000002   663  TIM_CR1_URS = (2)
-                           000001   664  TIM_CR1_UDIS = (1)
-                           000000   665  TIM_CR1_CEN = (0)
-                                    666 
-                           000006   667  TIM1_CR2_MMS2 = (6)
-                           000005   668  TIM1_CR2_MMS1 = (5)
-                           000004   669  TIM1_CR2_MMS0 = (4)
-                           000002   670  TIM1_CR2_COMS = (2)
-                           000000   671  TIM1_CR2_CCPC = (0)
-                                    672 
-                                    673 ; Timer Slave Mode Control bits
-                           000007   674  TIM1_SMCR_MSM = (7)
-                           000006   675  TIM1_SMCR_TS2 = (6)
-                           000005   676  TIM1_SMCR_TS1 = (5)
-                           000004   677  TIM1_SMCR_TS0 = (4)
-                           000002   678  TIM1_SMCR_SMS2 = (2)
-                           000001   679  TIM1_SMCR_SMS1 = (1)
-                           000000   680  TIM1_SMCR_SMS0 = (0)
-                                    681 
-                                    682 ; Timer External Trigger Enable bits
-                           000007   683  TIM1_ETR_ETP = (7)
-                           000006   684  TIM1_ETR_ECE = (6)
-                           000005   685  TIM1_ETR_ETPS1 = (5)
-                           000004   686  TIM1_ETR_ETPS0 = (4)
-                           000003   687  TIM1_ETR_ETF3 = (3)
-                           000002   688  TIM1_ETR_ETF2 = (2)
-                           000001   689  TIM1_ETR_ETF1 = (1)
-                           000000   690  TIM1_ETR_ETF0 = (0)
-                                    691 
-                                    692 ; Timer Interrupt Enable bits
-                           000007   693  TIM1_IER_BIE = (7)
-                           000006   694  TIM1_IER_TIE = (6)
-                           000005   695  TIM1_IER_COMIE = (5)
-                           000004   696  TIM1_IER_CC4IE = (4)
-                           000003   697  TIM1_IER_CC3IE = (3)
-                           000002   698  TIM1_IER_CC2IE = (2)
-                           000001   699  TIM1_IER_CC1IE = (1)
-                           000000   700  TIM1_IER_UIE = (0)
-                                    701 
-                                    702 ; Timer Status Register bits
-                           000007   703  TIM1_SR1_BIF = (7)
-                           000006   704  TIM1_SR1_TIF = (6)
-                           000005   705  TIM1_SR1_COMIF = (5)
-                           000004   706  TIM1_SR1_CC4IF = (4)
-                           000003   707  TIM1_SR1_CC3IF = (3)
-                           000002   708  TIM1_SR1_CC2IF = (2)
-                           000001   709  TIM1_SR1_CC1IF = (1)
-                           000000   710  TIM1_SR1_UIF = (0)
-                                    711 
-                           000004   712  TIM1_SR2_CC4OF = (4)
-                           000003   713  TIM1_SR2_CC3OF = (3)
-                           000002   714  TIM1_SR2_CC2OF = (2)
+                           000004   660  TIM_CR1_DIR = (4)
+                           000003   661  TIM_CR1_OPM = (3)
+                           000002   662  TIM_CR1_URS = (2)
+                           000001   663  TIM_CR1_UDIS = (1)
+                           000000   664  TIM_CR1_CEN = (0)
+                                    665 
+                           000006   666  TIM1_CR2_MMS2 = (6)
+                           000005   667  TIM1_CR2_MMS1 = (5)
+                           000004   668  TIM1_CR2_MMS0 = (4)
+                           000002   669  TIM1_CR2_COMS = (2)
+                           000000   670  TIM1_CR2_CCPC = (0)
+                                    671 
+                                    672 ; Timer Slave Mode Control bits
+                           000007   673  TIM1_SMCR_MSM = (7)
+                           000006   674  TIM1_SMCR_TS2 = (6)
+                           000005   675  TIM1_SMCR_TS1 = (5)
+                           000004   676  TIM1_SMCR_TS0 = (4)
+                           000002   677  TIM1_SMCR_SMS2 = (2)
+                           000001   678  TIM1_SMCR_SMS1 = (1)
+                           000000   679  TIM1_SMCR_SMS0 = (0)
+                                    680 
+                                    681 ; Timer External Trigger Enable bits
+                           000007   682  TIM1_ETR_ETP = (7)
+                           000006   683  TIM1_ETR_ECE = (6)
+                           000005   684  TIM1_ETR_ETPS1 = (5)
+                           000004   685  TIM1_ETR_ETPS0 = (4)
+                           000003   686  TIM1_ETR_ETF3 = (3)
+                           000002   687  TIM1_ETR_ETF2 = (2)
+                           000001   688  TIM1_ETR_ETF1 = (1)
+                           000000   689  TIM1_ETR_ETF0 = (0)
+                                    690 
+                                    691 ; Timer Interrupt Enable bits
+                           000007   692  TIM1_IER_BIE = (7)
+                           000006   693  TIM1_IER_TIE = (6)
+                           000005   694  TIM1_IER_COMIE = (5)
+                           000004   695  TIM1_IER_CC4IE = (4)
+                           000003   696  TIM1_IER_CC3IE = (3)
+                           000002   697  TIM1_IER_CC2IE = (2)
+                           000001   698  TIM1_IER_CC1IE = (1)
+                           000000   699  TIM1_IER_UIE = (0)
+                                    700 
+                                    701 ; Timer Status Register bits
+                           000007   702  TIM1_SR1_BIF = (7)
+                           000006   703  TIM1_SR1_TIF = (6)
+                           000005   704  TIM1_SR1_COMIF = (5)
+                           000004   705  TIM1_SR1_CC4IF = (4)
+                           000003   706  TIM1_SR1_CC3IF = (3)
+                           000002   707  TIM1_SR1_CC2IF = (2)
+                           000001   708  TIM1_SR1_CC1IF = (1)
+                           000000   709  TIM1_SR1_UIF = (0)
+                                    710 
+                           000004   711  TIM1_SR2_CC4OF = (4)
+                           000003   712  TIM1_SR2_CC3OF = (3)
+                           000002   713  TIM1_SR2_CC2OF = (2)
+                           000001   714  TIM1_SR2_CC1OF = (1)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
 Hexadecimal [24-Bits]
 
 
 
-                           000001   715  TIM1_SR2_CC1OF = (1)
-                                    716 
-                                    717 ; Timer Event Generation Register bits
-                           000007   718  TIM1_EGR_BG = (7)
-                           000006   719  TIM1_EGR_TG = (6)
-                           000005   720  TIM1_EGR_COMG = (5)
-                           000004   721  TIM1_EGR_CC4G = (4)
-                           000003   722  TIM1_EGR_CC3G = (3)
-                           000002   723  TIM1_EGR_CC2G = (2)
-                           000001   724  TIM1_EGR_CC1G = (1)
-                           000000   725  TIM1_EGR_UG = (0)
-                                    726 
-                                    727 ; Capture/Compare Mode Register 1 - channel configured in output
-                           000007   728  TIM1_CCMR1_OC1CE = (7)
-                           000006   729  TIM1_CCMR1_OC1M2 = (6)
-                           000005   730  TIM1_CCMR1_OC1M1 = (5)
-                           000004   731  TIM1_CCMR1_OC1M0 = (4)
-                           000003   732  TIM1_CCMR1_OC1PE = (3)
-                           000002   733  TIM1_CCMR1_OC1FE = (2)
-                           000001   734  TIM1_CCMR1_CC1S1 = (1)
-                           000000   735  TIM1_CCMR1_CC1S0 = (0)
-                                    736 
-                                    737 ; Capture/Compare Mode Register 1 - channel configured in input
-                           000007   738  TIM1_CCMR1_IC1F3 = (7)
-                           000006   739  TIM1_CCMR1_IC1F2 = (6)
-                           000005   740  TIM1_CCMR1_IC1F1 = (5)
-                           000004   741  TIM1_CCMR1_IC1F0 = (4)
-                           000003   742  TIM1_CCMR1_IC1PSC1 = (3)
-                           000002   743  TIM1_CCMR1_IC1PSC0 = (2)
-                                    744 ;  TIM1_CCMR1_CC1S1 = (1)
-                           000000   745  TIM1_CCMR1_CC1S0 = (0)
-                                    746 
-                                    747 ; Capture/Compare Mode Register 2 - channel configured in output
-                           000007   748  TIM1_CCMR2_OC2CE = (7)
-                           000006   749  TIM1_CCMR2_OC2M2 = (6)
-                           000005   750  TIM1_CCMR2_OC2M1 = (5)
-                           000004   751  TIM1_CCMR2_OC2M0 = (4)
-                           000003   752  TIM1_CCMR2_OC2PE = (3)
-                           000002   753  TIM1_CCMR2_OC2FE = (2)
-                           000001   754  TIM1_CCMR2_CC2S1 = (1)
-                           000000   755  TIM1_CCMR2_CC2S0 = (0)
-                                    756 
-                                    757 ; Capture/Compare Mode Register 2 - channel configured in input
-                           000007   758  TIM1_CCMR2_IC2F3 = (7)
-                           000006   759  TIM1_CCMR2_IC2F2 = (6)
-                           000005   760  TIM1_CCMR2_IC2F1 = (5)
-                           000004   761  TIM1_CCMR2_IC2F0 = (4)
-                           000003   762  TIM1_CCMR2_IC2PSC1 = (3)
-                           000002   763  TIM1_CCMR2_IC2PSC0 = (2)
-                                    764 ;  TIM1_CCMR2_CC2S1 = (1)
-                           000000   765  TIM1_CCMR2_CC2S0 = (0)
-                                    766 
-                                    767 ; Capture/Compare Mode Register 3 - channel configured in output
-                           000007   768  TIM1_CCMR3_OC3CE = (7)
-                           000006   769  TIM1_CCMR3_OC3M2 = (6)
+                                    715 
+                                    716 ; Timer Event Generation Register bits
+                           000007   717  TIM1_EGR_BG = (7)
+                           000006   718  TIM1_EGR_TG = (6)
+                           000005   719  TIM1_EGR_COMG = (5)
+                           000004   720  TIM1_EGR_CC4G = (4)
+                           000003   721  TIM1_EGR_CC3G = (3)
+                           000002   722  TIM1_EGR_CC2G = (2)
+                           000001   723  TIM1_EGR_CC1G = (1)
+                           000000   724  TIM1_EGR_UG = (0)
+                                    725 
+                                    726 ; Capture/Compare Mode Register 1 - channel configured in output
+                           000007   727  TIM1_CCMR1_OC1CE = (7)
+                           000006   728  TIM1_CCMR1_OC1M2 = (6)
+                           000005   729  TIM1_CCMR1_OC1M1 = (5)
+                           000004   730  TIM1_CCMR1_OC1M0 = (4)
+                           000003   731  TIM1_CCMR1_OC1PE = (3)
+                           000002   732  TIM1_CCMR1_OC1FE = (2)
+                           000001   733  TIM1_CCMR1_CC1S1 = (1)
+                           000000   734  TIM1_CCMR1_CC1S0 = (0)
+                                    735 
+                                    736 ; Capture/Compare Mode Register 1 - channel configured in input
+                           000007   737  TIM1_CCMR1_IC1F3 = (7)
+                           000006   738  TIM1_CCMR1_IC1F2 = (6)
+                           000005   739  TIM1_CCMR1_IC1F1 = (5)
+                           000004   740  TIM1_CCMR1_IC1F0 = (4)
+                           000003   741  TIM1_CCMR1_IC1PSC1 = (3)
+                           000002   742  TIM1_CCMR1_IC1PSC0 = (2)
+                                    743 ;  TIM1_CCMR1_CC1S1 = (1)
+                           000000   744  TIM1_CCMR1_CC1S0 = (0)
+                                    745 
+                                    746 ; Capture/Compare Mode Register 2 - channel configured in output
+                           000007   747  TIM1_CCMR2_OC2CE = (7)
+                           000006   748  TIM1_CCMR2_OC2M2 = (6)
+                           000005   749  TIM1_CCMR2_OC2M1 = (5)
+                           000004   750  TIM1_CCMR2_OC2M0 = (4)
+                           000003   751  TIM1_CCMR2_OC2PE = (3)
+                           000002   752  TIM1_CCMR2_OC2FE = (2)
+                           000001   753  TIM1_CCMR2_CC2S1 = (1)
+                           000000   754  TIM1_CCMR2_CC2S0 = (0)
+                                    755 
+                                    756 ; Capture/Compare Mode Register 2 - channel configured in input
+                           000007   757  TIM1_CCMR2_IC2F3 = (7)
+                           000006   758  TIM1_CCMR2_IC2F2 = (6)
+                           000005   759  TIM1_CCMR2_IC2F1 = (5)
+                           000004   760  TIM1_CCMR2_IC2F0 = (4)
+                           000003   761  TIM1_CCMR2_IC2PSC1 = (3)
+                           000002   762  TIM1_CCMR2_IC2PSC0 = (2)
+                                    763 ;  TIM1_CCMR2_CC2S1 = (1)
+                           000000   764  TIM1_CCMR2_CC2S0 = (0)
+                                    765 
+                                    766 ; Capture/Compare Mode Register 3 - channel configured in output
+                           000007   767  TIM1_CCMR3_OC3CE = (7)
+                           000006   768  TIM1_CCMR3_OC3M2 = (6)
+                           000005   769  TIM1_CCMR3_OC3M1 = (5)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
 Hexadecimal [24-Bits]
 
 
 
-                           000005   770  TIM1_CCMR3_OC3M1 = (5)
-                           000004   771  TIM1_CCMR3_OC3M0 = (4)
-                           000003   772  TIM1_CCMR3_OC3PE = (3)
-                           000002   773  TIM1_CCMR3_OC3FE = (2)
-                           000001   774  TIM1_CCMR3_CC3S1 = (1)
-                           000000   775  TIM1_CCMR3_CC3S0 = (0)
-                                    776 
-                                    777 ; Capture/Compare Mode Register 3 - channel configured in input
-                           000007   778  TIM1_CCMR3_IC3F3 = (7)
-                           000006   779  TIM1_CCMR3_IC3F2 = (6)
-                           000005   780  TIM1_CCMR3_IC3F1 = (5)
-                           000004   781  TIM1_CCMR3_IC3F0 = (4)
-                           000003   782  TIM1_CCMR3_IC3PSC1 = (3)
-                           000002   783  TIM1_CCMR3_IC3PSC0 = (2)
-                                    784 ;  TIM1_CCMR3_CC3S1 = (1)
-                           000000   785  TIM1_CCMR3_CC3S0 = (0)
-                                    786 
-                                    787 ; Capture/Compare Mode Register 4 - channel configured in output
-                           000007   788  TIM1_CCMR4_OC4CE = (7)
-                           000006   789  TIM1_CCMR4_OC4M2 = (6)
-                           000005   790  TIM1_CCMR4_OC4M1 = (5)
-                           000004   791  TIM1_CCMR4_OC4M0 = (4)
-                           000003   792  TIM1_CCMR4_OC4PE = (3)
-                           000002   793  TIM1_CCMR4_OC4FE = (2)
-                           000001   794  TIM1_CCMR4_CC4S1 = (1)
-                           000000   795  TIM1_CCMR4_CC4S0 = (0)
-                                    796 
-                                    797 ; Capture/Compare Mode Register 4 - channel configured in input
-                           000007   798  TIM1_CCMR4_IC4F3 = (7)
-                           000006   799  TIM1_CCMR4_IC4F2 = (6)
-                           000005   800  TIM1_CCMR4_IC4F1 = (5)
-                           000004   801  TIM1_CCMR4_IC4F0 = (4)
-                           000003   802  TIM1_CCMR4_IC4PSC1 = (3)
-                           000002   803  TIM1_CCMR4_IC4PSC0 = (2)
-                                    804 ;  TIM1_CCMR4_CC4S1 = (1)
-                           000000   805  TIM1_CCMR4_CC4S0 = (0)
-                                    806 
-                                    807 ; Timer 2 - 16-bit timer
-                           005300   808  TIM2_CR1  = (0x5300)
-                           005301   809  TIM2_IER  = (0x5301)
-                           005302   810  TIM2_SR1  = (0x5302)
-                           005303   811  TIM2_SR2  = (0x5303)
-                           005304   812  TIM2_EGR  = (0x5304)
-                           005305   813  TIM2_CCMR1  = (0x5305)
-                           005306   814  TIM2_CCMR2  = (0x5306)
-                           005307   815  TIM2_CCMR3  = (0x5307)
-                           005308   816  TIM2_CCER1  = (0x5308)
-                           005309   817  TIM2_CCER2  = (0x5309)
-                           00530A   818  TIM2_CNTRH  = (0x530A)
-                           00530B   819  TIM2_CNTRL  = (0x530B)
-                           00530C   820  TIM2_PSCR  = (0x530C)
-                           00530D   821  TIM2_ARRH  = (0x530D)
-                           00530E   822  TIM2_ARRL  = (0x530E)
-                           00530F   823  TIM2_CCR1H  = (0x530F)
-                           005310   824  TIM2_CCR1L  = (0x5310)
+                           000004   770  TIM1_CCMR3_OC3M0 = (4)
+                           000003   771  TIM1_CCMR3_OC3PE = (3)
+                           000002   772  TIM1_CCMR3_OC3FE = (2)
+                           000001   773  TIM1_CCMR3_CC3S1 = (1)
+                           000000   774  TIM1_CCMR3_CC3S0 = (0)
+                                    775 
+                                    776 ; Capture/Compare Mode Register 3 - channel configured in input
+                           000007   777  TIM1_CCMR3_IC3F3 = (7)
+                           000006   778  TIM1_CCMR3_IC3F2 = (6)
+                           000005   779  TIM1_CCMR3_IC3F1 = (5)
+                           000004   780  TIM1_CCMR3_IC3F0 = (4)
+                           000003   781  TIM1_CCMR3_IC3PSC1 = (3)
+                           000002   782  TIM1_CCMR3_IC3PSC0 = (2)
+                                    783 ;  TIM1_CCMR3_CC3S1 = (1)
+                           000000   784  TIM1_CCMR3_CC3S0 = (0)
+                                    785 
+                                    786 ; Capture/Compare Mode Register 4 - channel configured in output
+                           000007   787  TIM1_CCMR4_OC4CE = (7)
+                           000006   788  TIM1_CCMR4_OC4M2 = (6)
+                           000005   789  TIM1_CCMR4_OC4M1 = (5)
+                           000004   790  TIM1_CCMR4_OC4M0 = (4)
+                           000003   791  TIM1_CCMR4_OC4PE = (3)
+                           000002   792  TIM1_CCMR4_OC4FE = (2)
+                           000001   793  TIM1_CCMR4_CC4S1 = (1)
+                           000000   794  TIM1_CCMR4_CC4S0 = (0)
+                                    795 
+                                    796 ; Capture/Compare Mode Register 4 - channel configured in input
+                           000007   797  TIM1_CCMR4_IC4F3 = (7)
+                           000006   798  TIM1_CCMR4_IC4F2 = (6)
+                           000005   799  TIM1_CCMR4_IC4F1 = (5)
+                           000004   800  TIM1_CCMR4_IC4F0 = (4)
+                           000003   801  TIM1_CCMR4_IC4PSC1 = (3)
+                           000002   802  TIM1_CCMR4_IC4PSC0 = (2)
+                                    803 ;  TIM1_CCMR4_CC4S1 = (1)
+                           000000   804  TIM1_CCMR4_CC4S0 = (0)
+                                    805 
+                                    806 ; Timer 2 - 16-bit timer
+                           005300   807  TIM2_CR1  = (0x5300)
+                           005301   808  TIM2_IER  = (0x5301)
+                           005302   809  TIM2_SR1  = (0x5302)
+                           005303   810  TIM2_SR2  = (0x5303)
+                           005304   811  TIM2_EGR  = (0x5304)
+                           005305   812  TIM2_CCMR1  = (0x5305)
+                           005306   813  TIM2_CCMR2  = (0x5306)
+                           005307   814  TIM2_CCMR3  = (0x5307)
+                           005308   815  TIM2_CCER1  = (0x5308)
+                           005309   816  TIM2_CCER2  = (0x5309)
+                           00530A   817  TIM2_CNTRH  = (0x530A)
+                           00530B   818  TIM2_CNTRL  = (0x530B)
+                           00530C   819  TIM2_PSCR  = (0x530C)
+                           00530D   820  TIM2_ARRH  = (0x530D)
+                           00530E   821  TIM2_ARRL  = (0x530E)
+                           00530F   822  TIM2_CCR1H  = (0x530F)
+                           005310   823  TIM2_CCR1L  = (0x5310)
+                           005311   824  TIM2_CCR2H  = (0x5311)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
 Hexadecimal [24-Bits]
 
 
 
-                           005311   825  TIM2_CCR2H  = (0x5311)
-                           005312   826  TIM2_CCR2L  = (0x5312)
-                           005313   827  TIM2_CCR3H  = (0x5313)
-                           005314   828  TIM2_CCR3L  = (0x5314)
-                                    829 
-                                    830 ; Timer 3
-                           005320   831  TIM3_CR1  = (0x5320)
-                           005321   832  TIM3_IER  = (0x5321)
-                           005322   833  TIM3_SR1  = (0x5322)
-                           005323   834  TIM3_SR2  = (0x5323)
-                           005324   835  TIM3_EGR  = (0x5324)
-                           005325   836  TIM3_CCMR1  = (0x5325)
-                           005326   837  TIM3_CCMR2  = (0x5326)
-                           005327   838  TIM3_CCER1  = (0x5327)
-                           005328   839  TIM3_CNTRH  = (0x5328)
-                           005329   840  TIM3_CNTRL  = (0x5329)
-                           00532A   841  TIM3_PSCR  = (0x532A)
-                           00532B   842  TIM3_ARRH  = (0x532B)
-                           00532C   843  TIM3_ARRL  = (0x532C)
-                           00532D   844  TIM3_CCR1H  = (0x532D)
-                           00532E   845  TIM3_CCR1L  = (0x532E)
-                           00532F   846  TIM3_CCR2H  = (0x532F)
-                           005330   847  TIM3_CCR2L  = (0x5330)
-                                    848 
-                                    849 ; TIM3_CR1  fields
-                           000000   850  TIM3_CR1_CEN = (0)
-                           000001   851  TIM3_CR1_UDIS = (1)
-                           000002   852  TIM3_CR1_URS = (2)
-                           000003   853  TIM3_CR1_OPM = (3)
-                           000007   854  TIM3_CR1_ARPE = (7)
-                                    855 ; TIM3_CCR2  fields
-                           000000   856  TIM3_CCMR2_CC2S_POS = (0)
-                           000003   857  TIM3_CCMR2_OC2PE_POS = (3)
-                           000004   858  TIM3_CCMR2_OC2M_POS = (4)  
-                                    859 ; TIM3_CCER1 fields
-                           000000   860  TIM3_CCER1_CC1E = (0)
-                           000001   861  TIM3_CCER1_CC1P = (1)
-                           000004   862  TIM3_CCER1_CC2E = (4)
-                           000005   863  TIM3_CCER1_CC2P = (5)
-                                    864 ; TIM3_CCER2 fields
-                           000000   865  TIM3_CCER2_CC3E = (0)
-                           000001   866  TIM3_CCER2_CC3P = (1)
-                                    867 
-                                    868 ; Timer 4
-                           005340   869  TIM4_CR1  = (0x5340)
-                           005341   870  TIM4_IER  = (0x5341)
-                           005342   871  TIM4_SR  = (0x5342)
-                           005343   872  TIM4_EGR  = (0x5343)
-                           005344   873  TIM4_CNTR  = (0x5344)
-                           005345   874  TIM4_PSCR  = (0x5345)
-                           005346   875  TIM4_ARR  = (0x5346)
-                                    876 
-                                    877 ; Timer 4 bitmasks
-                                    878 
-                           000007   879  TIM4_CR1_ARPE = (7)
+                           005312   825  TIM2_CCR2L  = (0x5312)
+                           005313   826  TIM2_CCR3H  = (0x5313)
+                           005314   827  TIM2_CCR3L  = (0x5314)
+                                    828 
+                                    829 ; Timer 3
+                           005320   830  TIM3_CR1  = (0x5320)
+                           005321   831  TIM3_IER  = (0x5321)
+                           005322   832  TIM3_SR1  = (0x5322)
+                           005323   833  TIM3_SR2  = (0x5323)
+                           005324   834  TIM3_EGR  = (0x5324)
+                           005325   835  TIM3_CCMR1  = (0x5325)
+                           005326   836  TIM3_CCMR2  = (0x5326)
+                           005327   837  TIM3_CCER1  = (0x5327)
+                           005328   838  TIM3_CNTRH  = (0x5328)
+                           005329   839  TIM3_CNTRL  = (0x5329)
+                           00532A   840  TIM3_PSCR  = (0x532A)
+                           00532B   841  TIM3_ARRH  = (0x532B)
+                           00532C   842  TIM3_ARRL  = (0x532C)
+                           00532D   843  TIM3_CCR1H  = (0x532D)
+                           00532E   844  TIM3_CCR1L  = (0x532E)
+                           00532F   845  TIM3_CCR2H  = (0x532F)
+                           005330   846  TIM3_CCR2L  = (0x5330)
+                                    847 
+                                    848 ; TIM3_CR1  fields
+                           000000   849  TIM3_CR1_CEN = (0)
+                           000001   850  TIM3_CR1_UDIS = (1)
+                           000002   851  TIM3_CR1_URS = (2)
+                           000003   852  TIM3_CR1_OPM = (3)
+                           000007   853  TIM3_CR1_ARPE = (7)
+                                    854 ; TIM3_CCR2  fields
+                           000000   855  TIM3_CCMR2_CC2S_POS = (0)
+                           000003   856  TIM3_CCMR2_OC2PE_POS = (3)
+                           000004   857  TIM3_CCMR2_OC2M_POS = (4)  
+                                    858 ; TIM3_CCER1 fields
+                           000000   859  TIM3_CCER1_CC1E = (0)
+                           000001   860  TIM3_CCER1_CC1P = (1)
+                           000004   861  TIM3_CCER1_CC2E = (4)
+                           000005   862  TIM3_CCER1_CC2P = (5)
+                                    863 ; TIM3_CCER2 fields
+                           000000   864  TIM3_CCER2_CC3E = (0)
+                           000001   865  TIM3_CCER2_CC3P = (1)
+                                    866 
+                                    867 ; Timer 4
+                           005340   868  TIM4_CR1  = (0x5340)
+                           005341   869  TIM4_IER  = (0x5341)
+                           005342   870  TIM4_SR  = (0x5342)
+                           005343   871  TIM4_EGR  = (0x5343)
+                           005344   872  TIM4_CNTR  = (0x5344)
+                           005345   873  TIM4_PSCR  = (0x5345)
+                           005346   874  TIM4_ARR  = (0x5346)
+                                    875 
+                                    876 ; Timer 4 bitmasks
+                                    877 
+                           000007   878  TIM4_CR1_ARPE = (7)
+                           000003   879  TIM4_CR1_OPM = (3)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 19.
 Hexadecimal [24-Bits]
 
 
 
-                           000003   880  TIM4_CR1_OPM = (3)
-                           000002   881  TIM4_CR1_URS = (2)
-                           000001   882  TIM4_CR1_UDIS = (1)
-                           000000   883  TIM4_CR1_CEN = (0)
-                                    884 
-                           000000   885  TIM4_IER_UIE = (0)
-                                    886 
-                           000000   887  TIM4_SR_UIF = (0)
-                                    888 
-                           000000   889  TIM4_EGR_UG = (0)
-                                    890 
-                           000002   891  TIM4_PSCR_PSC2 = (2)
-                           000001   892  TIM4_PSCR_PSC1 = (1)
-                           000000   893  TIM4_PSCR_PSC0 = (0)
-                                    894 
-                           000000   895  TIM4_PSCR_1 = 0
-                           000001   896  TIM4_PSCR_2 = 1
-                           000002   897  TIM4_PSCR_4 = 2
-                           000003   898  TIM4_PSCR_8 = 3
-                           000004   899  TIM4_PSCR_16 = 4
-                           000005   900  TIM4_PSCR_32 = 5
-                           000006   901  TIM4_PSCR_64 = 6
-                           000007   902  TIM4_PSCR_128 = 7
-                                    903 
-                                    904 ; ADC2
-                           005400   905  ADC_CSR  = (0x5400)
-                           005401   906  ADC_CR1  = (0x5401)
-                           005402   907  ADC_CR2  = (0x5402)
-                           005403   908  ADC_CR3  = (0x5403)
-                           005404   909  ADC_DRH  = (0x5404)
-                           005405   910  ADC_DRL  = (0x5405)
-                           005406   911  ADC_TDRH  = (0x5406)
-                           005407   912  ADC_TDRL  = (0x5407)
-                                    913  
-                                    914 ; ADC bitmasks
-                                    915 
-                           000007   916  ADC_CSR_EOC = (7)
-                           000006   917  ADC_CSR_AWD = (6)
-                           000005   918  ADC_CSR_EOCIE = (5)
-                           000004   919  ADC_CSR_AWDIE = (4)
-                           000003   920  ADC_CSR_CH3 = (3)
-                           000002   921  ADC_CSR_CH2 = (2)
-                           000001   922  ADC_CSR_CH1 = (1)
-                           000000   923  ADC_CSR_CH0 = (0)
-                                    924 
-                           000006   925  ADC_CR1_SPSEL2 = (6)
-                           000005   926  ADC_CR1_SPSEL1 = (5)
-                           000004   927  ADC_CR1_SPSEL0 = (4)
-                           000001   928  ADC_CR1_CONT = (1)
-                           000000   929  ADC_CR1_ADON = (0)
-                                    930 
-                           000006   931  ADC_CR2_EXTTRIG = (6)
-                           000005   932  ADC_CR2_EXTSEL1 = (5)
-                           000004   933  ADC_CR2_EXTSEL0 = (4)
-                           000003   934  ADC_CR2_ALIGN = (3)
+                           000002   880  TIM4_CR1_URS = (2)
+                           000001   881  TIM4_CR1_UDIS = (1)
+                           000000   882  TIM4_CR1_CEN = (0)
+                                    883 
+                           000000   884  TIM4_IER_UIE = (0)
+                                    885 
+                           000000   886  TIM4_SR_UIF = (0)
+                                    887 
+                           000000   888  TIM4_EGR_UG = (0)
+                                    889 
+                           000002   890  TIM4_PSCR_PSC2 = (2)
+                           000001   891  TIM4_PSCR_PSC1 = (1)
+                           000000   892  TIM4_PSCR_PSC0 = (0)
+                                    893 
+                           000000   894  TIM4_PSCR_1 = 0
+                           000001   895  TIM4_PSCR_2 = 1
+                           000002   896  TIM4_PSCR_4 = 2
+                           000003   897  TIM4_PSCR_8 = 3
+                           000004   898  TIM4_PSCR_16 = 4
+                           000005   899  TIM4_PSCR_32 = 5
+                           000006   900  TIM4_PSCR_64 = 6
+                           000007   901  TIM4_PSCR_128 = 7
+                                    902 
+                                    903 ; ADC2
+                           005400   904  ADC_CSR  = (0x5400)
+                           005401   905  ADC_CR1  = (0x5401)
+                           005402   906  ADC_CR2  = (0x5402)
+                           005403   907  ADC_CR3  = (0x5403)
+                           005404   908  ADC_DRH  = (0x5404)
+                           005405   909  ADC_DRL  = (0x5405)
+                           005406   910  ADC_TDRH  = (0x5406)
+                           005407   911  ADC_TDRL  = (0x5407)
+                                    912  
+                                    913 ; ADC bitmasks
+                                    914 
+                           000007   915  ADC_CSR_EOC = (7)
+                           000006   916  ADC_CSR_AWD = (6)
+                           000005   917  ADC_CSR_EOCIE = (5)
+                           000004   918  ADC_CSR_AWDIE = (4)
+                           000003   919  ADC_CSR_CH3 = (3)
+                           000002   920  ADC_CSR_CH2 = (2)
+                           000001   921  ADC_CSR_CH1 = (1)
+                           000000   922  ADC_CSR_CH0 = (0)
+                                    923 
+                           000006   924  ADC_CR1_SPSEL2 = (6)
+                           000005   925  ADC_CR1_SPSEL1 = (5)
+                           000004   926  ADC_CR1_SPSEL0 = (4)
+                           000001   927  ADC_CR1_CONT = (1)
+                           000000   928  ADC_CR1_ADON = (0)
+                                    929 
+                           000006   930  ADC_CR2_EXTTRIG = (6)
+                           000005   931  ADC_CR2_EXTSEL1 = (5)
+                           000004   932  ADC_CR2_EXTSEL0 = (4)
+                           000003   933  ADC_CR2_ALIGN = (3)
+                           000001   934  ADC_CR2_SCAN = (1)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 20.
 Hexadecimal [24-Bits]
 
 
 
-                           000001   935  ADC_CR2_SCAN = (1)
-                                    936 
-                           000007   937  ADC_CR3_DBUF = (7)
-                           000006   938  ADC_CR3_DRH = (6)
-                                    939 
-                                    940 ; beCAN
-                           005420   941  CAN_MCR = (0x5420)
-                           005421   942  CAN_MSR = (0x5421)
-                           005422   943  CAN_TSR = (0x5422)
-                           005423   944  CAN_TPR = (0x5423)
-                           005424   945  CAN_RFR = (0x5424)
-                           005425   946  CAN_IER = (0x5425)
-                           005426   947  CAN_DGR = (0x5426)
-                           005427   948  CAN_FPSR = (0x5427)
-                           005428   949  CAN_P0 = (0x5428)
-                           005429   950  CAN_P1 = (0x5429)
-                           00542A   951  CAN_P2 = (0x542A)
-                           00542B   952  CAN_P3 = (0x542B)
-                           00542C   953  CAN_P4 = (0x542C)
-                           00542D   954  CAN_P5 = (0x542D)
-                           00542E   955  CAN_P6 = (0x542E)
-                           00542F   956  CAN_P7 = (0x542F)
-                           005430   957  CAN_P8 = (0x5430)
-                           005431   958  CAN_P9 = (0x5431)
-                           005432   959  CAN_PA = (0x5432)
-                           005433   960  CAN_PB = (0x5433)
-                           005434   961  CAN_PC = (0x5434)
-                           005435   962  CAN_PD = (0x5435)
-                           005436   963  CAN_PE = (0x5436)
-                           005437   964  CAN_PF = (0x5437)
+                                    935 
+                           000007   936  ADC_CR3_DBUF = (7)
+                           000006   937  ADC_CR3_DRH = (6)
+                                    938 
+                                    939 ; beCAN
+                           005420   940  CAN_MCR = (0x5420)
+                           005421   941  CAN_MSR = (0x5421)
+                           005422   942  CAN_TSR = (0x5422)
+                           005423   943  CAN_TPR = (0x5423)
+                           005424   944  CAN_RFR = (0x5424)
+                           005425   945  CAN_IER = (0x5425)
+                           005426   946  CAN_DGR = (0x5426)
+                           005427   947  CAN_FPSR = (0x5427)
+                           005428   948  CAN_P0 = (0x5428)
+                           005429   949  CAN_P1 = (0x5429)
+                           00542A   950  CAN_P2 = (0x542A)
+                           00542B   951  CAN_P3 = (0x542B)
+                           00542C   952  CAN_P4 = (0x542C)
+                           00542D   953  CAN_P5 = (0x542D)
+                           00542E   954  CAN_P6 = (0x542E)
+                           00542F   955  CAN_P7 = (0x542F)
+                           005430   956  CAN_P8 = (0x5430)
+                           005431   957  CAN_P9 = (0x5431)
+                           005432   958  CAN_PA = (0x5432)
+                           005433   959  CAN_PB = (0x5433)
+                           005434   960  CAN_PC = (0x5434)
+                           005435   961  CAN_PD = (0x5435)
+                           005436   962  CAN_PE = (0x5436)
+                           005437   963  CAN_PF = (0x5437)
+                                    964 
                                     965 
-                                    966 
-                                    967 ; CPU
-                           007F00   968  CPU_A  = (0x7F00)
-                           007F01   969  CPU_PCE  = (0x7F01)
-                           007F02   970  CPU_PCH  = (0x7F02)
-                           007F03   971  CPU_PCL  = (0x7F03)
-                           007F04   972  CPU_XH  = (0x7F04)
-                           007F05   973  CPU_XL  = (0x7F05)
-                           007F06   974  CPU_YH  = (0x7F06)
-                           007F07   975  CPU_YL  = (0x7F07)
-                           007F08   976  CPU_SPH  = (0x7F08)
-                           007F09   977  CPU_SPL   = (0x7F09)
-                           007F0A   978  CPU_CCR   = (0x7F0A)
-                                    979 
-                                    980 ; global configuration register
-                           007F60   981  CFG_GCR   = (0x7F60)
-                           000001   982  CFG_GCR_AL = 1
-                           000000   983  CFG_GCR_SWIM = 0
-                                    984 
-                                    985 ; interrupt control registers
-                           007F70   986  ITC_SPR1   = (0x7F70)
-                           007F71   987  ITC_SPR2   = (0x7F71)
-                           007F72   988  ITC_SPR3   = (0x7F72)
-                           007F73   989  ITC_SPR4   = (0x7F73)
+                                    966 ; CPU
+                           007F00   967  CPU_A  = (0x7F00)
+                           007F01   968  CPU_PCE  = (0x7F01)
+                           007F02   969  CPU_PCH  = (0x7F02)
+                           007F03   970  CPU_PCL  = (0x7F03)
+                           007F04   971  CPU_XH  = (0x7F04)
+                           007F05   972  CPU_XL  = (0x7F05)
+                           007F06   973  CPU_YH  = (0x7F06)
+                           007F07   974  CPU_YL  = (0x7F07)
+                           007F08   975  CPU_SPH  = (0x7F08)
+                           007F09   976  CPU_SPL   = (0x7F09)
+                           007F0A   977  CPU_CCR   = (0x7F0A)
+                                    978 
+                                    979 ; global configuration register
+                           007F60   980  CFG_GCR   = (0x7F60)
+                           000001   981  CFG_GCR_AL = 1
+                           000000   982  CFG_GCR_SWIM = 0
+                                    983 
+                                    984 ; interrupt control registers
+                           007F70   985  ITC_SPR1   = (0x7F70)
+                           007F71   986  ITC_SPR2   = (0x7F71)
+                           007F72   987  ITC_SPR3   = (0x7F72)
+                           007F73   988  ITC_SPR4   = (0x7F73)
+                           007F74   989  ITC_SPR5   = (0x7F74)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 21.
 Hexadecimal [24-Bits]
 
 
 
-                           007F74   990  ITC_SPR5   = (0x7F74)
-                           007F75   991  ITC_SPR6   = (0x7F75)
-                           007F76   992  ITC_SPR7   = (0x7F76)
-                           007F77   993  ITC_SPR8   = (0x7F77)
-                                    994 
-                                    995 ; SWIM, control and status register
-                           007F80   996  SWIM_CSR   = (0x7F80)
-                                    997 ; debug registers
-                           007F90   998  DM_BK1RE   = (0x7F90)
-                           007F91   999  DM_BK1RH   = (0x7F91)
-                           007F92  1000  DM_BK1RL   = (0x7F92)
-                           007F93  1001  DM_BK2RE   = (0x7F93)
-                           007F94  1002  DM_BK2RH   = (0x7F94)
-                           007F95  1003  DM_BK2RL   = (0x7F95)
-                           007F96  1004  DM_CR1   = (0x7F96)
-                           007F97  1005  DM_CR2   = (0x7F97)
-                           007F98  1006  DM_CSR1   = (0x7F98)
-                           007F99  1007  DM_CSR2   = (0x7F99)
-                           007F9A  1008  DM_ENFCTR   = (0x7F9A)
-                                   1009 
-                                   1010 ; Interrupt Numbers
-                           000000  1011  INT_TLI = 0
-                           000001  1012  INT_AWU = 1
-                           000002  1013  INT_CLK = 2
-                           000003  1014  INT_EXTI0 = 3
-                           000004  1015  INT_EXTI1 = 4
-                           000005  1016  INT_EXTI2 = 5
-                           000006  1017  INT_EXTI3 = 6
-                           000007  1018  INT_EXTI4 = 7
-                           000008  1019  INT_CAN_RX = 8
-                           000009  1020  INT_CAN_TX = 9
-                           00000A  1021  INT_SPI = 10
-                           00000B  1022  INT_TIM1_OVF = 11
-                           00000C  1023  INT_TIM1_CCM = 12
-                           00000D  1024  INT_TIM2_OVF = 13
-                           00000E  1025  INT_TIM2_CCM = 14
-                           00000F  1026  INT_TIM3_OVF = 15
-                           000010  1027  INT_TIM3_CCM = 16
-                           000011  1028  INT_UART1_TX_COMPLETED = 17
-                           000012  1029  INT_AUART1_RX_FULL = 18
-                           000013  1030  INT_I2C = 19
-                           000014  1031  INT_UART3_TX_COMPLETED = 20
-                           000015  1032  INT_UART3_RX_FULL = 21
-                           000016  1033  INT_ADC2 = 22
-                           000017  1034  INT_TIM4_OVF = 23
-                           000018  1035  INT_FLASH = 24
-                                   1036 
-                                   1037 ; Interrupt Vectors
-                           008000  1038  INT_VECTOR_RESET = 0x8000
-                           008004  1039  INT_VECTOR_TRAP = 0x8004
-                           008008  1040  INT_VECTOR_TLI = 0x8008
-                           00800C  1041  INT_VECTOR_AWU = 0x800C
-                           008010  1042  INT_VECTOR_CLK = 0x8010
-                           008014  1043  INT_VECTOR_EXTI0 = 0x8014
-                           008018  1044  INT_VECTOR_EXTI1 = 0x8018
+                           007F75   990  ITC_SPR6   = (0x7F75)
+                           007F76   991  ITC_SPR7   = (0x7F76)
+                           007F77   992  ITC_SPR8   = (0x7F77)
+                                    993 
+                                    994 ; SWIM, control and status register
+                           007F80   995  SWIM_CSR   = (0x7F80)
+                                    996 ; debug registers
+                           007F90   997  DM_BK1RE   = (0x7F90)
+                           007F91   998  DM_BK1RH   = (0x7F91)
+                           007F92   999  DM_BK1RL   = (0x7F92)
+                           007F93  1000  DM_BK2RE   = (0x7F93)
+                           007F94  1001  DM_BK2RH   = (0x7F94)
+                           007F95  1002  DM_BK2RL   = (0x7F95)
+                           007F96  1003  DM_CR1   = (0x7F96)
+                           007F97  1004  DM_CR2   = (0x7F97)
+                           007F98  1005  DM_CSR1   = (0x7F98)
+                           007F99  1006  DM_CSR2   = (0x7F99)
+                           007F9A  1007  DM_ENFCTR   = (0x7F9A)
+                                   1008 
+                                   1009 ; Interrupt Numbers
+                           000000  1010  INT_TLI = 0
+                           000001  1011  INT_AWU = 1
+                           000002  1012  INT_CLK = 2
+                           000003  1013  INT_EXTI0 = 3
+                           000004  1014  INT_EXTI1 = 4
+                           000005  1015  INT_EXTI2 = 5
+                           000006  1016  INT_EXTI3 = 6
+                           000007  1017  INT_EXTI4 = 7
+                           000008  1018  INT_CAN_RX = 8
+                           000009  1019  INT_CAN_TX = 9
+                           00000A  1020  INT_SPI = 10
+                           00000B  1021  INT_TIM1_OVF = 11
+                           00000C  1022  INT_TIM1_CCM = 12
+                           00000D  1023  INT_TIM2_OVF = 13
+                           00000E  1024  INT_TIM2_CCM = 14
+                           00000F  1025  INT_TIM3_OVF = 15
+                           000010  1026  INT_TIM3_CCM = 16
+                           000011  1027  INT_UART1_TX_COMPLETED = 17
+                           000012  1028  INT_AUART1_RX_FULL = 18
+                           000013  1029  INT_I2C = 19
+                           000014  1030  INT_UART3_TX_COMPLETED = 20
+                           000015  1031  INT_UART3_RX_FULL = 21
+                           000016  1032  INT_ADC2 = 22
+                           000017  1033  INT_TIM4_OVF = 23
+                           000018  1034  INT_FLASH = 24
+                                   1035 
+                                   1036 ; Interrupt Vectors
+                           008000  1037  INT_VECTOR_RESET = 0x8000
+                           008004  1038  INT_VECTOR_TRAP = 0x8004
+                           008008  1039  INT_VECTOR_TLI = 0x8008
+                           00800C  1040  INT_VECTOR_AWU = 0x800C
+                           008010  1041  INT_VECTOR_CLK = 0x8010
+                           008014  1042  INT_VECTOR_EXTI0 = 0x8014
+                           008018  1043  INT_VECTOR_EXTI1 = 0x8018
+                           00801C  1044  INT_VECTOR_EXTI2 = 0x801C
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 22.
 Hexadecimal [24-Bits]
 
 
 
-                           00801C  1045  INT_VECTOR_EXTI2 = 0x801C
-                           008020  1046  INT_VECTOR_EXTI3 = 0x8020
-                           008024  1047  INT_VECTOR_EXTI4 = 0x8024
-                           008028  1048  INT_VECTOR_CAN_RX = 0x8028
-                           00802C  1049  INT_VECTOR_CAN_TX = 0x802c
-                           008030  1050  INT_VECTOR_SPI = 0x8030
-                           008034  1051  INT_VECTOR_TIM1_OVF = 0x8034
-                           008038  1052  INT_VECTOR_TIM1_CCM = 0x8038
-                           00803C  1053  INT_VECTOR_TIM2_OVF = 0x803C
-                           008040  1054  INT_VECTOR_TIM2_CCM = 0x8040
-                           008044  1055  INT_VECTOR_TIM3_OVF = 0x8044
-                           008048  1056  INT_VECTOR_TIM3_CCM = 0x8048
-                           00804C  1057  INT_VECTOR_UART1_TX_COMPLETED = 0x804c
-                           008050  1058  INT_VECTOR_UART1_RX_FULL = 0x8050
-                           008054  1059  INT_VECTOR_I2C = 0x8054
-                           008058  1060  INT_VECTOR_UART3_TX_COMPLETED = 0x8058
-                           00805C  1061  INT_VECTOR_UART3_RX_FULL = 0x805C
-                           008060  1062  INT_VECTOR_ADC2 = 0x8060
-                           008064  1063  INT_VECTOR_TIM4_OVF = 0x8064
-                           008068  1064  INT_VECTOR_FLASH = 0x8068
-                                   1065 
-                                   1066 ; Condition code register bits
-                           000007  1067 CC_V = 7  ; overflow flag 
-                           000005  1068 CC_I1= 5  ; interrupt bit 1
-                           000004  1069 CC_H = 4  ; half carry 
-                           000003  1070 CC_I0 = 3 ; interrupt bit 0
-                           000002  1071 CC_N = 2 ;  negative flag 
-                           000001  1072 CC_Z = 1 ;  zero flag  
-                           000000  1073 CC_C = 0 ; carry bit 
+                           008020  1045  INT_VECTOR_EXTI3 = 0x8020
+                           008024  1046  INT_VECTOR_EXTI4 = 0x8024
+                           008028  1047  INT_VECTOR_CAN_RX = 0x8028
+                           00802C  1048  INT_VECTOR_CAN_TX = 0x802c
+                           008030  1049  INT_VECTOR_SPI = 0x8030
+                           008034  1050  INT_VECTOR_TIM1_OVF = 0x8034
+                           008038  1051  INT_VECTOR_TIM1_CCM = 0x8038
+                           00803C  1052  INT_VECTOR_TIM2_OVF = 0x803C
+                           008040  1053  INT_VECTOR_TIM2_CCM = 0x8040
+                           008044  1054  INT_VECTOR_TIM3_OVF = 0x8044
+                           008048  1055  INT_VECTOR_TIM3_CCM = 0x8048
+                           00804C  1056  INT_VECTOR_UART1_TX_COMPLETED = 0x804c
+                           008050  1057  INT_VECTOR_UART1_RX_FULL = 0x8050
+                           008054  1058  INT_VECTOR_I2C = 0x8054
+                           008058  1059  INT_VECTOR_UART3_TX_COMPLETED = 0x8058
+                           00805C  1060  INT_VECTOR_UART3_RX_FULL = 0x805C
+                           008060  1061  INT_VECTOR_ADC2 = 0x8060
+                           008064  1062  INT_VECTOR_TIM4_OVF = 0x8064
+                           008068  1063  INT_VECTOR_FLASH = 0x8068
+                                   1064 
+                                   1065 ; Condition code register bits
+                           000007  1066 CC_V = 7  ; overflow flag 
+                           000005  1067 CC_I1= 5  ; interrupt bit 1
+                           000004  1068 CC_H = 4  ; half carry 
+                           000003  1069 CC_I0 = 3 ; interrupt bit 0
+                           000002  1070 CC_N = 2 ;  negative flag 
+                           000001  1071 CC_Z = 1 ;  zero flag  
+                           000000  1072 CC_C = 0 ; carry bit 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 23.
 Hexadecimal [24-Bits]
 
@@ -1977,604 +1976,603 @@ Hexadecimal [24-Bits]
                                     523 ; uart identifier
                                     524 ; to be used by uart_init
                            000000   525  UART1 = 0
-                           000001   526  UART2 = 1
-                           000001   527  UART3 = 1
-                                    528 
-                                    529 ; pins used by uart 
-                           000005   530 UART1_TX_PIN=BIT5
-                           000004   531 UART1_RX_PIN=BIT4
-                           000006   532 UART3_TX_PIN=BIT6
-                           000005   533 UART3_RX_PIN=BIT5
-                                    534 ; uart port base address 
-                           000000   535 UART1_PORT=PA 
-                           00000F   536 UART3_PORT=PD
-                                    537 
-                                    538 ; UART1 
-                           005230   539  UART1_BASE  = (0x5230)
-                           005230   540  UART1_SR    = (0x5230)
-                           005231   541  UART1_DR    = (0x5231)
-                           005232   542  UART1_BRR1  = (0x5232)
-                           005233   543  UART1_BRR2  = (0x5233)
-                           005234   544  UART1_CR1   = (0x5234)
-                           005235   545  UART1_CR2   = (0x5235)
-                           005236   546  UART1_CR3   = (0x5236)
-                           005237   547  UART1_CR4   = (0x5237)
-                           005238   548  UART1_CR5   = (0x5238)
-                           005239   549  UART1_GTR   = (0x5239)
+                           000001   526  UART3 = 1
+                                    527 
+                                    528 ; pins used by uart 
+                           000005   529 UART1_TX_PIN=BIT5
+                           000004   530 UART1_RX_PIN=BIT4
+                           000005   531 UART3_TX_PIN=BIT5
+                           000006   532 UART3_RX_PIN=BIT6
+                                    533 ; uart port base address 
+                           000000   534 UART1_PORT=PA 
+                           00000F   535 UART3_PORT=PD
+                                    536 
+                                    537 ; UART1 
+                           005230   538  UART1_BASE  = (0x5230)
+                           005230   539  UART1_SR    = (0x5230)
+                           005231   540  UART1_DR    = (0x5231)
+                           005232   541  UART1_BRR1  = (0x5232)
+                           005233   542  UART1_BRR2  = (0x5233)
+                           005234   543  UART1_CR1   = (0x5234)
+                           005235   544  UART1_CR2   = (0x5235)
+                           005236   545  UART1_CR3   = (0x5236)
+                           005237   546  UART1_CR4   = (0x5237)
+                           005238   547  UART1_CR5   = (0x5238)
+                           005239   548  UART1_GTR   = (0x5239)
+                           00523A   549  UART1_PSCR  = (0x523A)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 37.
 Hexadecimal [24-Bits]
 
 
 
-                           00523A   550  UART1_PSCR  = (0x523A)
-                                    551 
-                                    552 ; UART3
-                           005240   553  UART3_BASE  = (0x5240)
-                           005240   554  UART3_SR    = (0x5240)
-                           005241   555  UART3_DR    = (0x5241)
-                           005242   556  UART3_BRR1  = (0x5242)
-                           005243   557  UART3_BRR2  = (0x5243)
-                           005244   558  UART3_CR1   = (0x5244)
-                           005245   559  UART3_CR2   = (0x5245)
-                           005246   560  UART3_CR3   = (0x5246)
-                           005247   561  UART3_CR4   = (0x5247)
-                           004249   562  UART3_CR6   = (0x4249)
-                                    563 
-                                    564 ; UART Status Register bits
-                           000007   565  UART_SR_TXE = (7)
-                           000006   566  UART_SR_TC = (6)
-                           000005   567  UART_SR_RXNE = (5)
-                           000004   568  UART_SR_IDLE = (4)
-                           000003   569  UART_SR_OR = (3)
-                           000002   570  UART_SR_NF = (2)
-                           000001   571  UART_SR_FE = (1)
-                           000000   572  UART_SR_PE = (0)
-                                    573 
-                                    574 ; Uart Control Register bits
-                           000007   575  UART_CR1_R8 = (7)
-                           000006   576  UART_CR1_T8 = (6)
-                           000005   577  UART_CR1_UARTD = (5)
-                           000004   578  UART_CR1_M = (4)
-                           000003   579  UART_CR1_WAKE = (3)
-                           000002   580  UART_CR1_PCEN = (2)
-                           000001   581  UART_CR1_PS = (1)
-                           000000   582  UART_CR1_PIEN = (0)
-                                    583 
-                           000007   584  UART_CR2_TIEN = (7)
-                           000006   585  UART_CR2_TCIEN = (6)
-                           000005   586  UART_CR2_RIEN = (5)
-                           000004   587  UART_CR2_ILIEN = (4)
-                           000003   588  UART_CR2_TEN = (3)
-                           000002   589  UART_CR2_REN = (2)
-                           000001   590  UART_CR2_RWU = (1)
-                           000000   591  UART_CR2_SBK = (0)
-                                    592 
-                           000006   593  UART_CR3_LINEN = (6)
-                           000005   594  UART_CR3_STOP1 = (5)
-                           000004   595  UART_CR3_STOP0 = (4)
-                           000003   596  UART_CR3_CLKEN = (3)
-                           000002   597  UART_CR3_CPOL = (2)
-                           000001   598  UART_CR3_CPHA = (1)
-                           000000   599  UART_CR3_LBCL = (0)
-                                    600 
-                           000006   601  UART_CR4_LBDIEN = (6)
-                           000005   602  UART_CR4_LBDL = (5)
-                           000004   603  UART_CR4_LBDF = (4)
-                           000003   604  UART_CR4_ADD3 = (3)
+                                    550 
+                                    551 ; UART3
+                           005240   552  UART3_BASE  = (0x5240)
+                           005240   553  UART3_SR    = (0x5240)
+                           005241   554  UART3_DR    = (0x5241)
+                           005242   555  UART3_BRR1  = (0x5242)
+                           005243   556  UART3_BRR2  = (0x5243)
+                           005244   557  UART3_CR1   = (0x5244)
+                           005245   558  UART3_CR2   = (0x5245)
+                           005246   559  UART3_CR3   = (0x5246)
+                           005247   560  UART3_CR4   = (0x5247)
+                           004249   561  UART3_CR6   = (0x4249)
+                                    562 
+                                    563 ; UART Status Register bits
+                           000007   564  UART_SR_TXE = (7)
+                           000006   565  UART_SR_TC = (6)
+                           000005   566  UART_SR_RXNE = (5)
+                           000004   567  UART_SR_IDLE = (4)
+                           000003   568  UART_SR_OR = (3)
+                           000002   569  UART_SR_NF = (2)
+                           000001   570  UART_SR_FE = (1)
+                           000000   571  UART_SR_PE = (0)
+                                    572 
+                                    573 ; Uart Control Register bits
+                           000007   574  UART_CR1_R8 = (7)
+                           000006   575  UART_CR1_T8 = (6)
+                           000005   576  UART_CR1_UARTD = (5)
+                           000004   577  UART_CR1_M = (4)
+                           000003   578  UART_CR1_WAKE = (3)
+                           000002   579  UART_CR1_PCEN = (2)
+                           000001   580  UART_CR1_PS = (1)
+                           000000   581  UART_CR1_PIEN = (0)
+                                    582 
+                           000007   583  UART_CR2_TIEN = (7)
+                           000006   584  UART_CR2_TCIEN = (6)
+                           000005   585  UART_CR2_RIEN = (5)
+                           000004   586  UART_CR2_ILIEN = (4)
+                           000003   587  UART_CR2_TEN = (3)
+                           000002   588  UART_CR2_REN = (2)
+                           000001   589  UART_CR2_RWU = (1)
+                           000000   590  UART_CR2_SBK = (0)
+                                    591 
+                           000006   592  UART_CR3_LINEN = (6)
+                           000005   593  UART_CR3_STOP1 = (5)
+                           000004   594  UART_CR3_STOP0 = (4)
+                           000003   595  UART_CR3_CLKEN = (3)
+                           000002   596  UART_CR3_CPOL = (2)
+                           000001   597  UART_CR3_CPHA = (1)
+                           000000   598  UART_CR3_LBCL = (0)
+                                    599 
+                           000006   600  UART_CR4_LBDIEN = (6)
+                           000005   601  UART_CR4_LBDL = (5)
+                           000004   602  UART_CR4_LBDF = (4)
+                           000003   603  UART_CR4_ADD3 = (3)
+                           000002   604  UART_CR4_ADD2 = (2)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 38.
 Hexadecimal [24-Bits]
 
 
 
-                           000002   605  UART_CR4_ADD2 = (2)
-                           000001   606  UART_CR4_ADD1 = (1)
-                           000000   607  UART_CR4_ADD0 = (0)
-                                    608 
-                           000005   609  UART_CR5_SCEN = (5)
-                           000004   610  UART_CR5_NACK = (4)
-                           000003   611  UART_CR5_HDSEL = (3)
-                           000002   612  UART_CR5_IRLP = (2)
-                           000001   613  UART_CR5_IREN = (1)
-                                    614 ; LIN mode config register
-                           000007   615  UART_CR6_LDUM = (7)
-                           000005   616  UART_CR6_LSLV = (5)
-                           000004   617  UART_CR6_LASE = (4)
-                           000002   618  UART_CR6_LHDIEN = (2) 
-                           000001   619  UART_CR6_LHDF = (1)
-                           000000   620  UART_CR6_LSF = (0)
-                                    621 
-                                    622 ; TIMERS
-                                    623 ; Timer 1 - 16-bit timer with complementary PWM outputs
-                           005250   624  TIM1_CR1  = (0x5250)
-                           005251   625  TIM1_CR2  = (0x5251)
-                           005252   626  TIM1_SMCR  = (0x5252)
-                           005253   627  TIM1_ETR  = (0x5253)
-                           005254   628  TIM1_IER  = (0x5254)
-                           005255   629  TIM1_SR1  = (0x5255)
-                           005256   630  TIM1_SR2  = (0x5256)
-                           005257   631  TIM1_EGR  = (0x5257)
-                           005258   632  TIM1_CCMR1  = (0x5258)
-                           005259   633  TIM1_CCMR2  = (0x5259)
-                           00525A   634  TIM1_CCMR3  = (0x525A)
-                           00525B   635  TIM1_CCMR4  = (0x525B)
-                           00525C   636  TIM1_CCER1  = (0x525C)
-                           00525D   637  TIM1_CCER2  = (0x525D)
-                           00525E   638  TIM1_CNTRH  = (0x525E)
-                           00525F   639  TIM1_CNTRL  = (0x525F)
-                           005260   640  TIM1_PSCRH  = (0x5260)
-                           005261   641  TIM1_PSCRL  = (0x5261)
-                           005262   642  TIM1_ARRH  = (0x5262)
-                           005263   643  TIM1_ARRL  = (0x5263)
-                           005264   644  TIM1_RCR  = (0x5264)
-                           005265   645  TIM1_CCR1H  = (0x5265)
-                           005266   646  TIM1_CCR1L  = (0x5266)
-                           005267   647  TIM1_CCR2H  = (0x5267)
-                           005268   648  TIM1_CCR2L  = (0x5268)
-                           005269   649  TIM1_CCR3H  = (0x5269)
-                           00526A   650  TIM1_CCR3L  = (0x526A)
-                           00526B   651  TIM1_CCR4H  = (0x526B)
-                           00526C   652  TIM1_CCR4L  = (0x526C)
-                           00526D   653  TIM1_BKR  = (0x526D)
-                           00526E   654  TIM1_DTR  = (0x526E)
-                           00526F   655  TIM1_OISR  = (0x526F)
-                                    656 
-                                    657 ; Timer Control Register bits
-                           000007   658  TIM_CR1_ARPE = (7)
-                           000006   659  TIM_CR1_CMSH = (6)
+                           000001   605  UART_CR4_ADD1 = (1)
+                           000000   606  UART_CR4_ADD0 = (0)
+                                    607 
+                           000005   608  UART_CR5_SCEN = (5)
+                           000004   609  UART_CR5_NACK = (4)
+                           000003   610  UART_CR5_HDSEL = (3)
+                           000002   611  UART_CR5_IRLP = (2)
+                           000001   612  UART_CR5_IREN = (1)
+                                    613 ; LIN mode config register
+                           000007   614  UART_CR6_LDUM = (7)
+                           000005   615  UART_CR6_LSLV = (5)
+                           000004   616  UART_CR6_LASE = (4)
+                           000002   617  UART_CR6_LHDIEN = (2) 
+                           000001   618  UART_CR6_LHDF = (1)
+                           000000   619  UART_CR6_LSF = (0)
+                                    620 
+                                    621 ; TIMERS
+                                    622 ; Timer 1 - 16-bit timer with complementary PWM outputs
+                           005250   623  TIM1_CR1  = (0x5250)
+                           005251   624  TIM1_CR2  = (0x5251)
+                           005252   625  TIM1_SMCR  = (0x5252)
+                           005253   626  TIM1_ETR  = (0x5253)
+                           005254   627  TIM1_IER  = (0x5254)
+                           005255   628  TIM1_SR1  = (0x5255)
+                           005256   629  TIM1_SR2  = (0x5256)
+                           005257   630  TIM1_EGR  = (0x5257)
+                           005258   631  TIM1_CCMR1  = (0x5258)
+                           005259   632  TIM1_CCMR2  = (0x5259)
+                           00525A   633  TIM1_CCMR3  = (0x525A)
+                           00525B   634  TIM1_CCMR4  = (0x525B)
+                           00525C   635  TIM1_CCER1  = (0x525C)
+                           00525D   636  TIM1_CCER2  = (0x525D)
+                           00525E   637  TIM1_CNTRH  = (0x525E)
+                           00525F   638  TIM1_CNTRL  = (0x525F)
+                           005260   639  TIM1_PSCRH  = (0x5260)
+                           005261   640  TIM1_PSCRL  = (0x5261)
+                           005262   641  TIM1_ARRH  = (0x5262)
+                           005263   642  TIM1_ARRL  = (0x5263)
+                           005264   643  TIM1_RCR  = (0x5264)
+                           005265   644  TIM1_CCR1H  = (0x5265)
+                           005266   645  TIM1_CCR1L  = (0x5266)
+                           005267   646  TIM1_CCR2H  = (0x5267)
+                           005268   647  TIM1_CCR2L  = (0x5268)
+                           005269   648  TIM1_CCR3H  = (0x5269)
+                           00526A   649  TIM1_CCR3L  = (0x526A)
+                           00526B   650  TIM1_CCR4H  = (0x526B)
+                           00526C   651  TIM1_CCR4L  = (0x526C)
+                           00526D   652  TIM1_BKR  = (0x526D)
+                           00526E   653  TIM1_DTR  = (0x526E)
+                           00526F   654  TIM1_OISR  = (0x526F)
+                                    655 
+                                    656 ; Timer Control Register bits
+                           000007   657  TIM_CR1_ARPE = (7)
+                           000006   658  TIM_CR1_CMSH = (6)
+                           000005   659  TIM_CR1_CMSL = (5)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 39.
 Hexadecimal [24-Bits]
 
 
 
-                           000005   660  TIM_CR1_CMSL = (5)
-                           000004   661  TIM_CR1_DIR = (4)
-                           000003   662  TIM_CR1_OPM = (3)
-                           000002   663  TIM_CR1_URS = (2)
-                           000001   664  TIM_CR1_UDIS = (1)
-                           000000   665  TIM_CR1_CEN = (0)
-                                    666 
-                           000006   667  TIM1_CR2_MMS2 = (6)
-                           000005   668  TIM1_CR2_MMS1 = (5)
-                           000004   669  TIM1_CR2_MMS0 = (4)
-                           000002   670  TIM1_CR2_COMS = (2)
-                           000000   671  TIM1_CR2_CCPC = (0)
-                                    672 
-                                    673 ; Timer Slave Mode Control bits
-                           000007   674  TIM1_SMCR_MSM = (7)
-                           000006   675  TIM1_SMCR_TS2 = (6)
-                           000005   676  TIM1_SMCR_TS1 = (5)
-                           000004   677  TIM1_SMCR_TS0 = (4)
-                           000002   678  TIM1_SMCR_SMS2 = (2)
-                           000001   679  TIM1_SMCR_SMS1 = (1)
-                           000000   680  TIM1_SMCR_SMS0 = (0)
-                                    681 
-                                    682 ; Timer External Trigger Enable bits
-                           000007   683  TIM1_ETR_ETP = (7)
-                           000006   684  TIM1_ETR_ECE = (6)
-                           000005   685  TIM1_ETR_ETPS1 = (5)
-                           000004   686  TIM1_ETR_ETPS0 = (4)
-                           000003   687  TIM1_ETR_ETF3 = (3)
-                           000002   688  TIM1_ETR_ETF2 = (2)
-                           000001   689  TIM1_ETR_ETF1 = (1)
-                           000000   690  TIM1_ETR_ETF0 = (0)
-                                    691 
-                                    692 ; Timer Interrupt Enable bits
-                           000007   693  TIM1_IER_BIE = (7)
-                           000006   694  TIM1_IER_TIE = (6)
-                           000005   695  TIM1_IER_COMIE = (5)
-                           000004   696  TIM1_IER_CC4IE = (4)
-                           000003   697  TIM1_IER_CC3IE = (3)
-                           000002   698  TIM1_IER_CC2IE = (2)
-                           000001   699  TIM1_IER_CC1IE = (1)
-                           000000   700  TIM1_IER_UIE = (0)
-                                    701 
-                                    702 ; Timer Status Register bits
-                           000007   703  TIM1_SR1_BIF = (7)
-                           000006   704  TIM1_SR1_TIF = (6)
-                           000005   705  TIM1_SR1_COMIF = (5)
-                           000004   706  TIM1_SR1_CC4IF = (4)
-                           000003   707  TIM1_SR1_CC3IF = (3)
-                           000002   708  TIM1_SR1_CC2IF = (2)
-                           000001   709  TIM1_SR1_CC1IF = (1)
-                           000000   710  TIM1_SR1_UIF = (0)
-                                    711 
-                           000004   712  TIM1_SR2_CC4OF = (4)
-                           000003   713  TIM1_SR2_CC3OF = (3)
-                           000002   714  TIM1_SR2_CC2OF = (2)
+                           000004   660  TIM_CR1_DIR = (4)
+                           000003   661  TIM_CR1_OPM = (3)
+                           000002   662  TIM_CR1_URS = (2)
+                           000001   663  TIM_CR1_UDIS = (1)
+                           000000   664  TIM_CR1_CEN = (0)
+                                    665 
+                           000006   666  TIM1_CR2_MMS2 = (6)
+                           000005   667  TIM1_CR2_MMS1 = (5)
+                           000004   668  TIM1_CR2_MMS0 = (4)
+                           000002   669  TIM1_CR2_COMS = (2)
+                           000000   670  TIM1_CR2_CCPC = (0)
+                                    671 
+                                    672 ; Timer Slave Mode Control bits
+                           000007   673  TIM1_SMCR_MSM = (7)
+                           000006   674  TIM1_SMCR_TS2 = (6)
+                           000005   675  TIM1_SMCR_TS1 = (5)
+                           000004   676  TIM1_SMCR_TS0 = (4)
+                           000002   677  TIM1_SMCR_SMS2 = (2)
+                           000001   678  TIM1_SMCR_SMS1 = (1)
+                           000000   679  TIM1_SMCR_SMS0 = (0)
+                                    680 
+                                    681 ; Timer External Trigger Enable bits
+                           000007   682  TIM1_ETR_ETP = (7)
+                           000006   683  TIM1_ETR_ECE = (6)
+                           000005   684  TIM1_ETR_ETPS1 = (5)
+                           000004   685  TIM1_ETR_ETPS0 = (4)
+                           000003   686  TIM1_ETR_ETF3 = (3)
+                           000002   687  TIM1_ETR_ETF2 = (2)
+                           000001   688  TIM1_ETR_ETF1 = (1)
+                           000000   689  TIM1_ETR_ETF0 = (0)
+                                    690 
+                                    691 ; Timer Interrupt Enable bits
+                           000007   692  TIM1_IER_BIE = (7)
+                           000006   693  TIM1_IER_TIE = (6)
+                           000005   694  TIM1_IER_COMIE = (5)
+                           000004   695  TIM1_IER_CC4IE = (4)
+                           000003   696  TIM1_IER_CC3IE = (3)
+                           000002   697  TIM1_IER_CC2IE = (2)
+                           000001   698  TIM1_IER_CC1IE = (1)
+                           000000   699  TIM1_IER_UIE = (0)
+                                    700 
+                                    701 ; Timer Status Register bits
+                           000007   702  TIM1_SR1_BIF = (7)
+                           000006   703  TIM1_SR1_TIF = (6)
+                           000005   704  TIM1_SR1_COMIF = (5)
+                           000004   705  TIM1_SR1_CC4IF = (4)
+                           000003   706  TIM1_SR1_CC3IF = (3)
+                           000002   707  TIM1_SR1_CC2IF = (2)
+                           000001   708  TIM1_SR1_CC1IF = (1)
+                           000000   709  TIM1_SR1_UIF = (0)
+                                    710 
+                           000004   711  TIM1_SR2_CC4OF = (4)
+                           000003   712  TIM1_SR2_CC3OF = (3)
+                           000002   713  TIM1_SR2_CC2OF = (2)
+                           000001   714  TIM1_SR2_CC1OF = (1)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 40.
 Hexadecimal [24-Bits]
 
 
 
-                           000001   715  TIM1_SR2_CC1OF = (1)
-                                    716 
-                                    717 ; Timer Event Generation Register bits
-                           000007   718  TIM1_EGR_BG = (7)
-                           000006   719  TIM1_EGR_TG = (6)
-                           000005   720  TIM1_EGR_COMG = (5)
-                           000004   721  TIM1_EGR_CC4G = (4)
-                           000003   722  TIM1_EGR_CC3G = (3)
-                           000002   723  TIM1_EGR_CC2G = (2)
-                           000001   724  TIM1_EGR_CC1G = (1)
-                           000000   725  TIM1_EGR_UG = (0)
-                                    726 
-                                    727 ; Capture/Compare Mode Register 1 - channel configured in output
-                           000007   728  TIM1_CCMR1_OC1CE = (7)
-                           000006   729  TIM1_CCMR1_OC1M2 = (6)
-                           000005   730  TIM1_CCMR1_OC1M1 = (5)
-                           000004   731  TIM1_CCMR1_OC1M0 = (4)
-                           000003   732  TIM1_CCMR1_OC1PE = (3)
-                           000002   733  TIM1_CCMR1_OC1FE = (2)
-                           000001   734  TIM1_CCMR1_CC1S1 = (1)
-                           000000   735  TIM1_CCMR1_CC1S0 = (0)
-                                    736 
-                                    737 ; Capture/Compare Mode Register 1 - channel configured in input
-                           000007   738  TIM1_CCMR1_IC1F3 = (7)
-                           000006   739  TIM1_CCMR1_IC1F2 = (6)
-                           000005   740  TIM1_CCMR1_IC1F1 = (5)
-                           000004   741  TIM1_CCMR1_IC1F0 = (4)
-                           000003   742  TIM1_CCMR1_IC1PSC1 = (3)
-                           000002   743  TIM1_CCMR1_IC1PSC0 = (2)
-                                    744 ;  TIM1_CCMR1_CC1S1 = (1)
-                           000000   745  TIM1_CCMR1_CC1S0 = (0)
-                                    746 
-                                    747 ; Capture/Compare Mode Register 2 - channel configured in output
-                           000007   748  TIM1_CCMR2_OC2CE = (7)
-                           000006   749  TIM1_CCMR2_OC2M2 = (6)
-                           000005   750  TIM1_CCMR2_OC2M1 = (5)
-                           000004   751  TIM1_CCMR2_OC2M0 = (4)
-                           000003   752  TIM1_CCMR2_OC2PE = (3)
-                           000002   753  TIM1_CCMR2_OC2FE = (2)
-                           000001   754  TIM1_CCMR2_CC2S1 = (1)
-                           000000   755  TIM1_CCMR2_CC2S0 = (0)
-                                    756 
-                                    757 ; Capture/Compare Mode Register 2 - channel configured in input
-                           000007   758  TIM1_CCMR2_IC2F3 = (7)
-                           000006   759  TIM1_CCMR2_IC2F2 = (6)
-                           000005   760  TIM1_CCMR2_IC2F1 = (5)
-                           000004   761  TIM1_CCMR2_IC2F0 = (4)
-                           000003   762  TIM1_CCMR2_IC2PSC1 = (3)
-                           000002   763  TIM1_CCMR2_IC2PSC0 = (2)
-                                    764 ;  TIM1_CCMR2_CC2S1 = (1)
-                           000000   765  TIM1_CCMR2_CC2S0 = (0)
-                                    766 
-                                    767 ; Capture/Compare Mode Register 3 - channel configured in output
-                           000007   768  TIM1_CCMR3_OC3CE = (7)
-                           000006   769  TIM1_CCMR3_OC3M2 = (6)
+                                    715 
+                                    716 ; Timer Event Generation Register bits
+                           000007   717  TIM1_EGR_BG = (7)
+                           000006   718  TIM1_EGR_TG = (6)
+                           000005   719  TIM1_EGR_COMG = (5)
+                           000004   720  TIM1_EGR_CC4G = (4)
+                           000003   721  TIM1_EGR_CC3G = (3)
+                           000002   722  TIM1_EGR_CC2G = (2)
+                           000001   723  TIM1_EGR_CC1G = (1)
+                           000000   724  TIM1_EGR_UG = (0)
+                                    725 
+                                    726 ; Capture/Compare Mode Register 1 - channel configured in output
+                           000007   727  TIM1_CCMR1_OC1CE = (7)
+                           000006   728  TIM1_CCMR1_OC1M2 = (6)
+                           000005   729  TIM1_CCMR1_OC1M1 = (5)
+                           000004   730  TIM1_CCMR1_OC1M0 = (4)
+                           000003   731  TIM1_CCMR1_OC1PE = (3)
+                           000002   732  TIM1_CCMR1_OC1FE = (2)
+                           000001   733  TIM1_CCMR1_CC1S1 = (1)
+                           000000   734  TIM1_CCMR1_CC1S0 = (0)
+                                    735 
+                                    736 ; Capture/Compare Mode Register 1 - channel configured in input
+                           000007   737  TIM1_CCMR1_IC1F3 = (7)
+                           000006   738  TIM1_CCMR1_IC1F2 = (6)
+                           000005   739  TIM1_CCMR1_IC1F1 = (5)
+                           000004   740  TIM1_CCMR1_IC1F0 = (4)
+                           000003   741  TIM1_CCMR1_IC1PSC1 = (3)
+                           000002   742  TIM1_CCMR1_IC1PSC0 = (2)
+                                    743 ;  TIM1_CCMR1_CC1S1 = (1)
+                           000000   744  TIM1_CCMR1_CC1S0 = (0)
+                                    745 
+                                    746 ; Capture/Compare Mode Register 2 - channel configured in output
+                           000007   747  TIM1_CCMR2_OC2CE = (7)
+                           000006   748  TIM1_CCMR2_OC2M2 = (6)
+                           000005   749  TIM1_CCMR2_OC2M1 = (5)
+                           000004   750  TIM1_CCMR2_OC2M0 = (4)
+                           000003   751  TIM1_CCMR2_OC2PE = (3)
+                           000002   752  TIM1_CCMR2_OC2FE = (2)
+                           000001   753  TIM1_CCMR2_CC2S1 = (1)
+                           000000   754  TIM1_CCMR2_CC2S0 = (0)
+                                    755 
+                                    756 ; Capture/Compare Mode Register 2 - channel configured in input
+                           000007   757  TIM1_CCMR2_IC2F3 = (7)
+                           000006   758  TIM1_CCMR2_IC2F2 = (6)
+                           000005   759  TIM1_CCMR2_IC2F1 = (5)
+                           000004   760  TIM1_CCMR2_IC2F0 = (4)
+                           000003   761  TIM1_CCMR2_IC2PSC1 = (3)
+                           000002   762  TIM1_CCMR2_IC2PSC0 = (2)
+                                    763 ;  TIM1_CCMR2_CC2S1 = (1)
+                           000000   764  TIM1_CCMR2_CC2S0 = (0)
+                                    765 
+                                    766 ; Capture/Compare Mode Register 3 - channel configured in output
+                           000007   767  TIM1_CCMR3_OC3CE = (7)
+                           000006   768  TIM1_CCMR3_OC3M2 = (6)
+                           000005   769  TIM1_CCMR3_OC3M1 = (5)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 41.
 Hexadecimal [24-Bits]
 
 
 
-                           000005   770  TIM1_CCMR3_OC3M1 = (5)
-                           000004   771  TIM1_CCMR3_OC3M0 = (4)
-                           000003   772  TIM1_CCMR3_OC3PE = (3)
-                           000002   773  TIM1_CCMR3_OC3FE = (2)
-                           000001   774  TIM1_CCMR3_CC3S1 = (1)
-                           000000   775  TIM1_CCMR3_CC3S0 = (0)
-                                    776 
-                                    777 ; Capture/Compare Mode Register 3 - channel configured in input
-                           000007   778  TIM1_CCMR3_IC3F3 = (7)
-                           000006   779  TIM1_CCMR3_IC3F2 = (6)
-                           000005   780  TIM1_CCMR3_IC3F1 = (5)
-                           000004   781  TIM1_CCMR3_IC3F0 = (4)
-                           000003   782  TIM1_CCMR3_IC3PSC1 = (3)
-                           000002   783  TIM1_CCMR3_IC3PSC0 = (2)
-                                    784 ;  TIM1_CCMR3_CC3S1 = (1)
-                           000000   785  TIM1_CCMR3_CC3S0 = (0)
-                                    786 
-                                    787 ; Capture/Compare Mode Register 4 - channel configured in output
-                           000007   788  TIM1_CCMR4_OC4CE = (7)
-                           000006   789  TIM1_CCMR4_OC4M2 = (6)
-                           000005   790  TIM1_CCMR4_OC4M1 = (5)
-                           000004   791  TIM1_CCMR4_OC4M0 = (4)
-                           000003   792  TIM1_CCMR4_OC4PE = (3)
-                           000002   793  TIM1_CCMR4_OC4FE = (2)
-                           000001   794  TIM1_CCMR4_CC4S1 = (1)
-                           000000   795  TIM1_CCMR4_CC4S0 = (0)
-                                    796 
-                                    797 ; Capture/Compare Mode Register 4 - channel configured in input
-                           000007   798  TIM1_CCMR4_IC4F3 = (7)
-                           000006   799  TIM1_CCMR4_IC4F2 = (6)
-                           000005   800  TIM1_CCMR4_IC4F1 = (5)
-                           000004   801  TIM1_CCMR4_IC4F0 = (4)
-                           000003   802  TIM1_CCMR4_IC4PSC1 = (3)
-                           000002   803  TIM1_CCMR4_IC4PSC0 = (2)
-                                    804 ;  TIM1_CCMR4_CC4S1 = (1)
-                           000000   805  TIM1_CCMR4_CC4S0 = (0)
-                                    806 
-                                    807 ; Timer 2 - 16-bit timer
-                           005300   808  TIM2_CR1  = (0x5300)
-                           005301   809  TIM2_IER  = (0x5301)
-                           005302   810  TIM2_SR1  = (0x5302)
-                           005303   811  TIM2_SR2  = (0x5303)
-                           005304   812  TIM2_EGR  = (0x5304)
-                           005305   813  TIM2_CCMR1  = (0x5305)
-                           005306   814  TIM2_CCMR2  = (0x5306)
-                           005307   815  TIM2_CCMR3  = (0x5307)
-                           005308   816  TIM2_CCER1  = (0x5308)
-                           005309   817  TIM2_CCER2  = (0x5309)
-                           00530A   818  TIM2_CNTRH  = (0x530A)
-                           00530B   819  TIM2_CNTRL  = (0x530B)
-                           00530C   820  TIM2_PSCR  = (0x530C)
-                           00530D   821  TIM2_ARRH  = (0x530D)
-                           00530E   822  TIM2_ARRL  = (0x530E)
-                           00530F   823  TIM2_CCR1H  = (0x530F)
-                           005310   824  TIM2_CCR1L  = (0x5310)
+                           000004   770  TIM1_CCMR3_OC3M0 = (4)
+                           000003   771  TIM1_CCMR3_OC3PE = (3)
+                           000002   772  TIM1_CCMR3_OC3FE = (2)
+                           000001   773  TIM1_CCMR3_CC3S1 = (1)
+                           000000   774  TIM1_CCMR3_CC3S0 = (0)
+                                    775 
+                                    776 ; Capture/Compare Mode Register 3 - channel configured in input
+                           000007   777  TIM1_CCMR3_IC3F3 = (7)
+                           000006   778  TIM1_CCMR3_IC3F2 = (6)
+                           000005   779  TIM1_CCMR3_IC3F1 = (5)
+                           000004   780  TIM1_CCMR3_IC3F0 = (4)
+                           000003   781  TIM1_CCMR3_IC3PSC1 = (3)
+                           000002   782  TIM1_CCMR3_IC3PSC0 = (2)
+                                    783 ;  TIM1_CCMR3_CC3S1 = (1)
+                           000000   784  TIM1_CCMR3_CC3S0 = (0)
+                                    785 
+                                    786 ; Capture/Compare Mode Register 4 - channel configured in output
+                           000007   787  TIM1_CCMR4_OC4CE = (7)
+                           000006   788  TIM1_CCMR4_OC4M2 = (6)
+                           000005   789  TIM1_CCMR4_OC4M1 = (5)
+                           000004   790  TIM1_CCMR4_OC4M0 = (4)
+                           000003   791  TIM1_CCMR4_OC4PE = (3)
+                           000002   792  TIM1_CCMR4_OC4FE = (2)
+                           000001   793  TIM1_CCMR4_CC4S1 = (1)
+                           000000   794  TIM1_CCMR4_CC4S0 = (0)
+                                    795 
+                                    796 ; Capture/Compare Mode Register 4 - channel configured in input
+                           000007   797  TIM1_CCMR4_IC4F3 = (7)
+                           000006   798  TIM1_CCMR4_IC4F2 = (6)
+                           000005   799  TIM1_CCMR4_IC4F1 = (5)
+                           000004   800  TIM1_CCMR4_IC4F0 = (4)
+                           000003   801  TIM1_CCMR4_IC4PSC1 = (3)
+                           000002   802  TIM1_CCMR4_IC4PSC0 = (2)
+                                    803 ;  TIM1_CCMR4_CC4S1 = (1)
+                           000000   804  TIM1_CCMR4_CC4S0 = (0)
+                                    805 
+                                    806 ; Timer 2 - 16-bit timer
+                           005300   807  TIM2_CR1  = (0x5300)
+                           005301   808  TIM2_IER  = (0x5301)
+                           005302   809  TIM2_SR1  = (0x5302)
+                           005303   810  TIM2_SR2  = (0x5303)
+                           005304   811  TIM2_EGR  = (0x5304)
+                           005305   812  TIM2_CCMR1  = (0x5305)
+                           005306   813  TIM2_CCMR2  = (0x5306)
+                           005307   814  TIM2_CCMR3  = (0x5307)
+                           005308   815  TIM2_CCER1  = (0x5308)
+                           005309   816  TIM2_CCER2  = (0x5309)
+                           00530A   817  TIM2_CNTRH  = (0x530A)
+                           00530B   818  TIM2_CNTRL  = (0x530B)
+                           00530C   819  TIM2_PSCR  = (0x530C)
+                           00530D   820  TIM2_ARRH  = (0x530D)
+                           00530E   821  TIM2_ARRL  = (0x530E)
+                           00530F   822  TIM2_CCR1H  = (0x530F)
+                           005310   823  TIM2_CCR1L  = (0x5310)
+                           005311   824  TIM2_CCR2H  = (0x5311)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 42.
 Hexadecimal [24-Bits]
 
 
 
-                           005311   825  TIM2_CCR2H  = (0x5311)
-                           005312   826  TIM2_CCR2L  = (0x5312)
-                           005313   827  TIM2_CCR3H  = (0x5313)
-                           005314   828  TIM2_CCR3L  = (0x5314)
-                                    829 
-                                    830 ; Timer 3
-                           005320   831  TIM3_CR1  = (0x5320)
-                           005321   832  TIM3_IER  = (0x5321)
-                           005322   833  TIM3_SR1  = (0x5322)
-                           005323   834  TIM3_SR2  = (0x5323)
-                           005324   835  TIM3_EGR  = (0x5324)
-                           005325   836  TIM3_CCMR1  = (0x5325)
-                           005326   837  TIM3_CCMR2  = (0x5326)
-                           005327   838  TIM3_CCER1  = (0x5327)
-                           005328   839  TIM3_CNTRH  = (0x5328)
-                           005329   840  TIM3_CNTRL  = (0x5329)
-                           00532A   841  TIM3_PSCR  = (0x532A)
-                           00532B   842  TIM3_ARRH  = (0x532B)
-                           00532C   843  TIM3_ARRL  = (0x532C)
-                           00532D   844  TIM3_CCR1H  = (0x532D)
-                           00532E   845  TIM3_CCR1L  = (0x532E)
-                           00532F   846  TIM3_CCR2H  = (0x532F)
-                           005330   847  TIM3_CCR2L  = (0x5330)
-                                    848 
-                                    849 ; TIM3_CR1  fields
-                           000000   850  TIM3_CR1_CEN = (0)
-                           000001   851  TIM3_CR1_UDIS = (1)
-                           000002   852  TIM3_CR1_URS = (2)
-                           000003   853  TIM3_CR1_OPM = (3)
-                           000007   854  TIM3_CR1_ARPE = (7)
-                                    855 ; TIM3_CCR2  fields
-                           000000   856  TIM3_CCMR2_CC2S_POS = (0)
-                           000003   857  TIM3_CCMR2_OC2PE_POS = (3)
-                           000004   858  TIM3_CCMR2_OC2M_POS = (4)  
-                                    859 ; TIM3_CCER1 fields
-                           000000   860  TIM3_CCER1_CC1E = (0)
-                           000001   861  TIM3_CCER1_CC1P = (1)
-                           000004   862  TIM3_CCER1_CC2E = (4)
-                           000005   863  TIM3_CCER1_CC2P = (5)
-                                    864 ; TIM3_CCER2 fields
-                           000000   865  TIM3_CCER2_CC3E = (0)
-                           000001   866  TIM3_CCER2_CC3P = (1)
-                                    867 
-                                    868 ; Timer 4
-                           005340   869  TIM4_CR1  = (0x5340)
-                           005341   870  TIM4_IER  = (0x5341)
-                           005342   871  TIM4_SR  = (0x5342)
-                           005343   872  TIM4_EGR  = (0x5343)
-                           005344   873  TIM4_CNTR  = (0x5344)
-                           005345   874  TIM4_PSCR  = (0x5345)
-                           005346   875  TIM4_ARR  = (0x5346)
-                                    876 
-                                    877 ; Timer 4 bitmasks
-                                    878 
-                           000007   879  TIM4_CR1_ARPE = (7)
+                           005312   825  TIM2_CCR2L  = (0x5312)
+                           005313   826  TIM2_CCR3H  = (0x5313)
+                           005314   827  TIM2_CCR3L  = (0x5314)
+                                    828 
+                                    829 ; Timer 3
+                           005320   830  TIM3_CR1  = (0x5320)
+                           005321   831  TIM3_IER  = (0x5321)
+                           005322   832  TIM3_SR1  = (0x5322)
+                           005323   833  TIM3_SR2  = (0x5323)
+                           005324   834  TIM3_EGR  = (0x5324)
+                           005325   835  TIM3_CCMR1  = (0x5325)
+                           005326   836  TIM3_CCMR2  = (0x5326)
+                           005327   837  TIM3_CCER1  = (0x5327)
+                           005328   838  TIM3_CNTRH  = (0x5328)
+                           005329   839  TIM3_CNTRL  = (0x5329)
+                           00532A   840  TIM3_PSCR  = (0x532A)
+                           00532B   841  TIM3_ARRH  = (0x532B)
+                           00532C   842  TIM3_ARRL  = (0x532C)
+                           00532D   843  TIM3_CCR1H  = (0x532D)
+                           00532E   844  TIM3_CCR1L  = (0x532E)
+                           00532F   845  TIM3_CCR2H  = (0x532F)
+                           005330   846  TIM3_CCR2L  = (0x5330)
+                                    847 
+                                    848 ; TIM3_CR1  fields
+                           000000   849  TIM3_CR1_CEN = (0)
+                           000001   850  TIM3_CR1_UDIS = (1)
+                           000002   851  TIM3_CR1_URS = (2)
+                           000003   852  TIM3_CR1_OPM = (3)
+                           000007   853  TIM3_CR1_ARPE = (7)
+                                    854 ; TIM3_CCR2  fields
+                           000000   855  TIM3_CCMR2_CC2S_POS = (0)
+                           000003   856  TIM3_CCMR2_OC2PE_POS = (3)
+                           000004   857  TIM3_CCMR2_OC2M_POS = (4)  
+                                    858 ; TIM3_CCER1 fields
+                           000000   859  TIM3_CCER1_CC1E = (0)
+                           000001   860  TIM3_CCER1_CC1P = (1)
+                           000004   861  TIM3_CCER1_CC2E = (4)
+                           000005   862  TIM3_CCER1_CC2P = (5)
+                                    863 ; TIM3_CCER2 fields
+                           000000   864  TIM3_CCER2_CC3E = (0)
+                           000001   865  TIM3_CCER2_CC3P = (1)
+                                    866 
+                                    867 ; Timer 4
+                           005340   868  TIM4_CR1  = (0x5340)
+                           005341   869  TIM4_IER  = (0x5341)
+                           005342   870  TIM4_SR  = (0x5342)
+                           005343   871  TIM4_EGR  = (0x5343)
+                           005344   872  TIM4_CNTR  = (0x5344)
+                           005345   873  TIM4_PSCR  = (0x5345)
+                           005346   874  TIM4_ARR  = (0x5346)
+                                    875 
+                                    876 ; Timer 4 bitmasks
+                                    877 
+                           000007   878  TIM4_CR1_ARPE = (7)
+                           000003   879  TIM4_CR1_OPM = (3)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 43.
 Hexadecimal [24-Bits]
 
 
 
-                           000003   880  TIM4_CR1_OPM = (3)
-                           000002   881  TIM4_CR1_URS = (2)
-                           000001   882  TIM4_CR1_UDIS = (1)
-                           000000   883  TIM4_CR1_CEN = (0)
-                                    884 
-                           000000   885  TIM4_IER_UIE = (0)
-                                    886 
-                           000000   887  TIM4_SR_UIF = (0)
-                                    888 
-                           000000   889  TIM4_EGR_UG = (0)
-                                    890 
-                           000002   891  TIM4_PSCR_PSC2 = (2)
-                           000001   892  TIM4_PSCR_PSC1 = (1)
-                           000000   893  TIM4_PSCR_PSC0 = (0)
-                                    894 
-                           000000   895  TIM4_PSCR_1 = 0
-                           000001   896  TIM4_PSCR_2 = 1
-                           000002   897  TIM4_PSCR_4 = 2
-                           000003   898  TIM4_PSCR_8 = 3
-                           000004   899  TIM4_PSCR_16 = 4
-                           000005   900  TIM4_PSCR_32 = 5
-                           000006   901  TIM4_PSCR_64 = 6
-                           000007   902  TIM4_PSCR_128 = 7
-                                    903 
-                                    904 ; ADC2
-                           005400   905  ADC_CSR  = (0x5400)
-                           005401   906  ADC_CR1  = (0x5401)
-                           005402   907  ADC_CR2  = (0x5402)
-                           005403   908  ADC_CR3  = (0x5403)
-                           005404   909  ADC_DRH  = (0x5404)
-                           005405   910  ADC_DRL  = (0x5405)
-                           005406   911  ADC_TDRH  = (0x5406)
-                           005407   912  ADC_TDRL  = (0x5407)
-                                    913  
-                                    914 ; ADC bitmasks
-                                    915 
-                           000007   916  ADC_CSR_EOC = (7)
-                           000006   917  ADC_CSR_AWD = (6)
-                           000005   918  ADC_CSR_EOCIE = (5)
-                           000004   919  ADC_CSR_AWDIE = (4)
-                           000003   920  ADC_CSR_CH3 = (3)
-                           000002   921  ADC_CSR_CH2 = (2)
-                           000001   922  ADC_CSR_CH1 = (1)
-                           000000   923  ADC_CSR_CH0 = (0)
-                                    924 
-                           000006   925  ADC_CR1_SPSEL2 = (6)
-                           000005   926  ADC_CR1_SPSEL1 = (5)
-                           000004   927  ADC_CR1_SPSEL0 = (4)
-                           000001   928  ADC_CR1_CONT = (1)
-                           000000   929  ADC_CR1_ADON = (0)
-                                    930 
-                           000006   931  ADC_CR2_EXTTRIG = (6)
-                           000005   932  ADC_CR2_EXTSEL1 = (5)
-                           000004   933  ADC_CR2_EXTSEL0 = (4)
-                           000003   934  ADC_CR2_ALIGN = (3)
+                           000002   880  TIM4_CR1_URS = (2)
+                           000001   881  TIM4_CR1_UDIS = (1)
+                           000000   882  TIM4_CR1_CEN = (0)
+                                    883 
+                           000000   884  TIM4_IER_UIE = (0)
+                                    885 
+                           000000   886  TIM4_SR_UIF = (0)
+                                    887 
+                           000000   888  TIM4_EGR_UG = (0)
+                                    889 
+                           000002   890  TIM4_PSCR_PSC2 = (2)
+                           000001   891  TIM4_PSCR_PSC1 = (1)
+                           000000   892  TIM4_PSCR_PSC0 = (0)
+                                    893 
+                           000000   894  TIM4_PSCR_1 = 0
+                           000001   895  TIM4_PSCR_2 = 1
+                           000002   896  TIM4_PSCR_4 = 2
+                           000003   897  TIM4_PSCR_8 = 3
+                           000004   898  TIM4_PSCR_16 = 4
+                           000005   899  TIM4_PSCR_32 = 5
+                           000006   900  TIM4_PSCR_64 = 6
+                           000007   901  TIM4_PSCR_128 = 7
+                                    902 
+                                    903 ; ADC2
+                           005400   904  ADC_CSR  = (0x5400)
+                           005401   905  ADC_CR1  = (0x5401)
+                           005402   906  ADC_CR2  = (0x5402)
+                           005403   907  ADC_CR3  = (0x5403)
+                           005404   908  ADC_DRH  = (0x5404)
+                           005405   909  ADC_DRL  = (0x5405)
+                           005406   910  ADC_TDRH  = (0x5406)
+                           005407   911  ADC_TDRL  = (0x5407)
+                                    912  
+                                    913 ; ADC bitmasks
+                                    914 
+                           000007   915  ADC_CSR_EOC = (7)
+                           000006   916  ADC_CSR_AWD = (6)
+                           000005   917  ADC_CSR_EOCIE = (5)
+                           000004   918  ADC_CSR_AWDIE = (4)
+                           000003   919  ADC_CSR_CH3 = (3)
+                           000002   920  ADC_CSR_CH2 = (2)
+                           000001   921  ADC_CSR_CH1 = (1)
+                           000000   922  ADC_CSR_CH0 = (0)
+                                    923 
+                           000006   924  ADC_CR1_SPSEL2 = (6)
+                           000005   925  ADC_CR1_SPSEL1 = (5)
+                           000004   926  ADC_CR1_SPSEL0 = (4)
+                           000001   927  ADC_CR1_CONT = (1)
+                           000000   928  ADC_CR1_ADON = (0)
+                                    929 
+                           000006   930  ADC_CR2_EXTTRIG = (6)
+                           000005   931  ADC_CR2_EXTSEL1 = (5)
+                           000004   932  ADC_CR2_EXTSEL0 = (4)
+                           000003   933  ADC_CR2_ALIGN = (3)
+                           000001   934  ADC_CR2_SCAN = (1)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 44.
 Hexadecimal [24-Bits]
 
 
 
-                           000001   935  ADC_CR2_SCAN = (1)
-                                    936 
-                           000007   937  ADC_CR3_DBUF = (7)
-                           000006   938  ADC_CR3_DRH = (6)
-                                    939 
-                                    940 ; beCAN
-                           005420   941  CAN_MCR = (0x5420)
-                           005421   942  CAN_MSR = (0x5421)
-                           005422   943  CAN_TSR = (0x5422)
-                           005423   944  CAN_TPR = (0x5423)
-                           005424   945  CAN_RFR = (0x5424)
-                           005425   946  CAN_IER = (0x5425)
-                           005426   947  CAN_DGR = (0x5426)
-                           005427   948  CAN_FPSR = (0x5427)
-                           005428   949  CAN_P0 = (0x5428)
-                           005429   950  CAN_P1 = (0x5429)
-                           00542A   951  CAN_P2 = (0x542A)
-                           00542B   952  CAN_P3 = (0x542B)
-                           00542C   953  CAN_P4 = (0x542C)
-                           00542D   954  CAN_P5 = (0x542D)
-                           00542E   955  CAN_P6 = (0x542E)
-                           00542F   956  CAN_P7 = (0x542F)
-                           005430   957  CAN_P8 = (0x5430)
-                           005431   958  CAN_P9 = (0x5431)
-                           005432   959  CAN_PA = (0x5432)
-                           005433   960  CAN_PB = (0x5433)
-                           005434   961  CAN_PC = (0x5434)
-                           005435   962  CAN_PD = (0x5435)
-                           005436   963  CAN_PE = (0x5436)
-                           005437   964  CAN_PF = (0x5437)
+                                    935 
+                           000007   936  ADC_CR3_DBUF = (7)
+                           000006   937  ADC_CR3_DRH = (6)
+                                    938 
+                                    939 ; beCAN
+                           005420   940  CAN_MCR = (0x5420)
+                           005421   941  CAN_MSR = (0x5421)
+                           005422   942  CAN_TSR = (0x5422)
+                           005423   943  CAN_TPR = (0x5423)
+                           005424   944  CAN_RFR = (0x5424)
+                           005425   945  CAN_IER = (0x5425)
+                           005426   946  CAN_DGR = (0x5426)
+                           005427   947  CAN_FPSR = (0x5427)
+                           005428   948  CAN_P0 = (0x5428)
+                           005429   949  CAN_P1 = (0x5429)
+                           00542A   950  CAN_P2 = (0x542A)
+                           00542B   951  CAN_P3 = (0x542B)
+                           00542C   952  CAN_P4 = (0x542C)
+                           00542D   953  CAN_P5 = (0x542D)
+                           00542E   954  CAN_P6 = (0x542E)
+                           00542F   955  CAN_P7 = (0x542F)
+                           005430   956  CAN_P8 = (0x5430)
+                           005431   957  CAN_P9 = (0x5431)
+                           005432   958  CAN_PA = (0x5432)
+                           005433   959  CAN_PB = (0x5433)
+                           005434   960  CAN_PC = (0x5434)
+                           005435   961  CAN_PD = (0x5435)
+                           005436   962  CAN_PE = (0x5436)
+                           005437   963  CAN_PF = (0x5437)
+                                    964 
                                     965 
-                                    966 
-                                    967 ; CPU
-                           007F00   968  CPU_A  = (0x7F00)
-                           007F01   969  CPU_PCE  = (0x7F01)
-                           007F02   970  CPU_PCH  = (0x7F02)
-                           007F03   971  CPU_PCL  = (0x7F03)
-                           007F04   972  CPU_XH  = (0x7F04)
-                           007F05   973  CPU_XL  = (0x7F05)
-                           007F06   974  CPU_YH  = (0x7F06)
-                           007F07   975  CPU_YL  = (0x7F07)
-                           007F08   976  CPU_SPH  = (0x7F08)
-                           007F09   977  CPU_SPL   = (0x7F09)
-                           007F0A   978  CPU_CCR   = (0x7F0A)
-                                    979 
-                                    980 ; global configuration register
-                           007F60   981  CFG_GCR   = (0x7F60)
-                           000001   982  CFG_GCR_AL = 1
-                           000000   983  CFG_GCR_SWIM = 0
-                                    984 
-                                    985 ; interrupt control registers
-                           007F70   986  ITC_SPR1   = (0x7F70)
-                           007F71   987  ITC_SPR2   = (0x7F71)
-                           007F72   988  ITC_SPR3   = (0x7F72)
-                           007F73   989  ITC_SPR4   = (0x7F73)
+                                    966 ; CPU
+                           007F00   967  CPU_A  = (0x7F00)
+                           007F01   968  CPU_PCE  = (0x7F01)
+                           007F02   969  CPU_PCH  = (0x7F02)
+                           007F03   970  CPU_PCL  = (0x7F03)
+                           007F04   971  CPU_XH  = (0x7F04)
+                           007F05   972  CPU_XL  = (0x7F05)
+                           007F06   973  CPU_YH  = (0x7F06)
+                           007F07   974  CPU_YL  = (0x7F07)
+                           007F08   975  CPU_SPH  = (0x7F08)
+                           007F09   976  CPU_SPL   = (0x7F09)
+                           007F0A   977  CPU_CCR   = (0x7F0A)
+                                    978 
+                                    979 ; global configuration register
+                           007F60   980  CFG_GCR   = (0x7F60)
+                           000001   981  CFG_GCR_AL = 1
+                           000000   982  CFG_GCR_SWIM = 0
+                                    983 
+                                    984 ; interrupt control registers
+                           007F70   985  ITC_SPR1   = (0x7F70)
+                           007F71   986  ITC_SPR2   = (0x7F71)
+                           007F72   987  ITC_SPR3   = (0x7F72)
+                           007F73   988  ITC_SPR4   = (0x7F73)
+                           007F74   989  ITC_SPR5   = (0x7F74)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 45.
 Hexadecimal [24-Bits]
 
 
 
-                           007F74   990  ITC_SPR5   = (0x7F74)
-                           007F75   991  ITC_SPR6   = (0x7F75)
-                           007F76   992  ITC_SPR7   = (0x7F76)
-                           007F77   993  ITC_SPR8   = (0x7F77)
-                                    994 
-                                    995 ; SWIM, control and status register
-                           007F80   996  SWIM_CSR   = (0x7F80)
-                                    997 ; debug registers
-                           007F90   998  DM_BK1RE   = (0x7F90)
-                           007F91   999  DM_BK1RH   = (0x7F91)
-                           007F92  1000  DM_BK1RL   = (0x7F92)
-                           007F93  1001  DM_BK2RE   = (0x7F93)
-                           007F94  1002  DM_BK2RH   = (0x7F94)
-                           007F95  1003  DM_BK2RL   = (0x7F95)
-                           007F96  1004  DM_CR1   = (0x7F96)
-                           007F97  1005  DM_CR2   = (0x7F97)
-                           007F98  1006  DM_CSR1   = (0x7F98)
-                           007F99  1007  DM_CSR2   = (0x7F99)
-                           007F9A  1008  DM_ENFCTR   = (0x7F9A)
-                                   1009 
-                                   1010 ; Interrupt Numbers
-                           000000  1011  INT_TLI = 0
-                           000001  1012  INT_AWU = 1
-                           000002  1013  INT_CLK = 2
-                           000003  1014  INT_EXTI0 = 3
-                           000004  1015  INT_EXTI1 = 4
-                           000005  1016  INT_EXTI2 = 5
-                           000006  1017  INT_EXTI3 = 6
-                           000007  1018  INT_EXTI4 = 7
-                           000008  1019  INT_CAN_RX = 8
-                           000009  1020  INT_CAN_TX = 9
-                           00000A  1021  INT_SPI = 10
-                           00000B  1022  INT_TIM1_OVF = 11
-                           00000C  1023  INT_TIM1_CCM = 12
-                           00000D  1024  INT_TIM2_OVF = 13
-                           00000E  1025  INT_TIM2_CCM = 14
-                           00000F  1026  INT_TIM3_OVF = 15
-                           000010  1027  INT_TIM3_CCM = 16
-                           000011  1028  INT_UART1_TX_COMPLETED = 17
-                           000012  1029  INT_AUART1_RX_FULL = 18
-                           000013  1030  INT_I2C = 19
-                           000014  1031  INT_UART3_TX_COMPLETED = 20
-                           000015  1032  INT_UART3_RX_FULL = 21
-                           000016  1033  INT_ADC2 = 22
-                           000017  1034  INT_TIM4_OVF = 23
-                           000018  1035  INT_FLASH = 24
-                                   1036 
-                                   1037 ; Interrupt Vectors
-                           008000  1038  INT_VECTOR_RESET = 0x8000
-                           008004  1039  INT_VECTOR_TRAP = 0x8004
-                           008008  1040  INT_VECTOR_TLI = 0x8008
-                           00800C  1041  INT_VECTOR_AWU = 0x800C
-                           008010  1042  INT_VECTOR_CLK = 0x8010
-                           008014  1043  INT_VECTOR_EXTI0 = 0x8014
-                           008018  1044  INT_VECTOR_EXTI1 = 0x8018
+                           007F75   990  ITC_SPR6   = (0x7F75)
+                           007F76   991  ITC_SPR7   = (0x7F76)
+                           007F77   992  ITC_SPR8   = (0x7F77)
+                                    993 
+                                    994 ; SWIM, control and status register
+                           007F80   995  SWIM_CSR   = (0x7F80)
+                                    996 ; debug registers
+                           007F90   997  DM_BK1RE   = (0x7F90)
+                           007F91   998  DM_BK1RH   = (0x7F91)
+                           007F92   999  DM_BK1RL   = (0x7F92)
+                           007F93  1000  DM_BK2RE   = (0x7F93)
+                           007F94  1001  DM_BK2RH   = (0x7F94)
+                           007F95  1002  DM_BK2RL   = (0x7F95)
+                           007F96  1003  DM_CR1   = (0x7F96)
+                           007F97  1004  DM_CR2   = (0x7F97)
+                           007F98  1005  DM_CSR1   = (0x7F98)
+                           007F99  1006  DM_CSR2   = (0x7F99)
+                           007F9A  1007  DM_ENFCTR   = (0x7F9A)
+                                   1008 
+                                   1009 ; Interrupt Numbers
+                           000000  1010  INT_TLI = 0
+                           000001  1011  INT_AWU = 1
+                           000002  1012  INT_CLK = 2
+                           000003  1013  INT_EXTI0 = 3
+                           000004  1014  INT_EXTI1 = 4
+                           000005  1015  INT_EXTI2 = 5
+                           000006  1016  INT_EXTI3 = 6
+                           000007  1017  INT_EXTI4 = 7
+                           000008  1018  INT_CAN_RX = 8
+                           000009  1019  INT_CAN_TX = 9
+                           00000A  1020  INT_SPI = 10
+                           00000B  1021  INT_TIM1_OVF = 11
+                           00000C  1022  INT_TIM1_CCM = 12
+                           00000D  1023  INT_TIM2_OVF = 13
+                           00000E  1024  INT_TIM2_CCM = 14
+                           00000F  1025  INT_TIM3_OVF = 15
+                           000010  1026  INT_TIM3_CCM = 16
+                           000011  1027  INT_UART1_TX_COMPLETED = 17
+                           000012  1028  INT_AUART1_RX_FULL = 18
+                           000013  1029  INT_I2C = 19
+                           000014  1030  INT_UART3_TX_COMPLETED = 20
+                           000015  1031  INT_UART3_RX_FULL = 21
+                           000016  1032  INT_ADC2 = 22
+                           000017  1033  INT_TIM4_OVF = 23
+                           000018  1034  INT_FLASH = 24
+                                   1035 
+                                   1036 ; Interrupt Vectors
+                           008000  1037  INT_VECTOR_RESET = 0x8000
+                           008004  1038  INT_VECTOR_TRAP = 0x8004
+                           008008  1039  INT_VECTOR_TLI = 0x8008
+                           00800C  1040  INT_VECTOR_AWU = 0x800C
+                           008010  1041  INT_VECTOR_CLK = 0x8010
+                           008014  1042  INT_VECTOR_EXTI0 = 0x8014
+                           008018  1043  INT_VECTOR_EXTI1 = 0x8018
+                           00801C  1044  INT_VECTOR_EXTI2 = 0x801C
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 46.
 Hexadecimal [24-Bits]
 
 
 
-                           00801C  1045  INT_VECTOR_EXTI2 = 0x801C
-                           008020  1046  INT_VECTOR_EXTI3 = 0x8020
-                           008024  1047  INT_VECTOR_EXTI4 = 0x8024
-                           008028  1048  INT_VECTOR_CAN_RX = 0x8028
-                           00802C  1049  INT_VECTOR_CAN_TX = 0x802c
-                           008030  1050  INT_VECTOR_SPI = 0x8030
-                           008034  1051  INT_VECTOR_TIM1_OVF = 0x8034
-                           008038  1052  INT_VECTOR_TIM1_CCM = 0x8038
-                           00803C  1053  INT_VECTOR_TIM2_OVF = 0x803C
-                           008040  1054  INT_VECTOR_TIM2_CCM = 0x8040
-                           008044  1055  INT_VECTOR_TIM3_OVF = 0x8044
-                           008048  1056  INT_VECTOR_TIM3_CCM = 0x8048
-                           00804C  1057  INT_VECTOR_UART1_TX_COMPLETED = 0x804c
-                           008050  1058  INT_VECTOR_UART1_RX_FULL = 0x8050
-                           008054  1059  INT_VECTOR_I2C = 0x8054
-                           008058  1060  INT_VECTOR_UART3_TX_COMPLETED = 0x8058
-                           00805C  1061  INT_VECTOR_UART3_RX_FULL = 0x805C
-                           008060  1062  INT_VECTOR_ADC2 = 0x8060
-                           008064  1063  INT_VECTOR_TIM4_OVF = 0x8064
-                           008068  1064  INT_VECTOR_FLASH = 0x8068
-                                   1065 
-                                   1066 ; Condition code register bits
-                           000007  1067 CC_V = 7  ; overflow flag 
-                           000005  1068 CC_I1= 5  ; interrupt bit 1
-                           000004  1069 CC_H = 4  ; half carry 
-                           000003  1070 CC_I0 = 3 ; interrupt bit 0
-                           000002  1071 CC_N = 2 ;  negative flag 
-                           000001  1072 CC_Z = 1 ;  zero flag  
-                           000000  1073 CC_C = 0 ; carry bit 
+                           008020  1045  INT_VECTOR_EXTI3 = 0x8020
+                           008024  1046  INT_VECTOR_EXTI4 = 0x8024
+                           008028  1047  INT_VECTOR_CAN_RX = 0x8028
+                           00802C  1048  INT_VECTOR_CAN_TX = 0x802c
+                           008030  1049  INT_VECTOR_SPI = 0x8030
+                           008034  1050  INT_VECTOR_TIM1_OVF = 0x8034
+                           008038  1051  INT_VECTOR_TIM1_CCM = 0x8038
+                           00803C  1052  INT_VECTOR_TIM2_OVF = 0x803C
+                           008040  1053  INT_VECTOR_TIM2_CCM = 0x8040
+                           008044  1054  INT_VECTOR_TIM3_OVF = 0x8044
+                           008048  1055  INT_VECTOR_TIM3_CCM = 0x8048
+                           00804C  1056  INT_VECTOR_UART1_TX_COMPLETED = 0x804c
+                           008050  1057  INT_VECTOR_UART1_RX_FULL = 0x8050
+                           008054  1058  INT_VECTOR_I2C = 0x8054
+                           008058  1059  INT_VECTOR_UART3_TX_COMPLETED = 0x8058
+                           00805C  1060  INT_VECTOR_UART3_RX_FULL = 0x805C
+                           008060  1061  INT_VECTOR_ADC2 = 0x8060
+                           008064  1062  INT_VECTOR_TIM4_OVF = 0x8064
+                           008068  1063  INT_VECTOR_FLASH = 0x8068
+                                   1064 
+                                   1065 ; Condition code register bits
+                           000007  1066 CC_V = 7  ; overflow flag 
+                           000005  1067 CC_I1= 5  ; interrupt bit 1
+                           000004  1068 CC_H = 4  ; half carry 
+                           000003  1069 CC_I0 = 3 ; interrupt bit 0
+                           000002  1070 CC_N = 2 ;  negative flag 
+                           000001  1071 CC_Z = 1 ;  zero flag  
+                           000000  1072 CC_C = 0 ; carry bit 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 47.
 Hexadecimal [24-Bits]
 

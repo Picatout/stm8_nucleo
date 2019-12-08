@@ -114,18 +114,22 @@ get_dev::
 ; output:
 ;    X          same character  
 ;----------------------------------------
-    VSIZE=0
+    VSIZE=2
     ARG_OFS=2+VSIZE
-    ZERO=ARG_OFS+1
-    CHAR=ARG_OFS+2 
-    UART_ID=CHAR  
+    CHAR=ARG_OFS+1
+; local variables 
+    UCHAR=1
+    UART_ID=2
 _putchar::
 putchar::
-    ld a,(CHAR,sp)
-    ld (ZERO,sp),a 
+    _vars VSIZE
+    ld a,(CHAR+1,sp)
+    ld (UCHAR,sp),a 
     ld a,std_dev 
     ld (UART_ID,sp),a 
-    jp uart_putc 
+    call uart_putc
+    ldw x,(CHAR,sp) 
+_fn_exit 
 
 ;------------------------------------------
 ; wait a character from standard input 

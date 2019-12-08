@@ -25,6 +25,7 @@ FLASH=stm8flash
 BOARD=stm8s208rb
 PROGRAMMER=stlinkv21
 TARGET=$(BUILD)conio_test.ihx 
+TEST_HELP=../build/test_help.rel
 
 .PHONY: all
 
@@ -55,7 +56,7 @@ test: $(LIB)
 	@echo "creating test    "
 	@echo "*****************"
 	$(AS) -g -l -o $(BUILD)conio_test.rel conio_test.asm 
-	$(CC) $(CFLAGS) -L$(LIB_PATH) -luart -lconio -o$(TARGET) $(BUILD)conio_test.rel
+	$(CC) $(CFLAGS) -L$(LIB_PATH) -luart -lconio -o$(TARGET) $(TEST_HELP) $(BUILD)conio_test.rel
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
 

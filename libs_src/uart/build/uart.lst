@@ -1363,167 +1363,165 @@ Hexadecimal [24-Bits]
       000099 27 FA            [ 1]  169     jreq 1$
       00009B 7B 03            [ 1]  170     ld a,(CHAR,sp)
       00009D E7 01            [ 1]  171 	ld (UART_DR,x),a
-      00009F 5F               [ 1]  172     clrw x 
-      0000A0 97               [ 1]  173     ld xl,a 
-      0000A1 81               [ 4]  174     ret
-                                    175 
-                                    176 ;------------------------------------
-                                    177 ; print n spaces 
-                                    178 ; C prototype: void uart_spaces(uint8_t n,uint8_t uart_id)
-                                    179 ; input: 
-                                    180 ;   n  		number of space to print 
-                                    181 ;   uart_id   uart selector
-                                    182 ; output:
-                                    183 ;	none 
-                                    184 ;------------------------------------
-                           000002   185     ARG_OFS=2
-                           000003   186     N=ARG_OFS+1
+      00009F 81               [ 4]  172     ret
+                                    173 
+                                    174 ;------------------------------------
+                                    175 ; print n spaces 
+                                    176 ; C prototype: void uart_spaces(uint8_t n,uint8_t uart_id)
+                                    177 ; input: 
+                                    178 ;   n  		number of space to print 
+                                    179 ;   uart_id   uart selector
+                                    180 ; output:
+                                    181 ;	none 
+                                    182 ;------------------------------------
+                           000002   183     ARG_OFS=2
+                           000003   184     N=ARG_OFS+1
+                           000004   185     UART=ARG_OFS+2
+      0000A0                        186 _uart_spaces::
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-                           000004   187     UART=ARG_OFS+2
-      0000A2                        188 _uart_spaces::
-      0000A2                        189 uart_spaces::
-      0000A2 0D 03            [ 1]  190 	tnz (N,sp)
-      0000A4 27 0F            [ 1]  191     jreq 3$
-      0000A6 7B 04            [ 1]  192     ld a,(UART,sp)
-      0000A8 88               [ 1]  193     push a 
-      0000A9 A6 20            [ 1]  194     ld a,#SPACE 
-      0000AB 88               [ 1]  195     push a 
-      0000AC CD 00 90         [ 4]  196     call uart_putc 
-      0000AF 5B 02            [ 2]  197     addw sp,#2 
-      0000B1 0A 03            [ 1]  198     dec (N,sp)
-      0000B3 20 ED            [ 2]  199     jra uart_spaces 
-      0000B5 81               [ 4]  200 3$: ret
-                                    201 
-                                    202 ;------------------------------------
-                                    203 ; put string to uart channel
-                                    204 ; C prototype: void uart_puts(char *str,uint8_t uart)
-                                    205 ; input:
-                                    206 ;   str         char *string to print
-                                    207 ;   uart        uart identifier
-                                    208 ; output:
-                                    209 ;   len         in X  
-                                    210 ;------------------------------------
-                           000006   211     ARG_OFS=6
-                           000007   212     STR=ARG_OFS+1
-                           000009   213     UART=ARG_OFS+3 
-                                    214 ; uart_putc arguments
-                           000001   215     PUTC_CHAR=1 
-                           000002   216     PUTC_UART=2     
-                           000002   217     LOCAL_SIZE=2
-      0000B6                        218 _uart_puts::
-      0000B6                        219 uart_puts::
-      0000B6 90 89            [ 2]  220     pushw y
-      0000B8 52 02            [ 2]  221     sub sp,#LOCAL_SIZE 
-      0000BA 5F               [ 1]  222     clrw x 
-      0000BB 16 07            [ 2]  223     ldw y,(STR,sp) 
-                                    224 ; check for null pointer  
-      0000BD 90 A3 00 00      [ 2]  225 	cpw y,#0
-      0000C1 27 12            [ 1]  226     jreq 1$ 
-      0000C3 7B 09            [ 1]  227     ld a,(UART,sp)
-      0000C5 6B 02            [ 1]  228     ld (PUTC_UART,sp),a  
-      0000C7 90 F6            [ 1]  229 0$: ld a,(y)
-      0000C9 27 0A            [ 1]  230 	jreq 1$
-      0000CB 6B 01            [ 1]  231 	ld (PUTC_CHAR,sp),a 
-      0000CD CD 00 90         [ 4]  232     call uart_putc 
-      0000D0 90 5C            [ 1]  233 	incw y
-      0000D2 5C               [ 1]  234     incw x 
-      0000D3 20 F2            [ 2]  235 	jra 0$
-      0000D5 5B 02            [ 2]  236 1$: addw sp,#LOCAL_SIZE 
-      0000D7 90 85            [ 2]  237     popw y 
-      0000D9 81               [ 4]  238     ret
-                                    239 
-                                    240 ;------------------------------------
-                                    241 ; check if char available
+      0000A0                        187 uart_spaces::
+      0000A0 0D 03            [ 1]  188 	tnz (N,sp)
+      0000A2 27 0F            [ 1]  189     jreq 3$
+      0000A4 7B 04            [ 1]  190     ld a,(UART,sp)
+      0000A6 88               [ 1]  191     push a 
+      0000A7 A6 20            [ 1]  192     ld a,#SPACE 
+      0000A9 88               [ 1]  193     push a 
+      0000AA CD 00 90         [ 4]  194     call uart_putc 
+      0000AD 5B 02            [ 2]  195     addw sp,#2 
+      0000AF 0A 03            [ 1]  196     dec (N,sp)
+      0000B1 20 ED            [ 2]  197     jra uart_spaces 
+      0000B3 81               [ 4]  198 3$: ret
+                                    199 
+                                    200 ;------------------------------------
+                                    201 ; put string to uart channel
+                                    202 ; C prototype: void uart_puts(char *str,uint8_t uart)
+                                    203 ; input:
+                                    204 ;   str         char *string to print
+                                    205 ;   uart        uart identifier
+                                    206 ; output:
+                                    207 ;   len         in X  
+                                    208 ;------------------------------------
+                           000006   209     ARG_OFS=6
+                           000007   210     STR=ARG_OFS+1
+                           000009   211     UART=ARG_OFS+3 
+                                    212 ; uart_putc arguments
+                           000001   213     PUTC_CHAR=1 
+                           000002   214     PUTC_UART=2     
+                           000002   215     LOCAL_SIZE=2
+      0000B4                        216 _uart_puts::
+      0000B4                        217 uart_puts::
+      0000B4 90 89            [ 2]  218     pushw y
+      0000B6 52 02            [ 2]  219     sub sp,#LOCAL_SIZE 
+      0000B8 5F               [ 1]  220     clrw x 
+      0000B9 16 07            [ 2]  221     ldw y,(STR,sp) 
+                                    222 ; check for null pointer  
+      0000BB 90 A3 00 00      [ 2]  223 	cpw y,#0
+      0000BF 27 12            [ 1]  224     jreq 1$ 
+      0000C1 7B 09            [ 1]  225     ld a,(UART,sp)
+      0000C3 6B 02            [ 1]  226     ld (PUTC_UART,sp),a  
+      0000C5 90 F6            [ 1]  227 0$: ld a,(y)
+      0000C7 27 0A            [ 1]  228 	jreq 1$
+      0000C9 6B 01            [ 1]  229 	ld (PUTC_CHAR,sp),a 
+      0000CB CD 00 90         [ 4]  230     call uart_putc 
+      0000CE 90 5C            [ 1]  231 	incw y
+      0000D0 5C               [ 1]  232     incw x 
+      0000D1 20 F2            [ 2]  233 	jra 0$
+      0000D3 5B 02            [ 2]  234 1$: addw sp,#LOCAL_SIZE 
+      0000D5 90 85            [ 2]  235     popw y 
+      0000D7 81               [ 4]  236     ret
+                                    237 
+                                    238 ;------------------------------------
+                                    239 ; check if char available
+                                    240 ; return char if available else 0 
+                                    241 ; C prototype: char uint8_t uart_query(uint8_t uart_id)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 
 
-                                    242 ; return char if available else 0 
-                                    243 ; C prototype: char uint8_t uart_query(uint8_t uart_id)
-                                    244 ; input:
-                                    245 ;   uart_id     uart identifier
-                                    246 ; output:
-                                    247 ;   A           0 = not char | char 
-                                    248 ;------------------------------------
-                           000004   249     ARG_OFS=4
-                           000005   250     UART=ARG_OFS+1
-      0000DA                        251 _uart_query::
-      0000DA                        252 uart_query::
-      0000DA 89               [ 2]  253     pushw x 
-      0000DB 7B 05            [ 1]  254     ld a,(UART,sp)
-      0000DD CD 00 2F         [ 4]  255     call select_uart 
-      0000E0 A6 20            [ 1]  256 1$: ld a,#(1<<UART_SR_RXNE) 
-      0000E2 E4 00            [ 1]  257 	and a,(UART_SR,x)
-      0000E4 27 02            [ 1]  258     jreq 2$
-      0000E6 E6 01            [ 1]  259     ld a,(UART_DR,x)
-      0000E8 85               [ 2]  260 2$: popw x 
-      0000E9 81               [ 4]  261     ret 
-                                    262 
-                                    263 ;------------------------------------
-                                    264 ; wait for character from uart
-                                    265 ; C prototype: int uart_getc(uint8_t uart_id)
-                                    266 ; input:
-                                    267 ;   uart_id     uart_identifier
-                                    268 ; output:
-                                    269 ;   X           character received extended to 16 bits 
-                                    270 ;------------------------------------
-                           000002   271     ARG_OFS=2
-                           000003   272     UART=ARG_OFS+1 
-      0000EA                        273 _uart_getc::       
-      0000EA                        274 uart_getc::
-      0000EA 7B 03            [ 1]  275     ld a,(UART,sp)
-      0000EC CD 00 2F         [ 4]  276     call select_uart  
-      0000EF A6 20            [ 1]  277 1$:	ld a,#(1<<UART_SR_RXNE) 
-      0000F1 E4 00            [ 1]  278     and a,(UART_SR,x)
-      0000F3 27 FA            [ 1]  279     jreq 1$
-      0000F5 E6 01            [ 1]  280 	ld a, (UART_DR,x) 
-      0000F7 5F               [ 1]  281     clrw x 
-      0000F8 97               [ 1]  282 2$: ld xl,a
-      0000F9 81               [ 4]  283     ret
-                                    284 
-                                    285 ;------------------------------------
-                                    286 ; delete n character from input line
-                                    287 ; C prototype: void uart_delete(uint8_t n,uint8_t uart_id)
-                                    288 ; input:
-                                    289 ;   n           number of characters to delete 
-                                    290 ;   uart_id     uart identifier
-                                    291 ; output:
-                                    292 ;   none 
-                                    293 ;------------------------------------
-                           000002   294     ARG_OFS=2
-                           000003   295     N=ARG_OFS+1 
-                           000004   296     UART=ARG_OFS+2
+                                    242 ; input:
+                                    243 ;   uart_id     uart identifier
+                                    244 ; output:
+                                    245 ;   A           0 = not char | char 
+                                    246 ;------------------------------------
+                           000004   247     ARG_OFS=4
+                           000005   248     UART=ARG_OFS+1
+      0000D8                        249 _uart_query::
+      0000D8                        250 uart_query::
+      0000D8 89               [ 2]  251     pushw x 
+      0000D9 7B 05            [ 1]  252     ld a,(UART,sp)
+      0000DB CD 00 2F         [ 4]  253     call select_uart 
+      0000DE A6 20            [ 1]  254 1$: ld a,#(1<<UART_SR_RXNE) 
+      0000E0 E4 00            [ 1]  255 	and a,(UART_SR,x)
+      0000E2 27 02            [ 1]  256     jreq 2$
+      0000E4 E6 01            [ 1]  257     ld a,(UART_DR,x)
+      0000E6 85               [ 2]  258 2$: popw x 
+      0000E7 81               [ 4]  259     ret 
+                                    260 
+                                    261 ;------------------------------------
+                                    262 ; wait for character from uart
+                                    263 ; C prototype: int uart_getc(uint8_t uart_id)
+                                    264 ; input:
+                                    265 ;   uart_id     uart_identifier
+                                    266 ; output:
+                                    267 ;   X           character received extended to 16 bits 
+                                    268 ;------------------------------------
+                           000002   269     ARG_OFS=2
+                           000003   270     UART=ARG_OFS+1 
+      0000E8                        271 _uart_getc::       
+      0000E8                        272 uart_getc::
+      0000E8 7B 03            [ 1]  273     ld a,(UART,sp)
+      0000EA CD 00 2F         [ 4]  274     call select_uart  
+      0000ED A6 20            [ 1]  275 1$:	ld a,#(1<<UART_SR_RXNE) 
+      0000EF E4 00            [ 1]  276     and a,(UART_SR,x)
+      0000F1 27 FA            [ 1]  277     jreq 1$
+      0000F3 E6 01            [ 1]  278 	ld a, (UART_DR,x) 
+      0000F5 5F               [ 1]  279     clrw x 
+      0000F6 97               [ 1]  280 2$: ld xl,a
+      0000F7 81               [ 4]  281     ret
+                                    282 
+                                    283 ;------------------------------------
+                                    284 ; delete n character from input line
+                                    285 ; C prototype: void uart_delete(uint8_t n,uint8_t uart_id)
+                                    286 ; input:
+                                    287 ;   n           number of characters to delete 
+                                    288 ;   uart_id     uart identifier
+                                    289 ; output:
+                                    290 ;   none 
+                                    291 ;------------------------------------
+                           000002   292     ARG_OFS=2
+                           000003   293     N=ARG_OFS+1 
+                           000004   294     UART=ARG_OFS+2
+      0000F8                        295 _uart_delete:: ; pour appel à partir de 'C'.
+      0000F8                        296 uart_delete::
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 
 
-      0000FA                        297 _uart_delete:: ; pour appel à partir de 'C'.
-      0000FA                        298 uart_delete::
-      0000FA                        299 del_loop:
-      0000FA 0D 03            [ 1]  300 	tnz (N,sp)
-      0000FC 27 1D            [ 1]  301 	jreq 1$
-      0000FE 7B 04            [ 1]  302     ld a,(UART,sp)
-      000100 88               [ 1]  303     push a 
-      000101 A6 08            [ 1]  304 	ld a,#BSP
-      000103 88               [ 1]  305     push a 
-      000104 CD 00 90         [ 4]  306 	call uart_putc
-      000107 A6 20            [ 1]  307     ld a,#SPACE
-      000109 6B 01            [ 1]  308     ld (1,sp),a 
-      00010B CD 00 90         [ 4]  309     call uart_putc
-      00010E A6 08            [ 1]  310     ld a,#BSP
-      000110 6B 01            [ 1]  311     ld (1,sp),a 
-      000112 CD 00 90         [ 4]  312     call uart_putc 
-      000115 5B 02            [ 2]  313     addw sp,#2 
-      000117 0A 03            [ 1]  314     dec (N,sp)
-      000119 20 DF            [ 2]  315     jra del_loop
-      00011B 81               [ 4]  316 1$: ret 
-                                    317 
+      0000F8                        297 del_loop:
+      0000F8 0D 03            [ 1]  298 	tnz (N,sp)
+      0000FA 27 1D            [ 1]  299 	jreq 1$
+      0000FC 7B 04            [ 1]  300     ld a,(UART,sp)
+      0000FE 88               [ 1]  301     push a 
+      0000FF A6 08            [ 1]  302 	ld a,#BSP
+      000101 88               [ 1]  303     push a 
+      000102 CD 00 90         [ 4]  304 	call uart_putc
+      000105 A6 20            [ 1]  305     ld a,#SPACE
+      000107 6B 01            [ 1]  306     ld (1,sp),a 
+      000109 CD 00 90         [ 4]  307     call uart_putc
+      00010C A6 08            [ 1]  308     ld a,#BSP
+      00010E 6B 01            [ 1]  309     ld (1,sp),a 
+      000110 CD 00 90         [ 4]  310     call uart_putc 
+      000113 5B 02            [ 2]  311     addw sp,#2 
+      000115 0A 03            [ 1]  312     dec (N,sp)
+      000117 20 DF            [ 2]  313     jra del_loop
+      000119 81               [ 4]  314 1$: ret 
+                                    315 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
@@ -1845,14 +1843,14 @@ Symbol Table
     USR_BTN_=  005015     |     VT      =  00000B     |     WDGOPT  =  004805 
     WDGOPT_I=  000002     |     WDGOPT_L=  000003     |     WDGOPT_W=  000000 
     WDGOPT_W=  000001     |     WWDG_CR =  0050D1     |     WWDG_WR =  0050D2 
-  2 _uart_de   0000FA GR  |   2 _uart_ge   0000EA GR  |   2 _uart_in   000040 GR
-  2 _uart_pu   000090 GR  |   2 _uart_pu   0000B6 GR  |   2 _uart_qu   0000DA GR
-  2 _uart_sp   0000A2 GR  |   2 baud_fcy   00001B R   |   2 baud_fcy   000009 R
-  2 config_b   000062 R   |   2 del_loop   0000FA R   |   2 select_u   00002F R
-  2 uart1      000048 R   |   2 uart3      000056 R   |   2 uart_del   0000FA GR
-  2 uart_get   0000EA GR  |   2 uart_ini   000040 GR  |   2 uart_put   000090 GR
-  2 uart_put   0000B6 GR  |   2 uart_que   0000DA GR  |   2 uart_reg   000005 R
-  2 uart_spa   0000A2 GR
+  2 _uart_de   0000F8 GR  |   2 _uart_ge   0000E8 GR  |   2 _uart_in   000040 GR
+  2 _uart_pu   000090 GR  |   2 _uart_pu   0000B4 GR  |   2 _uart_qu   0000D8 GR
+  2 _uart_sp   0000A0 GR  |   2 baud_fcy   00001B R   |   2 baud_fcy   000009 R
+  2 config_b   000062 R   |   2 del_loop   0000F8 R   |   2 select_u   00002F R
+  2 uart1      000048 R   |   2 uart3      000056 R   |   2 uart_del   0000F8 GR
+  2 uart_get   0000E8 GR  |   2 uart_ini   000040 GR  |   2 uart_put   000090 GR
+  2 uart_put   0000B4 GR  |   2 uart_que   0000D8 GR  |   2 uart_reg   000005 R
+  2 uart_spa   0000A0 GR
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
 Hexadecimal [24-Bits]
@@ -1861,5 +1859,5 @@ Area Table
 
    0 _CODE      size      0   flags    0
    1 DATA       size      0   flags    0
-   2 CODE       size    11C   flags    0
+   2 CODE       size    11A   flags    0
 

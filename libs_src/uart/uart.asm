@@ -169,8 +169,6 @@ uart_putc::
     jreq 1$
     ld a,(CHAR,sp)
 	ld (UART_DR,x),a
-    clrw x 
-    ld xl,a 
     ret
 
 ;------------------------------------

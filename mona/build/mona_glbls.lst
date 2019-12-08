@@ -597,7 +597,6 @@ Hexadecimal [24-Bits]
                                         ; to be used by uart_init
                                  
                                  
-                                 
                                         
                                         ; pins used by uart 
                                  
@@ -1802,7 +1801,6 @@ Hexadecimal [24-Bits]
                                         
                                         ; uart identifier
                                         ; to be used by uart_init
-                                 
                                  
                                  
                                         

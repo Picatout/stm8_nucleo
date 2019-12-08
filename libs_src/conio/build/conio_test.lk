@@ -1,17 +1,16 @@
 -muwx
--i conio/build/conio_test.ihx
+-i build/conio_test.ihx
 -Y
 -b HOME = 0x8000
 -b DATA = 0x0001
 -b SSEG = 0xffffffff
--k ../lib
+-k ../../lib/
 -k /usr/local/bin/../share/sdcc/lib/stm8
 -k /usr/local/share/sdcc/lib/stm8
--l stm8
 -l uart
 -l conio
 -l stm8
-build/test_help.rel
-conio/build/conio_test.rel
+../build/test_help.rel
+build/conio_test.rel
 
 -e

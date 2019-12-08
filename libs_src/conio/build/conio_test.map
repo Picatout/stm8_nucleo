@@ -14,10 +14,10 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000000  s_SSEG0                         
      00000000  s__CODE                         
      00000001  s_DATA                          
-     0000007C  l_DATA                          
+     0000006E  l_DATA                          
      00000080  l_HOME                          
      00000100  l_SSEG0                         
-     00000496  l_CODE                          
+     000006E9  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -26,7 +26,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    0000007C =         124. bytes (REL,CON)
+DATA                                00000001    0000006E =         110. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -53,61 +53,67 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000496 =        1174. bytes (REL,CON)
+CODE                                00008080    000006E9 =        1769. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
-     000080D0  _main                              TEST_HELP
-     000080D0  main                               TEST_HELP
-     000080D5  _ledon                             TEST_HELP
-     000080D5  ledon                              TEST_HELP
-     000080DA  _ledoff                            TEST_HELP
-     000080DF  _ledtoggle                         TEST_HELP
-     000080DF  ledtoggle                          TEST_HELP
-     000081DC  print_int                          TEST_HELP
-     00008238  itoa                               TEST_HELP
-     00008284  strlen                             TEST_HELP
-     00008296  divu24_8                           TEST_HELP
-     000082BE  neg_acc24                          TEST_HELP
-     000082E1  test_main                          CONIO_TEST
-     0000830E  _conio_init                        CONIO
-     0000830E  conio_init                         CONIO
-     00008316  set_dev                            CONIO
-     0000831C  get_dev                            CONIO
-     00008320  _putchar                           CONIO
-     00008320  putchar                            CONIO
-     0000832C  _getchar                           CONIO
-     0000832C  getchar                            CONIO
-     00008336  _puts                              CONIO
-     00008336  puts                               CONIO
-     00008351  _gets                              CONIO
-     00008351  gets                               CONIO
-     0000843A  _uart_init                         UART
-     0000843A  uart_init                          UART
-     0000848A  _uart_putc                         UART
-     0000848A  uart_putc                          UART
-     0000849C  _uart_spaces                       UART
-     0000849C  uart_spaces                        UART
-     000084B0  _uart_puts                         UART
-     000084B0  uart_puts                          UART
-     000084D4  _uart_query                        UART
-     000084D4  uart_query                         UART
-     000084E4  _uart_getc                         UART
-     000084E4  uart_getc                          UART
-     000084F4  _uart_delete                       UART
-     000084F4  uart_delete                        UART
+     0000810F  _main                              TEST_HELP
+     0000810F  main                               TEST_HELP
+     00008114  _ledon                             TEST_HELP
+     00008114  ledon                              TEST_HELP
+     00008119  _ledoff                            TEST_HELP
+     00008119  ledoff                             TEST_HELP
+     0000811E  _ledtoggle                         TEST_HELP
+     0000811E  ledtoggle                          TEST_HELP
+     0000821B  print_int                          TEST_HELP
+     00008264  itoa                               TEST_HELP
+     000082B0  strlen                             TEST_HELP
+     000082C2  divu24_8                           TEST_HELP
+     000082EA  neg_acc24                          TEST_HELP
+     00008435  number                             TEST_HELP
+     0000843C  next_word                          TEST_HELP
+     00008467  to_lower                           TEST_HELP
+     00008472  atoi                               TEST_HELP
+     000084E3  mulu24_8                           TEST_HELP
+     0000852F  test_main                          CONIO_TEST
+     0000855C  _conio_init                        CONIO
+     0000855C  conio_init                         CONIO
+     00008564  set_dev                            CONIO
+     0000856A  get_dev                            CONIO
+     0000856E  _putchar                           CONIO
+     0000856E  putchar                            CONIO
+     00008581  _getchar                           CONIO
+     00008581  getchar                            CONIO
+     0000858B  _puts                              CONIO
+     0000858B  puts                               CONIO
+     000085A6  _gets                              CONIO
+     000085A6  gets                               CONIO
+     0000868F  _uart_init                         UART
+     0000868F  uart_init                          UART
+     000086DF  _uart_putc                         UART
+     000086DF  uart_putc                          UART
+     000086EF  _uart_spaces                       UART
+     000086EF  uart_spaces                        UART
+     00008703  _uart_puts                         UART
+     00008703  uart_puts                          UART
+     00008727  _uart_query                        UART
+     00008727  uart_query                         UART
+     00008737  _uart_getc                         UART
+     00008737  uart_getc                          UART
+     00008747  _uart_delete                       UART
+     00008747  uart_delete                        UART
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
 Files Linked                              [ module(s) ]
 
-build/test_help.rel                       [ TEST_HELP ]
-conio/build/conio_test.rel                [ CONIO_TEST ]
+../build/test_help.rel                    [ TEST_HELP ]
+build/conio_test.rel                      [ CONIO_TEST ]
 
 
 Libraries Linked                          [ object file ]
 
-../lib/conio.lib                          [ conio.rel ]
-../lib/uart.lib                           [ uart.rel ]
+../../lib/conio.lib                       [ conio.rel ]
+../../lib/uart.lib                        [ uart.rel ]
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 

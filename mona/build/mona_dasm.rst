@@ -692,7 +692,6 @@ Hexadecimal [24-Bits]
                                         ; to be used by uart_init
                                  
                                  
-                                 
                                         
                                         ; pins used by uart 
                                  
@@ -2836,7 +2835,7 @@ Hexadecimal [24-Bits]
                                    1049 ;  helper macros 
                                    1050 ;----------------------------
                                    1051 ; lsize is local variables size in bytes 
-                                   1052 ; nomae is routine name 
+                                   1052 ; name is routine name 
                                    1053     .macro _fn_entry lsize name
                                    1054     LOCAL_SIZE = lsize
                                    1055     STRUCT=3+LOCAL_SIZE
