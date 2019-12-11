@@ -42,8 +42,8 @@ Initialise le périphérique uart désigné par **uart_id** à la vitesse indiqu
 ## char uart_putc(char c, uint8_t uart_id)
 Envoie le caractère **c** au uart désigné par **uart_id**. Le caractère envoyé est retourné tel quel dans **A**. 
 
-## void uart_puts(char* str,uint8_t uart_id)
-Envoie une chaîne de caractère terminée par un zéro au uart désigné par **uart_id**.  
+## int uart_puts(char* str,uint8_t uart_id)
+Envoie une chaîne de caractère terminée par un zéro au uart désigné par **uart_id**. Retourne la longueure de la chaîne envoyée.  
 
 ## char uart_query(uint8_t uart_id)
 Vérifie s'il y a un caractère de disponible sur le uart identifié par **uart_id**. Retourne **0** ou le caractère s'il y en a un de disponible.

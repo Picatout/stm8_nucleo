@@ -8,16 +8,16 @@ Area                                    Addr        Size        Decimal Bytes (A
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
      FFFFFFFF  s_SSEG                          
-     00000000  .__.ABS.                           UART
+     00000000  .__.ABS.                           MATH24
      00000000  l_SSEG                          
      00000000  l__CODE                         
      00000000  s_SSEG0                         
      00000000  s__CODE                         
      00000001  s_DATA                          
-     0000006E  l_DATA                          
      00000080  l_HOME                          
+     000000CA  l_DATA                          
      00000100  l_SSEG0                         
-     000006E9  l_CODE                          
+     00000C6C  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -26,10 +26,12 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    0000006E =         110. bytes (REL,CON)
+DATA                                00000001    000000CA =         202. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
+     000000C1  fmt_buffer                         CONIO
+
 ASxxxx Linker V03.00 + NoICE + sdld,  page 3.
 Hexadecimal  [32-Bits]
 
@@ -53,7 +55,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    000006E9 =        1769. bytes (REL,CON)
+CODE                                00008080    00000C6C =        3180. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -65,44 +67,74 @@ CODE                                00008080    000006E9 =        1769. bytes (R
      00008119  ledoff                             TEST_HELP
      0000811E  _ledtoggle                         TEST_HELP
      0000811E  ledtoggle                          TEST_HELP
-     0000821B  print_int                          TEST_HELP
-     00008264  itoa                               TEST_HELP
-     000082B0  strlen                             TEST_HELP
-     000082C2  divu24_8                           TEST_HELP
-     000082EA  neg_acc24                          TEST_HELP
-     00008435  number                             TEST_HELP
-     0000843C  next_word                          TEST_HELP
-     00008467  to_lower                           TEST_HELP
-     00008472  atoi                               TEST_HELP
-     000084E3  mulu24_8                           TEST_HELP
-     0000852F  test_main                          CONIO_TEST
-     0000855C  _conio_init                        CONIO
-     0000855C  conio_init                         CONIO
-     00008564  set_dev                            CONIO
-     0000856A  get_dev                            CONIO
-     0000856E  _putchar                           CONIO
-     0000856E  putchar                            CONIO
-     00008581  _getchar                           CONIO
-     00008581  getchar                            CONIO
-     0000858B  _puts                              CONIO
-     0000858B  puts                               CONIO
-     000085A6  _gets                              CONIO
-     000085A6  gets                               CONIO
-     0000868F  _uart_init                         UART
-     0000868F  uart_init                          UART
-     000086DF  _uart_putc                         UART
-     000086DF  uart_putc                          UART
-     000086EF  _uart_spaces                       UART
-     000086EF  uart_spaces                        UART
-     00008703  _uart_puts                         UART
-     00008703  uart_puts                          UART
-     00008727  _uart_query                        UART
-     00008727  uart_query                         UART
-     00008737  _uart_getc                         UART
-     00008737  uart_getc                          UART
-     00008747  _uart_delete                       UART
-     00008747  uart_delete                        UART
+     0000823A  print_int                          TEST_HELP
+     00008283  itoa                               TEST_HELP
+     000082CC  divu24_8                           TEST_HELP
+     000082F4  neg_acc24                          TEST_HELP
+     0000843F  number                             TEST_HELP
+     00008446  next_word                          TEST_HELP
+     00008471  to_lower                           TEST_HELP
+     0000847C  atoi                               TEST_HELP
+     000084ED  mulu24_8                           TEST_HELP
+     00008539  test_main                          CONIO_TEST
+     00008660  _conio_init                        CONIO
+     00008660  conio_init                         CONIO
+     00008668  set_dev                            CONIO
+     0000866E  get_dev                            CONIO
+     00008672  _putchar                           CONIO
+     00008672  putchar                            CONIO
+     00008685  _getchar                           CONIO
+     00008685  getchar                            CONIO
+     0000868F  _puts                              CONIO
+     0000868F  puts                               CONIO
+     000086A9  _gets                              CONIO
+     000086A9  gets                               CONIO
+     00008752  _is_digit                          CONIO
+     00008752  is_digit                           CONIO
+     0000875E  _is_hex                            CONIO
+     0000875E  is_hex                             CONIO
+     00008772  _i24toa                            CONIO
+     00008772  i24toa                             CONIO
+     00008804  _strlen                            CONIO
+     00008804  strlen                             CONIO
+     00008815  _sprintf                           CONIO
+     00008815  sprintf                            CONIO
+     000088EF  _printf                            CONIO
+     000088EF  printf                             CONIO
+     00008A08  _uart_init                         UART
+     00008A08  uart_init                          UART
+     00008A58  _uart_putc                         UART
+     00008A58  uart_putc                          UART
+     00008A68  _uart_spaces                       UART
+     00008A68  uart_spaces                        UART
+     00008A7C  _uart_puts                         UART
+     00008A7C  uart_puts                          UART
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+CODE                                00008080    00000C6C =        3180. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     00008AA9  _uart_query                        UART
+     00008AA9  uart_query                         UART
+     00008AB9  _uart_getc                         UART
+     00008AB9  uart_getc                          UART
+     00008AC9  _uart_delete                       UART
+     00008AC9  uart_delete                        UART
+     00008AEB  add24                              MATH24
+     00008AF8  sub24                              MATH24
+     00008B05  mul24_8u                           MATH24
+     00008B2E  mul24u                             MATH24
+     00008B72  mul24s                             MATH24
+     00008BA5  div24_8u                           MATH24
+     00008BBB  clz24                              MATH24
+     00008BD7  div24u                             MATH24
+     00008C63  div24s                             MATH24
+     00008CE4  neg24                              MATH24
+ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 
 Files Linked                              [ module(s) ]
 
@@ -114,8 +146,9 @@ Libraries Linked                          [ object file ]
 
 ../../lib/conio.lib                       [ conio.rel ]
 ../../lib/uart.lib                        [ uart.rel ]
+../../lib/math24.lib                      [ math24.rel ]
 
-ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
+ASxxxx Linker V03.00 + NoICE + sdld,  page 8.
 
 User Base Address Definitions
 

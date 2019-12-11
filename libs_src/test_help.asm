@@ -125,7 +125,7 @@ farptr: .blkb 3
 .asciz "TEST_MAIN"
 
 NonHandledInterrupt:
-    .byte 0x71  ; réinitialize le MCU
+    .byte 0x71  ; reinitialize MCU
 
 
 ;------------------------------------
@@ -144,6 +144,10 @@ clock_init:
 1$:	cp a,CLK_CMSR
 	jrne 1$
 	ret
+
+;---------------------------------------------
+;   UART3 subroutines
+;---------------------------------------------
 
 ; initialize UART3, 115200 8N1
 ; to be used as debug i/o 
@@ -195,7 +199,9 @@ uart3_delete:
 1$:	pop a 
 	ret
 
-
+;-------------------------------------
+;  program initialization entry point 
+;-------------------------------------
 init0:
     ldw x,#RAM_SIZE-1 
     ldw sp,x 
@@ -206,10 +212,18 @@ init0:
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
     call main 
+
+;----------------------------
+;    MAIN function 
+;----------------------------	
 _main::
 main::
-    call test_main 
+    call test_main ; call test application main function.
     jra .
+
+;----------------------------------------
+;   exported LED control functions
+;----------------------------------------
 
 ; turn LED on 
 _ledon::
@@ -231,9 +245,10 @@ ledtoggle::
     ld PC_ODR,a
     ret 
 
-
-; affiche les registres sauvegardés
-; par l'interruption sur la pile.
+;------------------------------------
+; print registers contents saved on
+; stack by trap interrupt.
+;------------------------------------
 print_registers:
 	ldw y,#STATES
 	call uart3_puts
@@ -287,17 +302,28 @@ print_registers:
 	ld a,#16
     clrw x   
 	call print_int 
+; print SP 
+	ldw y,#REG_SP
+	call uart3_puts 
+	ldw x,sp 
+	addw x,#12
+	ldw acc16,x 
+	clr acc24 
+	ld a,#16 
+	clrw x 
+	call print_int 
 	ld a,#'\n' 
-	call uart3_putc  
+	call uart3_putc
 	ret
 
 USER_ABORT: .asciz "Program aborted by user.\n"
-STATES:  .asciz "Registers state at abort point.\n--------------------------\n"
+STATES:  .asciz "\nRegisters state at abort point.\n--------------------------\n"
 REG_EPC: .asciz "EPC: "
 REG_Y:   .asciz "\nY: " 
 REG_X:   .asciz "\nX: "
 REG_A:   .asciz "\nA: " 
 REG_CC:  .asciz "\nCC: "
+REG_SP:  .asciz "\nSP: "
 
 ;------------------------------------
 ; print integer in acc24 
@@ -399,28 +425,7 @@ itoa_loop:
     ld (y),a
 10$:
 	addw sp,#LOCAL_SIZE
-	call strlen
 	ret
-
-;------------------------------------
-;strlen  return .asciz string length
-; input:
-;	y  	pointer to string
-; output:
-;	a   length  < 256
-;------------------------------------
-	LEN=1
-strlen::
-    pushw y
-    push #0 ; length 
-0$: ld a,(y)
-    jreq 1$
-    inc (LEN,sp)
-    incw y
-    jra 0$
-1$: pop a
-    popw y
-    ret
 
 ;-------------------------------------
 ; divide uint24_t by uint8_t

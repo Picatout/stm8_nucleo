@@ -1204,32 +1204,131 @@ Hexadecimal [24-Bits]
 
 
                                      17     .area DATA 
-                                     18 
+      000000                         18 line: .ds 80 
                                      19 
                                      20 ;--------------------------------------------------------
                                      21     .area CODE
                                      22 
       000000                         23 test_main::
-      000000 4B 01            [ 1]   24     push #UART3
-      000002 4B 06            [ 1]   25     push #B115200
-      000004 CD 00 00         [ 4]   26     call conio_init
-      000007 AE 00 1B         [ 2]   27     ldw x,#conio_test 
-      00000A 89               [ 2]   28     pushw x 
-      00000B CD 00 00         [ 4]   29     call puts
-      00000E                         30     _drop 2 
-      00000E 5B 02            [ 2]    1         addw sp,#2 
-      000010                         31 0$: 
-      000010 CD 00 00         [ 4]   32     call getchar 
-      000013 89               [ 2]   33 	pushw x
-      000014 CD 00 00         [ 4]   34     call putchar
-      000017                         35     _drop 2
-      000017 5B 02            [ 2]    1         addw sp,#2 
-      000019 20 F5            [ 2]   36     jra 0$
-                                     37 
-      00001B 0A 63 6F 6E 69 6F 20    38 conio_test: .asciz "\nconio test" 
-             74 65 73 74 00
-                                     39 
+      000000 AE 00 00         [ 2]   24     ldw x,#line 
+      000003 A6 50            [ 1]   25     ld a,#80 
+      000005 88               [ 1]   26     push a 
+      000006                         27 clear_loop:    
+      000006 7F               [ 1]   28     clr (x)
+      000007 5C               [ 1]   29     incw x 
+      000008 4A               [ 1]   30     dec a 
+      000009 26 FB            [ 1]   31     jrne clear_loop
+      00000B 4B 01            [ 1]   32     push #UART3
+      00000D 4B 06            [ 1]   33     push #B115200
+      00000F CD 00 00         [ 4]   34     call conio_init
+      000012 AE 00 B9         [ 2]   35     ldw x,#conio_test 
+      000015 89               [ 2]   36     pushw x 
+      000016 CD 00 00         [ 4]   37     call puts
+      000019 AE 00 C5         [ 2]   38     ldw x,#test1 
+      00001C 1F 01            [ 2]   39     ldw (1,sp),x 
+      00001E CD 00 00         [ 4]   40     call puts 
+                                     41 ; send extended ascii 32-255
+      000021 AE 00 20         [ 2]   42     ldw x,#SPACE
+      000024 1F 01            [ 2]   43     ldw (1,sp),x 
+      000026 CD 00 00         [ 4]   44 1$: call putchar 
+      000029 0C 02            [ 1]   45     inc (2,sp)
+      00002B 2A F9            [ 1]   46     jrpl 1$    
+      00002D AE 00 D9         [ 2]   47 0$: ldw x,#test2 
+      000030 1F 01            [ 2]   48     ldw (1,sp),x 
+      000032 CD 00 00         [ 4]   49     call puts 
+      000035 CD 00 00         [ 4]   50     call getchar
+      000038 0F 01            [ 1]   51     clr (1,sp)
+      00003A 6B 02            [ 1]   52     ld (2,sp),a 
+      00003C CD 00 00         [ 4]   53     call putchar 
+                                     54 ;printf test
+      00003F AE 00 F4         [ 2]   55     ldw x,#test3 
+      000042 1F 01            [ 2]   56     ldw (1,sp),x 
+      000044 CD 00 00         [ 4]   57     call puts 
+      000047                         58     _drop 2 
+      000047 5B 02            [ 2]    1         addw sp,#2 
+                           000001    59     FMT=1 ; 2 
+                           000003    60     SPC1=3 ; 1 
+                           000004    61     CHR1=4 ; 1
+                           000005    62     SPC2=5 ; 1
+                           000006    63     STR=6  ; 2
+                           000008    64     SPC3=8 ; 1 
+                           000009    65     I1=9   ; 3 
+                           00000C    66     SPC4=12 ; 1 
+                           00000D    67     I2 =13  ; 3
+                           000010    68     VSIZE=I2+3   
+      000049 52 10            [ 2]   69     sub sp,#VSIZE 
+      00004B A6 04            [ 1]   70     ld a,#4
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
+Hexadecimal [24-Bits]
+
+
+
+      00004D 6B 03            [ 1]   71     ld (SPC1,sp),a 
+      00004F 6B 05            [ 1]   72     ld (SPC2,sp),a 
+      000051 6B 08            [ 1]   73     ld (SPC3,sp),a 
+      000053 6B 0C            [ 1]   74     ld (SPC4,sp),a 
+      000055 AE 00 9C         [ 2]   75     ldw x,#fmt 
+      000058 1F 01            [ 2]   76     ldw (FMT,sp),x 
+      00005A A6 FF            [ 1]   77     ld a,#0xff
+      00005C AE 02 7F         [ 2]   78     ldw x,#0x27f
+      00005F 6B 0B            [ 1]   79     ld (I1+2,sp),a 
+      000061 1F 09            [ 2]   80     ldw (I1,sp),x 
+      000063 A6 56            [ 1]   81     ld a,#0x56
+      000065 AE 12 34         [ 2]   82     ldw x,#0x1234
+      000068 6B 0F            [ 1]   83     ld (I2+2,sp),a 
+      00006A 1F 0D            [ 2]   84     ldw (I2,sp),x 
+      00006C AE 00 AC         [ 2]   85     ldw x,#hello 
+      00006F 1F 06            [ 2]   86     ldw (STR,sp),x  
+      000071 A6 55            [ 1]   87     ld a,#'U 
+      000073 6B 04            [ 1]   88     ld (CHR1,sp),a 
+      000075 CD 00 00         [ 4]   89     call printf
+      000078 AE 01 01         [ 2]   90     ldw x,#test4 
+      00007B 89               [ 2]   91     pushw x 
+      00007C CD 00 00         [ 4]   92     call puts 
+      00007F AE 00 00         [ 2]   93     ldw x,#line 
+      000082 1F 01            [ 2]   94     ldw (1,sp),x 
+      000084 CD 00 00         [ 4]   95     call sprintf 
+      000087                         96     _drop VSIZE+2 
+      000087 5B 12            [ 2]    1         addw sp,#VSIZE+2 
+      000089 AE 00 00         [ 2]   97     ldw x,#line 
+      00008C 89               [ 2]   98     pushw x 
+      00008D CD 00 00         [ 4]   99     call puts 
+      000090 AE 01 0F         [ 2]  100     ldw x,#completed 
+      000093 1F 01            [ 2]  101     ldw (1,sp),x 
+      000095 CD 00 00         [ 4]  102     call puts
+      000098                        103     _drop 2 
+      000098 5B 02            [ 2]    1         addw sp,#2 
+      00009A 20 FE            [ 2]  104     jra .  
+                                    105 
+                                    106 
+      00009C 41 42 43 25 61 25 63   107 fmt: .asciz "ABC%a%c%a%s%a%d";%a%x\n"
+             25 61 25 73 25 61 25
+             64 00
+      0000AC 68 65 6C 6C 6F 20 77   108 hello: .asciz "hello world!"
+             6F 72 6C 64 21 00
+      0000B9 0A 63 6F 6E 69 6F 20   109 conio_test: .asciz "\nconio test" 
+             74 65 73 74 00
+      0000C5 41 53 43 49 49 20 63   110 test1: .asciz "ASCII character set"
+             68 61 72 61 63 74 65
+             72 20 73 65 74 00
+      0000D9 0A 67 65 74 63 68 61   111 test2: .asciz "\ngetchar test, press a key"
+             72 20 74 65 73 74 2C
+             20 70 72 65 73 73 20
+             61 20 6B 65 79 00
+      0000F4 0A 70 72 69 6E 74 66   112 test3: .asciz "\nprintf test"
+             20 74 65 73 74 00
+      000101 0A 73 70 72 69 6E 74   113 test4: .asciz "\nsprintf test" 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
+Hexadecimal [24-Bits]
+
+
+
+             66 20 74 65 73 74 00
+      00010F 0A 74 65 73 74 73 20   114 completed: .asciz "\ntests completed."
+             63 6F 6D 70 6C 65 74
+             65 64 2E 00
+                                    115 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1271,163 +1370,166 @@ Symbol Table
     CC_C    =  000000     |     CC_H    =  000004     |     CC_I0   =  000003 
     CC_I1   =  000005     |     CC_N    =  000002     |     CC_V    =  000007 
     CC_Z    =  000001     |     CFG_GCR =  007F60     |     CFG_GCR_=  000001 
-    CFG_GCR_=  000000     |     CLKOPT  =  004807     |     CLKOPT_C=  000002 
-    CLKOPT_E=  000003     |     CLKOPT_P=  000000     |     CLKOPT_P=  000001 
-    CLK_CCOR=  0050C9     |     CLK_CKDI=  0050C6     |     CLK_CKDI=  000000 
-    CLK_CKDI=  000001     |     CLK_CKDI=  000002     |     CLK_CKDI=  000003 
-    CLK_CKDI=  000004     |     CLK_CMSR=  0050C3     |     CLK_CSSR=  0050C8 
-    CLK_ECKR=  0050C1     |     CLK_ECKR=  000000     |     CLK_ECKR=  000001 
-    CLK_HSIT=  0050CC     |     CLK_ICKR=  0050C0     |     CLK_ICKR=  000002 
-    CLK_ICKR=  000000     |     CLK_ICKR=  000001     |     CLK_ICKR=  000003 
-    CLK_ICKR=  000004     |     CLK_ICKR=  000005     |     CLK_PCKE=  0050C7 
-    CLK_PCKE=  000000     |     CLK_PCKE=  000001     |     CLK_PCKE=  000007 
-    CLK_PCKE=  000005     |     CLK_PCKE=  000006     |     CLK_PCKE=  000004 
-    CLK_PCKE=  000002     |     CLK_PCKE=  000003     |     CLK_PCKE=  0050CA 
-    CLK_PCKE=  000003     |     CLK_PCKE=  000002     |     CLK_PCKE=  000007 
-    CLK_SWCR=  0050C5     |     CLK_SWCR=  000000     |     CLK_SWCR=  000001 
-    CLK_SWCR=  000002     |     CLK_SWCR=  000003     |     CLK_SWIM=  0050CD 
-    CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4     |     CLK_SWR_=  0000E1 
-    CLK_SWR_=  0000D2     |     CPU_A   =  007F00     |     CPU_CCR =  007F0A 
-    CPU_PCE =  007F01     |     CPU_PCH =  007F02     |     CPU_PCL =  007F03 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
-Hexadecimal [24-Bits]
-
-Symbol Table
-
-    CPU_SPH =  007F08     |     CPU_SPL =  007F09     |     CPU_XH  =  007F04 
-    CPU_XL  =  007F05     |     CPU_YH  =  007F06     |     CPU_YL  =  007F07 
-    CR      =  00000D     |     CTRL_A  =  000001     |     CTRL_B  =  000002 
-    CTRL_C  =  000003     |     CTRL_D  =  000004     |     CTRL_E  =  000005 
-    CTRL_F  =  000006     |     CTRL_G  =  000007     |     CTRL_H  =  000008 
-    CTRL_I  =  000009     |     CTRL_J  =  00000A     |     CTRL_K  =  00000B 
-    CTRL_L  =  00000C     |     CTRL_M  =  00000D     |     CTRL_N  =  00000E 
-    CTRL_O  =  00000F     |     CTRL_P  =  000010     |     CTRL_Q  =  000011 
-    CTRL_R  =  000012     |     CTRL_S  =  000013     |     CTRL_T  =  000014 
-    CTRL_U  =  000015     |     CTRL_V  =  000016     |     CTRL_W  =  000017 
-    CTRL_X  =  000018     |     CTRL_Y  =  000019     |     CTRL_Z  =  00001A 
-    DEBUG_BA=  007F00     |     DEBUG_EN=  007FFF     |     DEVID_BA=  0048CD 
-    DEVID_EN=  0048D8     |     DEVID_LO=  0048D2     |     DEVID_LO=  0048D3 
-    DEVID_LO=  0048D4     |     DEVID_LO=  0048D5     |     DEVID_LO=  0048D6 
-    DEVID_LO=  0048D7     |     DEVID_LO=  0048D8     |     DEVID_WA=  0048D1 
-    DEVID_XH=  0048CE     |     DEVID_XL=  0048CD     |     DEVID_YH=  0048D0 
-    DEVID_YL=  0048CF     |     DM_BK1RE=  007F90     |     DM_BK1RH=  007F91 
-    DM_BK1RL=  007F92     |     DM_BK2RE=  007F93     |     DM_BK2RH=  007F94 
-    DM_BK2RL=  007F95     |     DM_CR1  =  007F96     |     DM_CR2  =  007F97 
-    DM_CSR1 =  007F98     |     DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A 
-    EEPROM_B=  004000     |     EEPROM_E=  0047FF     |     EEPROM_S=  000800 
-    ESC     =  00001B     |     EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1 
-    FF      =  00000C     |     FHSE    =  7A1200     |     FHSI    =  F42400 
-    FLASH_BA=  008000     |     FLASH_CR=  00505A     |     FLASH_CR=  000002 
-    FLASH_CR=  000000     |     FLASH_CR=  000003     |     FLASH_CR=  000001 
-    FLASH_CR=  00505B     |     FLASH_CR=  000005     |     FLASH_CR=  000004 
-    FLASH_CR=  000007     |     FLASH_CR=  000000     |     FLASH_CR=  000006 
-    FLASH_DU=  005064     |     FLASH_DU=  0000AE     |     FLASH_DU=  000056 
-    FLASH_EN=  027FFF     |     FLASH_FP=  00505D     |     FLASH_FP=  000000 
-    FLASH_FP=  000001     |     FLASH_FP=  000002     |     FLASH_FP=  000003 
-    FLASH_FP=  000004     |     FLASH_FP=  000005     |     FLASH_IA=  00505F 
-    FLASH_IA=  000003     |     FLASH_IA=  000002     |     FLASH_IA=  000006 
-    FLASH_IA=  000001     |     FLASH_IA=  000000     |     FLASH_NC=  00505C 
-    FLASH_NF=  00505E     |     FLASH_NF=  000000     |     FLASH_NF=  000001 
-    FLASH_NF=  000002     |     FLASH_NF=  000003     |     FLASH_NF=  000004 
-    FLASH_NF=  000005     |     FLASH_PU=  005062     |     FLASH_PU=  000056 
-    FLASH_PU=  0000AE     |     FLASH_SI=  020000     |     FLASH_WS=  00480D 
-    FLSI    =  01F400     |     GPIO_BAS=  005000     |     GPIO_CR1=  000003 
-    GPIO_CR2=  000004     |     GPIO_DDR=  000002     |     GPIO_IDR=  000001 
-    GPIO_ODR=  000000     |     GPIO_SIZ=  000005     |     HSECNT  =  004809 
-    I2C_CCRH=  00521C     |     I2C_CCRH=  000080     |     I2C_CCRH=  0000C0 
-    I2C_CCRH=  000080     |     I2C_CCRH=  000000     |     I2C_CCRH=  000001 
-    I2C_CCRH=  000000     |     I2C_CCRL=  00521B     |     I2C_CCRL=  00001A 
-    I2C_CCRL=  000002     |     I2C_CCRL=  00000D     |     I2C_CCRL=  000050 
-    I2C_CCRL=  000090     |     I2C_CCRL=  0000A0     |     I2C_CR1 =  005210 
-    I2C_CR1_=  000006     |     I2C_CR1_=  000007     |     I2C_CR1_=  000000 
-    I2C_CR2 =  005211     |     I2C_CR2_=  000002     |     I2C_CR2_=  000003 
-    I2C_CR2_=  000000     |     I2C_CR2_=  000001     |     I2C_CR2_=  000007 
-    I2C_DR  =  005216     |     I2C_FREQ=  005212     |     I2C_ITR =  00521A 
-    I2C_ITR_=  000002     |     I2C_ITR_=  000000     |     I2C_ITR_=  000001 
-    I2C_OARH=  005214     |     I2C_OARH=  000001     |     I2C_OARH=  000002 
-    I2C_OARH=  000006     |     I2C_OARH=  000007     |     I2C_OARL=  005213 
-    I2C_OARL=  000000     |     I2C_OAR_=  000813     |     I2C_OAR_=  000009 
-    I2C_PECR=  00521E     |     I2C_READ=  000001     |     I2C_SR1 =  005217 
-    I2C_SR1_=  000003     |     I2C_SR1_=  000001     |     I2C_SR1_=  000002 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
-Hexadecimal [24-Bits]
-
-Symbol Table
-
-    I2C_SR1_=  000006     |     I2C_SR1_=  000000     |     I2C_SR1_=  000004 
-    I2C_SR1_=  000007     |     I2C_SR2 =  005218     |     I2C_SR2_=  000002 
-    I2C_SR2_=  000001     |     I2C_SR2_=  000000     |     I2C_SR2_=  000003 
-    I2C_SR2_=  000005     |     I2C_SR3 =  005219     |     I2C_SR3_=  000001 
-    I2C_SR3_=  000007     |     I2C_SR3_=  000004     |     I2C_SR3_=  000000 
-    I2C_SR3_=  000002     |     I2C_TRIS=  00521D     |     I2C_TRIS=  000005 
-    I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000011 
-    I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_WRIT=  000000 
-    INPUT_DI=  000000     |     INPUT_EI=  000001     |     INPUT_FL=  000000 
-    INPUT_PU=  000001     |     INT_ADC2=  000016     |     INT_AUAR=  000012 
-    INT_AWU =  000001     |     INT_CAN_=  000008     |     INT_CAN_=  000009 
-    INT_CLK =  000002     |     INT_EXTI=  000003     |     INT_EXTI=  000004 
-    INT_EXTI=  000005     |     INT_EXTI=  000006     |     INT_EXTI=  000007 
-    INT_FLAS=  000018     |     INT_I2C =  000013     |     INT_SPI =  00000A 
-    INT_TIM1=  00000C     |     INT_TIM1=  00000B     |     INT_TIM2=  00000E 
-    INT_TIM2=  00000D     |     INT_TIM3=  000010     |     INT_TIM3=  00000F 
-    INT_TIM4=  000017     |     INT_TLI =  000000     |     INT_UART=  000011 
-    INT_UART=  000015     |     INT_UART=  000014     |     INT_VECT=  008060 
-    INT_VECT=  00800C     |     INT_VECT=  008028     |     INT_VECT=  00802C 
-    INT_VECT=  008010     |     INT_VECT=  008014     |     INT_VECT=  008018 
-    INT_VECT=  00801C     |     INT_VECT=  008020     |     INT_VECT=  008024 
-    INT_VECT=  008068     |     INT_VECT=  008054     |     INT_VECT=  008000 
-    INT_VECT=  008030     |     INT_VECT=  008038     |     INT_VECT=  008034 
-    INT_VECT=  008040     |     INT_VECT=  00803C     |     INT_VECT=  008048 
-    INT_VECT=  008044     |     INT_VECT=  008064     |     INT_VECT=  008008 
-    INT_VECT=  008004     |     INT_VECT=  008050     |     INT_VECT=  00804C 
-    INT_VECT=  00805C     |     INT_VECT=  008058     |     ITC_SPR1=  007F70 
-    ITC_SPR2=  007F71     |     ITC_SPR3=  007F72     |     ITC_SPR4=  007F73 
-    ITC_SPR5=  007F74     |     ITC_SPR6=  007F75     |     ITC_SPR7=  007F76 
-    ITC_SPR8=  007F77     |     IWDG_KR =  0050E0     |     IWDG_PR =  0050E1 
-    IWDG_RLR=  0050E2     |     LED2_BIT=  000005     |     LED2_MAS=  000020 
-    LED2_POR=  00500A     |     NAFR    =  004804     |     NCLKOPT =  004808 
-    NFLASH_W=  00480E     |     NHSECNT =  00480A     |     NL      =  00000A 
-    NOPT1   =  004802     |     NOPT2   =  004804     |     NOPT3   =  004806 
-    NOPT4   =  004808     |     NOPT5   =  00480A     |     NOPT6   =  00480C 
-    NOPT7   =  00480E     |     NOPTBL  =  00487F     |     NUBC    =  004802 
-    NWDGOPT =  004806     |     NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC 
-    NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE     |     OPT0    =  004800 
-    OPT1    =  004801     |     OPT2    =  004803     |     OPT3    =  004805 
-    OPT4    =  004807     |     OPT5    =  004809     |     OPT6    =  00480B 
-    OPT7    =  00480D     |     OPTBL   =  00487E     |     OPTION_B=  004800 
-    OPTION_E=  00487F     |     OUTPUT_F=  000001     |     OUTPUT_O=  000000 
-    OUTPUT_P=  000001     |     OUTPUT_S=  000000     |     PA      =  000000 
-    PA_BASE =  005000     |     PA_CR1  =  005003     |     PA_CR2  =  005004 
-    PA_DDR  =  005002     |     PA_IDR  =  005001     |     PA_ODR  =  005000 
-    PB      =  000005     |     PB_BASE =  005005     |     PB_CR1  =  005008 
-    PB_CR2  =  005009     |     PB_DDR  =  005007     |     PB_IDR  =  005006 
-    PB_ODR  =  005005     |     PC      =  00000A     |     PC_BASE =  00500A 
-    PC_CR1  =  00500D     |     PC_CR2  =  00500E     |     PC_DDR  =  00500C 
-    PC_IDR  =  00500B     |     PC_ODR  =  00500A     |     PD      =  00000F 
-    PD_BASE =  00500F     |     PD_CR1  =  005012     |     PD_CR2  =  005013 
-    PD_DDR  =  005011     |     PD_IDR  =  005010     |     PD_ODR  =  00500F 
-    PE      =  000014     |     PE_BASE =  005014     |     PE_CR1  =  005017 
-    PE_CR2  =  005018     |     PE_DDR  =  005016     |     PE_IDR  =  005015 
-    PE_ODR  =  005014     |     PF      =  000019     |     PF_BASE =  005019 
+    CFG_GCR_=  000000     |     CHR1    =  000004     |     CLKOPT  =  004807 
+    CLKOPT_C=  000002     |     CLKOPT_E=  000003     |     CLKOPT_P=  000000 
+    CLKOPT_P=  000001     |     CLK_CCOR=  0050C9     |     CLK_CKDI=  0050C6 
+    CLK_CKDI=  000000     |     CLK_CKDI=  000001     |     CLK_CKDI=  000002 
+    CLK_CKDI=  000003     |     CLK_CKDI=  000004     |     CLK_CMSR=  0050C3 
+    CLK_CSSR=  0050C8     |     CLK_ECKR=  0050C1     |     CLK_ECKR=  000000 
+    CLK_ECKR=  000001     |     CLK_HSIT=  0050CC     |     CLK_ICKR=  0050C0 
+    CLK_ICKR=  000002     |     CLK_ICKR=  000000     |     CLK_ICKR=  000001 
+    CLK_ICKR=  000003     |     CLK_ICKR=  000004     |     CLK_ICKR=  000005 
+    CLK_PCKE=  0050C7     |     CLK_PCKE=  000000     |     CLK_PCKE=  000001 
+    CLK_PCKE=  000007     |     CLK_PCKE=  000005     |     CLK_PCKE=  000006 
+    CLK_PCKE=  000004     |     CLK_PCKE=  000002     |     CLK_PCKE=  000003 
+    CLK_PCKE=  0050CA     |     CLK_PCKE=  000003     |     CLK_PCKE=  000002 
+    CLK_PCKE=  000007     |     CLK_SWCR=  0050C5     |     CLK_SWCR=  000000 
+    CLK_SWCR=  000001     |     CLK_SWCR=  000002     |     CLK_SWCR=  000003 
+    CLK_SWIM=  0050CD     |     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4 
+    CLK_SWR_=  0000E1     |     CLK_SWR_=  0000D2     |     CPU_A   =  007F00 
+    CPU_CCR =  007F0A     |     CPU_PCE =  007F01     |     CPU_PCH =  007F02 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    PF_CR1  =  00501C     |     PF_CR2  =  00501D     |     PF_DDR  =  00501B 
-    PF_IDR  =  00501A     |     PF_ODR  =  005019     |     PG      =  00001E 
-    PG_BASE =  00501E     |     PG_CR1  =  005021     |     PG_CR2  =  005022 
-    PG_DDR  =  005020     |     PG_IDR  =  00501F     |     PG_ODR  =  00501E 
-    PH_BASE =  005023     |     PH_CR1  =  005026     |     PH_CR2  =  005027 
-    PH_DDR  =  005025     |     PH_IDR  =  005024     |     PH_ODR  =  005023 
-    PI_BASE =  005028     |     PI_CR1  =  00502B     |     PI_CR2  =  00502C 
-    PI_DDR  =  00502A     |     PI_IDR  =  005029     |     PI_ODR  =  005028 
-    RAM_BASE=  000000     |     RAM_END =  0017FF     |     RAM_SIZE=  001800 
-    ROP     =  004800     |     RST_SR  =  0050B3     |     SFR_BASE=  005000 
-    SFR_END =  0057FF     |     SPACE   =  000020     |     SPI_CR1 =  005200 
-    SPI_CR2 =  005201     |     SPI_CRCP=  005205     |     SPI_DR  =  005204 
-    SPI_ICR =  005202     |     SPI_RXCR=  005206     |     SPI_SR  =  005203 
-    SPI_TXCR=  005207     |     SWIM_CSR=  007F80     |     TAB     =  000009 
+    CPU_PCL =  007F03     |     CPU_SPH =  007F08     |     CPU_SPL =  007F09 
+    CPU_XH  =  007F04     |     CPU_XL  =  007F05     |     CPU_YH  =  007F06 
+    CPU_YL  =  007F07     |     CR      =  00000D     |     CTRL_A  =  000001 
+    CTRL_B  =  000002     |     CTRL_C  =  000003     |     CTRL_D  =  000004 
+    CTRL_E  =  000005     |     CTRL_F  =  000006     |     CTRL_G  =  000007 
+    CTRL_H  =  000008     |     CTRL_I  =  000009     |     CTRL_J  =  00000A 
+    CTRL_K  =  00000B     |     CTRL_L  =  00000C     |     CTRL_M  =  00000D 
+    CTRL_N  =  00000E     |     CTRL_O  =  00000F     |     CTRL_P  =  000010 
+    CTRL_Q  =  000011     |     CTRL_R  =  000012     |     CTRL_S  =  000013 
+    CTRL_T  =  000014     |     CTRL_U  =  000015     |     CTRL_V  =  000016 
+    CTRL_W  =  000017     |     CTRL_X  =  000018     |     CTRL_Y  =  000019 
+    CTRL_Z  =  00001A     |     DEBUG_BA=  007F00     |     DEBUG_EN=  007FFF 
+    DEVID_BA=  0048CD     |     DEVID_EN=  0048D8     |     DEVID_LO=  0048D2 
+    DEVID_LO=  0048D3     |     DEVID_LO=  0048D4     |     DEVID_LO=  0048D5 
+    DEVID_LO=  0048D6     |     DEVID_LO=  0048D7     |     DEVID_LO=  0048D8 
+    DEVID_WA=  0048D1     |     DEVID_XH=  0048CE     |     DEVID_XL=  0048CD 
+    DEVID_YH=  0048D0     |     DEVID_YL=  0048CF     |     DM_BK1RE=  007F90 
+    DM_BK1RH=  007F91     |     DM_BK1RL=  007F92     |     DM_BK2RE=  007F93 
+    DM_BK2RH=  007F94     |     DM_BK2RL=  007F95     |     DM_CR1  =  007F96 
+    DM_CR2  =  007F97     |     DM_CSR1 =  007F98     |     DM_CSR2 =  007F99 
+    DM_ENFCT=  007F9A     |     EEPROM_B=  004000     |     EEPROM_E=  0047FF 
+    EEPROM_S=  000800     |     ESC     =  00001B     |     EXTI_CR1=  0050A0 
+    EXTI_CR2=  0050A1     |     FF      =  00000C     |     FHSE    =  7A1200 
+    FHSI    =  F42400     |     FLASH_BA=  008000     |     FLASH_CR=  00505A 
+    FLASH_CR=  000002     |     FLASH_CR=  000000     |     FLASH_CR=  000003 
+    FLASH_CR=  000001     |     FLASH_CR=  00505B     |     FLASH_CR=  000005 
+    FLASH_CR=  000004     |     FLASH_CR=  000007     |     FLASH_CR=  000000 
+    FLASH_CR=  000006     |     FLASH_DU=  005064     |     FLASH_DU=  0000AE 
+    FLASH_DU=  000056     |     FLASH_EN=  027FFF     |     FLASH_FP=  00505D 
+    FLASH_FP=  000000     |     FLASH_FP=  000001     |     FLASH_FP=  000002 
+    FLASH_FP=  000003     |     FLASH_FP=  000004     |     FLASH_FP=  000005 
+    FLASH_IA=  00505F     |     FLASH_IA=  000003     |     FLASH_IA=  000002 
+    FLASH_IA=  000006     |     FLASH_IA=  000001     |     FLASH_IA=  000000 
+    FLASH_NC=  00505C     |     FLASH_NF=  00505E     |     FLASH_NF=  000000 
+    FLASH_NF=  000001     |     FLASH_NF=  000002     |     FLASH_NF=  000003 
+    FLASH_NF=  000004     |     FLASH_NF=  000005     |     FLASH_PU=  005062 
+    FLASH_PU=  000056     |     FLASH_PU=  0000AE     |     FLASH_SI=  020000 
+    FLASH_WS=  00480D     |     FLSI    =  01F400     |     FMT     =  000001 
+    GPIO_BAS=  005000     |     GPIO_CR1=  000003     |     GPIO_CR2=  000004 
+    GPIO_DDR=  000002     |     GPIO_IDR=  000001     |     GPIO_ODR=  000000 
+    GPIO_SIZ=  000005     |     HSECNT  =  004809     |     I1      =  000009 
+    I2      =  00000D     |     I2C_CCRH=  00521C     |     I2C_CCRH=  000080 
+    I2C_CCRH=  0000C0     |     I2C_CCRH=  000080     |     I2C_CCRH=  000000 
+    I2C_CCRH=  000001     |     I2C_CCRH=  000000     |     I2C_CCRL=  00521B 
+    I2C_CCRL=  00001A     |     I2C_CCRL=  000002     |     I2C_CCRL=  00000D 
+    I2C_CCRL=  000050     |     I2C_CCRL=  000090     |     I2C_CCRL=  0000A0 
+    I2C_CR1 =  005210     |     I2C_CR1_=  000006     |     I2C_CR1_=  000007 
+    I2C_CR1_=  000000     |     I2C_CR2 =  005211     |     I2C_CR2_=  000002 
+    I2C_CR2_=  000003     |     I2C_CR2_=  000000     |     I2C_CR2_=  000001 
+    I2C_CR2_=  000007     |     I2C_DR  =  005216     |     I2C_FREQ=  005212 
+    I2C_ITR =  00521A     |     I2C_ITR_=  000002     |     I2C_ITR_=  000000 
+    I2C_ITR_=  000001     |     I2C_OARH=  005214     |     I2C_OARH=  000001 
+    I2C_OARH=  000002     |     I2C_OARH=  000006     |     I2C_OARH=  000007 
+    I2C_OARL=  005213     |     I2C_OARL=  000000     |     I2C_OAR_=  000813 
+    I2C_OAR_=  000009     |     I2C_PECR=  00521E     |     I2C_READ=  000001 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    I2C_SR1 =  005217     |     I2C_SR1_=  000003     |     I2C_SR1_=  000001 
+    I2C_SR1_=  000002     |     I2C_SR1_=  000006     |     I2C_SR1_=  000000 
+    I2C_SR1_=  000004     |     I2C_SR1_=  000007     |     I2C_SR2 =  005218 
+    I2C_SR2_=  000002     |     I2C_SR2_=  000001     |     I2C_SR2_=  000000 
+    I2C_SR2_=  000003     |     I2C_SR2_=  000005     |     I2C_SR3 =  005219 
+    I2C_SR3_=  000001     |     I2C_SR3_=  000007     |     I2C_SR3_=  000004 
+    I2C_SR3_=  000000     |     I2C_SR3_=  000002     |     I2C_TRIS=  00521D 
+    I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
+    I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
+    I2C_WRIT=  000000     |     INPUT_DI=  000000     |     INPUT_EI=  000001 
+    INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
+    INT_AUAR=  000012     |     INT_AWU =  000001     |     INT_CAN_=  000008 
+    INT_CAN_=  000009     |     INT_CLK =  000002     |     INT_EXTI=  000003 
+    INT_EXTI=  000004     |     INT_EXTI=  000005     |     INT_EXTI=  000006 
+    INT_EXTI=  000007     |     INT_FLAS=  000018     |     INT_I2C =  000013 
+    INT_SPI =  00000A     |     INT_TIM1=  00000C     |     INT_TIM1=  00000B 
+    INT_TIM2=  00000E     |     INT_TIM2=  00000D     |     INT_TIM3=  000010 
+    INT_TIM3=  00000F     |     INT_TIM4=  000017     |     INT_TLI =  000000 
+    INT_UART=  000011     |     INT_UART=  000015     |     INT_UART=  000014 
+    INT_VECT=  008060     |     INT_VECT=  00800C     |     INT_VECT=  008028 
+    INT_VECT=  00802C     |     INT_VECT=  008010     |     INT_VECT=  008014 
+    INT_VECT=  008018     |     INT_VECT=  00801C     |     INT_VECT=  008020 
+    INT_VECT=  008024     |     INT_VECT=  008068     |     INT_VECT=  008054 
+    INT_VECT=  008000     |     INT_VECT=  008030     |     INT_VECT=  008038 
+    INT_VECT=  008034     |     INT_VECT=  008040     |     INT_VECT=  00803C 
+    INT_VECT=  008048     |     INT_VECT=  008044     |     INT_VECT=  008064 
+    INT_VECT=  008008     |     INT_VECT=  008004     |     INT_VECT=  008050 
+    INT_VECT=  00804C     |     INT_VECT=  00805C     |     INT_VECT=  008058 
+    ITC_SPR1=  007F70     |     ITC_SPR2=  007F71     |     ITC_SPR3=  007F72 
+    ITC_SPR4=  007F73     |     ITC_SPR5=  007F74     |     ITC_SPR6=  007F75 
+    ITC_SPR7=  007F76     |     ITC_SPR8=  007F77     |     IWDG_KR =  0050E0 
+    IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2     |     LED2_BIT=  000005 
+    LED2_MAS=  000020     |     LED2_POR=  00500A     |     NAFR    =  004804 
+    NCLKOPT =  004808     |     NFLASH_W=  00480E     |     NHSECNT =  00480A 
+    NL      =  00000A     |     NOPT1   =  004802     |     NOPT2   =  004804 
+    NOPT3   =  004806     |     NOPT4   =  004808     |     NOPT5   =  00480A 
+    NOPT6   =  00480C     |     NOPT7   =  00480E     |     NOPTBL  =  00487F 
+    NUBC    =  004802     |     NWDGOPT =  004806     |     NWDGOPT_=  FFFFFFFD 
+    NWDGOPT_=  FFFFFFFC     |     NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE 
+    OPT0    =  004800     |     OPT1    =  004801     |     OPT2    =  004803 
+    OPT3    =  004805     |     OPT4    =  004807     |     OPT5    =  004809 
+    OPT6    =  00480B     |     OPT7    =  00480D     |     OPTBL   =  00487E 
+    OPTION_B=  004800     |     OPTION_E=  00487F     |     OUTPUT_F=  000001 
+    OUTPUT_O=  000000     |     OUTPUT_P=  000001     |     OUTPUT_S=  000000 
+    PA      =  000000     |     PA_BASE =  005000     |     PA_CR1  =  005003 
+    PA_CR2  =  005004     |     PA_DDR  =  005002     |     PA_IDR  =  005001 
+    PA_ODR  =  005000     |     PB      =  000005     |     PB_BASE =  005005 
+    PB_CR1  =  005008     |     PB_CR2  =  005009     |     PB_DDR  =  005007 
+    PB_IDR  =  005006     |     PB_ODR  =  005005     |     PC      =  00000A 
+    PC_BASE =  00500A     |     PC_CR1  =  00500D     |     PC_CR2  =  00500E 
+    PC_DDR  =  00500C     |     PC_IDR  =  00500B     |     PC_ODR  =  00500A 
+    PD      =  00000F     |     PD_BASE =  00500F     |     PD_CR1  =  005012 
+    PD_CR2  =  005013     |     PD_DDR  =  005011     |     PD_IDR  =  005010 
+    PD_ODR  =  00500F     |     PE      =  000014     |     PE_BASE =  005014 
+    PE_CR1  =  005017     |     PE_CR2  =  005018     |     PE_DDR  =  005016 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    PE_IDR  =  005015     |     PE_ODR  =  005014     |     PF      =  000019 
+    PF_BASE =  005019     |     PF_CR1  =  00501C     |     PF_CR2  =  00501D 
+    PF_DDR  =  00501B     |     PF_IDR  =  00501A     |     PF_ODR  =  005019 
+    PG      =  00001E     |     PG_BASE =  00501E     |     PG_CR1  =  005021 
+    PG_CR2  =  005022     |     PG_DDR  =  005020     |     PG_IDR  =  00501F 
+    PG_ODR  =  00501E     |     PH_BASE =  005023     |     PH_CR1  =  005026 
+    PH_CR2  =  005027     |     PH_DDR  =  005025     |     PH_IDR  =  005024 
+    PH_ODR  =  005023     |     PI_BASE =  005028     |     PI_CR1  =  00502B 
+    PI_CR2  =  00502C     |     PI_DDR  =  00502A     |     PI_IDR  =  005029 
+    PI_ODR  =  005028     |     RAM_BASE=  000000     |     RAM_END =  0017FF 
+    RAM_SIZE=  001800     |     ROP     =  004800     |     RST_SR  =  0050B3 
+    SFR_BASE=  005000     |     SFR_END =  0057FF     |     SPACE   =  000020 
+    SPC1    =  000003     |     SPC2    =  000005     |     SPC3    =  000008 
+    SPC4    =  00000C     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
+    SPI_CRCP=  005205     |     SPI_DR  =  005204     |     SPI_ICR =  005202 
+    SPI_RXCR=  005206     |     SPI_SR  =  005203     |     SPI_TXCR=  005207 
+    STR     =  000006     |     SWIM_CSR=  007F80     |     TAB     =  000009 
     TIM1_ARR=  005262     |     TIM1_ARR=  005263     |     TIM1_BKR=  00526D 
     TIM1_CCE=  00525C     |     TIM1_CCE=  00525D     |     TIM1_CCM=  005258 
     TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
@@ -1466,14 +1568,14 @@ Symbol Table
     TIM1_IER=  000003     |     TIM1_IER=  000004     |     TIM1_IER=  000005 
     TIM1_IER=  000006     |     TIM1_IER=  000000     |     TIM1_OIS=  00526F 
     TIM1_PSC=  005260     |     TIM1_PSC=  005261     |     TIM1_RCR=  005264 
-    TIM1_SMC=  005252     |     TIM1_SMC=  000007     |     TIM1_SMC=  000000 
-    TIM1_SMC=  000001     |     TIM1_SMC=  000002     |     TIM1_SMC=  000004 
-    TIM1_SMC=  000005     |     TIM1_SMC=  000006     |     TIM1_SR1=  005255 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
+    TIM1_SMC=  005252     |     TIM1_SMC=  000007     |     TIM1_SMC=  000000 
+    TIM1_SMC=  000001     |     TIM1_SMC=  000002     |     TIM1_SMC=  000004 
+    TIM1_SMC=  000005     |     TIM1_SMC=  000006     |     TIM1_SR1=  005255 
     TIM1_SR1=  000007     |     TIM1_SR1=  000001     |     TIM1_SR1=  000002 
     TIM1_SR1=  000003     |     TIM1_SR1=  000004     |     TIM1_SR1=  000005 
     TIM1_SR1=  000006     |     TIM1_SR1=  000000     |     TIM1_SR2=  005256 
@@ -1526,14 +1628,14 @@ Symbol Table
     UART_CR2=  000003     |     UART_CR2=  000007     |     UART_CR3=  000006 
     UART_CR3=  000003     |     UART_CR3=  000001     |     UART_CR3=  000002 
     UART_CR3=  000000     |     UART_CR3=  000006     |     UART_CR3=  000004 
-    UART_CR3=  000005     |     UART_CR4=  000007     |     UART_CR4=  000000 
-    UART_CR4=  000001     |     UART_CR4=  000002     |     UART_CR4=  000003 
-    UART_CR4=  000004     |     UART_CR4=  000006     |     UART_CR4=  000005 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
+    UART_CR3=  000005     |     UART_CR4=  000007     |     UART_CR4=  000000 
+    UART_CR4=  000001     |     UART_CR4=  000002     |     UART_CR4=  000003 
+    UART_CR4=  000004     |     UART_CR4=  000006     |     UART_CR4=  000005 
     UART_CR5=  000008     |     UART_CR5=  000003     |     UART_CR5=  000001 
     UART_CR5=  000002     |     UART_CR5=  000004     |     UART_CR5=  000005 
     UART_CR6=  000009     |     UART_CR6=  000004     |     UART_CR6=  000007 
@@ -1543,19 +1645,23 @@ Symbol Table
     UART_SR_=  000004     |     UART_SR_=  000002     |     UART_SR_=  000003 
     UART_SR_=  000000     |     UART_SR_=  000005     |     UART_SR_=  000006 
     UART_SR_=  000007     |     UBC     =  004801     |     USR_BTN_=  000004 
-    USR_BTN_=  000010     |     USR_BTN_=  005015     |     VT      =  00000B 
-    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
-    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
-    WWDG_WR =  0050D2     |     conio_in   ****** GX  |   2 conio_te   00001B R
-    getchar    ****** GX  |     putchar    ****** GX  |     puts       ****** GX
+    USR_BTN_=  000010     |     USR_BTN_=  005015     |     VSIZE   =  000010 
+    VT      =  00000B     |     WDGOPT  =  004805     |     WDGOPT_I=  000002 
+    WDGOPT_L=  000003     |     WDGOPT_W=  000000     |     WDGOPT_W=  000001 
+    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |   2 clear_lo   000006 R
+  2 complete   00010F R   |     conio_in   ****** GX  |   2 conio_te   0000B9 R
+  2 fmt        00009C R   |     getchar    ****** GX  |   2 hello      0000AC R
+  1 line       000000 R   |     printf     ****** GX  |     putchar    ****** GX
+    puts       ****** GX  |     sprintf    ****** GX  |   2 test1      0000C5 R
+  2 test2      0000D9 R   |   2 test3      0000F4 R   |   2 test4      000101 R
   2 test_mai   000000 GR
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 Area Table
 
    0 _CODE      size      0   flags    0
-   1 DATA       size      0   flags    0
-   2 CODE       size     27   flags    0
+   1 DATA       size     50   flags    0
+   2 CODE       size    121   flags    0
 

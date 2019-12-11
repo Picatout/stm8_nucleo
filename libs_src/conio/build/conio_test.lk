@@ -9,6 +9,7 @@
 -k /usr/local/share/sdcc/lib/stm8
 -l uart
 -l conio
+-l math24
 -l stm8
 ../build/test_help.rel
 build/conio_test.rel

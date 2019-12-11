@@ -199,25 +199,27 @@ uart_spaces::
 
 ;------------------------------------
 ; put string to uart channel
-; C prototype: void uart_puts(char *str,uint8_t uart)
+; C prototype: int uart_puts(char *str,uint8_t uart)
 ; input:
 ;   str         char *string to print
 ;   uart        uart identifier
 ; output:
-;   len         in X  
+;   x           string length  
 ;------------------------------------
-    ARG_OFS=6
+    ARG_OFS=8
     STR=ARG_OFS+1
     UART=ARG_OFS+3 
 ; uart_putc arguments
     PUTC_CHAR=1 
-    PUTC_UART=2     
-    LOCAL_SIZE=2
+    PUTC_UART=2 
+    LENGTH=3    
+    LOCAL_SIZE=4
 _uart_puts::
 uart_puts::
     pushw y
     sub sp,#LOCAL_SIZE 
-    clrw x 
+    clrw x
+    ldw (LENGTH,sp),x  
     ldw y,(STR,sp) 
 ; check for null pointer  
 	cpw y,#0
@@ -229,9 +231,12 @@ uart_puts::
 	ld (PUTC_CHAR,sp),a 
     call uart_putc 
 	incw y
-    incw x 
+    inc (LENGTH+1,sp)
+    jrne 0$
+    inc (LENGTH,sp) 
 	jra 0$
-1$: addw sp,#LOCAL_SIZE 
+1$: ldw x,(LENGTH,sp)
+    addw sp,#LOCAL_SIZE 
     popw y 
     ret
 
