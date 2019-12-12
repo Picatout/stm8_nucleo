@@ -20,6 +20,9 @@
 ;   DATE: 2019-12-07
 ;   This module is compile as test
 ;   application main module.
+;
+; DEPENDENCIES:
+;   This is design to avoid dependicies.
 ; 
 ; USAGE:
 ;   It use 'trap' software interrupt to
@@ -73,10 +76,9 @@ tib:  .ds TIB_SIZE
 pad:  .ds PAD_SIZE
 in.w: .blkb 1 
 in:   .blkb 1 
-count: .blkb 1 
-acc24: .blkb 1
-acc16: .blkb 1
-acc8:  .blkb 1
+acc24:: .blkb 1
+acc16:: .blkb 1
+acc8::  .blkb 1
 farptr: .blkb 3
 
 ;-----------------------------------
@@ -206,7 +208,7 @@ init0:
     ldw x,#RAM_SIZE-1 
     ldw sp,x 
     call clock_init 
-    call uart_init 
+    call uart3_init 
 ; configure LED2 pin 
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
@@ -337,7 +339,7 @@ REG_SP:  .asciz "\nSP: "
 	BASE = 2
 	WIDTH = 1
 	LOCAL_SIZE = 2
-print_int::
+print_int:
 	pushw y 
 	sub sp,#LOCAL_SIZE 
 	ld (BASE,sp),a 
@@ -440,7 +442,7 @@ itoa_loop:
 ; offset  on sp of arguments and locals
 	U8   = 1   ; divisor on stack
 	LOCAL_SIZE =1
-divu24_8::
+divu24_8:
 	pushw x ; save x
 	push a 
 	; ld dividend UU:MM bytes in X
@@ -475,7 +477,7 @@ divu24_8::
 ;  output:
 ;		acc24 variable
 ;-------------------------------------
-neg_acc24::
+neg_acc24:
 	cpl acc24+2
 	cpl acc24+1
 	cpl acc24
@@ -500,7 +502,6 @@ neg_acc24::
 ;   RXCHAR (2,sp)
 ; output:
 ;   text in tib  buffer
-;   len in count variable
 ;------------------------------------
 	; local variables
 	LEN = 1  ; accepted line length
@@ -528,7 +529,6 @@ del_line:
 	ld a,(LEN,sp)
 	call uart3_delete
 	ldw y,#tib
-	clr count
 	clr (LEN,sp)
 	jra readln_loop
 del_back:
@@ -541,7 +541,7 @@ del_back:
     jra readln_loop	
 accept_char:
 	ld a,#TIB_SIZE-1
-	cp a, (1,sp)
+	cp a, (LEN,sp)
 	jreq readln_loop
 	ld a,(RXCHAR,sp)
 	ld (y),a
@@ -551,20 +551,21 @@ accept_char:
 	call uart3_putc 
 	jra readln_loop
 readln_quit:
-	ld a,(LEN,sp)
-	ld count,a
-readln_quit2:
 	addw sp,#2
 	ld a,#NL
 	call uart3_putc
 	ret
-
+;----------------------------
+; command interface
+; only 2 commands:
+;  'q' to resume application
+;  'p' to print memory values 
+;----------------------------
 ;local variable 
 	PSIZE=1
 	LOCAL_SIZE=1 
 cmd_itf:
 	sub sp,#LOCAL_SIZE 
-	clr count
 	clr farptr 
 	clr farptr+1 
 	clr farptr+2  
@@ -631,6 +632,9 @@ peek_byte:
 
 invalid_cmd: .asciz "not a command\n" 
 
+;----------------------------
+; display farptr address
+;----------------------------
 print_farptr:
 	ld a ,farptr+2 
 	ld acc8,a 
@@ -642,8 +646,7 @@ print_farptr:
 	ret
 
 ;------------------------------------
-; get byte at address 
-; farptr[X]
+; get byte at address farptr[X]
 ; input:
 ;	 farptr   address to peek
 ;    X		  farptr index 	
@@ -658,7 +661,8 @@ peek:
 
 
 ;------------------------------------
-; expect a number from command line next argument
+; expect a number from command line 
+; next argument
 ;  input:
 ;	  none
 ;  output:
@@ -729,7 +733,7 @@ to_lower::
 	BASE=2 ; 1 byte, numeric base used in conversion
 	TEMP=3 ; 1 byte, temporary storage
 	LOCAL_SIZE=3 ; 3 bytes reserved for local storage
-atoi::
+atoi:
 	pushw x ;save x
 	sub sp,#LOCAL_SIZE
 	; acc24=0 
@@ -801,7 +805,7 @@ atoi_exit:
 	OVFL = 2  ; multiplicaton overflow low byte
 	OVFH = 1  ; multiplication overflow high byte
 	LOCAL_SIZE = 3
-mulu24_8::
+mulu24_8:
 	pushw x    ; save X
 	; local variables
 	push a     ; U8

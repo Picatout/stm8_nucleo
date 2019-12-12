@@ -3,9 +3,31 @@ Hexadecimal [24-Bits]
 
 
 
-                                      1 
-                                      2     .module CONIO_TEST
-                                            .include "../../inc/nucleo_8s208.inc"
+                                      1 ;;
+                                      2 ; Copyright Jacques Deschênes 2019 
+                                      3 ; This file is part of STM8_NUCLEO 
+                                      4 ;
+                                      5 ;     STM8_NUCLEO is free software: you can redistribute it and/or modify
+                                      6 ;     it under the terms of the GNU General Public License as published by
+                                      7 ;     the Free Software Foundation, either version 3 of the License, or
+                                      8 ;     (at your option) any later version.
+                                      9 ;
+                                     10 ;     STM8_NUCLEO is distributed in the hope that it will be useful,
+                                     11 ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                     12 ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                     13 ;     GNU General Public License for more details.
+                                     14 ;
+                                     15 ;     You should have received a copy of the GNU General Public License
+                                     16 ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
+                                     17 ;;
+                                     18 ;--------------------------------------
+                                     19 ;   STRINGS module
+                                     20 ;   DATE: 2019-11-29
+                                     21 ;   DEPENDENCIES: math24 
+                                     22 ;--------------------------------------
+                                     23     .module STRING_TEST
+                                     24 
+                                        	.include "../../inc/nucleo_8s208.inc"
                                         ;;
                                         ; Copyright Jacques Deschênes 2019 
                                         ; This file is part of MONA 
@@ -49,7 +71,7 @@ Hexadecimal [24-Bits]
                                  
                                         
                                         
-                                            .include "../../inc/stm8s208.inc"
+                                        	.include "../../inc/stm8s208.inc"
                                         ;;
                                         ; Copyright Jacques Deschênes 2019 
                                         ; This file is part of MONA 
@@ -1122,7 +1144,7 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
-                                            .include "../../inc/ascii.inc"
+                                        	.include "../../inc/ascii.inc"
                                         ;;
                                         ; Copyright Jacques Deschênes 2019 
                                         ; This file is part of MONA 
@@ -1188,146 +1210,191 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
-                                      7     .list 
-                                      8 
-                                      9 ;--------------------------------------------------------
-                                     10 ;      MACROS
-                                     11 ;--------------------------------------------------------
-                                     12         .macro _drop n 
-                                     13         addw sp,#n 
-                                     14         .endm 
-                                     15 
-                                     16 ;--------------------------------------------------------
+                                            .include "../../inc/gen_macros.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of STM8_NUCLEO 
+                                        ;
+                                        ;     STM8_NUCLEO is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     STM8_NUCLEO is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;--------------------------------------
+                                        ;   console Input/Output module
+                                        ;   DATE: 2019-12-11
+                                        ;    
+                                        ;   General usage macros.   
+                                        ;
+                                        ;--------------------------------------
+                                        
+                                            ; reserve space on stack
+                                            ; for local variabls
+                                            .macro _vars n 
+                                            
+                                            ; free space on stack
+                                            .macro _drop n 
+                                        
+                                            ; declare ARG_OFS for arguments 
+                                            ; displacement on stack. This 
+                                            ; value depend on local variables 
+                                            ; size.
+                                            .macro _argofs n 
+                                        
+                                            ; declare a function argument 
+                                            ; position relative to stack pointer 
+                                            ; _argofs must be called before it.
+                                            .macro _arg name ofs 
+                                     30     .list 
+                                     31 
+                                     32     .area DATA 
+      00006D                         33 buffer: .ds 80 
+                                     34     
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
 Hexadecimal [24-Bits]
 
 
 
-                                     17     .area DATA 
-      000000                         18 line: .ds 80 
-                                     19 
-                                     20 ;--------------------------------------------------------
-                                     21     .area CODE
-                                     22 
-      000000                         23 test_main::
-      000000 AE 00 00         [ 2]   24     ldw x,#line 
-      000003 A6 50            [ 1]   25     ld a,#80 
-      000005 88               [ 1]   26     push a 
-      000006                         27 clear_loop:    
-      000006 7F               [ 1]   28     clr (x)
-      000007 5C               [ 1]   29     incw x 
-      000008 4A               [ 1]   30     dec a 
-      000009 26 FB            [ 1]   31     jrne clear_loop
-      00000B 4B 01            [ 1]   32     push #UART3
-      00000D 4B 06            [ 1]   33     push #B115200
-      00000F CD 00 00         [ 4]   34     call conio_init
-      000012 AE 00 B9         [ 2]   35     ldw x,#conio_test 
-      000015 89               [ 2]   36     pushw x 
-      000016 CD 00 00         [ 4]   37     call puts
-      000019 AE 00 C5         [ 2]   38     ldw x,#test1 
-      00001C 1F 01            [ 2]   39     ldw (1,sp),x 
-      00001E CD 00 00         [ 4]   40     call puts 
-                                     41 ; send extended ascii 32-255
-      000021 AE 00 20         [ 2]   42     ldw x,#SPACE
-      000024 1F 01            [ 2]   43     ldw (1,sp),x 
-      000026 CD 00 00         [ 4]   44 1$: call putchar 
-      000029 0C 02            [ 1]   45     inc (2,sp)
-      00002B 2A F9            [ 1]   46     jrpl 1$    
-      00002D AE 00 D9         [ 2]   47 0$: ldw x,#test2 
-      000030 1F 01            [ 2]   48     ldw (1,sp),x 
-      000032 CD 00 00         [ 4]   49     call puts 
-      000035 CD 00 00         [ 4]   50     call getchar
-      000038 0F 01            [ 1]   51     clr (1,sp)
-      00003A 6B 02            [ 1]   52     ld (2,sp),a 
-      00003C CD 00 00         [ 4]   53     call putchar 
-                                     54 ;printf test
-      00003F AE 00 F4         [ 2]   55     ldw x,#test3 
-      000042 1F 01            [ 2]   56     ldw (1,sp),x 
-      000044 CD 00 00         [ 4]   57     call puts 
-      000047                         58     _drop 2 
-      000047 5B 02            [ 2]    1         addw sp,#2 
-                           000001    59     FMT=1 ; 2 
-                           000003    60     SPC1=3 ; 1 
-                           000004    61     CHR1=4 ; 1
-                           000005    62     SPC2=5 ; 1
-                           000006    63     STR=6  ; 2
-                           000008    64     SPC3=8 ; 1 
-                           000009    65     I1=9   ; 3 
-                           00000C    66     SPC4=12 ; 1 
-                           00000D    67     I2 =13  ; 3
-                           000010    68     VSIZE=I2+3   
-      000049 52 10            [ 2]   69     sub sp,#VSIZE 
-      00004B A6 04            [ 1]   70     ld a,#4
+                                     35     .area CODE 
+                                     36 
+      00852C                         37 test_main::
+                                     38 ; test atoi24
+      00852C AE 85 EE         [ 2]   39     ldw x,#number
+      00852F 89               [ 2]   40     pushw x 
+      008530 CD 87 3F         [ 4]   41     call atoi24
+      000007                         42     _drop 2  
+      008533 5B 02            [ 2]    1     addw sp,#2 
+      008535 83               [ 9]   43     trap
+                                     44 ; test strlen  
+      00000A                         45     _vars 2 
+      008536 52 02            [ 2]    1     sub sp,#2 
+      008538 AE 85 F5         [ 2]   46     ldw x,#hello 
+      00853B 1F 01            [ 2]   47     ldw (1,sp),x 
+      00853D CD 87 C3         [ 4]   48     call strlen 
+      000014                         49     _drop 2 
+      008540 5B 02            [ 2]    1     addw sp,#2 
+      008542 83               [ 9]   50     trap 
+                                     51 ; test strcpy
+      000017                         52     _vars 4 
+      008543 52 04            [ 2]    1     sub sp,#4 
+      008545 AE 00 6D         [ 2]   53     ldw x,#buffer 
+      008548 1F 01            [ 2]   54     ldw (1,sp),x 
+      00854A AE 85 F5         [ 2]   55     ldw x,#hello 
+      00854D 1F 03            [ 2]   56     ldw (3,sp),x 
+      00854F CD 87 DE         [ 4]   57     call strcpy 
+      000026                         58     _drop 4 
+      008552 5B 04            [ 2]    1     addw sp,#4 
+      008554 83               [ 9]   59     trap 
+                                     60 ; test memcpy 
+      000029                         61     _vars 6
+      008555 52 06            [ 2]    1     sub sp,#6 
+      008557 AE 00 0C         [ 2]   62     ldw x,#12 
+      00855A 1F 05            [ 2]   63     ldw (5,sp),x
+      00855C AE 00 6D         [ 2]   64     ldw x,#buffer
+      00855F 1F 03            [ 2]   65     ldw (3,sp),x 
+      008561 1C 00 0C         [ 2]   66     addw x,#12  
+      008564 1F 01            [ 2]   67     ldw (1,sp),x
+      008566 CD 87 F6         [ 4]   68     call memcpy  
+      00003D                         69     _drop 6 
+      008569 5B 06            [ 2]    1     addw sp,#6 
+      00856B 83               [ 9]   70     trap 
+                                     71 ; test fill
+      000040                         72     _vars 4
+      00856C 52 04            [ 2]    1     sub sp,#4 
+      00856E AE 00 6D         [ 2]   73     ldw x,#buffer 
+      008571 1F 01            [ 2]   74     ldw (1,sp),x 
+      008573 A6 20            [ 1]   75     ld a,#SPACE 
+      008575 6B 03            [ 1]   76     ld (3,sp),a 
+      008577 A6 18            [ 1]   77     ld a,#24 
+      008579 6B 04            [ 1]   78     ld (4,sp),a 
+      00857B CD 87 CF         [ 4]   79     call fill
+      000052                         80     _drop 4 
+      00857E 5B 04            [ 2]    1     addw sp,#4 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
 Hexadecimal [24-Bits]
 
 
 
-      00004D 6B 03            [ 1]   71     ld (SPC1,sp),a 
-      00004F 6B 05            [ 1]   72     ld (SPC2,sp),a 
-      000051 6B 08            [ 1]   73     ld (SPC3,sp),a 
-      000053 6B 0C            [ 1]   74     ld (SPC4,sp),a 
-      000055 AE 00 9C         [ 2]   75     ldw x,#fmt 
-      000058 1F 01            [ 2]   76     ldw (FMT,sp),x 
-      00005A A6 FF            [ 1]   77     ld a,#0xff
-      00005C AE 02 7F         [ 2]   78     ldw x,#0x27f
-      00005F 6B 0B            [ 1]   79     ld (I1+2,sp),a 
-      000061 1F 09            [ 2]   80     ldw (I1,sp),x 
-      000063 A6 56            [ 1]   81     ld a,#0x56
-      000065 AE 12 34         [ 2]   82     ldw x,#0x1234
-      000068 6B 0F            [ 1]   83     ld (I2+2,sp),a 
-      00006A 1F 0D            [ 2]   84     ldw (I2,sp),x 
-      00006C AE 00 AC         [ 2]   85     ldw x,#hello 
-      00006F 1F 06            [ 2]   86     ldw (STR,sp),x  
-      000071 A6 55            [ 1]   87     ld a,#'U 
-      000073 6B 04            [ 1]   88     ld (CHR1,sp),a 
-      000075 CD 00 00         [ 4]   89     call printf
-      000078 AE 01 01         [ 2]   90     ldw x,#test4 
-      00007B 89               [ 2]   91     pushw x 
-      00007C CD 00 00         [ 4]   92     call puts 
-      00007F AE 00 00         [ 2]   93     ldw x,#line 
-      000082 1F 01            [ 2]   94     ldw (1,sp),x 
-      000084 CD 00 00         [ 4]   95     call sprintf 
-      000087                         96     _drop VSIZE+2 
-      000087 5B 12            [ 2]    1         addw sp,#VSIZE+2 
-      000089 AE 00 00         [ 2]   97     ldw x,#line 
-      00008C 89               [ 2]   98     pushw x 
-      00008D CD 00 00         [ 4]   99     call puts 
-      000090 AE 01 0F         [ 2]  100     ldw x,#completed 
-      000093 1F 01            [ 2]  101     ldw (1,sp),x 
-      000095 CD 00 00         [ 4]  102     call puts
-      000098                        103     _drop 2 
-      000098 5B 02            [ 2]    1         addw sp,#2 
-      00009A 20 FE            [ 2]  104     jra .  
-                                    105 
-                                    106 
-      00009C 41 42 43 25 61 25 63   107 fmt: .asciz "ABC%a%c%a%s%a%d";%a%x\n"
-             25 61 25 73 25 61 25
-             64 00
-      0000AC 68 65 6C 6C 6F 20 77   108 hello: .asciz "hello world!"
-             6F 72 6C 64 21 00
-      0000B9 0A 63 6F 6E 69 6F 20   109 conio_test: .asciz "\nconio test" 
-             74 65 73 74 00
-      0000C5 41 53 43 49 49 20 63   110 test1: .asciz "ASCII character set"
-             68 61 72 61 63 74 65
-             72 20 73 65 74 00
-      0000D9 0A 67 65 74 63 68 61   111 test2: .asciz "\ngetchar test, press a key"
-             72 20 74 65 73 74 2C
-             20 70 72 65 73 73 20
-             61 20 6B 65 79 00
-      0000F4 0A 70 72 69 6E 74 66   112 test3: .asciz "\nprintf test"
-             20 74 65 73 74 00
-      000101 0A 73 70 72 69 6E 74   113 test4: .asciz "\nsprintf test" 
+      008580 83               [ 9]   81     trap 
+                                     82 ; test i24toa
+      000055                         83     _vars 6
+      008581 52 06            [ 2]    1     sub sp,#6 
+      008583 AE 01 E2         [ 2]   84     ldw x,#0x1e2
+      008586 A6 40            [ 1]   85     ld a,#0x40 
+      008588 1F 01            [ 2]   86     ldw (1,sp),x 
+      00858A 6B 03            [ 1]   87     ld (3,sp),a 
+      00858C A6 10            [ 1]   88     ld a,#16
+      00858E 6B 04            [ 1]   89     ld (4,sp),a  
+      008590 AE 00 6D         [ 2]   90     ldw x,#buffer 
+      008593 1F 05            [ 2]   91     ldw (5,sp),x 
+      008595 CD 86 D9         [ 4]   92     call i24toa 
+      00006C                         93     _drop 6 
+      008598 5B 06            [ 2]    1     addw sp,#6 
+      00859A 83               [ 9]   94     trap 
+                                     95 ; test format
+                           000001    96     STR=1 ; 2
+                           000003    97     FMT=3 ; 2 
+                           000005    98     SPC1=5 ; 1 
+                           000006    99     CHR1=6 ; 1
+                           000007   100     SPC2=7 ; 1
+                           000008   101     STR=8  ; 2
+                           00000A   102     SPC3=10 ; 1 
+                           00000B   103     I1=11  ; 3 
+                           00000E   104     SPC4=14 ; 1 
+                           00000F   105     I2 =15  ; 3
+                           000012   106     VSIZE=I2+3   
+      00859B 52 12            [ 2]  107     sub sp,#VSIZE 
+      00859D A6 04            [ 1]  108     ld a,#4
+      00859F 6B 05            [ 1]  109     ld (SPC1,sp),a 
+      0085A1 6B 07            [ 1]  110     ld (SPC2,sp),a 
+      0085A3 6B 0A            [ 1]  111     ld (SPC3,sp),a 
+      0085A5 6B 0E            [ 1]  112     ld (SPC4,sp),a
+      0085A7 AE 00 6D         [ 2]  113     ldw x,#buffer 
+      0085AA 1F 08            [ 2]  114     ldw (STR,sp),x  
+      0085AC AE 85 D9         [ 2]  115     ldw x,#fmt 
+      0085AF 1F 03            [ 2]  116     ldw (FMT,sp),x 
+      0085B1 A6 FF            [ 1]  117     ld a,#0xff
+      0085B3 AE 02 7F         [ 2]  118     ldw x,#0x27f
+      0085B6 6B 0D            [ 1]  119     ld (I1+2,sp),a 
+      0085B8 1F 0B            [ 2]  120     ldw (I1,sp),x 
+      0085BA A6 56            [ 1]  121     ld a,#0x56
+      0085BC AE 12 34         [ 2]  122     ldw x,#0x1234
+      0085BF 6B 11            [ 1]  123     ld (I2+2,sp),a 
+      0085C1 1F 0F            [ 2]  124     ldw (I2,sp),x 
+      0085C3 AE 85 F5         [ 2]  125     ldw x,#hello 
+      0085C6 1F 08            [ 2]  126     ldw (STR,sp),x  
+      0085C8 A6 55            [ 1]  127     ld a,#'U 
+      0085CA 6B 06            [ 1]  128     ld (CHR1,sp),a 
+      0085CC CD 86 09         [ 4]  129     call format 
+      0000A3                        130     _drop VSIZE 
+      0085CF 5B 12            [ 2]    1     addw sp,#VSIZE 
+      0085D1 83               [ 9]  131     trap 
+      0085D2 89               [ 2]  132     pushw x 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-             66 20 74 65 73 74 00
-      00010F 0A 74 65 73 74 73 20   114 completed: .asciz "\ntests completed."
-             63 6F 6D 70 6C 65 74
-             65 64 2E 00
-                                    115 
+      0085D3 CD 88 6C         [ 4]  133     call puts 
+      0085D6 83               [ 9]  134     trap 
+                                    135 
+      0085D7 20 FE            [ 2]  136     jra .
+                                    137 
+                                    138 
+      0085D9 41 42 43 25 61 25 63   139 fmt: .asciz "ABC%a%c%a%s%a%d%a%x\n"
+             25 61 25 73 25 61 25
+             64 25 61 25 78 0A 00
+      0085EE 31 32 33 34 35 36 00   140 number: .asciz "123456"
+      0085F5 48 65 6C 6C 6F 20 77   141 hello: .asciz "Hello world!"
+             6F 72 6C 64 21 00
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
@@ -1370,7 +1437,7 @@ Symbol Table
     CC_C    =  000000     |     CC_H    =  000004     |     CC_I0   =  000003 
     CC_I1   =  000005     |     CC_N    =  000002     |     CC_V    =  000007 
     CC_Z    =  000001     |     CFG_GCR =  007F60     |     CFG_GCR_=  000001 
-    CFG_GCR_=  000000     |     CHR1    =  000004     |     CLKOPT  =  004807 
+    CFG_GCR_=  000000     |     CHR1    =  000006     |     CLKOPT  =  004807 
     CLKOPT_C=  000002     |     CLKOPT_E=  000003     |     CLKOPT_P=  000000 
     CLKOPT_P=  000001     |     CLK_CCOR=  0050C9     |     CLK_CKDI=  0050C6 
     CLK_CKDI=  000000     |     CLK_CKDI=  000001     |     CLK_CKDI=  000002 
@@ -1430,11 +1497,11 @@ Symbol Table
     FLASH_NF=  000001     |     FLASH_NF=  000002     |     FLASH_NF=  000003 
     FLASH_NF=  000004     |     FLASH_NF=  000005     |     FLASH_PU=  005062 
     FLASH_PU=  000056     |     FLASH_PU=  0000AE     |     FLASH_SI=  020000 
-    FLASH_WS=  00480D     |     FLSI    =  01F400     |     FMT     =  000001 
+    FLASH_WS=  00480D     |     FLSI    =  01F400     |     FMT     =  000003 
     GPIO_BAS=  005000     |     GPIO_CR1=  000003     |     GPIO_CR2=  000004 
     GPIO_DDR=  000002     |     GPIO_IDR=  000001     |     GPIO_ODR=  000000 
-    GPIO_SIZ=  000005     |     HSECNT  =  004809     |     I1      =  000009 
-    I2      =  00000D     |     I2C_CCRH=  00521C     |     I2C_CCRH=  000080 
+    GPIO_SIZ=  000005     |     HSECNT  =  004809     |     I1      =  00000B 
+    I2      =  00000F     |     I2C_CCRH=  00521C     |     I2C_CCRH=  000080 
     I2C_CCRH=  0000C0     |     I2C_CCRH=  000080     |     I2C_CCRH=  000000 
     I2C_CCRH=  000001     |     I2C_CCRH=  000000     |     I2C_CCRL=  00521B 
     I2C_CCRL=  00001A     |     I2C_CCRL=  000002     |     I2C_CCRL=  00000D 
@@ -1525,11 +1592,11 @@ Symbol Table
     PI_ODR  =  005028     |     RAM_BASE=  000000     |     RAM_END =  0017FF 
     RAM_SIZE=  001800     |     ROP     =  004800     |     RST_SR  =  0050B3 
     SFR_BASE=  005000     |     SFR_END =  0057FF     |     SPACE   =  000020 
-    SPC1    =  000003     |     SPC2    =  000005     |     SPC3    =  000008 
-    SPC4    =  00000C     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
+    SPC1    =  000005     |     SPC2    =  000007     |     SPC3    =  00000A 
+    SPC4    =  00000E     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
     SPI_CRCP=  005205     |     SPI_DR  =  005204     |     SPI_ICR =  005202 
     SPI_RXCR=  005206     |     SPI_SR  =  005203     |     SPI_TXCR=  005207 
-    STR     =  000006     |     SWIM_CSR=  007F80     |     TAB     =  000009 
+    STR     =  000008     |     SWIM_CSR=  007F80     |     TAB     =  000009 
     TIM1_ARR=  005262     |     TIM1_ARR=  005263     |     TIM1_BKR=  00526D 
     TIM1_CCE=  00525C     |     TIM1_CCE=  00525D     |     TIM1_CCM=  005258 
     TIM1_CCM=  000000     |     TIM1_CCM=  000001     |     TIM1_CCM=  000004 
@@ -1645,16 +1712,14 @@ Symbol Table
     UART_SR_=  000004     |     UART_SR_=  000002     |     UART_SR_=  000003 
     UART_SR_=  000000     |     UART_SR_=  000005     |     UART_SR_=  000006 
     UART_SR_=  000007     |     UBC     =  004801     |     USR_BTN_=  000004 
-    USR_BTN_=  000010     |     USR_BTN_=  005015     |     VSIZE   =  000010 
+    USR_BTN_=  000010     |     USR_BTN_=  005015     |     VSIZE   =  000012 
     VT      =  00000B     |     WDGOPT  =  004805     |     WDGOPT_I=  000002 
     WDGOPT_L=  000003     |     WDGOPT_W=  000000     |     WDGOPT_W=  000001 
-    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |   2 clear_lo   000006 R
-  2 complete   00010F R   |     conio_in   ****** GX  |   2 conio_te   0000B9 R
-  2 fmt        00009C R   |     getchar    ****** GX  |   2 hello      0000AC R
-  1 line       000000 R   |     printf     ****** GX  |     putchar    ****** GX
-    puts       ****** GX  |     sprintf    ****** GX  |   2 test1      0000C5 R
-  2 test2      0000D9 R   |   2 test3      0000F4 R   |   2 test4      000101 R
-  2 test_mai   000000 GR
+    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |     atoi24     ****** GX
+  1 buffer     000000 R   |     fill       ****** GX  |   2 fmt        0000AD R
+    format     ****** GX  |   2 hello      0000C9 R   |     i24toa     ****** GX
+    memcpy     ****** GX  |   2 number     0000C2 R   |     puts       ****** GX
+    strcpy     ****** GX  |     strlen     ****** GX  |   2 test_mai   000000 GR
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
@@ -1663,5 +1728,5 @@ Area Table
 
    0 _CODE      size      0   flags    0
    1 DATA       size     50   flags    0
-   2 CODE       size    121   flags    0
+   2 CODE       size     D6   flags    0
 

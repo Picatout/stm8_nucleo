@@ -56,7 +56,7 @@ test: $(LIB)
 	@echo "creating test    "
 	@echo "*****************"
 	$(AS) -g -l -o $(BUILD)conio_test.rel conio_test.asm 
-	$(CC) $(CFLAGS) -L$(LIB_PATH) -luart -lconio -lmath24 -o$(TARGET) $(TEST_HELP) $(BUILD)conio_test.rel
+	$(CC) $(CFLAGS) -L$(LIB_PATH) -luart -lmath24 -lstring -lconio -o$(TARGET) $(TEST_HELP) $(BUILD)conio_test.rel
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
 

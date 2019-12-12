@@ -17,12 +17,34 @@
 ;;
 ;--------------------------------------
 ;   console Input/Output module
-;   DATE: 2019-12-05
-;   NOTE: global routines interface designed 
-;         to be callable from C with the
-;         prototype given. SDCC for stm8 
-;         pass functions arguments on stack
-;         pushed from right to left.
+;   DATE: 2019-12-11
+;    
+;   General usage macros.   
+;
 ;--------------------------------------
 
-FMT_BUFFER_SIZE=16
+    ; reserve space on stack
+    ; for local variabls
+    .macro _vars n 
+    sub sp,#n 
+    .endm 
+    
+    ; free space on stack
+    .macro _drop n 
+    addw sp,#n 
+    .endm
+
+    ; declare ARG_OFS for arguments 
+    ; displacement on stack. This 
+    ; value depend on local variables 
+    ; size.
+    .macro _argofs n 
+    ARG_OFS=2+n 
+    .endm 
+
+    ; declare a function argument 
+    ; position relative to stack pointer 
+    ; _argofs must be called before it.
+    .macro _arg name ofs 
+    name=ARG_OFS+ofs 
+    .endm 
