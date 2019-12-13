@@ -67,6 +67,8 @@
 	.include "../inc/nucleo_8s208.inc"
 	.include "../inc/stm8s208.inc"
 	.include "../inc/ascii.inc"
+	.include "../inc/gen_macros.inc" 
+	.include "test_macros.inc" 
     .list 
 
     .area DATA 
@@ -164,17 +166,17 @@ uart3_init:
 	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));
 	ret
 	
-uart3_putc:
+uart3_putc::
 	btjf UART3_SR,#UART_SR_TXE,.
 	ld UART3_DR,a 
 	ret 
 
-uart3_getc:
+uart3_getc::
 	btjf UART3_SR,#UART_SR_RXNE,.
 	ld a,UART3_DR 
 	ret 
 
-uart3_puts:
+uart3_puts::
     ld a,(y)
 	jreq 1$
 	call uart3_putc 
@@ -200,6 +202,69 @@ uart3_delete:
 	jra 0$
 1$:	pop a 
 	ret
+
+;; print actual registers states 
+	_argofs 0  
+	_arg R_Y 1 
+	_arg R_X 3
+	_arg R_A 5
+	_arg R_CC 6
+uart3_prt_regs::
+	ldw y,#regs_state 
+	call uart3_puts
+; register CC 
+	ld a,(R_CC,sp)
+	ldw y,#REG_CC 
+	call prt_reg8 
+; register A 
+	ld a,(R_A,sp)
+	ldw y,#REG_A 
+	call prt_reg8 
+; register X 
+	ldw x,(R_X,sp)
+	ldw y,#REG_X 
+	call prt_reg16 
+; register Y 
+	ldw x,(R_Y,sp)
+	ldw y,#REG_Y 
+	call prt_reg16 
+; register SP 
+	ldw x,sp
+	addw x,#6+ARG_OFS  
+	ldw y,#REG_SP
+	call prt_reg16
+	ld a,#CR 
+	call uart3_putc
+	call uart3_putc   
+	ret 
+
+regs_state: .asciz "\nregisters state\n--------------------"
+
+;--------------------
+; print content at address in hex.
+; input:
+;   X 	address to peek 
+; output:
+;	none 
+;--------------------	
+uart3_peek::
+	pushw x 
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#16 
+	call uart3_prti24 
+	ld a,#': 
+	call uart3_putc 
+	ld a,#SPACE 
+	call uart3_putc 
+	popw x 
+	ld a,(x)
+	ld acc8,a 
+	clrw x 
+	ld a,#16 
+	call uart3_prti24
+	ret 
 
 ;-------------------------------------
 ;  program initialization entry point 
@@ -247,6 +312,70 @@ ledtoggle::
     ld PC_ODR,a
     ret 
 
+left_paren:
+	ld a,#SPACE 
+	call uart3_putc
+	ld a,#'( 
+	call uart3_putc 	
+	ret 
+
+;------------------------------
+; print 8 bit register 
+; input:
+;   Y  point to register name 
+;   A  register value to print 
+; output:
+;   none
+;------------------------------- 
+prt_reg8:
+	push a 
+	call uart3_puts 
+	ld a,(1,sp) 
+	ld acc8,a 
+	clrw x 
+	ldw acc24,x 
+	ld a,#16 
+	call uart3_prti24 
+	call left_paren 
+	pop a 
+	ld acc8,a 
+	clrw x 
+	ldw acc24,x 
+	ld a,#10 
+	call uart3_prti24 
+	ld a,#') 
+	call uart3_putc
+	ret
+
+;--------------------------------
+; print 16 bits register 
+; input:
+;   Y   point register name 
+;   X   register value to print 
+; output:
+;  none
+;--------------------------------
+prt_reg16: 
+	pushw x 
+	call uart3_puts 
+	ldw x,(1,sp) 
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#16 
+	call uart3_prti24 
+	call left_paren 
+	popw x 
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#10 
+	call uart3_prti24 
+	ld a,#') 
+	call uart3_putc
+	ret 
+
+
 ;------------------------------------
 ; print registers contents saved on
 ; stack by trap interrupt.
@@ -265,55 +394,28 @@ print_registers:
 	ld acc24,a
 	clrw x  
 	ld a,#16
-	call print_int  
-; print Y 
-	ldw y,#REG_Y
-	call uart3_puts 
-	clr acc24 
-	ld a,(8,sp)
-	ld acc8,a 
-	ld a,(7,sp)
-	ld acc16,a 
-    clrw x 
-	ld a,#16 
-	call print_int 
+	call uart3_prti24  
 ; print X
 	ldw y,#REG_X
-	call uart3_puts  
-	ld a,(6,sp)
-	ld acc8,a 
-	ld a,(5,sp)
-	ld acc16,a 
-	ld a,#16 
-    clrw x
-	call print_int 
+	ldw x,(5,sp)
+	call prt_reg16  
+; print Y 
+	ldw y,#REG_Y
+	ldw x, (7,sp)
+	call prt_reg16  
 ; print A 
-	ldw y,#REG_A 
-	call uart3_puts 
-	clr acc16
+	ldw y,#REG_A
 	ld a, (4,sp) 
-	ld acc8,a 
-	ld a,#16
-    clrw x 
-	call print_int 
+	call prt_reg8
 ; print CC 
 	ldw y,#REG_CC 
-	call uart3_puts 
 	ld a, (3,sp) 
-	ld acc8,a
-	ld a,#16
-    clrw x   
-	call print_int 
+	call prt_reg8 
 ; print SP 
 	ldw y,#REG_SP
-	call uart3_puts 
 	ldw x,sp 
 	addw x,#12
-	ldw acc16,x 
-	clr acc24 
-	ld a,#16 
-	clrw x 
-	call print_int 
+	call prt_reg16  
 	ld a,#'\n' 
 	call uart3_putc
 	ret
@@ -339,7 +441,7 @@ REG_SP:  .asciz "\nSP: "
 	BASE = 2
 	WIDTH = 1
 	LOCAL_SIZE = 2
-print_int:
+uart3_prti24::
 	pushw y 
 	sub sp,#LOCAL_SIZE 
 	ld (BASE,sp),a 
@@ -388,7 +490,7 @@ print_int:
 	SIGN=1  ; integer sign 
 	BASE=2  ; numeric base 
 	LOCAL_SIZE=2  ;locals size
-itoa::
+itoa:
 	sub sp,#LOCAL_SIZE
 	ld (BASE,sp), a  ; base
 	clr (SIGN,sp)    ; sign
@@ -614,7 +716,7 @@ peek_byte:
 	clrw x 
 	ldw acc24,x 
 	ld a,#16
-	call print_int
+	call uart3_prti24
 	popw x 
 	dec (PSIZE,sp)
 	jrne 1$ 
@@ -642,7 +744,7 @@ print_farptr:
 	ldw acc24,x 
 	clrw x 
 	ld a,#16 
-	call print_int
+	call uart3_prti24
 	ret
 
 ;------------------------------------

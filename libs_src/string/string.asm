@@ -364,7 +364,8 @@ atoi_exit:
     ret 
 
 ;------------------------------------
-;strlen  return .asciz string length
+;name: strlen
+;  return .asciz string length
 ; input:
 ;	STR  	pointer to string
 ; output:

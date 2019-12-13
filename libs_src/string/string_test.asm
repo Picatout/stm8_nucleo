@@ -27,28 +27,50 @@
 	.include "../../inc/stm8s208.inc"
 	.include "../../inc/ascii.inc"
     .include "../../inc/gen_macros.inc"
+    .include "../test_macros.inc" 
     .list 
 
     .area DATA 
 buffer: .ds 80 
     
     .area CODE 
-
+_dbg 
 test_main::
-; test atoi24
+; clear_buffer
+    ldw x,#buffer 
+    ld a,#80 
+1$: clr (x)
+    incw x 
+    dec a 
+    jrne 1$
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_atoi24
+    _dbg_puts 
+    ldw y,#number 
+    _dbg_puts 
     ldw x,#number
     pushw x 
     call atoi24
     _drop 2  
-    trap
-; test strlen  
+    _dbg_prt_regs 
+;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_strlen  
+    _dbg_puts 
     _vars 2 
     ldw x,#hello 
     ldw (1,sp),x 
     call strlen 
-    _drop 2 
-    trap 
-; test strcpy
+    _drop 2
+    ldw acc16,x 
+    clr acc24 
+    ld a,#10 
+    clrw x 
+    _dbg_prti24
+    ld a,#CR 
+    _dbg_putc   
+;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_strcpy
+    _dbg_puts 
     _vars 4 
     ldw x,#buffer 
     ldw (1,sp),x 
@@ -56,8 +78,12 @@ test_main::
     ldw (3,sp),x 
     call strcpy 
     _drop 4 
-    trap 
-; test memcpy 
+    ldw y,#buffer 
+    _dbg_puts 
+    _dbg_prt_regs 
+;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_memcpy
+    _dbg_puts  
     _vars 6
     ldw x,#12 
     ldw (5,sp),x
@@ -67,19 +93,28 @@ test_main::
     ldw (1,sp),x
     call memcpy  
     _drop 6 
-    trap 
-; test fill
+    ldw y,#buffer 
+    _dbg_puts 
+    _dbg_prt_regs 
+;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_fill
+    _dbg_puts 
     _vars 4
     ldw x,#buffer 
     ldw (1,sp),x 
-    ld a,#SPACE 
+    ld a,#'@ 
     ld (3,sp),a 
     ld a,#24 
     ld (4,sp),a 
     call fill
     _drop 4 
-    trap 
-; test i24toa
+    clr (x) 
+    ldw y,#buffer 
+    _dbg_puts 
+    _dbg_prt_regs 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_i24toa
+    _dbg_puts 
     _vars 6
     ldw x,#0x1e2
     ld a,#0x40 
@@ -91,8 +126,13 @@ test_main::
     ldw (5,sp),x 
     call i24toa 
     _drop 6 
+    ldw acc24,x 
+    ld acc8,a 
+    _dbg_prti24 
     trap 
-; test format
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
+    ldw y,#test_format
+    _dbg_puts 
     STR=1 ; 2
     FMT=3 ; 2 
     SPC1=5 ; 1 
@@ -128,6 +168,8 @@ test_main::
     ld (CHR1,sp),a 
     call format 
     _drop VSIZE 
+    ldw y,#buffer 
+    _dbg_puts 
     trap 
     pushw x 
     call puts 
@@ -135,6 +177,13 @@ test_main::
 
     jra .
 
+test_i24toa: .asciz "test i24toa\n"
+test_atoi24: .asciz "test atoi24\n"
+test_strlen: .asciz "test strlen\n"
+test_fill: .asciz "test fill\n"
+test_memcpy: .asciz "test memcpy\n" 
+test_format: .asciz "test format\n"
+test_strcpy: .asciz "test strcpy\n"
 
 fmt: .asciz "ABC%a%c%a%s%a%d%a%x\n"
 number: .asciz "123456"
