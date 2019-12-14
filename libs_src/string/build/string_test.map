@@ -15,9 +15,9 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000000  s__CODE                         
      00000001  s_DATA                          
      00000080  l_HOME                          
-     000000D1  l_DATA                          
+     000000BE  l_DATA                          
      00000100  l_SSEG0                         
-     00000F08  l_CODE                          
+     00000C18  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -26,14 +26,15 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-DATA                                00000001    000000D1 =         209. bytes (REL,CON)
+DATA                                00000001    000000BE =         190. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
      00000067  acc24                              TEST_HELP
      00000068  acc16                              TEST_HELP
      00000069  acc8                               TEST_HELP
-     000000C2  fmt_buffer                         CONIO
+     0000006D  buffer                             STRING_TEST
+     000000BD  nearptr                            STRING
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 3.
 Hexadecimal  [32-Bits]
@@ -58,7 +59,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000F08 =        3848. bytes (REL,CON)
+CODE                                00008080    00000C18 =        3096. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -76,77 +77,35 @@ CODE                                00008080    00000F08 =        3848. bytes (R
      000081A7  _ledtoggle                         TEST_HELP
      000081A7  ledtoggle                          TEST_HELP
      000082DD  uart3_prti24                       TEST_HELP
-     00008326  itoa                               TEST_HELP
-     000084D5  number                             TEST_HELP
-     000084DC  next_word                          TEST_HELP
-     00008507  to_lower                           TEST_HELP
-     000085CF  test_main                          STRING_TEST
-     00008844  _format                            STRING
-     00008844  format                             STRING
-     00008914  _i24toa                            STRING
-     00008914  i24toa                             STRING
-     0000897A  _atoi24                            STRING
-     0000897A  atoi24                             STRING
-     000089FE  _strlen                            STRING
-     000089FE  strlen                             STRING
-     00008A0A  _fill                              STRING
-     00008A0A  fill                               STRING
-     00008A19  _strcpy                            STRING
-     00008A19  strcpy                             STRING
-     00008A31  _memcpy                            STRING
-     00008A31  memcpy                             STRING
-     00008A78  _conio_init                        CONIO
-     00008A78  conio_init                         CONIO
-     00008A80  set_dev                            CONIO
-     00008A86  get_dev                            CONIO
-     00008A8A  _putchar                           CONIO
-     00008A8A  putchar                            CONIO
-     00008A9D  _getchar                           CONIO
-     00008A9D  getchar                            CONIO
-     00008AA7  _puts                              CONIO
-     00008AA7  puts                               CONIO
-     00008AC1  _gets                              CONIO
-     00008AC1  gets                               CONIO
-     00008B6A  _is_digit                          CONIO
-     00008B6A  is_digit                           CONIO
-     00008B76  _is_hex                            CONIO
-     00008B76  is_hex                             CONIO
-     00008B8A  _printf                            CONIO
+     000084E5  number                             TEST_HELP
+     000084EC  next_word                          TEST_HELP
+     00008517  to_lower                           TEST_HELP
+     000085DF  test_main                          STRING_TEST
+     00008865  _format                            STRING
+     00008865  format                             STRING
+     00008937  _i24toa                            STRING
+     00008937  i24toa                             STRING
+     0000899F  _atoi24                            STRING
+     0000899F  atoi24                             STRING
+     00008A23  _strlen                            STRING
+     00008A23  strlen                             STRING
+     00008A2F  _fill                              STRING
+     00008A2F  fill                               STRING
+     00008A3E  _strcpy                            STRING
+     00008A3E  strcpy                             STRING
+     00008A56  _memcpy                            STRING
+     00008A56  memcpy                             STRING
+     00008A97  add24                              MATH24
+     00008AA4  sub24                              MATH24
+     00008AB1  mul24_8u                           MATH24
+     00008ADA  mul24u                             MATH24
+     00008B1E  mul24s                             MATH24
+     00008B51  div24_8u                           MATH24
+     00008B67  clz24                              MATH24
+     00008B83  div24u                             MATH24
+     00008C0F  div24s                             MATH24
+     00008C90  neg24                              MATH24
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
-Hexadecimal  [32-Bits]
-
-Area                                    Addr        Size        Decimal Bytes (Attributes)
---------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000F08 =        3848. bytes (REL,CON)
-
-      Value  Global                              Global Defined In Module
-      -----  --------------------------------   ------------------------
-     00008B8A  printf                             CONIO
-     00008CA4  _uart_init                         UART
-     00008CA4  uart_init                          UART
-     00008CF4  _uart_putc                         UART
-     00008CF4  uart_putc                          UART
-     00008D04  _uart_spaces                       UART
-     00008D04  uart_spaces                        UART
-     00008D18  _uart_puts                         UART
-     00008D18  uart_puts                          UART
-     00008D45  _uart_query                        UART
-     00008D45  uart_query                         UART
-     00008D55  _uart_getc                         UART
-     00008D55  uart_getc                          UART
-     00008D65  _uart_delete                       UART
-     00008D65  uart_delete                        UART
-     00008D87  add24                              MATH24
-     00008D94  sub24                              MATH24
-     00008DA1  mul24_8u                           MATH24
-     00008DCA  mul24u                             MATH24
-     00008E0E  mul24s                             MATH24
-     00008E41  div24_8u                           MATH24
-     00008E57  clz24                              MATH24
-     00008E73  div24u                             MATH24
-     00008EFF  div24s                             MATH24
-     00008F80  neg24                              MATH24
-ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 
 Files Linked                              [ module(s) ]
 
@@ -157,11 +116,9 @@ build/string_test.rel                     [ STRING_TEST ]
 Libraries Linked                          [ object file ]
 
 ../../lib/string.lib                      [ string.rel ]
-../../lib/conio.lib                       [ conio.rel ]
-../../lib/uart.lib                        [ uart.rel ]
 ../../lib/math24.lib                      [ math24.rel ]
 
-ASxxxx Linker V03.00 + NoICE + sdld,  page 8.
+ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
 
 User Base Address Definitions
 

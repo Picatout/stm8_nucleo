@@ -1253,562 +1253,620 @@ Hexadecimal [24-Bits]
                                             ; position relative to stack pointer 
                                             ; _argofs must be called before it.
                                             .macro _arg name ofs 
-                                     30     .list 
-                                     31 
-                                     32     .area DATA 
-      000000                         33 ptr.w: .blkw 1  ; used by format 
+                                            .include "../test_macros.inc" 
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of STM8_NUCLEO 
+                                        ;
+                                        ;     STM8_NUCLEO is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     STM8_NUCLEO is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;--------------------------------------
+                                        ;--------------------------------------
+                                        ; set of macros to use with test_help
+                                        ;--------------------------------------
+                                        
+                                            .macro _dbg 
+                                        
+                                            .macro _nodbg
+                                        
+                                 
+                                 
+                                 
+                                 
+                                            .macro _dbg_save_regs 
+                                        
+                                            .macro _dbg_restore_regs 
+                                        
+                                            .macro _dbg_getc 
+                                        
+                                            .macro _dbg_putc 
+                                        
+                                            .macro _dbg_puts 
+                                        
+                                            .macro _dbg_prti24 
+                                        
+                                            .macro _dbg_prt_regs
+                                        
+                                            .macro _dbg_peek addr 
+                                        
+                                        
+                                     31     .list 
+                                     32 
+      000000                         33 _dbg 
+                           000001     1     DEBUG=1
                                      34 
+                                     35     .area DATA 
+                           000001    36 .if DEBUG 
+      000000                         37 nearptr:: .blkw 1
+                           000000    38 .else     
+                                     39 nearptr: .blkw 1  ; used by format 
+                                     40 .endif 
+                                     41 
+                                     42     .area CODE 
+      000000 53 54 52 49 4E 47 00    43 .asciz "STRING"
+                                     44 
+                                     45 ;--------------------------------
+                                     46 ; name: format
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
 Hexadecimal [24-Bits]
 
 
 
-                                     35     .area CODE 
-      000000 53 54 52 49 4E 47 00    36 .asciz "STRING"
-                                     37 
-                                     38 ;--------------------------------
-                                     39 ; name: format
-                                     40 ; A simplified version of 'C' <sprintf>
-                                     41 ; input:
-                                     42 ;   STR     *string buffer in which format is done
-                                     43 ;   FMT     *string template
-                                     44 ;   VARARG  variable length list of arguments 
-                                     45 ; output:
-                                     46 ;   X       char* to formatted string 
-                                     47 ;
-                                     48 ; Detail:
-                                     49 ;   template is a .asciz string with embedded <%c>
-                                     50 ;   to indicate parameters positision. First <%c> 
-                                     51 ;   from left correspond to first paramter.
-                                     52 ;   'c' is one of these: 
-                                     53 ;      'a' print a count of SPACE for alignement purpose     
-                                     54 ;      'c' ASCII character
-                                     55 ;      'd' 24 bits integer (int24_t) displayed in decimal
-                                     56 ;      's' string (.asciz) parameter as pointer (16 bits)
-                                     57 ;      'x' 24 bits integer (int24_t) displayed in hexadecimal 
-                                     58 ;      others values of 'c' are printed as is.
-                                     59 ;--------------------------------
-                           00001A    60     VSIZE=26 ; local variables size 
-      000007                         61     _argofs VSIZE 
+                                     47 ; A simplified version of 'C' <sprintf>
+                                     48 ; input:
+                                     49 ;   STR     *string buffer in which format is done
+                                     50 ;   FMT     *string template
+                                     51 ;   VARARG  variable length list of arguments 
+                                     52 ; output:
+                                     53 ;   X       char* to formatted string 
+                                     54 ;
+                                     55 ; Detail:
+                                     56 ;   template is a .asciz string with embedded <%c>
+                                     57 ;   to indicate parameters positision. First <%c> 
+                                     58 ;   from left correspond to first paramter.
+                                     59 ;   'c' is one of these: 
+                                     60 ;      'a' print a count of SPACE for alignement purpose     
+                                     61 ;      'c' ASCII character
+                                     62 ;      'd' 24 bits integer (int24_t) displayed in decimal
+                                     63 ;      's' string (.asciz) parameter as pointer (16 bits)
+                                     64 ;      'x' 24 bits integer (int24_t) displayed in hexadecimal 
+                                     65 ;      others values of 'c' are printed as is.
+                                     66 ;--------------------------------
+                           00001A    67     VSIZE=26 ; local variables size 
+      000007                         68     _argofs VSIZE 
                            00001C     1     ARG_OFS=2+VSIZE 
-      000007                         62     _arg STR 1  ; size word
+      000007                         69     _arg STR 1  ; size word
                            00001D     1     STR=ARG_OFS+1 
-      000007                         63     _arg FMT 3  ; size word
+      000007                         70     _arg FMT 3  ; size word
                            00001F     1     FMT=ARG_OFS+3 
-      000007                         64     _arg VARARGS 5 ; size variable 
+      000007                         71     _arg VARARGS 5 ; size variable 
                            000021     1     VARARGS=ARG_OFS+5 
-                                     65 ; local variables
-                           000001    66     DEST=1 ; 2 bytes 
-                           000003    67     SRC=3  ; 2 bytes 
-                           000001    68     ACC24=1 ; size 3 bytes
-                           000004    69     BASE=4  ; size 1 
-                           000005    70     BUFFER=5  ; size 2
-                           000007    71     XSAVE=7  ; size 2 
-                           000009    72     YSAVE=9  ; size 2 
-                           00000B    73     I24BUF=11 ; size 16 
-      000007                         74 _format::
-      000007                         75 format::
-      000007                         76     _vars VSIZE 
+                                     72 ; local variables
+                           000001    73     DEST=1 ; 2 bytes overlay ACC24 
+                           000003    74     SRC=3  ; 2 bytes  overlay ACC24 and BASE 
+                           000001    75     ACC24=1 ; size 3 bytes
+                           000004    76     BASE=4  ; size 1 
+                           000005    77     BUFFER=5  ; size 2
+                           000007    78     XSAVE=7  ; size 2 
+                           000009    79     YSAVE=9  ; size 2 
+                           00000B    80     I24BUF=11 ; size 16 
+      000007                         81 _format::
+      000007                         82 format::
+      000007                         83     _vars VSIZE 
       000007 52 1A            [ 2]    1     sub sp,#VSIZE 
-                                     77 ; variable ptr.w use as char* string 
-      000009 1E 1D            [ 2]   78     ldw x,(STR,sp)
-      00000B CF 00 00         [ 2]   79     ldw ptr.w,x
-                                     80 ; X used as varargs pointer     
-      00000E 96               [ 1]   81     ldw x,sp 
-      00000F 1C 00 21         [ 2]   82     addw x,#VARARGS 
-                                     83 ; Y used as FMT pointer
-      000012 16 1F            [ 2]   84     ldw y,(FMT,sp)
+                                     84 ; variable nearptr use as char* string 
+      000009 1E 1D            [ 2]   85     ldw x,(STR,sp)
+      00000B CF 00 00         [ 2]   86     ldw nearptr,x
+                                     87 ; X used as varargs pointer     
+      00000E 96               [ 1]   88     ldw x,sp 
+      00000F 1C 00 21         [ 2]   89     addw x,#VARARGS 
+                                     90 ; Y used as FMT pointer
+      000012 16 1F            [ 2]   91     ldw y,(FMT,sp)
+      000014                         92 format_loop:
+      000014 90 F6            [ 1]   93     ld a,(y)
+      000016 26 03            [ 1]   94     jrne 1$
+      000018 CC 00 D4         [ 2]   95     jp format_exit
+      00001B 90 5C            [ 1]   96 1$: incw y 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
 Hexadecimal [24-Bits]
 
 
 
-      000014                         85 format_loop:    
-      000014 90 F6            [ 1]   86     ld a,(y)
-      000016 26 03            [ 1]   87     jrne 1$
-      000018 CC 00 D2         [ 2]   88     jp format_exit
-      00001B 90 5C            [ 1]   89 1$: incw y 
-      00001D A1 25            [ 1]   90     cp a,#'%
-      00001F 27 10            [ 1]   91     jreq percent 
-      000021                         92 store_char:     
-      000021 72 C7 00 00      [ 4]   93     ld [ptr.w],a 
-      000025 72 5C 00 01      [ 1]   94     inc ptr.w+1 
-      000029 26 E9            [ 1]   95     jrne format_loop 
-      00002B 72 5C 00 00      [ 1]   96     inc ptr.w 
-      00002F 20 E3            [ 2]   97     jra format_loop  
-      000031                         98 percent:
-      000031 90 F6            [ 1]   99     ld a,(y)
-      000033 26 03            [ 1]  100     jrne 1$
-      000035 CC 00 D2         [ 2]  101     jp format_exit 
-      000038 90 5C            [ 1]  102 1$: incw y
-      00003A A1 61            [ 1]  103     cp a,#'a' 
-      00003C 26 15            [ 1]  104     jrne 2$
-                                    105 ; *** space fill ***
-      00003E F6               [ 1]  106     ld a,(x)
-      00003F 5C               [ 1]  107     incw x 
-      000040 1F 07            [ 2]  108     ldw (XSAVE,sp),x 
-      000042 88               [ 1]  109     push a 
-      000043 4B 20            [ 1]  110     push #SPACE 
-      000045 CE 00 00         [ 2]  111     ldw x,ptr.w 
-      000048 89               [ 2]  112     pushw x 
-      000049 CD 01 CD         [ 4]  113     call fill
-      00004C CF 00 00         [ 2]  114     ldw ptr.w,x 
-      00004F                        115     _drop 4   
+      00001D A1 25            [ 1]   97     cp a,#'%
+      00001F 27 10            [ 1]   98     jreq percent 
+      000021                         99 store_char:     
+      000021 72 C7 00 00      [ 4]  100     ld [nearptr],a 
+      000025 72 5C 00 01      [ 1]  101     inc nearptr+1 
+      000029 26 E9            [ 1]  102     jrne format_loop 
+      00002B 72 5C 00 00      [ 1]  103     inc nearptr 
+      00002F 20 E3            [ 2]  104     jra format_loop  
+      000031                        105 percent:
+      000031 90 F6            [ 1]  106     ld a,(y)
+      000033 26 03            [ 1]  107     jrne 1$
+      000035 CC 00 D4         [ 2]  108     jp format_exit 
+      000038 90 5C            [ 1]  109 1$: incw y
+      00003A A1 61            [ 1]  110     cp a,#'a' 
+      00003C 26 17            [ 1]  111     jrne 2$
+                                    112 ; *** space fill ***
+      00003E F6               [ 1]  113     ld a,(x)
+      00003F 5C               [ 1]  114     incw x 
+      000040 1F 07            [ 2]  115     ldw (XSAVE,sp),x 
+      000042 88               [ 1]  116     push a 
+      000043 4B 20            [ 1]  117     push #SPACE 
+      000045 CE 00 00         [ 2]  118     ldw x,nearptr 
+      000048 89               [ 2]  119     pushw x 
+      000049 CD 01 D1         [ 4]  120     call fill
+      00004C CF 00 00         [ 2]  121     ldw nearptr,x 
+      00004F                        122     _drop 4  
       00004F 5B 04            [ 2]    1     addw sp,#4 
-      000051 20 C1            [ 2]  116     jra format_loop 
-      000053                        117 2$:
-      000053 A1 63            [ 1]  118     cp a,#'c'
-      000055 26 04            [ 1]  119     jrne 4$
-                                    120 ; **** ASCII character ***
-      000057 F6               [ 1]  121     ld a,(x)
-      000058 5C               [ 1]  122     incw x 
-      000059 20 C6            [ 2]  123     jra store_char          
-      00005B A1 64            [ 1]  124 4$: cp a,#'d 
-      00005D 26 3B            [ 1]  125     jrne 6$
-                                    126 ; *** int24_t in decimal *** 
-      00005F A6 0A            [ 1]  127     ld a,#10 
-      000061 6B 04            [ 1]  128 5$: ld (BASE,sp),a    
-      000063 F6               [ 1]  129     ld a,(x)
-      000064 5C               [ 1]  130     incw x 
-      000065 6B 01            [ 1]  131     ld (ACC24,sp),a
-      000067 F6               [ 1]  132     ld a,(x)
-      000068 5C               [ 1]  133     incw x 
-      000069 6B 02            [ 1]  134     ld (ACC24+1,sp),a 
-      00006B F6               [ 1]  135     ld a,(x)
-      00006C 5C               [ 1]  136     incw x 
-      00006D 6B 01            [ 1]  137     ld (ACC24,sp),a   
-      00006F 1F 07            [ 2]  138     ldw (XSAVE,sp),x 
+      000051 1E 07            [ 2]  123     ldw x,(XSAVE,sp) 
+      000053 20 BF            [ 2]  124     jra format_loop 
+      000055                        125 2$:
+      000055 A1 63            [ 1]  126     cp a,#'c'
+      000057 26 04            [ 1]  127     jrne 4$
+                                    128 ; **** ASCII character ***
+      000059 F6               [ 1]  129     ld a,(x)
+      00005A 5C               [ 1]  130     incw x 
+      00005B 20 C4            [ 2]  131     jra store_char          
+      00005D A1 64            [ 1]  132 4$: cp a,#'d 
+      00005F 26 3B            [ 1]  133     jrne 6$
+                                    134 ; *** int24_t in decimal *** 
+      000061 A6 0A            [ 1]  135     ld a,#10 
+      000063 6B 04            [ 1]  136 5$: ld (BASE,sp),a
+      000065 F6               [ 1]  137     ld a,(x)
+      000066 5C               [ 1]  138     incw x 
+      000067 6B 01            [ 1]  139     ld (ACC24,sp),a
+      000069 F6               [ 1]  140     ld a,(x)
+      00006A 5C               [ 1]  141     incw x 
+      00006B 6B 02            [ 1]  142     ld (ACC24+1,sp),a 
+      00006D F6               [ 1]  143     ld a,(x)
+      00006E 5C               [ 1]  144     incw x 
+      00006F 6B 03            [ 1]  145     ld (ACC24+2,sp),a   
+      000071 1F 07            [ 2]  146     ldw (XSAVE,sp),x 
+      000073 17 09            [ 2]  147     ldw (YSAVE,sp),y 
+      000075 96               [ 1]  148     ldw x,sp 
+      000076 1C 00 0B         [ 2]  149     addw x,#I24BUF 
+      000079 1F 05            [ 2]  150     ldw (BUFFER,sp),x 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-      000071 17 09            [ 2]  139     ldw (YSAVE,sp),y 
-      000073 96               [ 1]  140     ldw x,sp 
-      000074 1C 00 0B         [ 2]  141     addw x,#I24BUF 
-      000077 1F 05            [ 2]  142     ldw (BUFFER,sp),x 
-      000079 CD 00 D7         [ 4]  143     call i24toa
-      00007C 1F 03            [ 2]  144     ldw (SRC,sp),x 
-      00007E CE 00 00         [ 2]  145     ldw x,ptr.w 
-      000081 1F 01            [ 2]  146     ldw (DEST,sp),x 
-      000083 CD 01 DC         [ 4]  147     call strcpy 
-      000086 1E 1D            [ 2]  148     ldw x,(STR,sp)
-      000088 1F 01            [ 2]  149     ldw (DEST,sp),x 
-      00008A CD 01 C1         [ 4]  150     call strlen 
-      00008D 72 FB 1D         [ 2]  151     addw x,(STR,sp)
-      000090 CF 00 00         [ 2]  152     ldw ptr.w,x  
-      000093 1E 07            [ 2]  153     ldw x,(XSAVE,sp)
-      000095 16 09            [ 2]  154     ldw y,(YSAVE,sp)
-      000097 CC 00 14         [ 2]  155     jp format_loop
-      00009A A1 78            [ 1]  156 6$: cp a,#'x
-      00009C 26 04            [ 1]  157     jrne 7$ 
-                                    158 ; *** int24_t in hexadecimal     
-      00009E A6 10            [ 1]  159     ld a,#16
-      0000A0 20 BF            [ 2]  160     jra 5$
-      0000A2 A1 73            [ 1]  161 7$: cp a,#'s 
-      0000A4 27 03            [ 1]  162     jreq 8$
-      0000A6 CC 00 21         [ 2]  163     jp store_char
-                                    164 ; *** string type parameter *** 
-      0000A9 17 09            [ 2]  165 8$: ldw (YSAVE,sp),y 
-      0000AB 90 93            [ 1]  166     ldw y,x 
-      0000AD 1C 00 02         [ 2]  167     addw x,#2 
-      0000B0 1F 07            [ 2]  168     ldw (XSAVE,sp),x 
-      0000B2 90 FE            [ 2]  169     ldw y,(y)
-      0000B4 17 03            [ 2]  170     ldw (SRC,sp),y 
-      0000B6 CE 00 00         [ 2]  171     ldw x,ptr.w 
-      0000B9 1F 01            [ 2]  172     ldw (DEST,sp),x 
-      0000BB CD 01 DC         [ 4]  173     call strcpy
-      0000BE 1E 1D            [ 2]  174     ldw x,(STR,sp)
-      0000C0 1F 01            [ 2]  175     ldw (DEST,sp),x 
-      0000C2 CD 01 C1         [ 4]  176     call strlen 
-      0000C5 72 FB 1D         [ 2]  177     addw x,(STR,sp)
-      0000C8 CF 00 00         [ 2]  178     ldw ptr.w,x 
-      0000CB 1E 07            [ 2]  179     ldw x,(XSAVE,sp)
-      0000CD 16 09            [ 2]  180     ldw y,(YSAVE,sp)
-      0000CF CC 00 14         [ 2]  181     jp format_loop 
-      0000D2                        182 format_exit:
-      0000D2 1E 1D            [ 2]  183     ldw x,(STR,sp)
-      0000D4                        184     _drop VSIZE 
-      0000D4 5B 1A            [ 2]    1     addw sp,#VSIZE 
-      0000D6 81               [ 4]  185     ret 
-                                    186 
-                                    187 ;------------------------------------
-                                    188 ; name: i24toa 
-                                    189 ; convert integer to string
-                                    190 
-                                    191 ; input:
-                                    192 ;   ACC24   integer to convert
+      00007B CD 00 D9         [ 4]  151     call i24toa
+      00007E 1F 03            [ 2]  152     ldw (SRC,sp),x 
+      000080 CE 00 00         [ 2]  153     ldw x,nearptr 
+      000083 1F 01            [ 2]  154     ldw (DEST,sp),x 
+      000085 CD 01 E0         [ 4]  155     call strcpy 
+      000088 1E 1D            [ 2]  156     ldw x,(STR,sp)
+      00008A 1F 01            [ 2]  157     ldw (DEST,sp),x 
+      00008C CD 01 C5         [ 4]  158     call strlen 
+      00008F 72 FB 1D         [ 2]  159     addw x,(STR,sp)
+      000092 CF 00 00         [ 2]  160     ldw nearptr,x  
+      000095 1E 07            [ 2]  161     ldw x,(XSAVE,sp)
+      000097 16 09            [ 2]  162     ldw y,(YSAVE,sp)
+      000099 CC 00 14         [ 2]  163     jp format_loop
+      00009C A1 78            [ 1]  164 6$: cp a,#'x
+      00009E 26 04            [ 1]  165     jrne 7$ 
+                                    166 ; *** int24_t in hexadecimal     
+      0000A0 A6 10            [ 1]  167     ld a,#16
+      0000A2 20 BF            [ 2]  168     jra 5$
+      0000A4 A1 73            [ 1]  169 7$: cp a,#'s 
+      0000A6 27 03            [ 1]  170     jreq 8$
+      0000A8 CC 00 21         [ 2]  171     jp store_char
+                                    172 ; *** string type parameter *** 
+      0000AB 17 09            [ 2]  173 8$: ldw (YSAVE,sp),y 
+      0000AD 90 93            [ 1]  174     ldw y,x 
+      0000AF 1C 00 02         [ 2]  175     addw x,#2 
+      0000B2 1F 07            [ 2]  176     ldw (XSAVE,sp),x 
+      0000B4 90 FE            [ 2]  177     ldw y,(y)
+      0000B6 17 03            [ 2]  178     ldw (SRC,sp),y 
+      0000B8 CE 00 00         [ 2]  179     ldw x,nearptr 
+      0000BB 1F 01            [ 2]  180     ldw (DEST,sp),x 
+      0000BD CD 01 E0         [ 4]  181     call strcpy
+      0000C0 1E 1D            [ 2]  182     ldw x,(STR,sp)
+      0000C2 1F 01            [ 2]  183     ldw (DEST,sp),x 
+      0000C4 CD 01 C5         [ 4]  184     call strlen 
+      0000C7 72 FB 1D         [ 2]  185     addw x,(STR,sp)
+      0000CA CF 00 00         [ 2]  186     ldw nearptr,x 
+      0000CD 1E 07            [ 2]  187     ldw x,(XSAVE,sp)
+      0000CF 16 09            [ 2]  188     ldw y,(YSAVE,sp)
+      0000D1 CC 00 14         [ 2]  189     jp format_loop 
+      0000D4                        190 format_exit:
+      0000D4 1E 1D            [ 2]  191     ldw x,(STR,sp)
+      0000D6                        192     _drop VSIZE 
+      0000D6 5B 1A            [ 2]    1     addw sp,#VSIZE 
+      0000D8 81               [ 4]  193     ret 
+                                    194 
+                                    195 ;------------------------------------
+                                    196 ; name: i24toa 
+                                    197 ; convert integer to string
+                                    198 
+                                    199 ; input:
+                                    200 ;   ACC24   integer to convert
+                                    201 ;   BASE    numerical base 
+                                    202 ;	BUFFER	char* buffer to receive string.
+                                    203 ; output:
+                                    204 ;   X  		char* numerical string 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 
 
-                                    193 ;   BASE    numerical base 
-                                    194 ;	BUFFER	char* buffer to receive string.
-                                    195 ; output:
-                                    196 ;   X  		char* numerical string 
-                                    197 ;------------------------------------
-                           000007   198 	VSIZE=7
-      0000D7                        199     _argofs VSIZE  
+                                    205 ;------------------------------------
+                           000007   206 	VSIZE=7
+      0000D9                        207     _argofs VSIZE  
                            000009     1     ARG_OFS=2+VSIZE 
-      0000D7                        200     _arg ACC24 1 
+      0000D9                        208     _arg ACC24 1 
                            00000A     1     ACC24=ARG_OFS+1 
-      0000D7                        201     _arg BASE 4 
+      0000D9                        209     _arg BASE 4 
                            00000D     1     BASE=ARG_OFS+4 
-      0000D7                        202     _arg BUFFER 5
+      0000D9                        210     _arg BUFFER 5
                            00000E     1     BUFFER=ARG_OFS+5 
-                                    203 ; variables locales
-                           000001   204     DIVIDEND=1; 3 bytes
-                           000004   205     DIVISOR=4 ; 1      
-                           000005   206     SIGN=5  ; 1
-                           000006   207     XSAVE=6 ; 2 
-      0000D7                        208 _i24toa::
-      0000D7                        209 i24toa::
-      0000D7                        210 	_vars VSIZE 
-      0000D7 52 07            [ 2]    1     sub sp,#VSIZE 
-      0000D9 0F 05            [ 1]  211 	clr (SIGN,sp)    ; sign
-      0000DB A1 0A            [ 1]  212 	cp a,#10
-      0000DD 26 18            [ 1]  213 	jrne 1$
-                                    214 	; base 10 string display with negative sign if bit 23==1
-      0000DF A6 80            [ 1]  215 	ld a,#0x80
-      0000E1 15 0A            [ 1]  216     bcp a,(ACC24,sp)
-      0000E3 27 12            [ 1]  217     jreq 1$ 
-      0000E5 03 05            [ 1]  218 	cpl (SIGN,sp)
-      0000E7 03 0A            [ 1]  219 	cpl (ACC24,sp)
-      0000E9 03 0B            [ 1]  220     cpl (ACC24+1,sp)
-      0000EB 03 0C            [ 1]  221     cpl (ACC24+2,sp)
-      0000ED 0C 0C            [ 1]  222     inc (ACC24+2,sp)
-      0000EF 26 06            [ 1]  223     jrne 1$ 
-      0000F1 0C 0B            [ 1]  224     inc (ACC24+1,sp)
-      0000F3 26 02            [ 1]  225     jrne 1$ 
-      0000F5 0C 0A            [ 1]  226     inc (ACC24,sp)
-      0000F7                        227 1$:
-      0000F7 1E 0A            [ 2]  228     ldw x,(ACC24,sp)
-      0000F9 7B 0C            [ 1]  229     ld a,(ACC24+2,sp)
-      0000FB 1F 01            [ 2]  230     ldw (DIVIDEND,sp),x 
-      0000FD 6B 03            [ 1]  231     ld (DIVIDEND+2,sp),a 
-                                    232 ; initialize string pointer 
-      0000FF 1E 0E            [ 2]  233 	ldw x,(BUFFER,sp)
-      000101 1C 00 0C         [ 2]  234     addw x,#12
-      000104 7F               [ 1]  235 	clr (x)
-      000105                        236 itoa_loop:
-      000105 1F 06            [ 2]  237     ldw (XSAVE,sp),x 
-      000107 7B 0D            [ 1]  238     ld a,(BASE,sp)
-      000109 6B 04            [ 1]  239     ld (DIVISOR,sp),a 
-      00010B CD 00 00         [ 4]  240     call div24_8u
-      00010E AB 30            [ 1]  241     add a,#'0  ; remainder of division
-      000110 A1 3A            [ 1]  242     cp a,#'9+1
+                                    211 ; variables locales
+                           000001   212     DIVIDEND=1; 3 bytes
+                           000004   213     DIVISOR=4 ; 1      
+                           000005   214     SIGN=5  ; 1
+                           000006   215     XSAVE=6 ; 2 
+      0000D9                        216 _i24toa::
+      0000D9                        217 i24toa::
+      0000D9                        218 	_vars VSIZE 
+      0000D9 52 07            [ 2]    1     sub sp,#VSIZE 
+      0000DB 0F 05            [ 1]  219 	clr (SIGN,sp)    ; sign
+      0000DD A6 0A            [ 1]  220 	ld a,#10
+      0000DF 11 0D            [ 1]  221     cp a,(BASE,sp)
+      0000E1 26 18            [ 1]  222 	jrne 1$
+                                    223 	; base 10 string display with negative sign if bit 23==1
+      0000E3 A6 80            [ 1]  224 	ld a,#0x80
+      0000E5 15 0A            [ 1]  225     bcp a,(ACC24,sp)
+      0000E7 27 12            [ 1]  226     jreq 1$ 
+      0000E9 03 05            [ 1]  227 	cpl (SIGN,sp)
+      0000EB 03 0A            [ 1]  228 	cpl (ACC24,sp)
+      0000ED 03 0B            [ 1]  229     cpl (ACC24+1,sp)
+      0000EF 03 0C            [ 1]  230     cpl (ACC24+2,sp)
+      0000F1 0C 0C            [ 1]  231     inc (ACC24+2,sp)
+      0000F3 26 06            [ 1]  232     jrne 1$ 
+      0000F5 0C 0B            [ 1]  233     inc (ACC24+1,sp)
+      0000F7 26 02            [ 1]  234     jrne 1$ 
+      0000F9 0C 0A            [ 1]  235     inc (ACC24,sp)
+      0000FB                        236 1$:
+      0000FB 1E 0A            [ 2]  237     ldw x,(ACC24,sp)
+      0000FD 7B 0C            [ 1]  238     ld a,(ACC24+2,sp)
+      0000FF 1F 01            [ 2]  239     ldw (DIVIDEND,sp),x 
+      000101 6B 03            [ 1]  240     ld (DIVIDEND+2,sp),a 
+                                    241 ; initialize string pointer 
+      000103 1E 0E            [ 2]  242 	ldw x,(BUFFER,sp)
+      000105 1C 00 0C         [ 2]  243     addw x,#12
+      000108 7F               [ 1]  244 	clr (x)
+      000109                        245 itoa_loop:
+      000109 1F 06            [ 2]  246     ldw (XSAVE,sp),x 
+      00010B 7B 0D            [ 1]  247     ld a,(BASE,sp)
+      00010D 6B 04            [ 1]  248     ld (DIVISOR,sp),a 
+      00010F CD 00 00         [ 4]  249     call div24_8u
+      000112 AB 30            [ 1]  250     add a,#'0  ; remainder of division
+      000114 A1 3A            [ 1]  251     cp a,#'9+1
+      000116 2B 02            [ 1]  252     jrmi 2$
+      000118 AB 07            [ 1]  253     add a,#7 
+      00011A 1E 06            [ 2]  254 2$: ldw x,(XSAVE,sp)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 
 
-      000112 2B 02            [ 1]  243     jrmi 2$
-      000114 AB 07            [ 1]  244     add a,#7 
-      000116 1E 06            [ 2]  245 2$: ldw x,(XSAVE,sp)
-      000118 5A               [ 2]  246     decw x
-      000119 F7               [ 1]  247     ld (x),a
-      00011A 7B 01            [ 1]  248 	ld a,(DIVIDEND,sp)
-      00011C 1A 02            [ 1]  249 	or a,(DIVIDEND+1,sp)
-      00011E 1A 03            [ 1]  250 	or a,(DIVIDEND+2,sp)
-      000120 26 E3            [ 1]  251     jrne itoa_loop
-                                    252 	;conversion done, next add "0x" or '-' as required
-      000122 7B 0D            [ 1]  253 	ld a,(BASE,sp)
-      000124 A1 10            [ 1]  254 	cp a,#16
-      000126 26 0A            [ 1]  255 	jrne 10$
-      000128 A6 78            [ 1]  256     ld a,#'x 
-      00012A 5A               [ 2]  257     decw x 
-      00012B F7               [ 1]  258     ld (x),a 
-      00012C A6 30            [ 1]  259     ld a,#'0 
-      00012E 5A               [ 2]  260     decw x 
-      00012F F7               [ 1]  261     ld (x),a 
-      000130 20 08            [ 2]  262     jra 11$ 
-      000132                        263 10$:    
-      000132 7B 05            [ 1]  264     ld a,(SIGN,sp)
-      000134 27 04            [ 1]  265     jreq 11$
-      000136 5A               [ 2]  266     decw x
-      000137 A6 2D            [ 1]  267     ld a,#'-
-      000139 F7               [ 1]  268     ld (x),a
-      00013A                        269 11$:
-      00013A                        270 	_drop VSIZE
-      00013A 5B 07            [ 2]    1     addw sp,#VSIZE 
-      00013C 81               [ 4]  271     ret 
-                                    272 
-                                    273 
-                                    274 ;------------------------------------
-                                    275 ; name: atoi24
-                                    276 ; convert string in 24 bits integer
-                                    277 ; input:
-                                    278 ;    BUFFER		string to convert 
-                                    279 ; output:
-                                    280 ;    X:A      int24_t
-                                    281 ;------------------------------------
-                           000009   282     VSIZE=9
-      00013D                        283     _argofs VSIZE
+      00011C 5A               [ 2]  255     decw x
+      00011D F7               [ 1]  256     ld (x),a
+      00011E 7B 01            [ 1]  257 	ld a,(DIVIDEND,sp)
+      000120 1A 02            [ 1]  258 	or a,(DIVIDEND+1,sp)
+      000122 1A 03            [ 1]  259 	or a,(DIVIDEND+2,sp)
+      000124 26 E3            [ 1]  260     jrne itoa_loop
+                                    261 	;conversion done, next add "0x" or '-' as required
+      000126 7B 0D            [ 1]  262 	ld a,(BASE,sp)
+      000128 A1 10            [ 1]  263 	cp a,#16
+      00012A 26 0A            [ 1]  264 	jrne 10$
+      00012C A6 78            [ 1]  265     ld a,#'x 
+      00012E 5A               [ 2]  266     decw x 
+      00012F F7               [ 1]  267     ld (x),a 
+      000130 A6 30            [ 1]  268     ld a,#'0 
+      000132 5A               [ 2]  269     decw x 
+      000133 F7               [ 1]  270     ld (x),a 
+      000134 20 08            [ 2]  271     jra 11$ 
+      000136                        272 10$:    
+      000136 7B 05            [ 1]  273     ld a,(SIGN,sp)
+      000138 27 04            [ 1]  274     jreq 11$
+      00013A 5A               [ 2]  275     decw x
+      00013B A6 2D            [ 1]  276     ld a,#'-
+      00013D F7               [ 1]  277     ld (x),a
+      00013E                        278 11$:
+      00013E                        279 	_drop VSIZE
+      00013E 5B 07            [ 2]    1     addw sp,#VSIZE 
+      000140 81               [ 4]  280     ret 
+                                    281 
+                                    282 
+                                    283 ;------------------------------------
+                                    284 ; name: atoi24
+                                    285 ; convert string in 24 bits integer
+                                    286 ; input:
+                                    287 ;    BUFFER		string to convert 
+                                    288 ; output:
+                                    289 ;    X:A      int24_t
+                                    290 ;------------------------------------
+                           000009   291     VSIZE=9
+      000141                        292     _argofs VSIZE
                            00000B     1     ARG_OFS=2+VSIZE 
-      00013D                        284     _arg BUFFER 1  
+      000141                        293     _arg BUFFER 1  
                            00000C     1     BUFFER=ARG_OFS+1 
-                                    285 ; local variables
-                           000001   286     ACC24=1 ; 3 bytes 
-                           000004   287     MULT=4 ; 1 byte 
-                           000005   288 	SIGN=5 ; 1 byte, 
-                           000006   289 	BASE=6 ; 1 byte, numeric base used in conversion
-                           000007   290     TEMP=7 ; 1 byte 
-                           000008   291     XSAVE=8 ; 2 bytes  
-      00013D                        292 _atoi24::
-      00013D                        293 atoi24::
-      00013D                        294 	_vars VSIZE 
+                                    294 ; local variables
+                           000001   295     ACC24=1 ; 3 bytes 
+                           000004   296     MULT=4 ; 1 byte 
+                           000005   297 	SIGN=5 ; 1 byte, 
+                           000006   298 	BASE=6 ; 1 byte, numeric base used in conversion
+                           000007   299     TEMP=7 ; 1 byte 
+                           000008   300     XSAVE=8 ; 2 bytes  
+      000141                        301 _atoi24::
+      000141                        302 atoi24::
+      000141                        303 	_vars VSIZE 
+      000141 52 09            [ 2]    1     sub sp,#VSIZE 
+      000143 5F               [ 1]  304     clrw x 
+      000144 1F 01            [ 2]  305     ldw (ACC24,sp),x
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 
 
-      00013D 52 09            [ 2]    1     sub sp,#VSIZE 
-      00013F 5F               [ 1]  295     clrw x 
-      000140 1F 01            [ 2]  296     ldw (ACC24,sp),x
-      000142 0F 03            [ 1]  297     clr (ACC24+2,sp)
-      000144 1E 0C            [ 2]  298     ldw x,(BUFFER,sp)
-      000146 0F 05            [ 1]  299 	clr (SIGN,sp)
-      000148 F6               [ 1]  300     ld a,(x)
-      000149 27 6F            [ 1]  301 	jreq atoi_exit
-      00014B A6 0A            [ 1]  302 	ld a,#10
-      00014D 6B 06            [ 1]  303 	ld (BASE,sp),a ; default base decimal
-      00014F F6               [ 1]  304 	ld a,(x)
-      000150 A1 2D            [ 1]  305 	cp a,#'-
-      000152 26 04            [ 1]  306 	jrne 1$
-      000154 03 05            [ 1]  307 	cpl (SIGN,sp)
-      000156 20 13            [ 2]  308 	jra 2$
-      000158 A1 30            [ 1]  309 1$: cp a,#'0
-      00015A 26 10            [ 1]  310 	jrne 3$
-      00015C E6 01            [ 1]  311     ld a,(1,x)
-      00015E A1 78            [ 1]  312     cp a,#'x
-      000160 26 0A            [ 1]  313     jrne 3$ 
-      000162 A1 58            [ 1]  314     cp a,#'X 
-      000164 26 06            [ 1]  315     jrne 3$  
-      000166 A6 10            [ 1]  316 	ld a,#16
-      000168 6B 06            [ 1]  317 	ld (BASE,sp),a
-      00016A 5C               [ 1]  318     incw x 
-      00016B 5C               [ 1]  319 2$:	incw x  
-      00016C F6               [ 1]  320 3$:	ld a,(x)
-      00016D A1 61            [ 1]  321 	cp a,#'a
-      00016F 2B 02            [ 1]  322 	jrmi 4$
-      000171 A0 20            [ 1]  323 	sub a,#32
-      000173 A1 30            [ 1]  324 4$:	cp a,#'0
-      000175 2B 2F            [ 1]  325 	jrmi 9$
-      000177 A0 30            [ 1]  326 	sub a,#'0
-      000179 A1 0A            [ 1]  327 	cp a,#10
-      00017B 2B 06            [ 1]  328 	jrmi 5$
-      00017D A0 07            [ 1]  329 	sub a,#7
-      00017F 11 06            [ 1]  330 	cp a,(BASE,sp)
-      000181 2A 23            [ 1]  331 	jrpl 9$
-      000183 6B 07            [ 1]  332 5$:	ld (TEMP,sp),a
-      000185 7B 06            [ 1]  333 	ld a,(BASE,sp)
-      000187 6B 04            [ 1]  334     ld (MULT,sp),a 
-      000189 1F 08            [ 2]  335     ldw (XSAVE,sp),x 
-      00018B CD 00 00         [ 4]  336 	call mul24_8u
-      00018E 6B 03            [ 1]  337     ld (ACC24+2,sp),a 
-      000190 1F 01            [ 2]  338     ldw (ACC24,sp),x 
-      000192 7B 07            [ 1]  339     ld a,(TEMP,sp)
-      000194 1B 03            [ 1]  340 	add a,(ACC24+2,sp)
-      000196 6B 03            [ 1]  341 	ld (ACC24+2,sp),a
-      000198 4F               [ 1]  342 	clr a
-      000199 19 02            [ 1]  343 	adc a,(ACC24+1,sp)
-      00019B 6B 02            [ 1]  344 	ld (ACC24+1,sp),a
-      00019D 4F               [ 1]  345 	clr a
-      00019E 19 01            [ 1]  346 	adc a,(ACC24,sp)
-      0001A0 6B 01            [ 1]  347 	ld (ACC24,sp),a
-      0001A2 1E 08            [ 2]  348     ldw x,(XSAVE,sp)
+      000146 0F 03            [ 1]  306     clr (ACC24+2,sp)
+      000148 1E 0C            [ 2]  307     ldw x,(BUFFER,sp)
+      00014A 0F 05            [ 1]  308 	clr (SIGN,sp)
+      00014C F6               [ 1]  309     ld a,(x)
+      00014D 27 6F            [ 1]  310 	jreq atoi_exit
+      00014F A6 0A            [ 1]  311 	ld a,#10
+      000151 6B 06            [ 1]  312 	ld (BASE,sp),a ; default base decimal
+      000153 F6               [ 1]  313 	ld a,(x)
+      000154 A1 2D            [ 1]  314 	cp a,#'-
+      000156 26 04            [ 1]  315 	jrne 1$
+      000158 03 05            [ 1]  316 	cpl (SIGN,sp)
+      00015A 20 13            [ 2]  317 	jra 2$
+      00015C A1 30            [ 1]  318 1$: cp a,#'0
+      00015E 26 10            [ 1]  319 	jrne 3$
+      000160 E6 01            [ 1]  320     ld a,(1,x)
+      000162 A1 78            [ 1]  321     cp a,#'x
+      000164 26 0A            [ 1]  322     jrne 3$ 
+      000166 A1 58            [ 1]  323     cp a,#'X 
+      000168 26 06            [ 1]  324     jrne 3$  
+      00016A A6 10            [ 1]  325 	ld a,#16
+      00016C 6B 06            [ 1]  326 	ld (BASE,sp),a
+      00016E 5C               [ 1]  327     incw x 
+      00016F 5C               [ 1]  328 2$:	incw x  
+      000170 F6               [ 1]  329 3$:	ld a,(x)
+      000171 A1 61            [ 1]  330 	cp a,#'a
+      000173 2B 02            [ 1]  331 	jrmi 4$
+      000175 A0 20            [ 1]  332 	sub a,#32
+      000177 A1 30            [ 1]  333 4$:	cp a,#'0
+      000179 2B 2F            [ 1]  334 	jrmi 9$
+      00017B A0 30            [ 1]  335 	sub a,#'0
+      00017D A1 0A            [ 1]  336 	cp a,#10
+      00017F 2B 06            [ 1]  337 	jrmi 5$
+      000181 A0 07            [ 1]  338 	sub a,#7
+      000183 11 06            [ 1]  339 	cp a,(BASE,sp)
+      000185 2A 23            [ 1]  340 	jrpl 9$
+      000187 6B 07            [ 1]  341 5$:	ld (TEMP,sp),a
+      000189 7B 06            [ 1]  342 	ld a,(BASE,sp)
+      00018B 6B 04            [ 1]  343     ld (MULT,sp),a 
+      00018D 1F 08            [ 2]  344     ldw (XSAVE,sp),x 
+      00018F CD 00 00         [ 4]  345 	call mul24_8u
+      000192 6B 03            [ 1]  346     ld (ACC24+2,sp),a 
+      000194 1F 01            [ 2]  347     ldw (ACC24,sp),x 
+      000196 7B 07            [ 1]  348     ld a,(TEMP,sp)
+      000198 1B 03            [ 1]  349 	add a,(ACC24+2,sp)
+      00019A 6B 03            [ 1]  350 	ld (ACC24+2,sp),a
+      00019C 4F               [ 1]  351 	clr a
+      00019D 19 02            [ 1]  352 	adc a,(ACC24+1,sp)
+      00019F 6B 02            [ 1]  353 	ld (ACC24+1,sp),a
+      0001A1 4F               [ 1]  354 	clr a
+      0001A2 19 01            [ 1]  355 	adc a,(ACC24,sp)
+      0001A4 6B 01            [ 1]  356 	ld (ACC24,sp),a
+      0001A6 1E 08            [ 2]  357     ldw x,(XSAVE,sp)
+      0001A8 20 C5            [ 2]  358 	jra 2$
+      0001AA 0D 05            [ 1]  359 9$:	tnz (SIGN,sp)
+      0001AC 27 10            [ 1]  360     jreq atoi_exit
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 
 
-      0001A4 20 C5            [ 2]  349 	jra 2$
-      0001A6 0D 05            [ 1]  350 9$:	tnz (SIGN,sp)
-      0001A8 27 10            [ 1]  351     jreq atoi_exit
-      0001AA 03 01            [ 1]  352     cpl (ACC24,sp) 
-      0001AC 03 02            [ 1]  353     cpl (ACC24+1,sp)
-      0001AE 03 03            [ 1]  354     cpl (ACC24+2,sp) 
-      0001B0 0C 03            [ 1]  355     inc (ACC24+2,sp)
-      0001B2 26 06            [ 1]  356     jrne atoi_exit 
-      0001B4 0C 02            [ 1]  357     inc (ACC24+1,sp)
-      0001B6 26 02            [ 1]  358     jrne atoi_exit 
-      0001B8 0C 01            [ 1]  359     inc (ACC24,sp) 
-      0001BA                        360 atoi_exit: 
-      0001BA 1E 01            [ 2]  361     ldw x,(ACC24,sp)
-      0001BC 7B 03            [ 1]  362     ld a,(ACC24+2,sp)
-      0001BE                        363     _drop VSIZE 
-      0001BE 5B 09            [ 2]    1     addw sp,#VSIZE 
-      0001C0 81               [ 4]  364     ret 
-                                    365 
-                                    366 ;------------------------------------
-                                    367 ;strlen  return .asciz string length
-                                    368 ; input:
-                                    369 ;	STR  	pointer to string
-                                    370 ; output:
-                                    371 ;	X     length
-                                    372 ;------------------------------------
-                           000000   373     VSIZE=0
-      0001C1                        374     _argofs VSIZE 
+      0001AE 03 01            [ 1]  361     cpl (ACC24,sp) 
+      0001B0 03 02            [ 1]  362     cpl (ACC24+1,sp)
+      0001B2 03 03            [ 1]  363     cpl (ACC24+2,sp) 
+      0001B4 0C 03            [ 1]  364     inc (ACC24+2,sp)
+      0001B6 26 06            [ 1]  365     jrne atoi_exit 
+      0001B8 0C 02            [ 1]  366     inc (ACC24+1,sp)
+      0001BA 26 02            [ 1]  367     jrne atoi_exit 
+      0001BC 0C 01            [ 1]  368     inc (ACC24,sp) 
+      0001BE                        369 atoi_exit: 
+      0001BE 1E 01            [ 2]  370     ldw x,(ACC24,sp)
+      0001C0 7B 03            [ 1]  371     ld a,(ACC24+2,sp)
+      0001C2                        372     _drop VSIZE 
+      0001C2 5B 09            [ 2]    1     addw sp,#VSIZE 
+      0001C4 81               [ 4]  373     ret 
+                                    374 
+                                    375 ;------------------------------------
+                                    376 ;name: strlen
+                                    377 ;  return .asciz string length
+                                    378 ; input:
+                                    379 ;	STR  	pointer to string
+                                    380 ; output:
+                                    381 ;	X     length
+                                    382 ;------------------------------------
+                           000000   383     VSIZE=0
+      0001C5                        384     _argofs VSIZE 
                            000002     1     ARG_OFS=2+VSIZE 
-      0001C1                        375     _arg STR 1 
+      0001C5                        385     _arg STR 1 
                            000003     1     STR=ARG_OFS+1 
-      0001C1                        376 _strlen::
-      0001C1                        377 strlen::
-      0001C1 1E 03            [ 2]  378     ldw x,(STR,sp) 
-      0001C3 F6               [ 1]  379 0$: ld a,(x)
-      0001C4 27 03            [ 1]  380     jreq 2$
-      0001C6 5C               [ 1]  381     incw x
-      0001C7 20 FA            [ 2]  382     jra 0$
-      0001C9                        383 2$:
-      0001C9 72 F0 03         [ 2]  384     subw x,(STR,sp)
-      0001CC 81               [ 4]  385     ret
-                                    386 
-                                    387 ;---------------------------------
-                                    388 ; name: fill 
-                                    389 ; insert COUNT character in buffer pointed 
-                                    390 ; by 'x' 
-                                    391 ; input:
-                                    392 ;   BUFFER      char* buffer to fill.
-                                    393 ;   CHAR        char fill character  
-                                    394 ;   COUNT       byte character count
-                                    395 ; output:
-                                    396 ;   X           pointer after last fill character  
-                                    397 ;----------------------------------
-                           000000   398     VSIZE=0
-      0001CD                        399     _argofs VSIZE  
+      0001C5                        386 _strlen::
+      0001C5                        387 strlen::
+      0001C5 1E 03            [ 2]  388     ldw x,(STR,sp) 
+      0001C7 F6               [ 1]  389 0$: ld a,(x)
+      0001C8 27 03            [ 1]  390     jreq 2$
+      0001CA 5C               [ 1]  391     incw x
+      0001CB 20 FA            [ 2]  392     jra 0$
+      0001CD                        393 2$:
+      0001CD 72 F0 03         [ 2]  394     subw x,(STR,sp)
+      0001D0 81               [ 4]  395     ret
+                                    396 
+                                    397 ;---------------------------------
+                                    398 ; name: fill 
+                                    399 ; insert COUNT character in buffer pointed 
+                                    400 ; by 'x' 
+                                    401 ; input:
+                                    402 ;   BUFFER      char* buffer to fill.
+                                    403 ;   CHAR        char fill character  
+                                    404 ;   COUNT       byte character count
+                                    405 ; output:
+                                    406 ;   X           pointer after last fill character  
+                                    407 ;----------------------------------
+                           000000   408     VSIZE=0
+      0001D1                        409     _argofs VSIZE  
                            000002     1     ARG_OFS=2+VSIZE 
+      0001D1                        410     _arg BUFFER 1 ; word
+                           000003     1     BUFFER=ARG_OFS+1 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 
 
-      0001CD                        400     _arg BUFFER 1 ; word
-                           000003     1     BUFFER=ARG_OFS+1 
-      0001CD                        401     _arg CHAR  3 ;  byte
+      0001D1                        411     _arg CHAR  3 ;  byte
                            000005     1     CHAR=ARG_OFS+3 
-      0001CD                        402     _arg  COUNT 4 ; byte  
+      0001D1                        412     _arg  COUNT 4 ; byte  
                            000006     1     COUNT=ARG_OFS+4 
-      0001CD                        403 _fill::
-      0001CD                        404 fill::
-      0001CD 1E 03            [ 2]  405     ldw x,(BUFFER,sp)
-      0001CF 7B 05            [ 1]  406     ld a,(CHAR,sp)
-      0001D1 0D 06            [ 1]  407 1$: tnz (COUNT,sp) 
-      0001D3 27 06            [ 1]  408     jreq 9$ 
-      0001D5 F7               [ 1]  409     ld (x),a 
-      0001D6 5C               [ 1]  410     incw x
-      0001D7 0A 06            [ 1]  411     dec (COUNT,sp)
-      0001D9 26 F6            [ 1]  412     jrne 1$  
-      0001DB 81               [ 4]  413 9$: ret 
-                                    414 
-                                    415 ;-------------------------
-                                    416 ; name: strcpy 
-                                    417 ; copy SRC to DEST 
-                                    418 ; input:
-                                    419 ;    DEST      destination buffer 
-                                    420 ;    SRC       source buffer 
-                                    421 ;  output:
-                                    422 ;    X          DEST 
-                                    423 ;----------------------------------
-                           000002   424     VSIZE=2 
-      0001DC                        425     _argofs VSIZE 
+      0001D1                        413 _fill::
+      0001D1                        414 fill::
+      0001D1 1E 03            [ 2]  415     ldw x,(BUFFER,sp)
+      0001D3 7B 05            [ 1]  416     ld a,(CHAR,sp)
+      0001D5 0D 06            [ 1]  417 1$: tnz (COUNT,sp) 
+      0001D7 27 06            [ 1]  418     jreq 9$ 
+      0001D9 F7               [ 1]  419     ld (x),a 
+      0001DA 5C               [ 1]  420     incw x
+      0001DB 0A 06            [ 1]  421     dec (COUNT,sp)
+      0001DD 26 F6            [ 1]  422     jrne 1$  
+      0001DF 81               [ 4]  423 9$: ret 
+                                    424 
+                                    425 ;-------------------------
+                                    426 ; name: strcpy 
+                                    427 ; copy SRC to DEST 
+                                    428 ; input:
+                                    429 ;    DEST      destination buffer 
+                                    430 ;    SRC       source buffer 
+                                    431 ;  output:
+                                    432 ;    X          DEST 
+                                    433 ;----------------------------------
+                           000002   434     VSIZE=2 
+      0001E0                        435     _argofs VSIZE 
                            000004     1     ARG_OFS=2+VSIZE 
-      0001DC                        426     _arg DEST 1
+      0001E0                        436     _arg DEST 1
                            000005     1     DEST=ARG_OFS+1 
-      0001DC                        427     _arg SRC 3
+      0001E0                        437     _arg SRC 3
                            000007     1     SRC=ARG_OFS+3 
-                                    428 ; local variables 
-                           000001   429     YSAVE=1 ;    
-      0001DC                        430 _strcpy::
-      0001DC                        431 strcpy::
-      0001DC                        432     _vars VSIZE 
-      0001DC 52 02            [ 2]    1     sub sp,#VSIZE 
-      0001DE 17 01            [ 2]  433     ldw (YSAVE,sp),y  
-      0001E0 1E 05            [ 2]  434     ldw x,(DEST,sp)
-      0001E2 16 07            [ 2]  435     ldw y,(SRC,sp)
-      0001E4 90 F6            [ 1]  436 1$: ld a,(y)
-      0001E6 90 5C            [ 1]  437     incw y 
-      0001E8 F7               [ 1]  438     ld (x),a
-      0001E9 5C               [ 1]  439     incw x 
-      0001EA 4D               [ 1]  440     tnz a  
-      0001EB 26 F7            [ 1]  441     jrne 1$
-      0001ED 1E 05            [ 2]  442 9$: ldw x,(DEST,sp)
-      0001EF 16 01            [ 2]  443     ldw y,(YSAVE,sp)
-      0001F1                        444     _drop VSIZE 
-      0001F1 5B 02            [ 2]    1     addw sp,#VSIZE 
-      0001F3 81               [ 4]  445     ret 
-                                    446 
+                                    438 ; local variables 
+                           000001   439     YSAVE=1 ;    
+      0001E0                        440 _strcpy::
+      0001E0                        441 strcpy::
+      0001E0                        442     _vars VSIZE 
+      0001E0 52 02            [ 2]    1     sub sp,#VSIZE 
+      0001E2 17 01            [ 2]  443     ldw (YSAVE,sp),y  
+      0001E4 1E 05            [ 2]  444     ldw x,(DEST,sp)
+      0001E6 16 07            [ 2]  445     ldw y,(SRC,sp)
+      0001E8 90 F6            [ 1]  446 1$: ld a,(y)
+      0001EA 90 5C            [ 1]  447     incw y 
+      0001EC F7               [ 1]  448     ld (x),a
+      0001ED 5C               [ 1]  449     incw x 
+      0001EE 4D               [ 1]  450     tnz a  
+      0001EF 26 F7            [ 1]  451     jrne 1$
+      0001F1 1E 05            [ 2]  452 9$: ldw x,(DEST,sp)
+      0001F3 16 01            [ 2]  453     ldw y,(YSAVE,sp)
+      0001F5                        454     _drop VSIZE 
+      0001F5 5B 02            [ 2]    1     addw sp,#VSIZE 
+      0001F7 81               [ 4]  455     ret 
+                                    456 
+                                    457 ;------------------------
+                                    458 ; name: memcpy 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 
 
-                                    447 ;------------------------
-                                    448 ; name: memcpy 
-                                    449 ; copy n bytes from source
-                                    450 ; to dest.
-                                    451 ; input:
-                                    452 ;   DEST      destination ptr 
-                                    453 ;   SRC       source ptr 
-                                    454 ;   SIZE      in bytes 
-                                    455 ; output:
-                                    456 ;   none 
-                                    457 ;--------------------------
-                           000000   458     VSIZE=0
-      0001F4                        459     _argofs VSIZE 
+                                    459 ; copy n bytes from source
+                                    460 ; to dest.
+                                    461 ; input:
+                                    462 ;   DEST      destination ptr 
+                                    463 ;   SRC       source ptr 
+                                    464 ;   SIZE      in bytes 
+                                    465 ; output:
+                                    466 ;   none 
+                                    467 ;--------------------------
+                           000000   468     VSIZE=0
+      0001F8                        469     _argofs VSIZE 
                            000002     1     ARG_OFS=2+VSIZE 
-      0001F4                        460     _arg DEST 1  ; 1 word
+      0001F8                        470     _arg DEST 1  ; 1 word
                            000003     1     DEST=ARG_OFS+1 
-      0001F4                        461     _arg SRC 3  ; 1 word
+      0001F8                        471     _arg SRC 3  ; 1 word
                            000005     1     SRC=ARG_OFS+3 
-      0001F4                        462     _arg SIZE 5 ; 1 word  
+      0001F8                        472     _arg SIZE 5 ; 1 word  
                            000007     1     SIZE=ARG_OFS+5 
-      0001F4                        463 _memcpy::
-      0001F4                        464 memcpy::
-      0001F4 1E 03            [ 2]  465     ldw x,(DEST,sp)
-      0001F6 16 05            [ 2]  466     ldw y,(SRC,sp)
-      0001F8 13 05            [ 2]  467     cpw x,(SRC,sp)
-      0001FA 2A 18            [ 1]  468     jrpl move_up_init 
-      0001FC                        469 move_down:
-      0001FC 7B 08            [ 1]  470     ld a,(SIZE+1,sp)
-      0001FE 1A 07            [ 1]  471     or a,(SIZE,sp)
-      000200 27 30            [ 1]  472     jreq memcpy_exit
-      000202 90 F6            [ 1]  473     ld a,(y)
-      000204 90 5C            [ 1]  474     incw y 
-      000206 F7               [ 1]  475     ld (x),a 
-      000207 5C               [ 1]  476     incw x 
-      000208 7B 08            [ 1]  477     ld a,(SIZE+1,sp)
-      00020A A0 01            [ 1]  478     sub a,#1 
-      00020C 6B 08            [ 1]  479     ld (SIZE+1,sp),a
-      00020E 24 EC            [ 1]  480     jrnc move_down
-      000210 0A 07            [ 1]  481     dec (SIZE,sp)
-      000212 20 E8            [ 2]  482     jra move_down 
-      000214                        483 move_up_init:
-      000214 72 FB 07         [ 2]  484     addw x,(SIZE,sp)
-      000217 72 F9 07         [ 2]  485     addw y,(SIZE,sp)
-      00021A                        486 move_up:
-      00021A 7B 08            [ 1]  487     ld a,(SIZE+1,sp)
-      00021C 1A 07            [ 1]  488     or a,(SIZE,sp)
-      00021E 27 12            [ 1]  489     jreq memcpy_exit
-      000220 90 5A            [ 2]  490     decw y 
-      000222 90 F6            [ 1]  491     ld a,(y)
-      000224 5A               [ 2]  492     decw x 
-      000225 F7               [ 1]  493     ld (x),a 
-      000226 7B 08            [ 1]  494     ld a,(SIZE+1,sp)
-      000228 A0 01            [ 1]  495     sub a,#1 
-      00022A 6B 08            [ 1]  496     ld (SIZE+1,sp),a
-      00022C 24 EC            [ 1]  497     jrnc move_up
+      0001F8                        473 _memcpy::
+      0001F8                        474 memcpy::
+      0001F8 1E 03            [ 2]  475     ldw x,(DEST,sp)
+      0001FA 16 05            [ 2]  476     ldw y,(SRC,sp)
+      0001FC 13 05            [ 2]  477     cpw x,(SRC,sp)
+      0001FE 2A 18            [ 1]  478     jrpl move_up_init 
+      000200                        479 move_down:
+      000200 7B 08            [ 1]  480     ld a,(SIZE+1,sp)
+      000202 1A 07            [ 1]  481     or a,(SIZE,sp)
+      000204 27 30            [ 1]  482     jreq memcpy_exit
+      000206 90 F6            [ 1]  483     ld a,(y)
+      000208 90 5C            [ 1]  484     incw y 
+      00020A F7               [ 1]  485     ld (x),a 
+      00020B 5C               [ 1]  486     incw x 
+      00020C 7B 08            [ 1]  487     ld a,(SIZE+1,sp)
+      00020E A0 01            [ 1]  488     sub a,#1 
+      000210 6B 08            [ 1]  489     ld (SIZE+1,sp),a
+      000212 24 EC            [ 1]  490     jrnc move_down
+      000214 0A 07            [ 1]  491     dec (SIZE,sp)
+      000216 20 E8            [ 2]  492     jra move_down 
+      000218                        493 move_up_init:
+      000218 72 FB 07         [ 2]  494     addw x,(SIZE,sp)
+      00021B 72 F9 07         [ 2]  495     addw y,(SIZE,sp)
+      00021E                        496 move_up:
+      00021E 7B 08            [ 1]  497     ld a,(SIZE+1,sp)
+      000220 1A 07            [ 1]  498     or a,(SIZE,sp)
+      000222 27 12            [ 1]  499     jreq memcpy_exit
+      000224 90 5A            [ 2]  500     decw y 
+      000226 90 F6            [ 1]  501     ld a,(y)
+      000228 5A               [ 2]  502     decw x 
+      000229 F7               [ 1]  503     ld (x),a 
+      00022A 7B 08            [ 1]  504     ld a,(SIZE+1,sp)
+      00022C A0 01            [ 1]  505     sub a,#1 
+      00022E 6B 08            [ 1]  506     ld (SIZE+1,sp),a
+      000230 24 EC            [ 1]  507     jrnc move_up
+      000232 0A 07            [ 1]  508     dec (SIZE,sp)
+      000234 20 E8            [ 2]  509     jra move_up 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 
 
-      00022E 0A 07            [ 1]  498     dec (SIZE,sp)
-      000230 20 E8            [ 2]  499     jra move_up 
-      000232                        500 memcpy_exit:    
-      000232 1E 03            [ 2]  501     ldw x,(DEST,sp)
-      000234 81               [ 4]  502     ret 
-                                    503 
+      000236                        510 memcpy_exit:    
+      000236 1E 03            [ 2]  511     ldw x,(DEST,sp)
+      000238 81               [ 4]  512     ret 
+                                    513 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
 Hexadecimal [24-Bits]
 
@@ -1887,262 +1945,263 @@ Symbol Table
     CTRL_R  =  000012     |     CTRL_S  =  000013     |     CTRL_T  =  000014 
     CTRL_U  =  000015     |     CTRL_V  =  000016     |     CTRL_W  =  000017 
     CTRL_X  =  000018     |     CTRL_Y  =  000019     |     CTRL_Z  =  00001A 
-    DEBUG_BA=  007F00     |     DEBUG_EN=  007FFF     |     DEST    =  000003 
-    DEVID_BA=  0048CD     |     DEVID_EN=  0048D8     |     DEVID_LO=  0048D2 
-    DEVID_LO=  0048D3     |     DEVID_LO=  0048D4     |     DEVID_LO=  0048D5 
-    DEVID_LO=  0048D6     |     DEVID_LO=  0048D7     |     DEVID_LO=  0048D8 
-    DEVID_WA=  0048D1     |     DEVID_XH=  0048CE     |     DEVID_XL=  0048CD 
-    DEVID_YH=  0048D0     |     DEVID_YL=  0048CF     |     DIVIDEND=  000001 
-    DIVISOR =  000004     |     DM_BK1RE=  007F90     |     DM_BK1RH=  007F91 
-    DM_BK1RL=  007F92     |     DM_BK2RE=  007F93     |     DM_BK2RH=  007F94 
-    DM_BK2RL=  007F95     |     DM_CR1  =  007F96     |     DM_CR2  =  007F97 
-    DM_CSR1 =  007F98     |     DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A 
-    EEPROM_B=  004000     |     EEPROM_E=  0047FF     |     EEPROM_S=  000800 
-    ESC     =  00001B     |     EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1 
-    FF      =  00000C     |     FHSE    =  7A1200     |     FHSI    =  F42400 
-    FLASH_BA=  008000     |     FLASH_CR=  00505A     |     FLASH_CR=  000002 
-    FLASH_CR=  000000     |     FLASH_CR=  000003     |     FLASH_CR=  000001 
-    FLASH_CR=  00505B     |     FLASH_CR=  000005     |     FLASH_CR=  000004 
-    FLASH_CR=  000007     |     FLASH_CR=  000000     |     FLASH_CR=  000006 
-    FLASH_DU=  005064     |     FLASH_DU=  0000AE     |     FLASH_DU=  000056 
-    FLASH_EN=  027FFF     |     FLASH_FP=  00505D     |     FLASH_FP=  000000 
-    FLASH_FP=  000001     |     FLASH_FP=  000002     |     FLASH_FP=  000003 
-    FLASH_FP=  000004     |     FLASH_FP=  000005     |     FLASH_IA=  00505F 
-    FLASH_IA=  000003     |     FLASH_IA=  000002     |     FLASH_IA=  000006 
-    FLASH_IA=  000001     |     FLASH_IA=  000000     |     FLASH_NC=  00505C 
-    FLASH_NF=  00505E     |     FLASH_NF=  000000     |     FLASH_NF=  000001 
-    FLASH_NF=  000002     |     FLASH_NF=  000003     |     FLASH_NF=  000004 
-    FLASH_NF=  000005     |     FLASH_PU=  005062     |     FLASH_PU=  000056 
-    FLASH_PU=  0000AE     |     FLASH_SI=  020000     |     FLASH_WS=  00480D 
-    FLSI    =  01F400     |     FMT     =  00001F     |     GPIO_BAS=  005000 
-    GPIO_CR1=  000003     |     GPIO_CR2=  000004     |     GPIO_DDR=  000002 
-    GPIO_IDR=  000001     |     GPIO_ODR=  000000     |     GPIO_SIZ=  000005 
-    HSECNT  =  004809     |     I24BUF  =  00000B     |     I2C_CCRH=  00521C 
-    I2C_CCRH=  000080     |     I2C_CCRH=  0000C0     |     I2C_CCRH=  000080 
-    I2C_CCRH=  000000     |     I2C_CCRH=  000001     |     I2C_CCRH=  000000 
-    I2C_CCRL=  00521B     |     I2C_CCRL=  00001A     |     I2C_CCRL=  000002 
-    I2C_CCRL=  00000D     |     I2C_CCRL=  000050     |     I2C_CCRL=  000090 
-    I2C_CCRL=  0000A0     |     I2C_CR1 =  005210     |     I2C_CR1_=  000006 
-    I2C_CR1_=  000007     |     I2C_CR1_=  000000     |     I2C_CR2 =  005211 
-    I2C_CR2_=  000002     |     I2C_CR2_=  000003     |     I2C_CR2_=  000000 
-    I2C_CR2_=  000001     |     I2C_CR2_=  000007     |     I2C_DR  =  005216 
-    I2C_FREQ=  005212     |     I2C_ITR =  00521A     |     I2C_ITR_=  000002 
-    I2C_ITR_=  000000     |     I2C_ITR_=  000001     |     I2C_OARH=  005214 
-    I2C_OARH=  000001     |     I2C_OARH=  000002     |     I2C_OARH=  000006 
+    DBG_A   =  000005     |     DBG_CC  =  000006     |     DBG_X   =  000003 
+    DBG_Y   =  000001     |     DEBUG   =  000001     |     DEBUG_BA=  007F00 
+    DEBUG_EN=  007FFF     |     DEST    =  000003     |     DEVID_BA=  0048CD 
+    DEVID_EN=  0048D8     |     DEVID_LO=  0048D2     |     DEVID_LO=  0048D3 
+    DEVID_LO=  0048D4     |     DEVID_LO=  0048D5     |     DEVID_LO=  0048D6 
+    DEVID_LO=  0048D7     |     DEVID_LO=  0048D8     |     DEVID_WA=  0048D1 
+    DEVID_XH=  0048CE     |     DEVID_XL=  0048CD     |     DEVID_YH=  0048D0 
+    DEVID_YL=  0048CF     |     DIVIDEND=  000001     |     DIVISOR =  000004 
+    DM_BK1RE=  007F90     |     DM_BK1RH=  007F91     |     DM_BK1RL=  007F92 
+    DM_BK2RE=  007F93     |     DM_BK2RH=  007F94     |     DM_BK2RL=  007F95 
+    DM_CR1  =  007F96     |     DM_CR2  =  007F97     |     DM_CSR1 =  007F98 
+    DM_CSR2 =  007F99     |     DM_ENFCT=  007F9A     |     EEPROM_B=  004000 
+    EEPROM_E=  0047FF     |     EEPROM_S=  000800     |     ESC     =  00001B 
+    EXTI_CR1=  0050A0     |     EXTI_CR2=  0050A1     |     FF      =  00000C 
+    FHSE    =  7A1200     |     FHSI    =  F42400     |     FLASH_BA=  008000 
+    FLASH_CR=  00505A     |     FLASH_CR=  000002     |     FLASH_CR=  000000 
+    FLASH_CR=  000003     |     FLASH_CR=  000001     |     FLASH_CR=  00505B 
+    FLASH_CR=  000005     |     FLASH_CR=  000004     |     FLASH_CR=  000007 
+    FLASH_CR=  000000     |     FLASH_CR=  000006     |     FLASH_DU=  005064 
+    FLASH_DU=  0000AE     |     FLASH_DU=  000056     |     FLASH_EN=  027FFF 
+    FLASH_FP=  00505D     |     FLASH_FP=  000000     |     FLASH_FP=  000001 
+    FLASH_FP=  000002     |     FLASH_FP=  000003     |     FLASH_FP=  000004 
+    FLASH_FP=  000005     |     FLASH_IA=  00505F     |     FLASH_IA=  000003 
+    FLASH_IA=  000002     |     FLASH_IA=  000006     |     FLASH_IA=  000001 
+    FLASH_IA=  000000     |     FLASH_NC=  00505C     |     FLASH_NF=  00505E 
+    FLASH_NF=  000000     |     FLASH_NF=  000001     |     FLASH_NF=  000002 
+    FLASH_NF=  000003     |     FLASH_NF=  000004     |     FLASH_NF=  000005 
+    FLASH_PU=  005062     |     FLASH_PU=  000056     |     FLASH_PU=  0000AE 
+    FLASH_SI=  020000     |     FLASH_WS=  00480D     |     FLSI    =  01F400 
+    FMT     =  00001F     |     GPIO_BAS=  005000     |     GPIO_CR1=  000003 
+    GPIO_CR2=  000004     |     GPIO_DDR=  000002     |     GPIO_IDR=  000001 
+    GPIO_ODR=  000000     |     GPIO_SIZ=  000005     |     HSECNT  =  004809 
+    I24BUF  =  00000B     |     I2C_CCRH=  00521C     |     I2C_CCRH=  000080 
+    I2C_CCRH=  0000C0     |     I2C_CCRH=  000080     |     I2C_CCRH=  000000 
+    I2C_CCRH=  000001     |     I2C_CCRH=  000000     |     I2C_CCRL=  00521B 
+    I2C_CCRL=  00001A     |     I2C_CCRL=  000002     |     I2C_CCRL=  00000D 
+    I2C_CCRL=  000050     |     I2C_CCRL=  000090     |     I2C_CCRL=  0000A0 
+    I2C_CR1 =  005210     |     I2C_CR1_=  000006     |     I2C_CR1_=  000007 
+    I2C_CR1_=  000000     |     I2C_CR2 =  005211     |     I2C_CR2_=  000002 
+    I2C_CR2_=  000003     |     I2C_CR2_=  000000     |     I2C_CR2_=  000001 
+    I2C_CR2_=  000007     |     I2C_DR  =  005216     |     I2C_FREQ=  005212 
+    I2C_ITR =  00521A     |     I2C_ITR_=  000002     |     I2C_ITR_=  000000 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    I2C_OARH=  000007     |     I2C_OARL=  005213     |     I2C_OARL=  000000 
-    I2C_OAR_=  000813     |     I2C_OAR_=  000009     |     I2C_PECR=  00521E 
-    I2C_READ=  000001     |     I2C_SR1 =  005217     |     I2C_SR1_=  000003 
-    I2C_SR1_=  000001     |     I2C_SR1_=  000002     |     I2C_SR1_=  000006 
-    I2C_SR1_=  000000     |     I2C_SR1_=  000004     |     I2C_SR1_=  000007 
-    I2C_SR2 =  005218     |     I2C_SR2_=  000002     |     I2C_SR2_=  000001 
-    I2C_SR2_=  000000     |     I2C_SR2_=  000003     |     I2C_SR2_=  000005 
-    I2C_SR3 =  005219     |     I2C_SR3_=  000001     |     I2C_SR3_=  000007 
-    I2C_SR3_=  000004     |     I2C_SR3_=  000000     |     I2C_SR3_=  000002 
-    I2C_TRIS=  00521D     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
-    I2C_TRIS=  000005     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
-    I2C_TRIS=  000011     |     I2C_WRIT=  000000     |     INPUT_DI=  000000 
-    INPUT_EI=  000001     |     INPUT_FL=  000000     |     INPUT_PU=  000001 
-    INT_ADC2=  000016     |     INT_AUAR=  000012     |     INT_AWU =  000001 
-    INT_CAN_=  000008     |     INT_CAN_=  000009     |     INT_CLK =  000002 
-    INT_EXTI=  000003     |     INT_EXTI=  000004     |     INT_EXTI=  000005 
-    INT_EXTI=  000006     |     INT_EXTI=  000007     |     INT_FLAS=  000018 
-    INT_I2C =  000013     |     INT_SPI =  00000A     |     INT_TIM1=  00000C 
-    INT_TIM1=  00000B     |     INT_TIM2=  00000E     |     INT_TIM2=  00000D 
-    INT_TIM3=  000010     |     INT_TIM3=  00000F     |     INT_TIM4=  000017 
-    INT_TLI =  000000     |     INT_UART=  000011     |     INT_UART=  000015 
-    INT_UART=  000014     |     INT_VECT=  008060     |     INT_VECT=  00800C 
-    INT_VECT=  008028     |     INT_VECT=  00802C     |     INT_VECT=  008010 
-    INT_VECT=  008014     |     INT_VECT=  008018     |     INT_VECT=  00801C 
-    INT_VECT=  008020     |     INT_VECT=  008024     |     INT_VECT=  008068 
-    INT_VECT=  008054     |     INT_VECT=  008000     |     INT_VECT=  008030 
-    INT_VECT=  008038     |     INT_VECT=  008034     |     INT_VECT=  008040 
-    INT_VECT=  00803C     |     INT_VECT=  008048     |     INT_VECT=  008044 
-    INT_VECT=  008064     |     INT_VECT=  008008     |     INT_VECT=  008004 
-    INT_VECT=  008050     |     INT_VECT=  00804C     |     INT_VECT=  00805C 
-    INT_VECT=  008058     |     ITC_SPR1=  007F70     |     ITC_SPR2=  007F71 
-    ITC_SPR3=  007F72     |     ITC_SPR4=  007F73     |     ITC_SPR5=  007F74 
-    ITC_SPR6=  007F75     |     ITC_SPR7=  007F76     |     ITC_SPR8=  007F77 
-    IWDG_KR =  0050E0     |     IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2 
-    LED2_BIT=  000005     |     LED2_MAS=  000020     |     LED2_POR=  00500A 
-    MULT    =  000004     |     NAFR    =  004804     |     NCLKOPT =  004808 
-    NFLASH_W=  00480E     |     NHSECNT =  00480A     |     NL      =  00000A 
-    NOPT1   =  004802     |     NOPT2   =  004804     |     NOPT3   =  004806 
-    NOPT4   =  004808     |     NOPT5   =  00480A     |     NOPT6   =  00480C 
-    NOPT7   =  00480E     |     NOPTBL  =  00487F     |     NUBC    =  004802 
-    NWDGOPT =  004806     |     NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC 
-    NWDGOPT_=  FFFFFFFF     |     NWDGOPT_=  FFFFFFFE     |     OPT0    =  004800 
-    OPT1    =  004801     |     OPT2    =  004803     |     OPT3    =  004805 
-    OPT4    =  004807     |     OPT5    =  004809     |     OPT6    =  00480B 
-    OPT7    =  00480D     |     OPTBL   =  00487E     |     OPTION_B=  004800 
-    OPTION_E=  00487F     |     OUTPUT_F=  000001     |     OUTPUT_O=  000000 
-    OUTPUT_P=  000001     |     OUTPUT_S=  000000     |     PA      =  000000 
-    PA_BASE =  005000     |     PA_CR1  =  005003     |     PA_CR2  =  005004 
-    PA_DDR  =  005002     |     PA_IDR  =  005001     |     PA_ODR  =  005000 
-    PB      =  000005     |     PB_BASE =  005005     |     PB_CR1  =  005008 
-    PB_CR2  =  005009     |     PB_DDR  =  005007     |     PB_IDR  =  005006 
-    PB_ODR  =  005005     |     PC      =  00000A     |     PC_BASE =  00500A 
-    PC_CR1  =  00500D     |     PC_CR2  =  00500E     |     PC_DDR  =  00500C 
-    PC_IDR  =  00500B     |     PC_ODR  =  00500A     |     PD      =  00000F 
-    PD_BASE =  00500F     |     PD_CR1  =  005012     |     PD_CR2  =  005013 
+    I2C_ITR_=  000001     |     I2C_OARH=  005214     |     I2C_OARH=  000001 
+    I2C_OARH=  000002     |     I2C_OARH=  000006     |     I2C_OARH=  000007 
+    I2C_OARL=  005213     |     I2C_OARL=  000000     |     I2C_OAR_=  000813 
+    I2C_OAR_=  000009     |     I2C_PECR=  00521E     |     I2C_READ=  000001 
+    I2C_SR1 =  005217     |     I2C_SR1_=  000003     |     I2C_SR1_=  000001 
+    I2C_SR1_=  000002     |     I2C_SR1_=  000006     |     I2C_SR1_=  000000 
+    I2C_SR1_=  000004     |     I2C_SR1_=  000007     |     I2C_SR2 =  005218 
+    I2C_SR2_=  000002     |     I2C_SR2_=  000001     |     I2C_SR2_=  000000 
+    I2C_SR2_=  000003     |     I2C_SR2_=  000005     |     I2C_SR3 =  005219 
+    I2C_SR3_=  000001     |     I2C_SR3_=  000007     |     I2C_SR3_=  000004 
+    I2C_SR3_=  000000     |     I2C_SR3_=  000002     |     I2C_TRIS=  00521D 
+    I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000005 
+    I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_TRIS=  000011 
+    I2C_WRIT=  000000     |     INPUT_DI=  000000     |     INPUT_EI=  000001 
+    INPUT_FL=  000000     |     INPUT_PU=  000001     |     INT_ADC2=  000016 
+    INT_AUAR=  000012     |     INT_AWU =  000001     |     INT_CAN_=  000008 
+    INT_CAN_=  000009     |     INT_CLK =  000002     |     INT_EXTI=  000003 
+    INT_EXTI=  000004     |     INT_EXTI=  000005     |     INT_EXTI=  000006 
+    INT_EXTI=  000007     |     INT_FLAS=  000018     |     INT_I2C =  000013 
+    INT_SPI =  00000A     |     INT_TIM1=  00000C     |     INT_TIM1=  00000B 
+    INT_TIM2=  00000E     |     INT_TIM2=  00000D     |     INT_TIM3=  000010 
+    INT_TIM3=  00000F     |     INT_TIM4=  000017     |     INT_TLI =  000000 
+    INT_UART=  000011     |     INT_UART=  000015     |     INT_UART=  000014 
+    INT_VECT=  008060     |     INT_VECT=  00800C     |     INT_VECT=  008028 
+    INT_VECT=  00802C     |     INT_VECT=  008010     |     INT_VECT=  008014 
+    INT_VECT=  008018     |     INT_VECT=  00801C     |     INT_VECT=  008020 
+    INT_VECT=  008024     |     INT_VECT=  008068     |     INT_VECT=  008054 
+    INT_VECT=  008000     |     INT_VECT=  008030     |     INT_VECT=  008038 
+    INT_VECT=  008034     |     INT_VECT=  008040     |     INT_VECT=  00803C 
+    INT_VECT=  008048     |     INT_VECT=  008044     |     INT_VECT=  008064 
+    INT_VECT=  008008     |     INT_VECT=  008004     |     INT_VECT=  008050 
+    INT_VECT=  00804C     |     INT_VECT=  00805C     |     INT_VECT=  008058 
+    ITC_SPR1=  007F70     |     ITC_SPR2=  007F71     |     ITC_SPR3=  007F72 
+    ITC_SPR4=  007F73     |     ITC_SPR5=  007F74     |     ITC_SPR6=  007F75 
+    ITC_SPR7=  007F76     |     ITC_SPR8=  007F77     |     IWDG_KR =  0050E0 
+    IWDG_PR =  0050E1     |     IWDG_RLR=  0050E2     |     LED2_BIT=  000005 
+    LED2_MAS=  000020     |     LED2_POR=  00500A     |     MULT    =  000004 
+    NAFR    =  004804     |     NCLKOPT =  004808     |     NFLASH_W=  00480E 
+    NHSECNT =  00480A     |     NL      =  00000A     |     NOPT1   =  004802 
+    NOPT2   =  004804     |     NOPT3   =  004806     |     NOPT4   =  004808 
+    NOPT5   =  00480A     |     NOPT6   =  00480C     |     NOPT7   =  00480E 
+    NOPTBL  =  00487F     |     NUBC    =  004802     |     NWDGOPT =  004806 
+    NWDGOPT_=  FFFFFFFD     |     NWDGOPT_=  FFFFFFFC     |     NWDGOPT_=  FFFFFFFF 
+    NWDGOPT_=  FFFFFFFE     |     OPT0    =  004800     |     OPT1    =  004801 
+    OPT2    =  004803     |     OPT3    =  004805     |     OPT4    =  004807 
+    OPT5    =  004809     |     OPT6    =  00480B     |     OPT7    =  00480D 
+    OPTBL   =  00487E     |     OPTION_B=  004800     |     OPTION_E=  00487F 
+    OUTPUT_F=  000001     |     OUTPUT_O=  000000     |     OUTPUT_P=  000001 
+    OUTPUT_S=  000000     |     PA      =  000000     |     PA_BASE =  005000 
+    PA_CR1  =  005003     |     PA_CR2  =  005004     |     PA_DDR  =  005002 
+    PA_IDR  =  005001     |     PA_ODR  =  005000     |     PB      =  000005 
+    PB_BASE =  005005     |     PB_CR1  =  005008     |     PB_CR2  =  005009 
+    PB_DDR  =  005007     |     PB_IDR  =  005006     |     PB_ODR  =  005005 
+    PC      =  00000A     |     PC_BASE =  00500A     |     PC_CR1  =  00500D 
+    PC_CR2  =  00500E     |     PC_DDR  =  00500C     |     PC_IDR  =  00500B 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    PD_DDR  =  005011     |     PD_IDR  =  005010     |     PD_ODR  =  00500F 
-    PE      =  000014     |     PE_BASE =  005014     |     PE_CR1  =  005017 
-    PE_CR2  =  005018     |     PE_DDR  =  005016     |     PE_IDR  =  005015 
-    PE_ODR  =  005014     |     PF      =  000019     |     PF_BASE =  005019 
-    PF_CR1  =  00501C     |     PF_CR2  =  00501D     |     PF_DDR  =  00501B 
-    PF_IDR  =  00501A     |     PF_ODR  =  005019     |     PG      =  00001E 
-    PG_BASE =  00501E     |     PG_CR1  =  005021     |     PG_CR2  =  005022 
-    PG_DDR  =  005020     |     PG_IDR  =  00501F     |     PG_ODR  =  00501E 
-    PH_BASE =  005023     |     PH_CR1  =  005026     |     PH_CR2  =  005027 
-    PH_DDR  =  005025     |     PH_IDR  =  005024     |     PH_ODR  =  005023 
-    PI_BASE =  005028     |     PI_CR1  =  00502B     |     PI_CR2  =  00502C 
-    PI_DDR  =  00502A     |     PI_IDR  =  005029     |     PI_ODR  =  005028 
-    RAM_BASE=  000000     |     RAM_END =  0017FF     |     RAM_SIZE=  001800 
-    ROP     =  004800     |     RST_SR  =  0050B3     |     SFR_BASE=  005000 
-    SFR_END =  0057FF     |     SIGN    =  000005     |     SIZE    =  000007 
-    SPACE   =  000020     |     SPI_CR1 =  005200     |     SPI_CR2 =  005201 
-    SPI_CRCP=  005205     |     SPI_DR  =  005204     |     SPI_ICR =  005202 
-    SPI_RXCR=  005206     |     SPI_SR  =  005203     |     SPI_TXCR=  005207 
-    SRC     =  000005     |     STR     =  000003     |     SWIM_CSR=  007F80 
-    TAB     =  000009     |     TEMP    =  000007     |     TIM1_ARR=  005262 
-    TIM1_ARR=  005263     |     TIM1_BKR=  00526D     |     TIM1_CCE=  00525C 
-    TIM1_CCE=  00525D     |     TIM1_CCM=  005258     |     TIM1_CCM=  000000 
-    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
-    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    PC_ODR  =  00500A     |     PD      =  00000F     |     PD_BASE =  00500F 
+    PD_CR1  =  005012     |     PD_CR2  =  005013     |     PD_DDR  =  005011 
+    PD_IDR  =  005010     |     PD_ODR  =  00500F     |     PE      =  000014 
+    PE_BASE =  005014     |     PE_CR1  =  005017     |     PE_CR2  =  005018 
+    PE_DDR  =  005016     |     PE_IDR  =  005015     |     PE_ODR  =  005014 
+    PF      =  000019     |     PF_BASE =  005019     |     PF_CR1  =  00501C 
+    PF_CR2  =  00501D     |     PF_DDR  =  00501B     |     PF_IDR  =  00501A 
+    PF_ODR  =  005019     |     PG      =  00001E     |     PG_BASE =  00501E 
+    PG_CR1  =  005021     |     PG_CR2  =  005022     |     PG_DDR  =  005020 
+    PG_IDR  =  00501F     |     PG_ODR  =  00501E     |     PH_BASE =  005023 
+    PH_CR1  =  005026     |     PH_CR2  =  005027     |     PH_DDR  =  005025 
+    PH_IDR  =  005024     |     PH_ODR  =  005023     |     PI_BASE =  005028 
+    PI_CR1  =  00502B     |     PI_CR2  =  00502C     |     PI_DDR  =  00502A 
+    PI_IDR  =  005029     |     PI_ODR  =  005028     |     RAM_BASE=  000000 
+    RAM_END =  0017FF     |     RAM_SIZE=  001800     |     ROP     =  004800 
+    RST_SR  =  0050B3     |     SFR_BASE=  005000     |     SFR_END =  0057FF 
+    SIGN    =  000005     |     SIZE    =  000007     |     SPACE   =  000020 
+    SPI_CR1 =  005200     |     SPI_CR2 =  005201     |     SPI_CRCP=  005205 
+    SPI_DR  =  005204     |     SPI_ICR =  005202     |     SPI_RXCR=  005206 
+    SPI_SR  =  005203     |     SPI_TXCR=  005207     |     SRC     =  000005 
+    STR     =  000003     |     SWIM_CSR=  007F80     |     TAB     =  000009 
+    TEMP    =  000007     |     TIM1_ARR=  005262     |     TIM1_ARR=  005263 
+    TIM1_BKR=  00526D     |     TIM1_CCE=  00525C     |     TIM1_CCE=  00525D 
+    TIM1_CCM=  005258     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
     TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000003     |     TIM1_CCM=  005259     |     TIM1_CCM=  000000 
-    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
-    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
+    TIM1_CCM=  005259     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
     TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000003     |     TIM1_CCM=  00525A     |     TIM1_CCM=  000000 
-    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
-    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
+    TIM1_CCM=  00525A     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
     TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000003     |     TIM1_CCM=  00525B     |     TIM1_CCM=  000000 
-    TIM1_CCM=  000001     |     TIM1_CCM=  000004     |     TIM1_CCM=  000005 
-    TIM1_CCM=  000006     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
-    TIM1_CCM=  000003     |     TIM1_CCM=  000007     |     TIM1_CCM=  000002 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
+    TIM1_CCM=  00525B     |     TIM1_CCM=  000000     |     TIM1_CCM=  000001 
     TIM1_CCM=  000004     |     TIM1_CCM=  000005     |     TIM1_CCM=  000006 
-    TIM1_CCM=  000003     |     TIM1_CCR=  005265     |     TIM1_CCR=  005266 
-    TIM1_CCR=  005267     |     TIM1_CCR=  005268     |     TIM1_CCR=  005269 
-    TIM1_CCR=  00526A     |     TIM1_CCR=  00526B     |     TIM1_CCR=  00526C 
-    TIM1_CNT=  00525E     |     TIM1_CNT=  00525F     |     TIM1_CR1=  005250 
-    TIM1_CR2=  005251     |     TIM1_CR2=  000000     |     TIM1_CR2=  000002 
-    TIM1_CR2=  000004     |     TIM1_CR2=  000005     |     TIM1_CR2=  000006 
-    TIM1_DTR=  00526E     |     TIM1_EGR=  005257     |     TIM1_EGR=  000007 
-    TIM1_EGR=  000001     |     TIM1_EGR=  000002     |     TIM1_EGR=  000003 
-    TIM1_EGR=  000004     |     TIM1_EGR=  000005     |     TIM1_EGR=  000006 
-    TIM1_EGR=  000000     |     TIM1_ETR=  005253     |     TIM1_ETR=  000006 
-    TIM1_ETR=  000000     |     TIM1_ETR=  000001     |     TIM1_ETR=  000002 
-    TIM1_ETR=  000003     |     TIM1_ETR=  000007     |     TIM1_ETR=  000004 
-    TIM1_ETR=  000005     |     TIM1_IER=  005254     |     TIM1_IER=  000007 
-    TIM1_IER=  000001     |     TIM1_IER=  000002     |     TIM1_IER=  000003 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000003 
+    TIM1_CCM=  000007     |     TIM1_CCM=  000002     |     TIM1_CCM=  000004 
+    TIM1_CCM=  000005     |     TIM1_CCM=  000006     |     TIM1_CCM=  000003 
+    TIM1_CCR=  005265     |     TIM1_CCR=  005266     |     TIM1_CCR=  005267 
+    TIM1_CCR=  005268     |     TIM1_CCR=  005269     |     TIM1_CCR=  00526A 
+    TIM1_CCR=  00526B     |     TIM1_CCR=  00526C     |     TIM1_CNT=  00525E 
+    TIM1_CNT=  00525F     |     TIM1_CR1=  005250     |     TIM1_CR2=  005251 
+    TIM1_CR2=  000000     |     TIM1_CR2=  000002     |     TIM1_CR2=  000004 
+    TIM1_CR2=  000005     |     TIM1_CR2=  000006     |     TIM1_DTR=  00526E 
+    TIM1_EGR=  005257     |     TIM1_EGR=  000007     |     TIM1_EGR=  000001 
+    TIM1_EGR=  000002     |     TIM1_EGR=  000003     |     TIM1_EGR=  000004 
+    TIM1_EGR=  000005     |     TIM1_EGR=  000006     |     TIM1_EGR=  000000 
+    TIM1_ETR=  005253     |     TIM1_ETR=  000006     |     TIM1_ETR=  000000 
+    TIM1_ETR=  000001     |     TIM1_ETR=  000002     |     TIM1_ETR=  000003 
+    TIM1_ETR=  000007     |     TIM1_ETR=  000004     |     TIM1_ETR=  000005 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    TIM1_IER=  000004     |     TIM1_IER=  000005     |     TIM1_IER=  000006 
-    TIM1_IER=  000000     |     TIM1_OIS=  00526F     |     TIM1_PSC=  005260 
-    TIM1_PSC=  005261     |     TIM1_RCR=  005264     |     TIM1_SMC=  005252 
-    TIM1_SMC=  000007     |     TIM1_SMC=  000000     |     TIM1_SMC=  000001 
-    TIM1_SMC=  000002     |     TIM1_SMC=  000004     |     TIM1_SMC=  000005 
-    TIM1_SMC=  000006     |     TIM1_SR1=  005255     |     TIM1_SR1=  000007 
-    TIM1_SR1=  000001     |     TIM1_SR1=  000002     |     TIM1_SR1=  000003 
-    TIM1_SR1=  000004     |     TIM1_SR1=  000005     |     TIM1_SR1=  000006 
-    TIM1_SR1=  000000     |     TIM1_SR2=  005256     |     TIM1_SR2=  000001 
-    TIM1_SR2=  000002     |     TIM1_SR2=  000003     |     TIM1_SR2=  000004 
-    TIM2_ARR=  00530D     |     TIM2_ARR=  00530E     |     TIM2_CCE=  005308 
-    TIM2_CCE=  005309     |     TIM2_CCM=  005305     |     TIM2_CCM=  005306 
-    TIM2_CCM=  005307     |     TIM2_CCR=  00530F     |     TIM2_CCR=  005310 
-    TIM2_CCR=  005311     |     TIM2_CCR=  005312     |     TIM2_CCR=  005313 
-    TIM2_CCR=  005314     |     TIM2_CNT=  00530A     |     TIM2_CNT=  00530B 
-    TIM2_CR1=  005300     |     TIM2_EGR=  005304     |     TIM2_IER=  005301 
-    TIM2_PSC=  00530C     |     TIM2_SR1=  005302     |     TIM2_SR2=  005303 
-    TIM3_ARR=  00532B     |     TIM3_ARR=  00532C     |     TIM3_CCE=  005327 
-    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCE=  000004 
-    TIM3_CCE=  000005     |     TIM3_CCE=  000000     |     TIM3_CCE=  000001 
-    TIM3_CCM=  005325     |     TIM3_CCM=  005326     |     TIM3_CCM=  000000 
-    TIM3_CCM=  000004     |     TIM3_CCM=  000003     |     TIM3_CCR=  00532D 
-    TIM3_CCR=  00532E     |     TIM3_CCR=  00532F     |     TIM3_CCR=  005330 
-    TIM3_CNT=  005328     |     TIM3_CNT=  005329     |     TIM3_CR1=  005320 
-    TIM3_CR1=  000007     |     TIM3_CR1=  000000     |     TIM3_CR1=  000003 
-    TIM3_CR1=  000001     |     TIM3_CR1=  000002     |     TIM3_EGR=  005324 
-    TIM3_IER=  005321     |     TIM3_PSC=  00532A     |     TIM3_SR1=  005322 
-    TIM3_SR2=  005323     |     TIM4_ARR=  005346     |     TIM4_CNT=  005344 
-    TIM4_CR1=  005340     |     TIM4_CR1=  000007     |     TIM4_CR1=  000000 
-    TIM4_CR1=  000003     |     TIM4_CR1=  000001     |     TIM4_CR1=  000002 
-    TIM4_EGR=  005343     |     TIM4_EGR=  000000     |     TIM4_IER=  005341 
-    TIM4_IER=  000000     |     TIM4_PSC=  005345     |     TIM4_PSC=  000000 
-    TIM4_PSC=  000007     |     TIM4_PSC=  000004     |     TIM4_PSC=  000001 
-    TIM4_PSC=  000005     |     TIM4_PSC=  000002     |     TIM4_PSC=  000006 
-    TIM4_PSC=  000003     |     TIM4_PSC=  000000     |     TIM4_PSC=  000001 
-    TIM4_PSC=  000002     |     TIM4_SR =  005342     |     TIM4_SR_=  000000 
-    TIM_CR1_=  000007     |     TIM_CR1_=  000000     |     TIM_CR1_=  000006 
-    TIM_CR1_=  000005     |     TIM_CR1_=  000004     |     TIM_CR1_=  000003 
-    TIM_CR1_=  000001     |     TIM_CR1_=  000002     |     UART1   =  000000 
-    UART1_BA=  005230     |     UART1_BR=  005232     |     UART1_BR=  005233 
-    UART1_CR=  005234     |     UART1_CR=  005235     |     UART1_CR=  005236 
-    UART1_CR=  005237     |     UART1_CR=  005238     |     UART1_DR=  005231 
-    UART1_GT=  005239     |     UART1_PO=  000000     |     UART1_PS=  00523A 
-    UART1_RX=  000004     |     UART1_SR=  005230     |     UART1_TX=  000005 
-    UART3   =  000001     |     UART3_BA=  005240     |     UART3_BR=  005242 
-    UART3_BR=  005243     |     UART3_CR=  005244     |     UART3_CR=  005245 
-    UART3_CR=  005246     |     UART3_CR=  005247     |     UART3_CR=  004249 
-    UART3_DR=  005241     |     UART3_PO=  00000F     |     UART3_RX=  000006 
-    UART3_SR=  005240     |     UART3_TX=  000005     |     UART_BRR=  000002 
-    UART_BRR=  000003     |     UART_CR1=  000004     |     UART_CR1=  000004 
-    UART_CR1=  000002     |     UART_CR1=  000000     |     UART_CR1=  000001 
-    UART_CR1=  000007     |     UART_CR1=  000006     |     UART_CR1=  000005 
-    UART_CR1=  000003     |     UART_CR2=  000005     |     UART_CR2=  000004 
-    UART_CR2=  000002     |     UART_CR2=  000005     |     UART_CR2=  000001 
-    UART_CR2=  000000     |     UART_CR2=  000006     |     UART_CR2=  000003 
+    TIM1_IER=  005254     |     TIM1_IER=  000007     |     TIM1_IER=  000001 
+    TIM1_IER=  000002     |     TIM1_IER=  000003     |     TIM1_IER=  000004 
+    TIM1_IER=  000005     |     TIM1_IER=  000006     |     TIM1_IER=  000000 
+    TIM1_OIS=  00526F     |     TIM1_PSC=  005260     |     TIM1_PSC=  005261 
+    TIM1_RCR=  005264     |     TIM1_SMC=  005252     |     TIM1_SMC=  000007 
+    TIM1_SMC=  000000     |     TIM1_SMC=  000001     |     TIM1_SMC=  000002 
+    TIM1_SMC=  000004     |     TIM1_SMC=  000005     |     TIM1_SMC=  000006 
+    TIM1_SR1=  005255     |     TIM1_SR1=  000007     |     TIM1_SR1=  000001 
+    TIM1_SR1=  000002     |     TIM1_SR1=  000003     |     TIM1_SR1=  000004 
+    TIM1_SR1=  000005     |     TIM1_SR1=  000006     |     TIM1_SR1=  000000 
+    TIM1_SR2=  005256     |     TIM1_SR2=  000001     |     TIM1_SR2=  000002 
+    TIM1_SR2=  000003     |     TIM1_SR2=  000004     |     TIM2_ARR=  00530D 
+    TIM2_ARR=  00530E     |     TIM2_CCE=  005308     |     TIM2_CCE=  005309 
+    TIM2_CCM=  005305     |     TIM2_CCM=  005306     |     TIM2_CCM=  005307 
+    TIM2_CCR=  00530F     |     TIM2_CCR=  005310     |     TIM2_CCR=  005311 
+    TIM2_CCR=  005312     |     TIM2_CCR=  005313     |     TIM2_CCR=  005314 
+    TIM2_CNT=  00530A     |     TIM2_CNT=  00530B     |     TIM2_CR1=  005300 
+    TIM2_EGR=  005304     |     TIM2_IER=  005301     |     TIM2_PSC=  00530C 
+    TIM2_SR1=  005302     |     TIM2_SR2=  005303     |     TIM3_ARR=  00532B 
+    TIM3_ARR=  00532C     |     TIM3_CCE=  005327     |     TIM3_CCE=  000000 
+    TIM3_CCE=  000001     |     TIM3_CCE=  000004     |     TIM3_CCE=  000005 
+    TIM3_CCE=  000000     |     TIM3_CCE=  000001     |     TIM3_CCM=  005325 
+    TIM3_CCM=  005326     |     TIM3_CCM=  000000     |     TIM3_CCM=  000004 
+    TIM3_CCM=  000003     |     TIM3_CCR=  00532D     |     TIM3_CCR=  00532E 
+    TIM3_CCR=  00532F     |     TIM3_CCR=  005330     |     TIM3_CNT=  005328 
+    TIM3_CNT=  005329     |     TIM3_CR1=  005320     |     TIM3_CR1=  000007 
+    TIM3_CR1=  000000     |     TIM3_CR1=  000003     |     TIM3_CR1=  000001 
+    TIM3_CR1=  000002     |     TIM3_EGR=  005324     |     TIM3_IER=  005321 
+    TIM3_PSC=  00532A     |     TIM3_SR1=  005322     |     TIM3_SR2=  005323 
+    TIM4_ARR=  005346     |     TIM4_CNT=  005344     |     TIM4_CR1=  005340 
+    TIM4_CR1=  000007     |     TIM4_CR1=  000000     |     TIM4_CR1=  000003 
+    TIM4_CR1=  000001     |     TIM4_CR1=  000002     |     TIM4_EGR=  005343 
+    TIM4_EGR=  000000     |     TIM4_IER=  005341     |     TIM4_IER=  000000 
+    TIM4_PSC=  005345     |     TIM4_PSC=  000000     |     TIM4_PSC=  000007 
+    TIM4_PSC=  000004     |     TIM4_PSC=  000001     |     TIM4_PSC=  000005 
+    TIM4_PSC=  000002     |     TIM4_PSC=  000006     |     TIM4_PSC=  000003 
+    TIM4_PSC=  000000     |     TIM4_PSC=  000001     |     TIM4_PSC=  000002 
+    TIM4_SR =  005342     |     TIM4_SR_=  000000     |     TIM_CR1_=  000007 
+    TIM_CR1_=  000000     |     TIM_CR1_=  000006     |     TIM_CR1_=  000005 
+    TIM_CR1_=  000004     |     TIM_CR1_=  000003     |     TIM_CR1_=  000001 
+    TIM_CR1_=  000002     |     UART1   =  000000     |     UART1_BA=  005230 
+    UART1_BR=  005232     |     UART1_BR=  005233     |     UART1_CR=  005234 
+    UART1_CR=  005235     |     UART1_CR=  005236     |     UART1_CR=  005237 
+    UART1_CR=  005238     |     UART1_DR=  005231     |     UART1_GT=  005239 
+    UART1_PO=  000000     |     UART1_PS=  00523A     |     UART1_RX=  000004 
+    UART1_SR=  005230     |     UART1_TX=  000005     |     UART3   =  000001 
+    UART3_BA=  005240     |     UART3_BR=  005242     |     UART3_BR=  005243 
+    UART3_CR=  005244     |     UART3_CR=  005245     |     UART3_CR=  005246 
+    UART3_CR=  005247     |     UART3_CR=  004249     |     UART3_DR=  005241 
+    UART3_PO=  00000F     |     UART3_RX=  000006     |     UART3_SR=  005240 
+    UART3_TX=  000005     |     UART_BRR=  000002     |     UART_BRR=  000003 
+    UART_CR1=  000004     |     UART_CR1=  000004     |     UART_CR1=  000002 
+    UART_CR1=  000000     |     UART_CR1=  000001     |     UART_CR1=  000007 
+    UART_CR1=  000006     |     UART_CR1=  000005     |     UART_CR1=  000003 
+    UART_CR2=  000005     |     UART_CR2=  000004     |     UART_CR2=  000002 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    UART_CR2=  000007     |     UART_CR3=  000006     |     UART_CR3=  000003 
-    UART_CR3=  000001     |     UART_CR3=  000002     |     UART_CR3=  000000 
-    UART_CR3=  000006     |     UART_CR3=  000004     |     UART_CR3=  000005 
-    UART_CR4=  000007     |     UART_CR4=  000000     |     UART_CR4=  000001 
-    UART_CR4=  000002     |     UART_CR4=  000003     |     UART_CR4=  000004 
-    UART_CR4=  000006     |     UART_CR4=  000005     |     UART_CR5=  000008 
-    UART_CR5=  000003     |     UART_CR5=  000001     |     UART_CR5=  000002 
-    UART_CR5=  000004     |     UART_CR5=  000005     |     UART_CR6=  000009 
-    UART_CR6=  000004     |     UART_CR6=  000007     |     UART_CR6=  000001 
-    UART_CR6=  000002     |     UART_CR6=  000000     |     UART_CR6=  000005 
-    UART_DR =  000001     |     UART_GTR=  000009     |     UART_PSC=  00000A 
-    UART_SR =  000000     |     UART_SR_=  000001     |     UART_SR_=  000004 
-    UART_SR_=  000002     |     UART_SR_=  000003     |     UART_SR_=  000000 
-    UART_SR_=  000005     |     UART_SR_=  000006     |     UART_SR_=  000007 
-    UBC     =  004801     |     USR_BTN_=  000004     |     USR_BTN_=  000010 
-    USR_BTN_=  005015     |     VARARGS =  000021     |     VSIZE   =  000000 
-    VT      =  00000B     |     WDGOPT  =  004805     |     WDGOPT_I=  000002 
-    WDGOPT_L=  000003     |     WDGOPT_W=  000000     |     WDGOPT_W=  000001 
-    WWDG_CR =  0050D1     |     WWDG_WR =  0050D2     |     XSAVE   =  000008 
-    YSAVE   =  000001     |   2 _atoi24    00013D GR  |   2 _fill      0001CD GR
-  2 _format    000007 GR  |   2 _i24toa    0000D7 GR  |   2 _memcpy    0001F4 GR
-  2 _strcpy    0001DC GR  |   2 _strlen    0001C1 GR  |   2 atoi24     00013D GR
-  2 atoi_exi   0001BA R   |     div24_8u   ****** GX  |   2 fill       0001CD GR
-  2 format     000007 GR  |   2 format_e   0000D2 R   |   2 format_l   000014 R
-  2 i24toa     0000D7 GR  |   2 itoa_loo   000105 R   |   2 memcpy     0001F4 GR
-  2 memcpy_e   000232 R   |   2 move_dow   0001FC R   |   2 move_up    00021A R
-  2 move_up_   000214 R   |     mul24_8u   ****** GX  |   2 percent    000031 R
-  1 ptr.w      000000 R   |   2 store_ch   000021 R   |   2 strcpy     0001DC GR
-  2 strlen     0001C1 GR
+    UART_CR2=  000005     |     UART_CR2=  000001     |     UART_CR2=  000000 
+    UART_CR2=  000006     |     UART_CR2=  000003     |     UART_CR2=  000007 
+    UART_CR3=  000006     |     UART_CR3=  000003     |     UART_CR3=  000001 
+    UART_CR3=  000002     |     UART_CR3=  000000     |     UART_CR3=  000006 
+    UART_CR3=  000004     |     UART_CR3=  000005     |     UART_CR4=  000007 
+    UART_CR4=  000000     |     UART_CR4=  000001     |     UART_CR4=  000002 
+    UART_CR4=  000003     |     UART_CR4=  000004     |     UART_CR4=  000006 
+    UART_CR4=  000005     |     UART_CR5=  000008     |     UART_CR5=  000003 
+    UART_CR5=  000001     |     UART_CR5=  000002     |     UART_CR5=  000004 
+    UART_CR5=  000005     |     UART_CR6=  000009     |     UART_CR6=  000004 
+    UART_CR6=  000007     |     UART_CR6=  000001     |     UART_CR6=  000002 
+    UART_CR6=  000000     |     UART_CR6=  000005     |     UART_DR =  000001 
+    UART_GTR=  000009     |     UART_PSC=  00000A     |     UART_SR =  000000 
+    UART_SR_=  000001     |     UART_SR_=  000004     |     UART_SR_=  000002 
+    UART_SR_=  000003     |     UART_SR_=  000000     |     UART_SR_=  000005 
+    UART_SR_=  000006     |     UART_SR_=  000007     |     UBC     =  004801 
+    USR_BTN_=  000004     |     USR_BTN_=  000010     |     USR_BTN_=  005015 
+    VARARGS =  000021     |     VSIZE   =  000000     |     VT      =  00000B 
+    WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
+    WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
+    WWDG_WR =  0050D2     |     XSAVE   =  000008     |     YSAVE   =  000001 
+  2 _atoi24    000141 GR  |   2 _fill      0001D1 GR  |   2 _format    000007 GR
+  2 _i24toa    0000D9 GR  |   2 _memcpy    0001F8 GR  |   2 _strcpy    0001E0 GR
+  2 _strlen    0001C5 GR  |   2 atoi24     000141 GR  |   2 atoi_exi   0001BE R
+    div24_8u   ****** GX  |   2 fill       0001D1 GR  |   2 format     000007 GR
+  2 format_e   0000D4 R   |   2 format_l   000014 R   |   2 i24toa     0000D9 GR
+  2 itoa_loo   000109 R   |   2 memcpy     0001F8 GR  |   2 memcpy_e   000236 R
+  2 move_dow   000200 R   |   2 move_up    00021E R   |   2 move_up_   000218 R
+    mul24_8u   ****** GX  |   1 nearptr    000000 GR  |   2 percent    000031 R
+  2 store_ch   000021 R   |   2 strcpy     0001E0 GR  |   2 strlen     0001C5 GR
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
 Hexadecimal [24-Bits]
@@ -2151,5 +2210,5 @@ Area Table
 
    0 _CODE      size      0   flags    0
    1 DATA       size      2   flags    0
-   2 CODE       size    235   flags    0
+   2 CODE       size    239   flags    0
 

@@ -661,7 +661,8 @@ readln_quit:
 ; command interface
 ; only 2 commands:
 ;  'q' to resume application
-;  'p' to print memory values 
+;  'p [addr]' to print memory values 
+;  's addr' to print string 
 ;----------------------------
 ;local variable 
 	PSIZE=1
@@ -684,7 +685,7 @@ repl:
 	ld a,(y)
 	incw y
 	cp a,#'q 
-	jrne next_test
+	jrne test_p
 repl_exit:
 	addw sp,#LOCAL_SIZE 	
 	ret  
@@ -692,9 +693,17 @@ invalid:
 	ldw y,#invalid_cmd 
 	call uart3_puts 
 	jra repl 
-next_test:	
+test_p:	
     cp a,#'p 
+	jreq mem_peek
+    cp a,#'s 
 	jrne invalid 
+print_string:	
+	call number
+	ldw y,acc16 
+	call uart3_puts
+	jra repl 	
+mem_peek:	 
 	call number
 	ld a, acc24 
 	or a,acc16 

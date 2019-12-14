@@ -63,7 +63,7 @@ test: $(LIB)
 	@echo "creating test    "
 	@echo "*****************"
 	$(SDAS) -g -l -o $(BUILD)$(TEST_NAME).rel $(TEST_NAME).asm 
-	$(SDCC) $(CFLAGS) -L$(LIB_PATH) -lmath24 -lstring -lconio -luart -o$(TARGET) $(TEST_HELP) $(BUILD)$(TEST_NAME).rel
+	$(SDCC) $(CFLAGS) -L$(LIB_PATH) -lmath24 -lstring  -o$(TARGET) $(TEST_HELP) $(BUILD)$(TEST_NAME).rel
 	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(TARGET)
 
 

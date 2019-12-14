@@ -27,10 +27,17 @@
 	.include "../../inc/stm8s208.inc"
 	.include "../../inc/ascii.inc"
     .include "../../inc/gen_macros.inc"
+    .include "../test_macros.inc" 
     .list 
 
+_dbg 
+
     .area DATA 
-ptr.w: .blkw 1  ; used by format 
+.if DEBUG 
+nearptr:: .blkw 1
+.else     
+nearptr: .blkw 1  ; used by format 
+.endif 
 
     .area CODE 
 .asciz "STRING"
@@ -63,8 +70,8 @@ ptr.w: .blkw 1  ; used by format
     _arg FMT 3  ; size word
     _arg VARARGS 5 ; size variable 
 ; local variables
-    DEST=1 ; 2 bytes 
-    SRC=3  ; 2 bytes 
+    DEST=1 ; 2 bytes overlay ACC24 
+    SRC=3  ; 2 bytes  overlay ACC24 and BASE 
     ACC24=1 ; size 3 bytes
     BASE=4  ; size 1 
     BUFFER=5  ; size 2
@@ -74,15 +81,15 @@ ptr.w: .blkw 1  ; used by format
 _format::
 format::
     _vars VSIZE 
-; variable ptr.w use as char* string 
+; variable nearptr use as char* string 
     ldw x,(STR,sp)
-    ldw ptr.w,x
+    ldw nearptr,x
 ; X used as varargs pointer     
     ldw x,sp 
     addw x,#VARARGS 
 ; Y used as FMT pointer
     ldw y,(FMT,sp)
-format_loop:    
+format_loop:
     ld a,(y)
     jrne 1$
     jp format_exit
@@ -90,10 +97,10 @@ format_loop:
     cp a,#'%
     jreq percent 
 store_char:     
-    ld [ptr.w],a 
-    inc ptr.w+1 
+    ld [nearptr],a 
+    inc nearptr+1 
     jrne format_loop 
-    inc ptr.w 
+    inc nearptr 
     jra format_loop  
 percent:
     ld a,(y)
@@ -108,11 +115,12 @@ percent:
     ldw (XSAVE,sp),x 
     push a 
     push #SPACE 
-    ldw x,ptr.w 
+    ldw x,nearptr 
     pushw x 
     call fill
-    ldw ptr.w,x 
-    _drop 4   
+    ldw nearptr,x 
+    _drop 4  
+    ldw x,(XSAVE,sp) 
     jra format_loop 
 2$:
     cp a,#'c'
@@ -125,7 +133,7 @@ percent:
     jrne 6$
 ; *** int24_t in decimal *** 
     ld a,#10 
-5$: ld (BASE,sp),a    
+5$: ld (BASE,sp),a
     ld a,(x)
     incw x 
     ld (ACC24,sp),a
@@ -134,7 +142,7 @@ percent:
     ld (ACC24+1,sp),a 
     ld a,(x)
     incw x 
-    ld (ACC24,sp),a   
+    ld (ACC24+2,sp),a   
     ldw (XSAVE,sp),x 
     ldw (YSAVE,sp),y 
     ldw x,sp 
@@ -142,14 +150,14 @@ percent:
     ldw (BUFFER,sp),x 
     call i24toa
     ldw (SRC,sp),x 
-    ldw x,ptr.w 
+    ldw x,nearptr 
     ldw (DEST,sp),x 
     call strcpy 
     ldw x,(STR,sp)
     ldw (DEST,sp),x 
     call strlen 
     addw x,(STR,sp)
-    ldw ptr.w,x  
+    ldw nearptr,x  
     ldw x,(XSAVE,sp)
     ldw y,(YSAVE,sp)
     jp format_loop
@@ -168,14 +176,14 @@ percent:
     ldw (XSAVE,sp),x 
     ldw y,(y)
     ldw (SRC,sp),y 
-    ldw x,ptr.w 
+    ldw x,nearptr 
     ldw (DEST,sp),x 
     call strcpy
     ldw x,(STR,sp)
     ldw (DEST,sp),x 
     call strlen 
     addw x,(STR,sp)
-    ldw ptr.w,x 
+    ldw nearptr,x 
     ldw x,(XSAVE,sp)
     ldw y,(YSAVE,sp)
     jp format_loop 
@@ -209,7 +217,8 @@ _i24toa::
 i24toa::
 	_vars VSIZE 
 	clr (SIGN,sp)    ; sign
-	cp a,#10
+	ld a,#10
+    cp a,(BASE,sp)
 	jrne 1$
 	; base 10 string display with negative sign if bit 23==1
 	ld a,#0x80

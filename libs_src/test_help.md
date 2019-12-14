@@ -267,7 +267,9 @@ Imprime en hexadécimal et décimal le contenu de l'adresse spécifiée dans **X
 
 ## Interrupt par trap
 
-Il est possible d'utiliser l'instruction **trap** pour interrompre le programme de test pour aller sur une ligne de commande simple. Cette ligne de commande n'accepte que 2 commandes:
+Il est possible d'utiliser l'instruction **trap** pour interrompre le programme de test pour aller sur une ligne de commande simple. Cette ligne de commande n'accepte que 3 commandes:
 * 'q' pour retourner dans le programme test au point d'arrêt.
-* 'p addr' pour afficher le contenu de 8 adresses consécutives. 'p' sans arguments affiche les 8 adresses suivantes.
+* 'p [addr]' pour afficher le contenu de 8 adresses consécutives. 'p' sans arguments affiche les 8 adresses suivantes.
+* 's addr'  pour imprimer la chaîne ASCIZ qui se trouve à l'adresse donnée. 
+
 

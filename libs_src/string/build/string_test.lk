@@ -9,8 +9,6 @@
 -k /usr/local/share/sdcc/lib/stm8
 -l math24
 -l string
--l conio
--l uart
 -l stm8
 ../build/test_help.rel
 build/string_test.rel

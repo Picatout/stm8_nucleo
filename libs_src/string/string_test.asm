@@ -31,7 +31,7 @@
     .list 
 
     .area DATA 
-buffer: .ds 80 
+buffer:: .ds 80 
     
     .area CODE 
 _dbg 
@@ -55,7 +55,9 @@ test_main::
     _dbg_prt_regs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_strlen  
-    _dbg_puts 
+    _dbg_puts
+    ldw y,#hello 
+    _dbg_puts  
     _vars 2 
     ldw x,#hello 
     ldw (1,sp),x 
@@ -67,7 +69,6 @@ test_main::
     clrw x 
     _dbg_prti24
     ld a,#CR 
-    _dbg_putc   
 ;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_strcpy
     _dbg_puts 
@@ -80,7 +81,6 @@ test_main::
     _drop 4 
     ldw y,#buffer 
     _dbg_puts 
-    _dbg_prt_regs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_memcpy
     _dbg_puts  
@@ -95,7 +95,6 @@ test_main::
     _drop 6 
     ldw y,#buffer 
     _dbg_puts 
-    _dbg_prt_regs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_fill
     _dbg_puts 
@@ -111,7 +110,6 @@ test_main::
     clr (x) 
     ldw y,#buffer 
     _dbg_puts 
-    _dbg_prt_regs 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_i24toa
     _dbg_puts 
@@ -126,14 +124,27 @@ test_main::
     ldw (5,sp),x 
     call i24toa 
     _drop 6 
-    ldw acc24,x 
-    ld acc8,a 
-    _dbg_prti24 
-    trap 
+    ldw y,x 
+    _dbg_puts
+    ld a,#CR 
+    _dbg_putc  
+    _vars 6 
+    ldw x,#0x1234
+    ld a,#0x56 
+    ldw (1,sp),x 
+    ld (3,sp),a 
+    ldw x,#buffer 
+    ldw (5,sp),x 
+    ld a,#10 
+    ld (4,sp),a 
+    call i24toa 
+    _drop 6 
+    ldw y,x 
+    _dbg_puts 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
     ldw y,#test_format
     _dbg_puts 
-    STR=1 ; 2
+    BUFF=1 ; 2
     FMT=3 ; 2 
     SPC1=5 ; 1 
     CHR1=6 ; 1
@@ -151,7 +162,7 @@ test_main::
     ld (SPC3,sp),a 
     ld (SPC4,sp),a
     ldw x,#buffer 
-    ldw (STR,sp),x  
+    ldw (BUFF,sp),x  
     ldw x,#fmt 
     ldw (FMT,sp),x 
     ld a,#0xff
@@ -168,22 +179,18 @@ test_main::
     ld (CHR1,sp),a 
     call format 
     _drop VSIZE 
-    ldw y,#buffer 
-    _dbg_puts 
+    ldw y,#buffer
+    _dbg_puts  
     trap 
-    pushw x 
-    call puts 
-    trap 
-
     jra .
 
-test_i24toa: .asciz "test i24toa\n"
-test_atoi24: .asciz "test atoi24\n"
-test_strlen: .asciz "test strlen\n"
-test_fill: .asciz "test fill\n"
-test_memcpy: .asciz "test memcpy\n" 
-test_format: .asciz "test format\n"
-test_strcpy: .asciz "test strcpy\n"
+test_i24toa: .asciz "\ntest i24toa\n"
+test_atoi24: .asciz "\ntest atoi24\n"
+test_strlen: .asciz "\ntest strlen\n"
+test_fill: .asciz "\ntest fill\n"
+test_memcpy: .asciz "\ntest memcpy\n" 
+test_format: .asciz "\ntest format\n"
+test_strcpy: .asciz "\ntest strcpy\n"
 
 fmt: .asciz "ABC%a%c%a%s%a%d%a%x\n"
 number: .asciz "123456"
