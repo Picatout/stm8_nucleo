@@ -1,15 +1,12 @@
 #############################
 # librairies make file
 #############################
-BOARD=stm8s208rb
-PROGRAMMER=stlinkv21
-FLASH=stm8flash
 NAME=math24
 LIBNAME=$(NAME).lib 
 SDAS=sdasstm8
 SDCC=sdcc
 SDAR=sdar
-CFLAGS=
+CFLAGS=-mstm8 -lstm8 -L$(LIB_PATH)
 INC=../inc/
 INCLUDES=$(INC)stm8s208.inc
 BUILD=build/
@@ -22,6 +19,11 @@ LIB=$(LIB_PATH)$(LIBNAME)
 LIBREL=$(LIBNAME:.lib=.rel)
 SYMBOLS=$(OBJECTS:.rel=.sym)
 LISTS=$(OBJECTS:.rel=.lst)
+FLASH=stm8flash
+BOARD=stm8s208rb
+PROGRAMMER=stlinkv21
+TEST_NAME=math24_test
+TEST_HELP=../build/test_help.rel
 
 .PHONY: all
 
@@ -65,17 +67,18 @@ build:
 	mkdir build
 
 .PHONY: test 
-test: $(OBJECTS)
+
+test: $(LIB)
 	@echo
-	@echo "***************"
-	@echo "building test "
-	@echo "***************"
-	$(SDAS) -g -l -o $(BUILD)math24_test.rel math24_test.asm 
-	$(SDCC) -L$(LIB_PATH) -lmath24 -luart -mstm8 -lstm8 $(LDFLAGS) -o $(BUILD)math24_test.ihx $(BUILD)math24_test.rel 
+	@echo "*********************"
+	@echo "building test_math24 "
+	@echo "*********************"
+	$(SDAS) -g -l -o $(BUILD)$(TEST_NAME).rel $(TEST_NAME).asm 
+	$(SDCC) $(CFLAGS) -lmath24 -lstring -o $(BUILD)$(TEST_NAME).ihx $(TEST_HELP) $(BUILD)$(TEST_NAME).rel 
 	@echo
 	@echo "***************"
 	@echo "flashing device"
 	@echo "***************"
-	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(BUILD)math24_test.ihx 
+	$(FLASH) -c $(PROGRAMMER) -p $(BOARD) -w $(BUILD)$(TEST_NAME).ihx 
 
 

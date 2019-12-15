@@ -73,11 +73,11 @@
 
     .area DATA 
     TIB_SIZE=80
-    PAD_SIZE=20 
-tib:  .ds TIB_SIZE
-pad:  .ds PAD_SIZE
-in.w: .blkb 1 
-in:   .blkb 1 
+    PAD_SIZE=80 
+tib::  .ds TIB_SIZE
+pad::  .ds PAD_SIZE
+in.w:  .blkb 1 
+in:    .blkb 1 
 acc24:: .blkb 1
 acc16:: .blkb 1
 acc8::  .blkb 1
@@ -477,6 +477,19 @@ uart3_prti24::
 	popw y 
     ret	
 
+;-----------------------------
+; intialize parser ready for
+; for a new line analysis
+; input:
+;   none
+; output:
+;	none 
+;------------------------------
+parser_init::
+	clr in.w 
+	clr in
+	clr pad  
+	ret 
 
 ;------------------------------------
 ; convert integer to string
@@ -485,7 +498,6 @@ uart3_prti24::
 ;	acc24	integer to convert
 ; output:
 ;   y  		pointer to string
-;   A 		string length 
 ;------------------------------------
 	SIGN=1  ; integer sign 
 	BASE=2  ; numeric base 
@@ -608,7 +620,7 @@ neg_acc24:
 	; local variables
 	LEN = 1  ; accepted line length
 	RXCHAR = 2 ; last char received
-readln:
+uart3_readln::
 	push #0  ; RXCHAR 
 	push #0  ; LEN
  	ldw y,#tib ; input buffer
@@ -679,7 +691,7 @@ repl:
 	call uart3_putc
 	clr in.w 
 	clr in 
-	call readln
+	call uart3_readln
 	call next_word 
 	ldw y,#pad 
 	ld a,(y)
@@ -788,6 +800,8 @@ number::
 ; Command line tokenizer
 ; scan tib for next word
 ; move token in 'pad'
+; input: 
+	none: 
 ; use:
 ;	Y   pointer to tib 
 ;   X	pointer to pad 
@@ -896,7 +910,7 @@ atoi:
 	jra 2$
 9$:	tnz (SIGN,sp)
     jreq atoi_exit
-    negw y
+    call neg_acc24
 atoi_exit: 
 	addw sp,#LOCAL_SIZE
 	popw x ; restore x

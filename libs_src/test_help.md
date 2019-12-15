@@ -6,6 +6,8 @@ Ce texte explique comment utiliser [test_help.asm](test_help.asm) pour assister 
 
 Le programme [test_help](test_help.asm) doit-être lié avec le programme de test de l'application. Ce programme exporte des fonctions qui permettent d'envoyer de l'information à un terminal en utilisant le périphérique **UART3** du **stm8s208R**. Le fichier [test_help.inc](test_help.inc) contient un ensemble de macros pour simplifier son utilisation. 
 
+[test_help](test_help.asm) contient une facilité pour créer un minishell de commande dans le programme de test. Les tests peuvent donc être interactifs en utilisant un émulateur de terminal sur le PC branché au **UART3** de la carte **NUCLEO**. La configuration est de 115200 BAUD 8N1, pas de contrôle de flux. 
+
 ## Comment construire une application de test
 
 ### Makefile exemple 
@@ -182,6 +184,38 @@ Le fichier [test_help.inc](test_help.inc) contient les macros suivantes:
     _dbg_restore_regs
     .endif 
     .endm 
+
+    .macro _dbg_parser_init 
+    .if DEBUG 
+    _dbg_save_regs
+    call parser_init 
+    _dbg_restore_regs
+    .endif
+    .endm
+
+    .macro _dbg_readln
+    .if DEBUG 
+    _dbg_save_regs
+    call uart3_readln
+    _dbg_restore_regs
+    .endif
+    .endm
+
+    .macro _dbg_number 
+    .if DEBUG 
+    _dbg_save_regs
+    call number 
+    _dbg_restore_regs
+    .endif
+    .endm  
+
+    .macro _dbg_nextword
+    .if DEBUG 
+    _dbg_save_regs
+    call next_word  
+    _dbg_restore_regs
+    .endif
+    .endm  
 ```
 Ces macros préservent l'état des registres incluant le registre **CC**. 
 
@@ -191,7 +225,7 @@ Active le débogage en mettant la constante **DEBUG** à **1** ce qui permet l'a
 
 ### _nodbg 
 
-Désactive le débogage en mettant la contsnte **DEBUG** à **0** ce qui empèche l'assemblage des macros de débogage.
+Désactive le débogage en mettant la constante **DEBUG** à **0** ce qui empèche l'assemblage des macros de débogage.
 
 ### _dbg_save_regs 
 
@@ -218,23 +252,40 @@ Envoie la représentation texte  ASCII d'un entier 24 bits via le **UART3**. L'e
 Le registre **A** doit contenir la base numérique utilisée pour la conversion en chaîne et **XL** contient la largeur du champ réservé pour cette chaîne de caractère. Si la conversion donne une chaîne plus courte que ce qui est spécifié dans **XL** la chaîne est comblée à gauche par des espaces.  
 
 ### _dbg_prt_regs 
-Imprime l'état des registres internes du CPU sans en altéré le contenu.
+Imprime l'état des registres internes du CPU sans en altérer le contenu.
 
 ### _dbg_peek addr 
 
-Imprime en hexadécimal le contenu à l'adresse spécifiée. 
+Imprime en hexadécimal et décimal le contenu à l'adresse spécifiée. 
+
+### _dbg_parser_init 
+Pour faire des tests interactif il faut une interface avec l'utilisateur. Dans ce but [test_help](test_help.asm) contient une fonction **uart3_readln** et les fonctions d'analyse lexicales **next_word** et **number**. **parser_init** initialize l'analyseur lexical avant son utilisation pour l'analyse d'une nouvelle ligne. 
+### _dbg_readln
+Permet de lire une ligne de texte à partir du **UART3**. Cette ligne est déposée dans la variable globale **tib**.
+### _dbg_nextword
+Extrait le prochain mot de **tib** et le dépose dans la tampon **pad**.
+### _dbg_number
+Lorsqu'on attend un entier comme prochain mot sur la ligne de commande. On utilise cette macro pour l'extraire et le déposer dans **acc24**. 
+
 
 ## Variables exportées par [test_help](test_help.asm)
 
 ### acc24
-Variable utilisée par **uart3_prti24**  cette variable est décomposée en octets en utilisant les variables supplémentaires **acc16** et **acc8**. Il faut concevoir ces 3 variables comme une union en **C**. 
+Variable utilisée par **uart3_prti24**  cette variable est décomposée en octets en utilisant les variables supplémentaires **acc16** et **acc8**. Il faut concevoir ces 3 variables comme une structure en **C**. Il n'y a pas d'espace entre chaque octet donc l'instruction assembleur **ldw x,acc24** dépose acc24:acc16 dans le registre **X**. idem pour **ldw x,acc16** qui dépose **acc16:acc8** dans le registre **X**.
 ```    
-union{
-    int24_t acc24;
-    int16_t acc16; 
+struct{
+    uint8_t acc24;
+    uint8_t acc16; 
     int8_t acc8;
 } acc24_t; 
 ```
+
+### tib 
+Variable tampon utilisée par **uart3_readln**. Ce tampon reçoit la ligne lue au terminal. La taille du tampon est de 80 octets.
+
+### pad 
+Variable tampon utilisée pour l'extraction des mots de la ligne lue dans **tib**. La taille du tampon est de 80 octets. 
+
 ## les fonctions exportées par [test_help](test_help.asm) 
 
 ### ledon 
@@ -265,11 +316,25 @@ Ne prend aucun argument. Imprime l'état des registes du CPU au point d'appel. N
 ### uart3_peek 
 Imprime en hexadécimal et décimal le contenu de l'adresse spécifiée dans **X**.     
 
+### parser_init
+Initialise l'analyseur lexical pour la prochaine extraction des mots dans **tib**. Ne doit pas être appellée directement mais plutôt avec la macro **_dbg_parser_init**.
+
+### uart3_readln
+Effectue la lecture d'une ligne de texte à partir d'un terminal connecté à **UART3** de la carte **NUCLEO**. Cette ligne est déposée dans le tampon pointé par la variable globale **tib**. Ne doit pas être appellée directement mais plutôt avec la macro **_dbg_readln**.
+
+### next_word
+Extrait le mot suivant du tampon **tib** pour le déposé dans le tampon **pad**.Ne doit pas être appellée directement mais plutôt avec la macro **_dbg_nextword**. 
+
+### number 
+Lorsqu'on s'attend à ce que le prochain mot dans **tib** soit un entier on utilise cette fonction pour l'extraire et le déposer dans **acc24**. Ne doit pas être appellée directement mais plutôt avec la macro **_dbg_number**.
+
 ## Interrupt par trap
 
 Il est possible d'utiliser l'instruction **trap** pour interrompre le programme de test pour aller sur une ligne de commande simple. Cette ligne de commande n'accepte que 3 commandes:
 * 'q' pour retourner dans le programme test au point d'arrêt.
 * 'p [addr]' pour afficher le contenu de 8 adresses consécutives. 'p' sans arguments affiche les 8 adresses suivantes.
-* 's addr'  pour imprimer la chaîne ASCIZ qui se trouve à l'adresse donnée. 
+* 's addr'  pour imprimer la chaîne ASCIZ qui se trouve à l'adresse donnée. On l'utilise lorsqu'on s'attend à que l'adresse en question contienne une chaîne ASCIZ. 
+
+
 
 

@@ -14,7 +14,10 @@ En même temps que j'apprends à programmer les STM8 en assembleur en utilisant 
 * **docs** contient des fichiers PDF fournis par le fabriquant STMicroelectronics ainsi que d'autres documents utiles.
 * **docs/images**   Contient les images qui sont affichées dans les différents fichiers __*.md__.
 * **inc** Contient les fichiers d'assembleur __*.inc__ d'usage pour les différents projets. 
-* **chx_nom** pour chaque chapitre du tutoriel il y a un dossier dont le nom est de cette forme. Par exemple le dossier **ch1_blink** est le chapitre 1 du tutoriel avec le progamme exemple **blink.asm**. Chacun de ces dossiers contient un fichier **readme.md** qui contient le texte du tutoriel pour ce chapitre. Le contenu du fichier est affiché automatiquement lors qu'on passe d'un dossier à l'autre sur [github](https://github.com/picatout/stm8_nucleo). 
+* **chx_nom** pour chaque chapitre du tutoriel il y a un dossier dont le nom est de cette forme. Par exemple le dossier **ch1_blink** est le chapitre 1 du tutoriel avec le progamme exemple **blink.asm**. Chacun de ces dossiers contient un fichier **readme.md** qui contient le texte du tutoriel pour ce chapitre. Le contenu du fichier est affiché automatiquement lors qu'on passe d'un dossier à l'autre sur [github](https://github.com/picatout/stm8_nucleo).
+* **lib**  Contient les fichiers librairies compilés. 
+* **libs_src** Contient les fichier sources des librairies.
+* **mona**  Contient le projet [MONA](mona/readme.md) qui est une Moniteur écris en asssembleur. 
 
 ## Tutoriel
 ### Chapitre 1 [blink.asm](ch1_blink/readme.md)

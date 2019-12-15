@@ -100,4 +100,35 @@
     .endif 
     .endm 
 
+    .macro _dbg_parser_init 
+    .if DEBUG 
+    _dbg_save_regs
+    call parser_init 
+    _dbg_restore_regs
+    .endif
+    .endm
+
+    .macro _dbg_readln
+    .if DEBUG 
+    _dbg_save_regs
+    call uart3_readln
+    _dbg_restore_regs
+    .endif
+    .endm
+
+    .macro _dbg_number 
+    .if DEBUG 
+    _dbg_save_regs
+    call number 
+    _dbg_restore_regs
+    .endif
+    .endm  
+
+    .macro _dbg_nextword
+    .if DEBUG 
+    _dbg_save_regs
+    call next_word  
+    _dbg_restore_regs
+    .endif
+    .endm  
 

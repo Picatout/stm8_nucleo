@@ -1,0 +1,116 @@
+ASxxxx Linker V03.00 + NoICE + sdld,  page 1.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+.  .ABS.                            00000000    00000000 =           0. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     FFFFFFFF  s_SSEG                          
+     00000000  .__.ABS.                           MATH24
+     00000000  l_SSEG                          
+     00000000  l__CODE                         
+     00000000  s_SSEG0                         
+     00000000  s__CODE                         
+     00000001  s_DATA                          
+     00000080  l_HOME                          
+     000000A8  l_DATA                          
+     00000100  l_SSEG0                         
+     00000A24  l_CODE                          
+     00008000  s_HOME                          
+     00008080  s_CODE                          
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+DATA                                00000001    000000A8 =         168. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     00000001  tib                                TEST_HELP
+     00000051  pad                                TEST_HELP
+     000000A3  acc24                              TEST_HELP
+     000000A4  acc16                              TEST_HELP
+     000000A5  acc8                               TEST_HELP
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 3.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+SSEG0                               00000000    00000100 =         256. bytes (ABS,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 4.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+HOME                                00008000    00000080 =         128. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+ASxxxx Linker V03.00 + NoICE + sdld,  page 5.
+Hexadecimal  [32-Bits]
+
+Area                                    Addr        Size        Decimal Bytes (Attributes)
+--------------------------------        ----        ----        ------- ----- ------------
+CODE                                00008080    00000A24 =        2596. bytes (REL,CON)
+
+      Value  Global                              Global Defined In Module
+      -----  --------------------------------   ------------------------
+     000080BA  uart3_putc                         TEST_HELP
+     000080C3  uart3_getc                         TEST_HELP
+     000080CC  uart3_puts                         TEST_HELP
+     000080F6  uart3_prt_regs                     TEST_HELP
+     0000815B  uart3_peek                         TEST_HELP
+     00008198  _main                              TEST_HELP
+     00008198  main                               TEST_HELP
+     0000819D  _ledon                             TEST_HELP
+     0000819D  ledon                              TEST_HELP
+     000081A2  _ledoff                            TEST_HELP
+     000081A2  ledoff                             TEST_HELP
+     000081A7  _ledtoggle                         TEST_HELP
+     000081A7  ledtoggle                          TEST_HELP
+     000082DD  uart3_prti24                       TEST_HELP
+     00008326  parser_init                        TEST_HELP
+     000083C7  uart3_readln                       TEST_HELP
+     000084F2  number                             TEST_HELP
+     000084F9  next_word                          TEST_HELP
+     00008524  to_lower                           TEST_HELP
+     000085ED  test_main                          MATH24_TEST
+     000088A3  add24                              MATH24
+     000088B0  sub24                              MATH24
+     000088BD  mul24_8u                           MATH24
+     000088E6  mul24u                             MATH24
+     0000892A  mul24s                             MATH24
+     0000895D  div24_8u                           MATH24
+     00008973  clz24                              MATH24
+     0000898F  div24u                             MATH24
+     00008A1B  div24s                             MATH24
+     00008A9C  neg24                              MATH24
+ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
+
+Files Linked                              [ module(s) ]
+
+../build/test_help.rel                    [ TEST_HELP ]
+build/math24_test.rel                     [ MATH24_TEST ]
+
+
+Libraries Linked                          [ object file ]
+
+../../lib/math24.lib                      [ math24.rel ]
+
+ASxxxx Linker V03.00 + NoICE + sdld,  page 7.
+
+User Base Address Definitions
+
+HOME = 0x8000
+DATA = 0x0001
+SSEG = 0xffffffff
+
+
