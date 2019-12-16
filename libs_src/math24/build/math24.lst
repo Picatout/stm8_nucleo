@@ -1141,556 +1141,643 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
-                                     25     .list 
-                                     26 
-                                     27 ; NOTE: pour l'assembleur sdas une étiquette terminée par **::** est une 
-                                     28 ; étiquette globale qui peut être référencée dans un autre module.
-                                     29 
-                                     30     .area CODE 
-                                     31 
-                                     32 ;----------------------------------
-                                     33 ; addition 24 bits
-                                     34 ; input:
-                                     35 ;  N1       premier argument 
-                                     36 ;  N2       deuxième argument 
-                                     37 ; output:
-                                     38 ;   X:A     somme N1+N2 
-                                     39 ;--------------------------------
-                           000002    40     ARG_OFS=2
-                           000003    41     N1=ARG_OFS+1
-                           000006    42     N2=ARG_OFS+4
-      000000                         43  add24::
-      000000 1E 03            [ 2]   44     ldw x,(N1,sp)
-      000002 7B 05            [ 1]   45     ld a,(N1+2,sp)
-      000004 1B 08            [ 1]   46     add a,(N2+2,sp)
-      000006 24 01            [ 1]   47     jrnc 1$
-      000008 5C               [ 1]   48     incw x 
-      000009 72 FB 06         [ 2]   49 1$: addw x,(N2,sp)
-      00000C 81               [ 4]   50     ret 
-                                     51 
-                                     52 ;----------------------------------
-                                     53 ; soustraction 24 bits
-                                     54 ; input:
-                                     55 ;  N1       premier argument 
-                                     56 ;  N2       deuxième argument 
-                                     57 ; output:
-                                     58 ;   X:A     somme N1-N2 
-                                     59 ;--------------------------------
-                           000002    60     ARG_OFS=2
-                           000003    61     N1=ARG_OFS+1
-                           000006    62     N2=ARG_OFS+4
-      00000D                         63 sub24::
-      00000D 1E 03            [ 2]   64     ldw x,(N1,sp)
-      00000F 7B 05            [ 1]   65     ld a,(N1+2,sp)
-      000011 10 08            [ 1]   66     sub a,(N2+2,sp)
-      000013 24 01            [ 1]   67     jrnc 1$
-      000015 5A               [ 2]   68     decw x 
-      000016 72 F0 06         [ 2]   69 1$: subw x,(N2,sp)
-      000019 81               [ 4]   70     ret 
-                                     71 
-                                     72 
-                                     73 ;----------------------------------------
-                                     74 ; multiplication non signée d'un 
-                                     75 ; entier 24 bits par un entier 8 bits.
-                                     76 ; input:
-                                     77 ;   U24         entier non signé 24 bits 
-                                     78 ;   U8          entier non signé 8 bits
-                                     79 ; output:
-                                     80 ;   X:A         produit U24*U8
-                                     81 ; NOTE: cette routine jette le débordement
+                                            .include "../../inc/gen_macros.inc"
+                                        ;;
+                                        ; Copyright Jacques Deschênes 2019 
+                                        ; This file is part of STM8_NUCLEO 
+                                        ;
+                                        ;     STM8_NUCLEO is free software: you can redistribute it and/or modify
+                                        ;     it under the terms of the GNU General Public License as published by
+                                        ;     the Free Software Foundation, either version 3 of the License, or
+                                        ;     (at your option) any later version.
+                                        ;
+                                        ;     STM8_NUCLEO is distributed in the hope that it will be useful,
+                                        ;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+                                        ;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                                        ;     GNU General Public License for more details.
+                                        ;
+                                        ;     You should have received a copy of the GNU General Public License
+                                        ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
+                                        ;;
+                                        ;--------------------------------------
+                                        ;   console Input/Output module
+                                        ;   DATE: 2019-12-11
+                                        ;    
+                                        ;   General usage macros.   
+                                        ;
+                                        ;--------------------------------------
+                                        
+                                            ; reserve space on stack
+                                            ; for local variabls
+                                            .macro _vars n 
+                                            
+                                            ; free space on stack
+                                            .macro _drop n 
+                                        
+                                            ; declare ARG_OFS for arguments 
+                                            ; displacement on stack. This 
+                                            ; value depend on local variables 
+                                            ; size.
+                                            .macro _argofs n 
+                                        
+                                            ; declare a function argument 
+                                            ; position relative to stack pointer 
+                                            ; _argofs must be called before it.
+                                            .macro _arg name ofs 
+                                     26     .list 
+                                     27 
+                                     28 ; NOTE: pour l'assembleur sdas une étiquette terminée par **::** est une 
+                                     29 ; étiquette globale qui peut être référencée dans un autre module.
+                                     30 
+                                     31     .area CODE 
+                                     32 
+                                     33 ;----------------------------------
+                                     34 ; addition 24 bits
+                                     35 ; input:
+                                     36 ;  N1       premier argument 
+                                     37 ;  N2       deuxième argument 
+                                     38 ; output:
+                                     39 ;   X:A     somme N1+N2 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
 Hexadecimal [24-Bits]
 
 
 
-                                     82 ;       au delà du bit 23.
-                                     83 ;---------------------------------------
-                                     84 ; les arguments sont décalés de 5 octets à cause
-                                     85 ; de la variable locale ACC24 de 3 octets.
-                           000005    86     ARG_OFS=5
-                           000006    87     U24 = ARG_OFS+1
-                           000009    88     U8 = ARG_OFS+4
-                                     89 ; variable locale pour produit partiel
-                           000001    90     ACC24=1
-                           000003    91     LOCAL_SIZE=3 
-      00001A                         92 mul24_8u::
-      00001A 52 03            [ 2]   93     sub sp,#LOCAL_SIZE 
-      00001C 0F 01            [ 1]   94     clr (ACC24,sp)
-                                     95 ; U24bits7:0 x U8      
-      00001E 7B 08            [ 1]   96     ld a,(U24+2,sp)
-      000020 97               [ 1]   97     ld xl,a 
-      000021 7B 09            [ 1]   98     ld a,(U8,sp)
-      000023 42               [ 4]   99     mul x,a
-      000024 1F 02            [ 2]  100     ldw (ACC24+1,sp),x ; produit partiel 1
-                                    101 ; produit U24bits15:8 x U8 
-      000026 7B 07            [ 1]  102     ld a,(U24+1,sp)
-      000028 97               [ 1]  103     ld xl,a 
-      000029 7B 09            [ 1]  104     ld a,(U8,sp)
-      00002B 42               [ 4]  105     mul x,a
-      00002C 72 FB 01         [ 2]  106     addw x,(ACC24,sp)
-      00002F 1F 01            [ 2]  107     ldw (ACC24,sp),x ; produit partiel 2
-                                    108 ; produit U24bits23:16 x U8 
-      000031 7B 06            [ 1]  109     ld a,(U24,sp)
-      000033 97               [ 1]  110     ld xl,a
-      000034 7B 09            [ 1]  111     ld a,(U8,sp) 
-      000036 42               [ 4]  112     mul x,a 
-                                    113 ; le contenu de xh est un débordement au delà du bit 23 
-                                    114 ; donc on l'ignore. xl représente les 23:16 de ce produit partiel.    
-      000037 9F               [ 1]  115     ld a,xl 
-      000038 1B 01            [ 1]  116     add a,(ACC24,sp)
-      00003A 95               [ 1]  117     ld xh,a ; produit final bits 23:16
-      00003B 7B 02            [ 1]  118     ld a,(ACC24+1,sp)
-      00003D 97               [ 1]  119     ld xl,a  ; produit final bits 15:8
-      00003E 7B 03            [ 1]  120     ld a,(ACC24+2,sp) ; produit final bits 7:0
-      000040 5B 03            [ 2]  121     addw sp,#LOCAL_SIZE 
-      000042 81               [ 4]  122     ret 
-                                    123 
-                                    124 ;----------------------------------
-                                    125 ; multiplication non signée de 24 bits
-                                    126 ; input:
-                                    127 ;  N1       premier argument 
-                                    128 ;  N2       deuxième argument 
-                                    129 ; output:
-                                    130 ;   X:A     somme N1*N2 
-                                    131 ; NOTE: cette routine jette le débordement
-                                    132 ;       au delà du bit 23.
-                                    133 ;--------------------------------
-                                    134 ; les arguments sont décalés de 9 octets:
-                                    135 ;   2 pour l'adresse de retour 
-                                    136 ;   7 pour LOCAL_SIZE 
+                                     40 ;--------------------------------
+                           000002    41     ARG_OFS=2
+                           000003    42     N1=ARG_OFS+1
+                           000006    43     N2=ARG_OFS+4
+      000000                         44  add24::
+      000000 1E 03            [ 2]   45     ldw x,(N1,sp)
+      000002 7B 05            [ 1]   46     ld a,(N1+2,sp)
+      000004 1B 08            [ 1]   47     add a,(N2+2,sp)
+      000006 24 01            [ 1]   48     jrnc 1$
+      000008 5C               [ 1]   49     incw x 
+      000009 72 FB 06         [ 2]   50 1$: addw x,(N2,sp)
+      00000C 81               [ 4]   51     ret 
+                                     52 
+                                     53 ;----------------------------------
+                                     54 ; soustraction 24 bits
+                                     55 ; input:
+                                     56 ;  N1       premier argument 
+                                     57 ;  N2       deuxième argument 
+                                     58 ; output:
+                                     59 ;   X:A     somme N1-N2 
+                                     60 ;--------------------------------
+                           000002    61     ARG_OFS=2
+                           000003    62     N1=ARG_OFS+1
+                           000006    63     N2=ARG_OFS+4
+      00000D                         64 sub24::
+      00000D 1E 03            [ 2]   65     ldw x,(N1,sp)
+      00000F 7B 05            [ 1]   66     ld a,(N1+2,sp)
+      000011 10 08            [ 1]   67     sub a,(N2+2,sp)
+      000013 24 01            [ 1]   68     jrnc 1$
+      000015 5A               [ 2]   69     decw x 
+      000016 72 F0 06         [ 2]   70 1$: subw x,(N2,sp)
+      000019 81               [ 4]   71     ret 
+                                     72 
+                                     73 
+                                     74 ;----------------------------------------
+                                     75 ; multiplication non signée d'un 
+                                     76 ; entier 24 bits par un entier 8 bits.
+                                     77 ; input:
+                                     78 ;   U24         entier non signé 24 bits 
+                                     79 ;   U8          entier non signé 8 bits
+                                     80 ; output:
+                                     81 ;   X:A         produit U24*U8
+                                     82 ; NOTE: cette routine jette le débordement
+                                     83 ;       au delà du bit 23.
+                                     84 ;---------------------------------------
+                                     85 ; les arguments sont décalés de 5 octets à cause
+                                     86 ; de la variable locale ACC24 de 3 octets.
+                           000005    87     ARG_OFS=5
+                           000006    88     U24 = ARG_OFS+1
+                           000009    89     U8 = ARG_OFS+4
+                                     90 ; variable locale pour produit partiel
+                           000001    91     ACC24=1
+                           000003    92     LOCAL_SIZE=3 
+      00001A                         93 mul24_8u::
+      00001A 52 03            [ 2]   94     sub sp,#LOCAL_SIZE 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
 Hexadecimal [24-Bits]
 
 
 
-                           000009   137     ARG_OFS=9
-                           00000A   138     N1=ARG_OFS+1  ; argument 1 
-                           00000D   139     N2=ARG_OFS+4  ; argument 2
-                                    140 ; variable locale de 24 bits
-                           000001   141     U24 = 1 ; arg1 pour mul24_8u
-                           000004   142     U8 = 4  ; arg2 pour mul24_8u
-                           000005   143     ACC24=5 ; 3 octets
-                           000007   144     LOCAL_SIZE=7
-      000043                        145 mul24u::
-      000043 52 07            [ 2]  146     sub sp,#LOCAL_SIZE
-                                    147 ; multiplie  N1 * N2bit7:0  
-      000045 7B 0F            [ 1]  148     ld a,(N2+2,sp)
-      000047 6B 04            [ 1]  149     ld (U8,sp),a 
-      000049 7B 0C            [ 1]  150     ld a,(N1+2,sp)
-      00004B 6B 03            [ 1]  151     ld (U24+2,sp),a 
-      00004D 1E 0A            [ 2]  152     ldw x,(N1,sp)
-      00004F 1F 01            [ 2]  153     ldw (U24,sp),x 
-      000051 CD 00 1A         [ 4]  154     call mul24_8u
-                                    155 ; produit partiel 1
-      000054 6B 07            [ 1]  156     ld (ACC24+2,sp),a 
-      000056 1F 05            [ 2]  157     ldw (ACC24,sp),x
-                                    158 ; multiplie N1 * N2bit15:8     
-      000058 7B 0E            [ 1]  159     ld a,(N2+1,sp)
-      00005A 6B 04            [ 1]  160     ld (U8,sp),a 
-      00005C 7B 0C            [ 1]  161     ld a,(N1+2,sp)
-      00005E 6B 03            [ 1]  162     ld (U24+2,sp),a 
-      000060 1E 0A            [ 2]  163     ldw x,(N1,sp)
-      000062 1F 01            [ 2]  164     ldw (U24,sp),x 
-      000064 CD 00 1A         [ 4]  165     call mul24_8u
-                                    166 ; additionne produit partiel 2 à produit partiel 1
-                                    167 ;  xh représente un débordement après le bit 23 donc ignoré.
-      000067 02               [ 1]  168     rlwa x 
-      000068 72 FB 05         [ 2]  169     addw x,(ACC24,sp)
-      00006B 1F 05            [ 2]  170     ldw (ACC24,sp),x 
-                                    171 ; multiplie N1 * N2bits23:16
-      00006D 7B 0D            [ 1]  172     ld a,(N2,sp)
-      00006F 6B 04            [ 1]  173     ld (U8,sp),a 
-      000071 7B 0C            [ 1]  174     ld a,(N1+2,sp)
-      000073 6B 03            [ 1]  175     ld (U24+2,sp),a 
-      000075 1E 0A            [ 2]  176     ldw x,(N1,sp)
-      000077 1F 01            [ 2]  177     ldw (U24,sp),x 
-      000079 CD 00 1A         [ 4]  178     call mul24_8u
-                                    179 ; additionne produit partiel 3 à acc24 
-      00007C 1B 05            [ 1]  180     add a,(ACC24,sp)
-      00007E 6B 05            [ 1]  181     ld (ACC24,sp),a 
-                                    182 ; retourne le produit dans X:A 
-      000080                        183 result: ; X:A 
-      000080 1E 05            [ 2]  184     ldw x,(ACC24,sp)
-      000082 7B 07            [ 1]  185     ld a,(ACC24+2,sp)
-      000084 5B 07            [ 2]  186     addw sp,#LOCAL_SIZE 
-      000086 81               [ 4]  187     ret 
-                                    188 
-                                    189 ;----------------------------------------
-                                    190 ; multiplication non signée d'un 
-                                    191 ; entier 24 bits par un entier 8 bits.
+      00001C 0F 01            [ 1]   95     clr (ACC24,sp)
+                                     96 ; U24bits7:0 x U8      
+      00001E 7B 08            [ 1]   97     ld a,(U24+2,sp)
+      000020 97               [ 1]   98     ld xl,a 
+      000021 7B 09            [ 1]   99     ld a,(U8,sp)
+      000023 42               [ 4]  100     mul x,a
+      000024 1F 02            [ 2]  101     ldw (ACC24+1,sp),x ; produit partiel 1
+                                    102 ; produit U24bits15:8 x U8 
+      000026 7B 07            [ 1]  103     ld a,(U24+1,sp)
+      000028 97               [ 1]  104     ld xl,a 
+      000029 7B 09            [ 1]  105     ld a,(U8,sp)
+      00002B 42               [ 4]  106     mul x,a
+      00002C 72 FB 01         [ 2]  107     addw x,(ACC24,sp)
+      00002F 1F 01            [ 2]  108     ldw (ACC24,sp),x ; produit partiel 2
+                                    109 ; produit U24bits23:16 x U8 
+      000031 7B 06            [ 1]  110     ld a,(U24,sp)
+      000033 97               [ 1]  111     ld xl,a
+      000034 7B 09            [ 1]  112     ld a,(U8,sp) 
+      000036 42               [ 4]  113     mul x,a 
+                                    114 ; le contenu de xh est un débordement au delà du bit 23 
+                                    115 ; donc on l'ignore. xl représente les 23:16 de ce produit partiel.    
+      000037 9F               [ 1]  116     ld a,xl 
+      000038 1B 01            [ 1]  117     add a,(ACC24,sp)
+      00003A 95               [ 1]  118     ld xh,a ; produit final bits 23:16
+      00003B 7B 02            [ 1]  119     ld a,(ACC24+1,sp)
+      00003D 97               [ 1]  120     ld xl,a  ; produit final bits 15:8
+      00003E 7B 03            [ 1]  121     ld a,(ACC24+2,sp) ; produit final bits 7:0
+      000040 5B 03            [ 2]  122     addw sp,#LOCAL_SIZE 
+      000042 81               [ 4]  123     ret 
+                                    124 
+                                    125 ;----------------------------------
+                                    126 ; multiplication non signée de 24 bits
+                                    127 ; input:
+                                    128 ;  N1       premier argument 
+                                    129 ;  N2       deuxième argument 
+                                    130 ; output:
+                                    131 ;   X:A     somme N1*N2 
+                                    132 ; NOTE: cette routine jette le débordement
+                                    133 ;       au delà du bit 23.
+                                    134 ;--------------------------------
+                                    135 ; les arguments sont décalés de 9 octets:
+                                    136 ;   2 pour l'adresse de retour 
+                                    137 ;   7 pour LOCAL_SIZE 
+                           000009   138     ARG_OFS=9
+                           00000A   139     N1=ARG_OFS+1  ; argument 1 
+                           00000D   140     N2=ARG_OFS+4  ; argument 2
+                                    141 ; variable locale de 24 bits
+                           000001   142     U24 = 1 ; arg1 pour mul24_8u
+                           000004   143     U8 = 4  ; arg2 pour mul24_8u
+                           000005   144     ACC24=5 ; 3 octets
+                           000007   145     LOCAL_SIZE=7
+      000043                        146 mul24u::
+      000043 52 07            [ 2]  147     sub sp,#LOCAL_SIZE
+                                    148 ; multiplie  N1 * N2bit7:0  
+      000045 7B 0F            [ 1]  149     ld a,(N2+2,sp)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-                                    192 ; input:
-                                    193 ;   I1         entier signé 24 bits 
-                                    194 ;   I2          entier signé 24 bits
-                                    195 ; output:
-                                    196 ;   X:A         produit I1*I2
-                                    197 ; NOTE: cette routine jette le débordement
-                                    198 ;       au delà du bit 23.
-                                    199 ;---------------------------------------
-                           000009   200     ARG_OFS=9
-                           00000A   201     I1=ARG_OFS+1
-                           00000D   202     I2=ARG_OFS+4
-                                    203 ; local variables
-                           000001   204     U1=1
-                           000004   205     U2=4
-                           000007   206     SIGN=7   
-                           000007   207     LOCAL_SIZE=7
-      000087                        208 mul24s::
-      000087 52 07            [ 2]  209     sub sp,#LOCAL_SIZE 
-      000089 0F 07            [ 1]  210     clr (SIGN,sp)
-      00008B 7B 0C            [ 1]  211     ld a,(I1+2,sp)
-      00008D 1E 0A            [ 2]  212     ldw x,(I1,sp)
-      00008F 0D 0A            [ 1]  213     tnz (I1,sp)
-      000091 2A 05            [ 1]  214     jrpl 0$
-      000093 03 07            [ 1]  215     cpl (SIGN,sp)
-      000095 CD 01 F9         [ 4]  216     call neg24
-      000098 6B 03            [ 1]  217 0$: ld (U1+2,sp),a 
-      00009A 1F 01            [ 2]  218     ldw (U1,sp),x
-      00009C 7B 0F            [ 1]  219 1$: ld a,(I2+2,sp)
-      00009E 1E 0D            [ 2]  220     ldw x,(I2,sp)
-      0000A0 0D 0D            [ 1]  221     tnz (I2,sp)
-      0000A2 2A 05            [ 1]  222     jrpl 2$
-      0000A4 CD 01 F9         [ 4]  223     call neg24
-      0000A7 03 07            [ 1]  224     cpl (SIGN,sp)
-      0000A9 6B 06            [ 1]  225 2$: ld (U2+2,sp),a 
-      0000AB 1F 04            [ 2]  226     ldw (U2,sp),x 
-      0000AD CD 00 43         [ 4]  227     call mul24u 
-      0000B0 0D 07            [ 1]  228     tnz (SIGN,sp)
-      0000B2 27 03            [ 1]  229     jreq 3$
-      0000B4 CD 01 F9         [ 4]  230     call neg24    
-      0000B7 5B 07            [ 2]  231 3$: addw sp,#LOCAL_SIZE
-      0000B9 81               [ 4]  232     ret
-                                    233 
-                                    234 ;-------------------------------------
-                                    235 ; division non signée uint24_t by uint8_t
-                                    236 ; input:
-                                    237 ;	dividend    uint24_t
-                                    238 ;   divisor		uint8_t 
-                                    239 ; output:
-                                    240 ;    divident   quotient
-                                    241 ;    A          remainder 
-                                    242 ;------------------------------------- 
-                           000002   243     ARG_OFS=2
-                           000003   244     U24 = ARG_OFS+1
-                           000006   245 	U8   = ARG_OFS+4
-      0000BA                        246 div24_8u::
+      000047 6B 04            [ 1]  150     ld (U8,sp),a 
+      000049 7B 0C            [ 1]  151     ld a,(N1+2,sp)
+      00004B 6B 03            [ 1]  152     ld (U24+2,sp),a 
+      00004D 1E 0A            [ 2]  153     ldw x,(N1,sp)
+      00004F 1F 01            [ 2]  154     ldw (U24,sp),x 
+      000051 CD 00 1A         [ 4]  155     call mul24_8u
+                                    156 ; produit partiel 1
+      000054 6B 07            [ 1]  157     ld (ACC24+2,sp),a 
+      000056 1F 05            [ 2]  158     ldw (ACC24,sp),x
+                                    159 ; multiplie N1 * N2bit15:8     
+      000058 7B 0E            [ 1]  160     ld a,(N2+1,sp)
+      00005A 6B 04            [ 1]  161     ld (U8,sp),a 
+      00005C 7B 0C            [ 1]  162     ld a,(N1+2,sp)
+      00005E 6B 03            [ 1]  163     ld (U24+2,sp),a 
+      000060 1E 0A            [ 2]  164     ldw x,(N1,sp)
+      000062 1F 01            [ 2]  165     ldw (U24,sp),x 
+      000064 CD 00 1A         [ 4]  166     call mul24_8u
+                                    167 ; additionne produit partiel 2 à produit partiel 1
+                                    168 ;  xh représente un débordement après le bit 23 donc ignoré.
+      000067 02               [ 1]  169     rlwa x 
+      000068 72 FB 05         [ 2]  170     addw x,(ACC24,sp)
+      00006B 1F 05            [ 2]  171     ldw (ACC24,sp),x 
+                                    172 ; multiplie N1 * N2bits23:16
+      00006D 7B 0D            [ 1]  173     ld a,(N2,sp)
+      00006F 6B 04            [ 1]  174     ld (U8,sp),a 
+      000071 7B 0C            [ 1]  175     ld a,(N1+2,sp)
+      000073 6B 03            [ 1]  176     ld (U24+2,sp),a 
+      000075 1E 0A            [ 2]  177     ldw x,(N1,sp)
+      000077 1F 01            [ 2]  178     ldw (U24,sp),x 
+      000079 CD 00 1A         [ 4]  179     call mul24_8u
+                                    180 ; additionne produit partiel 3 à acc24 
+      00007C 1B 05            [ 1]  181     add a,(ACC24,sp)
+      00007E 6B 05            [ 1]  182     ld (ACC24,sp),a 
+                                    183 ; retourne le produit dans X:A 
+      000080                        184 result: ; X:A 
+      000080 1E 05            [ 2]  185     ldw x,(ACC24,sp)
+      000082 7B 07            [ 1]  186     ld a,(ACC24+2,sp)
+      000084 5B 07            [ 2]  187     addw sp,#LOCAL_SIZE 
+      000086 81               [ 4]  188     ret 
+                                    189 
+                                    190 ;----------------------------------------
+                                    191 ; multiplication non signée d'un 
+                                    192 ; entier 24 bits par un entier 8 bits.
+                                    193 ; input:
+                                    194 ;   I1         entier signé 24 bits 
+                                    195 ;   I2          entier signé 24 bits
+                                    196 ; output:
+                                    197 ;   X:A         produit I1*I2
+                                    198 ; NOTE: cette routine jette le débordement
+                                    199 ;       au delà du bit 23.
+                                    200 ;---------------------------------------
+                           000009   201     ARG_OFS=9
+                           00000A   202     I1=ARG_OFS+1
+                           00000D   203     I2=ARG_OFS+4
+                                    204 ; local variables
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 
 
-                                    247 	;dividende bits 23:8 in X
-      0000BA 1E 03            [ 2]  248 	ldw x,(U24,sp)
-      0000BC 7B 06            [ 1]  249 	ld a,(U8,SP) ; diviseur
-      0000BE 62               [ 2]  250 	div x,a ; 
-      0000BF 1F 03            [ 2]  251     ldw (U24,sp),x 
-      0000C1 95               [ 1]  252 	ld xh,a
-      0000C2 7B 05            [ 1]  253 	ld a,(U24+2,sp)
-      0000C4 97               [ 1]  254 	ld xl,a
-      0000C5 7B 06            [ 1]  255 	ld a,(U8,sp) ; diviseur
-      0000C7 62               [ 2]  256 	div x,a  
-      0000C8 6B 06            [ 1]  257 	ld (U8,sp),a ; sauve reste 
-      0000CA 9F               [ 1]  258 	ld a,xl
-      0000CB 6B 05            [ 1]  259 	ld (U24+2,sp),a
-      0000CD 7B 06            [ 1]  260     ld a,(U8,sp)
-      0000CF 81               [ 4]  261 	ret
-                                    262 
-                                    263 ;---------------------------------------
-                                    264 ; compte le nombre de bits à zéro
-                                    265 ; avant de rencontrer un 1 à partir
-                                    266 ; du bit le plus significatif
-                                    267 ; input:
-                                    268 ;   X        adresse de l'entier 24 bits 
-                                    269 ; output:
-                                    270 ;   A        nombre de zéro à gauche
-                                    271 ;--------------------------------------    
-                           000001   272     LZ=1  ; compteur de zéros
-                           000001   273     LOCAL_SIZE=1
-      0000D0                        274 clz24::
-      0000D0 4F               [ 1]  275     clr a
-      0000D1 88               [ 1]  276     push a 
-      0000D2 99               [ 1]  277     scf 
-      0000D3 46               [ 1]  278 1$: rrc a 
-      0000D4 24 02            [ 1]  279     jrnc 2$
-      0000D6 5C               [ 1]  280     incw x
-      0000D7 46               [ 1]  281     rrc a    
-      0000D8 F5               [ 1]  282 2$: bcp a,(X)
-      0000D9 26 0F            [ 1]  283     jrne 3$
-      0000DB 0C 01            [ 1]  284     inc (LZ,sp)
-      0000DD 90 97            [ 1]  285     ld yl,a 
-      0000DF A6 18            [ 1]  286     ld a,#24
-      0000E1 11 01            [ 1]  287     cp a,(LZ,sp)
-      0000E3 27 05            [ 1]  288     jreq 3$
-      0000E5 90 9F            [ 1]  289     ld a,yl
-      0000E7 98               [ 1]  290     rcf  
-      0000E8 20 E9            [ 2]  291     jra 1$
-      0000EA 84               [ 1]  292 3$: pop a 
-      0000EB 81               [ 4]  293     ret
-                                    294 
-                                    295 
-                                    296 ;-------------------------------
-                                    297 ;  division non signée de DVDEND/DVSOR 
-                                    298 ; input:
-                                    299 ;   DVDEND      dividende 24 bits
-                                    300 ;   DVSOR      diviseur  24 bits 
-                                    301 ; output:
+                           000001   205     U1=1
+                           000004   206     U2=4
+                           000007   207     SIGN=7   
+                           000007   208     LOCAL_SIZE=7
+      000087                        209 mul24s::
+      000087 52 07            [ 2]  210     sub sp,#LOCAL_SIZE 
+      000089 0F 07            [ 1]  211     clr (SIGN,sp)
+      00008B 7B 0C            [ 1]  212     ld a,(I1+2,sp)
+      00008D 1E 0A            [ 2]  213     ldw x,(I1,sp)
+      00008F 0D 0A            [ 1]  214     tnz (I1,sp)
+      000091 2A 05            [ 1]  215     jrpl 0$
+      000093 03 07            [ 1]  216     cpl (SIGN,sp)
+      000095 CD 01 F9         [ 4]  217     call neg24
+      000098 6B 03            [ 1]  218 0$: ld (U1+2,sp),a 
+      00009A 1F 01            [ 2]  219     ldw (U1,sp),x
+      00009C 7B 0F            [ 1]  220 1$: ld a,(I2+2,sp)
+      00009E 1E 0D            [ 2]  221     ldw x,(I2,sp)
+      0000A0 0D 0D            [ 1]  222     tnz (I2,sp)
+      0000A2 2A 05            [ 1]  223     jrpl 2$
+      0000A4 CD 01 F9         [ 4]  224     call neg24
+      0000A7 03 07            [ 1]  225     cpl (SIGN,sp)
+      0000A9 6B 06            [ 1]  226 2$: ld (U2+2,sp),a 
+      0000AB 1F 04            [ 2]  227     ldw (U2,sp),x 
+      0000AD CD 00 43         [ 4]  228     call mul24u 
+      0000B0 0D 07            [ 1]  229     tnz (SIGN,sp)
+      0000B2 27 03            [ 1]  230     jreq 3$
+      0000B4 CD 01 F9         [ 4]  231     call neg24    
+      0000B7 5B 07            [ 2]  232 3$: addw sp,#LOCAL_SIZE
+      0000B9 81               [ 4]  233     ret
+                                    234 
+                                    235 ;-------------------------------------
+                                    236 ; division non signée uint24_t by uint8_t
+                                    237 ; input:
+                                    238 ;	dividend    uint24_t
+                                    239 ;   divisor		uint8_t 
+                                    240 ; output:
+                                    241 ;    divident   quotient
+                                    242 ;    A          remainder 
+                                    243 ;------------------------------------- 
+                           000002   244     ARG_OFS=2
+                           000003   245     U24 = ARG_OFS+1
+                           000006   246 	U8   = ARG_OFS+4
+      0000BA                        247 div24_8u::
+                                    248 	;dividende bits 23:8 in X
+      0000BA 1E 03            [ 2]  249 	ldw x,(U24,sp)
+      0000BC 7B 06            [ 1]  250 	ld a,(U8,SP) ; diviseur
+      0000BE 62               [ 2]  251 	div x,a ; 
+      0000BF 1F 03            [ 2]  252     ldw (U24,sp),x 
+      0000C1 95               [ 1]  253 	ld xh,a
+      0000C2 7B 05            [ 1]  254 	ld a,(U24+2,sp)
+      0000C4 97               [ 1]  255 	ld xl,a
+      0000C5 7B 06            [ 1]  256 	ld a,(U8,sp) ; diviseur
+      0000C7 62               [ 2]  257 	div x,a  
+      0000C8 6B 06            [ 1]  258 	ld (U8,sp),a ; sauve reste 
+      0000CA 9F               [ 1]  259 	ld a,xl
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 
 
-                                    302 ;   X:A     quotient U1/DVSOR 
-                                    303 ;   U1      reste 
-                                    304 ;------------------------------
-                           000008   305     ARG_OFS= 8
-                           000009   306     DVDEND = ARG_OFS+1
-                           00000C   307     DVSOR = ARG_OFS+4
-                                    308 ; variable locale 
-                           000001   309     QUOT_LB = 1 ; quotient bits 7:0, 1 octets
-                           000002   310     SHIFT=2 ;  compteur de décalage, 1 octet
-                           000003   311     DIFF=3  ;  différence entre DVDEND et DVSOR, 3 octets
-                           000006   312     SHIFTR=6 ; décalage du reste vers la droite, 1 octet
-                           000006   313     LOCAL_SIZE=6
-      0000EC                        314 div24u::
-      0000EC 52 06            [ 2]  315     sub sp,#LOCAL_SIZE
-      0000EE 0F 01            [ 1]  316     clr (QUOT_LB,sp)
-                                    317 ; si diviseur zéro gènère exception fatale
-      0000F0 7B 0C            [ 1]  318     ld a,(DVSOR,sp)
-      0000F2 1A 0D            [ 1]  319     or a,(DVSOR+1,sp)
-      0000F4 1A 0E            [ 1]  320     or a,(DVSOR+2,sp)
-      0000F6 26 01            [ 1]  321     jrne 1$
-      0000F8 83               [ 9]  322     trap ; excepction division par zéro.
-      0000F9                        323 1$: ; si dividende < diviseur retourne X:A=0 R=dividende
-      0000F9 96               [ 1]  324     ldw x,sp 
-      0000FA 1C 00 09         [ 2]  325     addw x,#DVDEND ; dividente 
-      0000FD CD 00 D0         [ 4]  326     call clz24 
-      000100 6B 02            [ 1]  327     ld (SHIFT,sp),a 
-      000102 96               [ 1]  328     ldw x,sp 
-      000103 1C 00 0C         [ 2]  329     addw x,#DVSOR ; diviseur 
-      000106 CD 00 D0         [ 4]  330     call clz24
-      000109 11 02            [ 1]  331     cp a,(SHIFT,sp)
-      00010B 24 04            [ 1]  332     jruge 2$
-      00010D 5F               [ 1]  333     clrw x 
-      00010E 4F               [ 1]  334     clr a 
-      00010F 20 62            [ 2]  335     jra 9$ 
-                                    336 ; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
-      000111 10 02            [ 1]  337 2$: sub a,(SHIFT,sp)
-      000113 6B 02            [ 1]  338     ld (SHIFT,sp),a 
-      000115 6B 06            [ 1]  339     ld (SHIFTR,sp),a 
-      000117 16 0C            [ 2]  340     ldw y,(DVSOR,sp)
-      000119 4D               [ 1]  341 3$: tnz a 
-      00011A 27 07            [ 1]  342     jreq 4$
-      00011C 08 0E            [ 1]  343     sll (DVSOR+2,sp)
-      00011E 90 59            [ 2]  344     rlcw y
-      000120 4A               [ 1]  345     dec a
-      000121 20 F6            [ 2]  346     jra 3$
-      000123 17 0C            [ 2]  347 4$: ldw (DVSOR,sp),y 
-                                    348 ; boucle de division
-      000125 5F               [ 1]  349     clrw x  ; quotient bits 23:8 
-      000126 7B 0B            [ 1]  350 5$: ld a,(DVDEND+2,sp) ; dividende bits 7:0
-      000128 16 09            [ 2]  351     ldw y,(DVDEND,sp); dividende bits 23:8
-      00012A 10 0E            [ 1]  352     sub a,(DVSOR+2,sp) ; diviseur bits 7:0
-      00012C 6B 05            [ 1]  353     ld (DIFF+2,sp),a
-      00012E 90 9F            [ 1]  354     ld a,yl 
-      000130 12 0D            [ 1]  355     sbc a,(DVSOR+1,sp)
-      000132 6B 04            [ 1]  356     ld (DIFF+1,sp),a 
+      0000CB 6B 05            [ 1]  260 	ld (U24+2,sp),a
+      0000CD 7B 06            [ 1]  261     ld a,(U8,sp)
+      0000CF 81               [ 4]  262 	ret
+                                    263 
+                                    264 ;---------------------------------------
+                                    265 ; compte le nombre de bits à zéro
+                                    266 ; avant de rencontrer un 1 à partir
+                                    267 ; du bit le plus significatif
+                                    268 ; input:
+                                    269 ;   X        adresse de l'entier 24 bits 
+                                    270 ; output:
+                                    271 ;   A        nombre de zéro à gauche
+                                    272 ;--------------------------------------    
+                           000001   273     LZ=1  ; compteur de zéros
+                           000001   274     LOCAL_SIZE=1
+      0000D0                        275 clz24::
+      0000D0 4F               [ 1]  276     clr a
+      0000D1 88               [ 1]  277     push a 
+      0000D2 99               [ 1]  278     scf 
+      0000D3 46               [ 1]  279 1$: rrc a 
+      0000D4 24 02            [ 1]  280     jrnc 2$
+      0000D6 5C               [ 1]  281     incw x
+      0000D7 46               [ 1]  282     rrc a    
+      0000D8 F5               [ 1]  283 2$: bcp a,(X)
+      0000D9 26 0F            [ 1]  284     jrne 3$
+      0000DB 0C 01            [ 1]  285     inc (LZ,sp)
+      0000DD 90 97            [ 1]  286     ld yl,a 
+      0000DF A6 18            [ 1]  287     ld a,#24
+      0000E1 11 01            [ 1]  288     cp a,(LZ,sp)
+      0000E3 27 05            [ 1]  289     jreq 3$
+      0000E5 90 9F            [ 1]  290     ld a,yl
+      0000E7 98               [ 1]  291     rcf  
+      0000E8 20 E9            [ 2]  292     jra 1$
+      0000EA 84               [ 1]  293 3$: pop a 
+      0000EB 81               [ 4]  294     ret
+                                    295 
+                                    296 
+                                    297 ;-------------------------------
+                                    298 ;  division non signée de DVDEND/DVSOR 
+                                    299 ; input:
+                                    300 ;   DVDEND      dividende 24 bits
+                                    301 ;   DVSOR      diviseur  24 bits 
+                                    302 ; output:
+                                    303 ;   X:A     quotient U1/DVSOR 
+                                    304 ;   U1      reste 
+                                    305 ;------------------------------
+                           000008   306     ARG_OFS= 8
+                           000009   307     DVDEND = ARG_OFS+1
+                           00000C   308     DVSOR = ARG_OFS+4
+                                    309 ; variable locale 
+                           000001   310     QUOT_LB = 1 ; quotient bits 7:0, 1 octets
+                           000002   311     SHIFT=2 ;  compteur de décalage, 1 octet
+                           000003   312     DIFF=3  ;  différence entre DVDEND et DVSOR, 3 octets
+                           000006   313     SHIFTR=6 ; décalage du reste vers la droite, 1 octet
+                           000006   314     LOCAL_SIZE=6
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 
 
-      000134 90 9E            [ 1]  357     ld a,yh 
-      000136 12 0C            [ 1]  358     sbc a,(DVSOR,sp)
-      000138 6B 03            [ 1]  359     ld (DIFF,sp),a 
-      00013A 25 0A            [ 1]  360     jrc 6$
-      00013C 16 03            [ 2]  361     ldw y,(DIFF,sp)
-      00013E 17 09            [ 2]  362     ldw (DVDEND,sp),y
-      000140 7B 05            [ 1]  363     ld a,(DIFF+2,sp) 
-      000142 6B 0B            [ 1]  364     ld (DVDEND+2,sp),a 
-      000144 20 08            [ 2]  365     jra 7$
-      000146 7B 0B            [ 1]  366 6$: ld a,(DVDEND+2,sp)
-      000148 16 09            [ 2]  367     ldw y,(DVDEND,sp)
-      00014A 6B 05            [ 1]  368     ld (DIFF+2,sp),a 
-      00014C 17 03            [ 2]  369     ldw (DIFF,sp),y 
-      00014E 8C               [ 1]  370 7$: ccf
-      00014F 09 01            [ 1]  371     rlc (QUOT_LB,sp)
-      000151 59               [ 2]  372     rlcw x
-      000152 0D 02            [ 1]  373     tnz (SHIFT,sp)
-      000154 27 0A            [ 1]  374     jreq 8$ 
-      000156 08 0B            [ 1]  375     sll (DVDEND+2,sp) 
-      000158 09 0A            [ 1]  376     rlc (DVDEND+1,sp) 
-      00015A 09 09            [ 1]  377     rlc (DVDEND,sp)
-      00015C 0A 02            [ 1]  378     dec (SHIFT,sp)
-      00015E 20 C6            [ 2]  379     jra 5$
-      000160 7B 05            [ 1]  380 8$: ld a,(DIFF+2,sp)
-      000162 16 03            [ 2]  381     ldw y,(DIFF,sp) 
-      000164                        382 80$: ; réaligne le reste sur le bit 0.
-      000164 0D 06            [ 1]  383     tnz (SHIFTR,sp)
-      000166 27 07            [ 1]  384     jreq 81$
-      000168 90 54            [ 2]  385     srlw y 
-      00016A 46               [ 1]  386     rrc a
-      00016B 0A 06            [ 1]  387     dec (SHIFTR,sp)
-      00016D 20 F5            [ 2]  388     jra 80$ 
-      00016F                        389 81$: 
-      00016F 6B 0B            [ 1]  390     ld (DVDEND+2,sp),a 
-      000171 17 09            [ 2]  391     ldw (DVDEND,sp),y
-                                    392 
-      000173 7B 01            [ 1]  393 9$: ld a,(QUOT_LB,sp) 
-      000175 5B 06            [ 2]  394     addw sp,#LOCAL_SIZE 
-      000177 81               [ 4]  395     ret 
-                                    396 
-                                    397 ;------------------------------------------
-                                    398 ; division signé int24_t/int24_t 
-                                    399 ; input:
-                                    400 ;   I1          dividende
-                                    401 ;   I2          diviseur
-                                    402 ; output:
-                                    403 ;   X:A         quotient 
-                                    404 ;   I1          reste 
-                                    405 ;NOTE: le reste doit toujours être positif 
-                                    406 ;REF: https://fr.wikipedia.org/wiki/Division_euclidienne#Extension_aux_entiers_relatifs
-                                    407 ;--------------------------------------------
-                           00000C   408     ARG_OFS=12
-                           00000D   409     I1=ARG_OFS+1 
-                           000010   410     I2=ARG_OFS+4
-                                    411 ; variables locales 
+      0000EC                        315 div24u::
+      0000EC 52 06            [ 2]  316     sub sp,#LOCAL_SIZE
+      0000EE 0F 01            [ 1]  317     clr (QUOT_LB,sp)
+                                    318 ; si diviseur zéro gènère exception fatale
+      0000F0 7B 0C            [ 1]  319     ld a,(DVSOR,sp)
+      0000F2 1A 0D            [ 1]  320     or a,(DVSOR+1,sp)
+      0000F4 1A 0E            [ 1]  321     or a,(DVSOR+2,sp)
+      0000F6 26 01            [ 1]  322     jrne 1$
+      0000F8 83               [ 9]  323     trap ; excepction division par zéro.
+      0000F9                        324 1$: ; si dividende < diviseur retourne X:A=0 R=dividende
+      0000F9 96               [ 1]  325     ldw x,sp 
+      0000FA 1C 00 09         [ 2]  326     addw x,#DVDEND ; dividente 
+      0000FD CD 00 D0         [ 4]  327     call clz24 
+      000100 6B 02            [ 1]  328     ld (SHIFT,sp),a 
+      000102 96               [ 1]  329     ldw x,sp 
+      000103 1C 00 0C         [ 2]  330     addw x,#DVSOR ; diviseur 
+      000106 CD 00 D0         [ 4]  331     call clz24
+      000109 11 02            [ 1]  332     cp a,(SHIFT,sp)
+      00010B 24 04            [ 1]  333     jruge 2$
+      00010D 5F               [ 1]  334     clrw x 
+      00010E 4F               [ 1]  335     clr a 
+      00010F 20 62            [ 2]  336     jra 9$ 
+                                    337 ; décale diviseur vers la gauche jusqu'à ce que A==SHIFT 
+      000111 10 02            [ 1]  338 2$: sub a,(SHIFT,sp)
+      000113 6B 02            [ 1]  339     ld (SHIFT,sp),a 
+      000115 6B 06            [ 1]  340     ld (SHIFTR,sp),a 
+      000117 16 0C            [ 2]  341     ldw y,(DVSOR,sp)
+      000119 4D               [ 1]  342 3$: tnz a 
+      00011A 27 07            [ 1]  343     jreq 4$
+      00011C 08 0E            [ 1]  344     sll (DVSOR+2,sp)
+      00011E 90 59            [ 2]  345     rlcw y
+      000120 4A               [ 1]  346     dec a
+      000121 20 F6            [ 2]  347     jra 3$
+      000123 17 0C            [ 2]  348 4$: ldw (DVSOR,sp),y 
+                                    349 ; boucle de division
+      000125 5F               [ 1]  350     clrw x  ; quotient bits 23:8 
+      000126 7B 0B            [ 1]  351 5$: ld a,(DVDEND+2,sp) ; dividende bits 7:0
+      000128 16 09            [ 2]  352     ldw y,(DVDEND,sp); dividende bits 23:8
+      00012A 10 0E            [ 1]  353     sub a,(DVSOR+2,sp) ; diviseur bits 7:0
+      00012C 6B 05            [ 1]  354     ld (DIFF+2,sp),a
+      00012E 90 9F            [ 1]  355     ld a,yl 
+      000130 12 0D            [ 1]  356     sbc a,(DVSOR+1,sp)
+      000132 6B 04            [ 1]  357     ld (DIFF+1,sp),a 
+      000134 90 9E            [ 1]  358     ld a,yh 
+      000136 12 0C            [ 1]  359     sbc a,(DVSOR,sp)
+      000138 6B 03            [ 1]  360     ld (DIFF,sp),a 
+      00013A 25 0A            [ 1]  361     jrc 6$
+      00013C 16 03            [ 2]  362     ldw y,(DIFF,sp)
+      00013E 17 09            [ 2]  363     ldw (DVDEND,sp),y
+      000140 7B 05            [ 1]  364     ld a,(DIFF+2,sp) 
+      000142 6B 0B            [ 1]  365     ld (DVDEND+2,sp),a 
+      000144 20 08            [ 2]  366     jra 7$
+      000146 7B 0B            [ 1]  367 6$: ld a,(DVDEND+2,sp)
+      000148 16 09            [ 2]  368     ldw y,(DVDEND,sp)
+      00014A 6B 05            [ 1]  369     ld (DIFF+2,sp),a 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 
 
-                           000001   412     U1=1 
-                           000004   413     U2=4 
-                           000007   414     SIGN=7
-                           000008   415     UDIV=8
-                           00000A   416     LOCAL_SIZE=10
-      000178                        417 div24s::
-      000178 52 0A            [ 2]  418     sub sp,#LOCAL_SIZE
-      00017A 0F 07            [ 1]  419     clr (SIGN,sp)
-      00017C 7B 0F            [ 1]  420     ld a,(I1+2,sp)
-      00017E 1E 0D            [ 2]  421     ldw x,(I1,sp)
-      000180 0D 0D            [ 1]  422     tnz (I1,sp)
-      000182 2A 05            [ 1]  423     jrpl 1$
-      000184 03 07            [ 1]  424     cpl (SIGN,sp)
-      000186 CD 01 F9         [ 4]  425     call neg24
-      000189 6B 03            [ 1]  426 1$: ld (U1+2,sp),a 
-      00018B 1F 01            [ 2]  427     ldw (U1,sp),x 
-      00018D 7B 12            [ 1]  428     ld a,(I2+2,sp)
-      00018F 1E 10            [ 2]  429     ldw x,(I2,sp)
-      000191 0D 10            [ 1]  430     tnz (I2,sp)
-      000193 2A 05            [ 1]  431     jrpl 2$ 
-      000195 03 07            [ 1]  432     cpl (SIGN,sp)
-      000197 CD 01 F9         [ 4]  433     call neg24 
-      00019A 6B 06            [ 1]  434 2$: ld (U2+2,sp),a
-      00019C 1F 04            [ 2]  435     ldw (U2,sp),x
-      00019E 6B 0A            [ 1]  436     ld (UDIV+2,sp),a 
-      0001A0 1F 08            [ 2]  437     ldw (UDIV,sp),x 
-      0001A2 CD 00 EC         [ 4]  438     call div24u 
-      0001A5                        439 3$: ; dénominateur négatif et SIGN négatif incrémente quotient si R<>0
-                                    440     ; et ajuste le reste=U2-mod(U1/U2)
-                                    441     ; sauvegarde quotient
-      0001A5 6B 12            [ 1]  442     ld (I2+2,sp),a 
-      0001A7 1F 10            [ 2]  443     ldw (I2,sp),x 
-                                    444 ; si le reste est 0 on ne fait aucun ajustement.    
-      0001A9 7B 01            [ 1]  445     ld a,(U1,sp)
-      0001AB 1A 02            [ 1]  446     or a,(U1+1,sp)
-      0001AD 1A 03            [ 1]  447     or a,(U1+2,sp)
-      0001AF 27 21            [ 1]  448     jreq 5$
-                                    449 ;vérifie signe du dénominateur et du quotient 
-      0001B1 7B 0D            [ 1]  450     ld a,(I1,sp)
-      0001B3 A4 80            [ 1]  451     and a,#0x80 
-      0001B5 14 07            [ 1]  452     and a,(SIGN,sp)
-      0001B7 27 19            [ 1]  453     jreq 5$
-      0001B9 7B 12            [ 1]  454     ld a,(I2+2,sp)
-      0001BB CD 01 F3         [ 4]  455     call inc24u 
-      0001BE 6B 12            [ 1]  456     ld (I2+2,sp),a 
-      0001C0 1F 10            [ 2]  457     ldw (I2,sp),x 
-                                    458 ; ajuste le reste UDIV-mod(U1/U2)
-      0001C2 7B 0A            [ 1]  459     ld a,(UDIV+2,sp)
-      0001C4 1E 08            [ 2]  460     ldw x,(UDIV,sp)
-      0001C6 10 03            [ 1]  461     sub a,(U1+2,sp)
-      0001C8 24 01            [ 1]  462     jrnc 4$
-      0001CA 5A               [ 2]  463     decw x 
-      0001CB 72 F0 01         [ 2]  464 4$: subw x,(U1,sp)
-      0001CE 6B 03            [ 1]  465     ld (U1+2,sp),a 
-      0001D0 1F 01            [ 2]  466     ldw (U1,sp),x 
+      00014C 17 03            [ 2]  370     ldw (DIFF,sp),y 
+      00014E 8C               [ 1]  371 7$: ccf
+      00014F 09 01            [ 1]  372     rlc (QUOT_LB,sp)
+      000151 59               [ 2]  373     rlcw x
+      000152 0D 02            [ 1]  374     tnz (SHIFT,sp)
+      000154 27 0A            [ 1]  375     jreq 8$ 
+      000156 08 0B            [ 1]  376     sll (DVDEND+2,sp) 
+      000158 09 0A            [ 1]  377     rlc (DVDEND+1,sp) 
+      00015A 09 09            [ 1]  378     rlc (DVDEND,sp)
+      00015C 0A 02            [ 1]  379     dec (SHIFT,sp)
+      00015E 20 C6            [ 2]  380     jra 5$
+      000160 7B 05            [ 1]  381 8$: ld a,(DIFF+2,sp)
+      000162 16 03            [ 2]  382     ldw y,(DIFF,sp) 
+      000164                        383 80$: ; réaligne le reste sur le bit 0.
+      000164 0D 06            [ 1]  384     tnz (SHIFTR,sp)
+      000166 27 07            [ 1]  385     jreq 81$
+      000168 90 54            [ 2]  386     srlw y 
+      00016A 46               [ 1]  387     rrc a
+      00016B 0A 06            [ 1]  388     dec (SHIFTR,sp)
+      00016D 20 F5            [ 2]  389     jra 80$ 
+      00016F                        390 81$: 
+      00016F 6B 0B            [ 1]  391     ld (DVDEND+2,sp),a 
+      000171 17 09            [ 2]  392     ldw (DVDEND,sp),y
+                                    393 
+      000173 7B 01            [ 1]  394 9$: ld a,(QUOT_LB,sp) 
+      000175 5B 06            [ 2]  395     addw sp,#LOCAL_SIZE 
+      000177 81               [ 4]  396     ret 
+                                    397 
+                                    398 ;------------------------------------------
+                                    399 ; division signé int24_t/int24_t 
+                                    400 ; input:
+                                    401 ;   I1          dividende
+                                    402 ;   I2          diviseur
+                                    403 ; output:
+                                    404 ;   X:A         quotient 
+                                    405 ;   I1          reste 
+                                    406 ;NOTE: le reste doit toujours être positif 
+                                    407 ;REF: https://fr.wikipedia.org/wiki/Division_euclidienne#Extension_aux_entiers_relatifs
+                                    408 ;--------------------------------------------
+                           00000C   409     ARG_OFS=12
+                           00000D   410     I1=ARG_OFS+1 
+                           000010   411     I2=ARG_OFS+4
+                                    412 ; variables locales 
+                           000001   413     U1=1 
+                           000004   414     U2=4 
+                           000007   415     SIGN=7
+                           000008   416     UDIV=8
+                           00000A   417     LOCAL_SIZE=10
+      000178                        418 div24s::
+      000178 52 0A            [ 2]  419     sub sp,#LOCAL_SIZE
+      00017A 0F 07            [ 1]  420     clr (SIGN,sp)
+      00017C 7B 0F            [ 1]  421     ld a,(I1+2,sp)
+      00017E 1E 0D            [ 2]  422     ldw x,(I1,sp)
+      000180 0D 0D            [ 1]  423     tnz (I1,sp)
+      000182 2A 05            [ 1]  424     jrpl 1$
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 
 
-                                    467 ; si le signe est négatif ajuste le quotient
-      0001D2                        468 5$:
-      0001D2 7B 03            [ 1]  469     ld a,(U1+2,sp)
-      0001D4 1E 01            [ 2]  470     ldw x,(U1,sp)
-      0001D6 6B 0F            [ 1]  471     ld (I1+2,sp),a 
-      0001D8 1F 0D            [ 2]  472     ldw (I1,sp),x 
-      0001DA 7B 12            [ 1]  473     ld a,(I2+2,sp)
-      0001DC 1E 10            [ 2]  474     ldw x,(I2,sp)
-      0001DE 0D 07            [ 1]  475     tnz (SIGN,sp)
-      0001E0 27 03            [ 1]  476     jreq 6$ 
-      0001E2 CD 01 F9         [ 4]  477     call neg24
-      0001E5                        478 6$: 
-      0001E5 5B 0A            [ 2]  479     addw sp,#LOCAL_SIZE 
-      0001E7 81               [ 4]  480     ret 
-                                    481 
-                                    482 ;------------------------------------------------------
-                                    483 ;  retourne la valeur absolue d'un entier 24 bits
-                                    484 ;  input:
-                                    485 ;       X:A         int24_t 
-                                    486 ;  output:
-                                    487 ;       X:A         abs(X:A)
-                                    488 ;       Y           0 si était positif, -1 si était négatif
-                                    489 ;-----------------------------------------------------
-      0001E8                        490 abs24:
-      0001E8 88               [ 1]  491     push a 
-      0001E9 9E               [ 1]  492     ld a,xh 
-      0001EA A5 80            [ 1]  493     bcp a,#0x80
-      0001EC 84               [ 1]  494     pop a 
-      0001ED 27 03            [ 1]  495     jreq 1$
-      0001EF CD 01 F9         [ 4]  496     call neg24 
-      0001F2 81               [ 4]  497 1$: ret 
-                                    498 
-                                    499 
-                                    500 ;-------------------------------------------
-                                    501 ; incrémente de 1 un entier 24 bits non signé 
-                                    502 ; input:
-                                    503 ;   X:A          entier non signér à incrémenté
-                                    504 ; output:
-                                    505 ;   X:A         entier incrémenté de 1.
-                                    506 ;-----------------------------------------------
-      0001F3                        507 inc24u:
-      0001F3 AB 01            [ 1]  508     add a,#1  
-      0001F5 24 01            [ 1]  509     jrnc 1$ 
-      0001F7 5C               [ 1]  510     incw x 
-      0001F8 81               [ 4]  511 1$: ret 
-                                    512 
-                                    513 
-                                    514 ;-------------------------------------------
-                                    515 ; complément à 2 
-                                    516 ; input:
-                                    517 ;   X:A     entier 24 bits 
-                                    518 ; output:
-                                    519 ;   X:A     complément à 2 de l'entier.
-                                    520 ;------------------------------------------
-      0001F9                        521 neg24::
+      000184 03 07            [ 1]  425     cpl (SIGN,sp)
+      000186 CD 01 F9         [ 4]  426     call neg24
+      000189 6B 03            [ 1]  427 1$: ld (U1+2,sp),a 
+      00018B 1F 01            [ 2]  428     ldw (U1,sp),x 
+      00018D 7B 12            [ 1]  429     ld a,(I2+2,sp)
+      00018F 1E 10            [ 2]  430     ldw x,(I2,sp)
+      000191 0D 10            [ 1]  431     tnz (I2,sp)
+      000193 2A 05            [ 1]  432     jrpl 2$ 
+      000195 03 07            [ 1]  433     cpl (SIGN,sp)
+      000197 CD 01 F9         [ 4]  434     call neg24 
+      00019A 6B 06            [ 1]  435 2$: ld (U2+2,sp),a
+      00019C 1F 04            [ 2]  436     ldw (U2,sp),x
+      00019E 6B 0A            [ 1]  437     ld (UDIV+2,sp),a 
+      0001A0 1F 08            [ 2]  438     ldw (UDIV,sp),x 
+      0001A2 CD 00 EC         [ 4]  439     call div24u 
+      0001A5                        440 3$: ; dénominateur négatif et SIGN négatif incrémente quotient si R<>0
+                                    441     ; et ajuste le reste=U2-mod(U1/U2)
+                                    442     ; sauvegarde quotient
+      0001A5 6B 12            [ 1]  443     ld (I2+2,sp),a 
+      0001A7 1F 10            [ 2]  444     ldw (I2,sp),x 
+                                    445 ; si le reste est 0 on ne fait aucun ajustement.    
+      0001A9 7B 01            [ 1]  446     ld a,(U1,sp)
+      0001AB 1A 02            [ 1]  447     or a,(U1+1,sp)
+      0001AD 1A 03            [ 1]  448     or a,(U1+2,sp)
+      0001AF 27 21            [ 1]  449     jreq 5$
+                                    450 ;vérifie signe du dénominateur et du quotient 
+      0001B1 7B 0D            [ 1]  451     ld a,(I1,sp)
+      0001B3 A4 80            [ 1]  452     and a,#0x80 
+      0001B5 14 07            [ 1]  453     and a,(SIGN,sp)
+      0001B7 27 19            [ 1]  454     jreq 5$
+      0001B9 7B 12            [ 1]  455     ld a,(I2+2,sp)
+      0001BB CD 01 F3         [ 4]  456     call inc24u 
+      0001BE 6B 12            [ 1]  457     ld (I2+2,sp),a 
+      0001C0 1F 10            [ 2]  458     ldw (I2,sp),x 
+                                    459 ; ajuste le reste UDIV-mod(U1/U2)
+      0001C2 7B 0A            [ 1]  460     ld a,(UDIV+2,sp)
+      0001C4 1E 08            [ 2]  461     ldw x,(UDIV,sp)
+      0001C6 10 03            [ 1]  462     sub a,(U1+2,sp)
+      0001C8 24 01            [ 1]  463     jrnc 4$
+      0001CA 5A               [ 2]  464     decw x 
+      0001CB 72 F0 01         [ 2]  465 4$: subw x,(U1,sp)
+      0001CE 6B 03            [ 1]  466     ld (U1+2,sp),a 
+      0001D0 1F 01            [ 2]  467     ldw (U1,sp),x 
+                                    468 ; si le signe est négatif ajuste le quotient
+      0001D2                        469 5$:
+      0001D2 7B 03            [ 1]  470     ld a,(U1+2,sp)
+      0001D4 1E 01            [ 2]  471     ldw x,(U1,sp)
+      0001D6 6B 0F            [ 1]  472     ld (I1+2,sp),a 
+      0001D8 1F 0D            [ 2]  473     ldw (I1,sp),x 
+      0001DA 7B 12            [ 1]  474     ld a,(I2+2,sp)
+      0001DC 1E 10            [ 2]  475     ldw x,(I2,sp)
+      0001DE 0D 07            [ 1]  476     tnz (SIGN,sp)
+      0001E0 27 03            [ 1]  477     jreq 6$ 
+      0001E2 CD 01 F9         [ 4]  478     call neg24
+      0001E5                        479 6$: 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 
 
-      0001F9 43               [ 1]  522     cpl a 
-      0001FA 53               [ 2]  523     cplw x 
-      0001FB AB 01            [ 1]  524     add a,#1
-      0001FD 24 01            [ 1]  525     jrnc 1$
-      0001FF 5C               [ 1]  526     incw x 
-      000200 81               [ 4]  527 1$: ret 
-                                    528 
+      0001E5 5B 0A            [ 2]  480     addw sp,#LOCAL_SIZE 
+      0001E7 81               [ 4]  481     ret 
+                                    482 
+                                    483 ;------------------------------------------------------
+                                    484 ;  retourne la valeur absolue d'un entier 24 bits
+                                    485 ;  input:
+                                    486 ;       X:A         int24_t 
+                                    487 ;  output:
+                                    488 ;       X:A         abs(X:A)
+                                    489 ;       Y           0 si était positif, -1 si était négatif
+                                    490 ;-----------------------------------------------------
+      0001E8                        491 abs24::
+      0001E8 88               [ 1]  492     push a 
+      0001E9 9E               [ 1]  493     ld a,xh 
+      0001EA A5 80            [ 1]  494     bcp a,#0x80
+      0001EC 84               [ 1]  495     pop a 
+      0001ED 27 03            [ 1]  496     jreq 1$
+      0001EF CD 01 F9         [ 4]  497     call neg24 
+      0001F2 81               [ 4]  498 1$: ret 
+                                    499 
+                                    500 
+                                    501 ;-------------------------------------------
+                                    502 ; incrémente de 1 un entier 24 bits non signé 
+                                    503 ; input:
+                                    504 ;   X:A          entier non signér à incrémenté
+                                    505 ; output:
+                                    506 ;   X:A         entier incrémenté de 1.
+                                    507 ;-----------------------------------------------
+      0001F3                        508 inc24u::
+      0001F3 AB 01            [ 1]  509     add a,#1  
+      0001F5 24 01            [ 1]  510     jrnc 1$ 
+      0001F7 5C               [ 1]  511     incw x 
+      0001F8 81               [ 4]  512 1$: ret 
+                                    513 
+                                    514 
+                                    515 ;-------------------------------------------
+                                    516 ; complément à 2 
+                                    517 ; input:
+                                    518 ;   X:A     entier 24 bits 
+                                    519 ; output:
+                                    520 ;   X:A     complément à 2 de l'entier.
+                                    521 ;------------------------------------------
+      0001F9                        522 neg24::
+      0001F9 43               [ 1]  523     cpl a 
+      0001FA 53               [ 2]  524     cplw x 
+      0001FB AB 01            [ 1]  525     add a,#1
+      0001FD 24 01            [ 1]  526     jrnc 1$
+      0001FF 5C               [ 1]  527     incw x 
+      000200 81               [ 4]  528 1$: ret 
+                                    529 
+                                    530 ;-------------------------------------------------------------
+                                    531 ; name: cmp24 
+                                    532 ; compare 2 entiers , retourne 1,0,-1
+                                    533 ; input:
+                                    534 ;  n1       int24_t
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
+Hexadecimal [24-Bits]
+
+
+
+                                    535 ;  n2       int24_t 
+                                    536 ; output:
+                                    537 ;   X:A     n1>n2 alors X:A=1, n1=n2 alors X:A=0, n1<n2 alors X:A=-1 
+                                    538 ;--------------------------------------------------------------
+      000201                        539     _argofs 0 
+                           000002     1     ARG_OFS=2+0 
+      000201                        540     _arg N1 1 
+                           000003     1     N1=ARG_OFS+1 
+      000201                        541     _arg N2 4 
+                           000006     1     N2=ARG_OFS+4 
+      000201                        542 cmp24::
+      000201 7B 03            [ 1]  543     ld a,(N1,sp)
+      000203 11 06            [ 1]  544     cp a,(N2,sp) 
+      000205 2F 15            [ 1]  545     jrslt  1$ 
+      000207 2C 17            [ 1]  546     jrsgt  3$ 
+      000209 7B 04            [ 1]  547     ld a,(N1+1,sp)
+      00020B 11 07            [ 1]  548     cp a,(N2+1,sp)
+      00020D 2F 0D            [ 1]  549     jrslt 1$ 
+      00020F 2C 0F            [ 1]  550     jrsgt 3$ 
+      000211 7B 05            [ 1]  551     ld a,(N1+2,sp)
+      000213 11 08            [ 1]  552     cp a,(N2+2,sp)
+      000215 2F 05            [ 1]  553     jrslt 1$ 
+      000217 2C 07            [ 1]  554     jrsgt 3$
+      000219 4F               [ 1]  555     clr a 
+      00021A 20 06            [ 2]  556     jra 9$ 
+      00021C A6 FF            [ 1]  557 1$: ld a,#0xff 
+      00021E 20 02            [ 2]  558     jra 9$ 
+      000220 A6 01            [ 1]  559 3$: ld a,#1 
+      000222 5F               [ 1]  560 9$: clrw x 
+      000223 A5 80            [ 1]  561     bcp a,#0x80 
+      000225 27 01            [ 1]  562     jreq 4$ 
+      000227 53               [ 2]  563     cplw x 
+      000228 81               [ 4]  564 4$: ret 
+                                    565 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1709,7 +1796,7 @@ Symbol Table
     AFR     =  004803     |     AFR0_ADC=  000000     |     AFR1_TIM=  000001 
     AFR2_CCO=  000002     |     AFR3_TIM=  000003     |     AFR4_TIM=  000004 
     AFR5_TIM=  000005     |     AFR6_I2C=  000006     |     AFR7_BEE=  000007 
-    ARG_OFS =  00000C     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
+    ARG_OFS =  000002     |     AWU_APR =  0050F1     |     AWU_CSR1=  0050F0 
     AWU_TBR =  0050F2     |     B0_MASK =  000001     |     B115200 =  000006 
     B19200  =  000003     |     B1_MASK =  000002     |     B230400 =  000007 
     B2400   =  000000     |     B2_MASK =  000004     |     B38400  =  000004 
@@ -1750,7 +1837,7 @@ Symbol Table
     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4     |     CLK_SWR_=  0000E1 
     CLK_SWR_=  0000D2     |     CPU_A   =  007F00     |     CPU_CCR =  007F0A 
     CPU_PCE =  007F01     |     CPU_PCH =  007F02     |     CPU_PCL =  007F03 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1810,7 +1897,7 @@ Symbol Table
     I2C_SR3_=  000002     |     I2C_TRIS=  00521D     |     I2C_TRIS=  000005 
     I2C_TRIS=  000005     |     I2C_TRIS=  000005     |     I2C_TRIS=  000011 
     I2C_TRIS=  000011     |     I2C_TRIS=  000011     |     I2C_WRIT=  000000 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1839,7 +1926,7 @@ Symbol Table
     ITC_SPR8=  007F77     |     IWDG_KR =  0050E0     |     IWDG_PR =  0050E1 
     IWDG_RLR=  0050E2     |     LED2_BIT=  000005     |     LED2_MAS=  000020 
     LED2_POR=  00500A     |     LOCAL_SI=  00000A     |     LZ      =  000001 
-    N1      =  00000A     |     N2      =  00000D     |     NAFR    =  004804 
+    N1      =  000003     |     N2      =  000006     |     NAFR    =  004804 
     NCLKOPT =  004808     |     NFLASH_W=  00480E     |     NHSECNT =  00480A 
     NOPT1   =  004802     |     NOPT2   =  004804     |     NOPT3   =  004806 
     NOPT4   =  004808     |     NOPT5   =  00480A     |     NOPT6   =  00480C 
@@ -1870,7 +1957,7 @@ Symbol Table
     PH_BASE =  005023     |     PH_CR1  =  005026     |     PH_CR2  =  005027 
     PH_DDR  =  005025     |     PH_IDR  =  005024     |     PH_ODR  =  005023 
     PI_BASE =  005028     |     PI_CR1  =  00502B     |     PI_CR2  =  00502C 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1930,7 +2017,7 @@ Symbol Table
     TIM1_SR2=  000002     |     TIM1_SR2=  000003     |     TIM1_SR2=  000004 
     TIM2_ARR=  00530D     |     TIM2_ARR=  00530E     |     TIM2_CCE=  005308 
     TIM2_CCE=  005309     |     TIM2_CCM=  005305     |     TIM2_CCM=  005306 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1990,7 +2077,7 @@ Symbol Table
     UART_CR6=  000009     |     UART_CR6=  000004     |     UART_CR6=  000007 
     UART_CR6=  000001     |     UART_CR6=  000002     |     UART_CR6=  000000 
     UART_CR6=  000005     |     UART_DR =  000001     |     UART_GTR=  000009 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2002,17 +2089,17 @@ Symbol Table
     USR_BTN_=  000004     |     USR_BTN_=  000010     |     USR_BTN_=  005015 
     WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
     WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
-    WWDG_WR =  0050D2     |   1 abs24      0001E8 R   |   1 add24      000000 GR
-  1 clz24      0000D0 GR  |   1 div24_8u   0000BA GR  |   1 div24s     000178 GR
-  1 div24u     0000EC GR  |   1 inc24u     0001F3 R   |   1 mul24_8u   00001A GR
-  1 mul24s     000087 GR  |   1 mul24u     000043 GR  |   1 neg24      0001F9 GR
-  1 result     000080 R   |   1 sub24      00000D GR
+    WWDG_WR =  0050D2     |   1 abs24      0001E8 GR  |   1 add24      000000 GR
+  1 clz24      0000D0 GR  |   1 cmp24      000201 GR  |   1 div24_8u   0000BA GR
+  1 div24s     000178 GR  |   1 div24u     0000EC GR  |   1 inc24u     0001F3 GR
+  1 mul24_8u   00001A GR  |   1 mul24s     000087 GR  |   1 mul24u     000043 GR
+  1 neg24      0001F9 GR  |   1 result     000080 R   |   1 sub24      00000D GR
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
 Hexadecimal [24-Bits]
 
 Area Table
 
    0 _CODE      size      0   flags    0
-   1 CODE       size    201   flags    0
+   1 CODE       size    229   flags    0
 

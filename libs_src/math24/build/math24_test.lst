@@ -1264,7 +1264,7 @@ Hexadecimal [24-Bits]
 
 
       000000                         22 presentation:
-      000000 90 AE 02 4E      [ 2]   23     ldw y,#whatisit
+      000000 90 AE 02 6F      [ 2]   23     ldw y,#whatisit
       000004                         24     _dbg_puts  
                            000001     1     .if DEBUG 
       000004                          2     _dbg_save_regs
@@ -1459,391 +1459,424 @@ Hexadecimal [24-Bits]
       000096 7B 07            [ 1]   64     ld a,(OP,sp)
       000098 A1 2B            [ 1]   65     cp a,#'+
       00009A 26 03            [ 1]   66     jrne 1$
-      00009C CC 00 BE         [ 2]   67     jp test_add
+      00009C CC 00 C5         [ 2]   67     jp test_add
       00009F A1 2D            [ 1]   68 1$: cp a,#'- 
       0000A1 26 03            [ 1]   69     jrne 2$ 
-      0000A3 CC 00 DB         [ 2]   70     jp test_sub 
+      0000A3 CC 00 E2         [ 2]   70     jp test_sub 
       0000A6 A1 2A            [ 1]   71 2$: cp a,#'* 
       0000A8 26 03            [ 1]   72     jrne 3$ 
-      0000AA CC 00 F8         [ 2]   73     jp test_mul 
+      0000AA CC 00 FF         [ 2]   73     jp test_mul 
       0000AD A1 2F            [ 1]   74 3$: cp a,#'/ 
       0000AF 26 03            [ 1]   75     jrne 4$ 
-      0000B1 CC 01 15         [ 2]   76     jp test_div 
+      0000B1 CC 01 1C         [ 2]   76     jp test_div 
       0000B4 A1 6E            [ 1]   77 4$: cp a,#'n 
       0000B6 26 03            [ 1]   78     jrne 5$
-      0000B8 CC 01 57         [ 2]   79     jp test_neg
+      0000B8 CC 01 5E         [ 2]   79     jp test_neg
       0000BB                         80 5$:
-                                     81 
-      0000BB                         82 eval_exit:
-      0000BB 5B 07            [ 2]   83     addw sp,#LOCAL_SIZE 
-      0000BD 81               [ 4]   84     ret 
-                                     85 
-      0000BE                         86 test_add:
-      0000BE 90 AE 02 6F      [ 2]   87     ldw y,#add24_test
-      0000C2                         88     _dbg_puts 
+      0000BB A1 63            [ 1]   81     cp a,#'c 
+      0000BD 26 03            [ 1]   82     jrne 6$
+      0000BF CC 01 89         [ 2]   83     jp test_cmp
+      0000C2                         84 6$:
+      0000C2                         85 eval_exit:
+      0000C2 5B 07            [ 2]   86     addw sp,#LOCAL_SIZE 
+      0000C4 81               [ 4]   87     ret 
+                                     88 
+      0000C5                         89 test_add:
+      0000C5 90 AE 02 90      [ 2]   90     ldw y,#add24_test
+      0000C9                         91     _dbg_puts 
                            000001     1     .if DEBUG 
-      0000C2                          2     _dbg_save_regs
+      0000C9                          2     _dbg_save_regs
                            000001     1     .if DEBUG
-      0000C2 8A               [ 1]    2     push cc ; (6,sp)
-      0000C3 88               [ 1]    3     push a   ; (5,sp)
-      0000C4 89               [ 2]    4     pushw x  ; (3,sp)
-      0000C5 90 89            [ 2]    5     pushw y  ; (1,sp)
+      0000C9 8A               [ 1]    2     push cc ; (6,sp)
+      0000CA 88               [ 1]    3     push a   ; (5,sp)
+      0000CB 89               [ 2]    4     pushw x  ; (3,sp)
+      0000CC 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      0000C7 CD 00 00         [ 4]    3     call uart3_puts 
-      0000CA                          4     _dbg_restore_regs
+      0000CE CD 00 00         [ 4]    3     call uart3_puts 
+      0000D1                          4     _dbg_restore_regs
                            000001     1     .if DEBUG 
-      0000CA 90 85            [ 2]    2     popw y 
-      0000CC 85               [ 2]    3     popw x 
-      0000CD 84               [ 1]    4     pop a 
-      0000CE 86               [ 1]    5     pop cc 
-                                      6     .endif 
-                                      5     .endif 
+      0000D1 90 85            [ 2]    2     popw y 
+      0000D3 85               [ 2]    3     popw x 
+      0000D4 84               [ 1]    4     pop a 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 6.
 Hexadecimal [24-Bits]
 
 
 
-      0000CF CD 01 A3         [ 4]   89     call print_arguments
-      0000D2 CD 00 00         [ 4]   90     call add24 
-      0000D5 CD 01 DF         [ 4]   91     call print_int24
-      0000D8 CC 00 BB         [ 2]   92     jp eval_exit
-      0000DB                         93 test_sub:
-      0000DB 90 AE 02 78      [ 2]   94     ldw y,#sub24_test
-      0000DF                         95     _dbg_puts 
-                           000001     1     .if DEBUG 
-      0000DF                          2     _dbg_save_regs
-                           000001     1     .if DEBUG
-      0000DF 8A               [ 1]    2     push cc ; (6,sp)
-      0000E0 88               [ 1]    3     push a   ; (5,sp)
-      0000E1 89               [ 2]    4     pushw x  ; (3,sp)
-      0000E2 90 89            [ 2]    5     pushw y  ; (1,sp)
-                                      6     .endif 
-      0000E4 CD 00 00         [ 4]    3     call uart3_puts 
-      0000E7                          4     _dbg_restore_regs
-                           000001     1     .if DEBUG 
-      0000E7 90 85            [ 2]    2     popw y 
-      0000E9 85               [ 2]    3     popw x 
-      0000EA 84               [ 1]    4     pop a 
-      0000EB 86               [ 1]    5     pop cc 
+      0000D5 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      0000EC CD 01 A3         [ 4]   96     call print_arguments
-      0000EF CD 00 00         [ 4]   97     call sub24 
-      0000F2 CD 01 DF         [ 4]   98     call print_int24
-      0000F5 CC 00 BB         [ 2]   99     jp eval_exit
-      0000F8                        100 test_mul:
-      0000F8 90 AE 02 8D      [ 2]  101     ldw y,#mul24s_test
-      0000FC                        102     _dbg_puts
+      0000D6 CD 01 C4         [ 4]   92     call print_arguments
+      0000D9 CD 00 00         [ 4]   93     call add24 
+      0000DC CD 02 00         [ 4]   94     call print_int24
+      0000DF CC 00 C2         [ 2]   95     jp eval_exit
+      0000E2                         96 test_sub:
+      0000E2 90 AE 02 99      [ 2]   97     ldw y,#sub24_test
+      0000E6                         98     _dbg_puts 
                            000001     1     .if DEBUG 
-      0000FC                          2     _dbg_save_regs
+      0000E6                          2     _dbg_save_regs
                            000001     1     .if DEBUG
-      0000FC 8A               [ 1]    2     push cc ; (6,sp)
-      0000FD 88               [ 1]    3     push a   ; (5,sp)
-      0000FE 89               [ 2]    4     pushw x  ; (3,sp)
-      0000FF 90 89            [ 2]    5     pushw y  ; (1,sp)
+      0000E6 8A               [ 1]    2     push cc ; (6,sp)
+      0000E7 88               [ 1]    3     push a   ; (5,sp)
+      0000E8 89               [ 2]    4     pushw x  ; (3,sp)
+      0000E9 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      000101 CD 00 00         [ 4]    3     call uart3_puts 
-      000104                          4     _dbg_restore_regs
+      0000EB CD 00 00         [ 4]    3     call uart3_puts 
+      0000EE                          4     _dbg_restore_regs
                            000001     1     .if DEBUG 
-      000104 90 85            [ 2]    2     popw y 
-      000106 85               [ 2]    3     popw x 
-      000107 84               [ 1]    4     pop a 
-      000108 86               [ 1]    5     pop cc 
+      0000EE 90 85            [ 2]    2     popw y 
+      0000F0 85               [ 2]    3     popw x 
+      0000F1 84               [ 1]    4     pop a 
+      0000F2 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      000109 CD 01 A3         [ 4]  103     call print_arguments
-      00010C CD 00 00         [ 4]  104     call mul24s
-      00010F CD 01 DF         [ 4]  105     call print_int24
-      000112 CC 00 BB         [ 2]  106     jp eval_exit
-      000115                        107 test_div:
-      000115 90 AE 02 A3      [ 2]  108     ldw y,#div24s_test
-      000119                        109     _dbg_puts
+      0000F3 CD 01 C4         [ 4]   99     call print_arguments
+      0000F6 CD 00 00         [ 4]  100     call sub24 
+      0000F9 CD 02 00         [ 4]  101     call print_int24
+      0000FC CC 00 C2         [ 2]  102     jp eval_exit
+      0000FF                        103 test_mul:
+      0000FF 90 AE 02 AE      [ 2]  104     ldw y,#mul24s_test
+      000103                        105     _dbg_puts
+                           000001     1     .if DEBUG 
+      000103                          2     _dbg_save_regs
+                           000001     1     .if DEBUG
+      000103 8A               [ 1]    2     push cc ; (6,sp)
+      000104 88               [ 1]    3     push a   ; (5,sp)
+      000105 89               [ 2]    4     pushw x  ; (3,sp)
+      000106 90 89            [ 2]    5     pushw y  ; (1,sp)
+                                      6     .endif 
+      000108 CD 00 00         [ 4]    3     call uart3_puts 
+      00010B                          4     _dbg_restore_regs
+                           000001     1     .if DEBUG 
+      00010B 90 85            [ 2]    2     popw y 
+      00010D 85               [ 2]    3     popw x 
+      00010E 84               [ 1]    4     pop a 
+      00010F 86               [ 1]    5     pop cc 
+                                      6     .endif 
+                                      5     .endif 
+      000110 CD 01 C4         [ 4]  106     call print_arguments
+      000113 CD 00 00         [ 4]  107     call mul24s
+      000116 CD 02 00         [ 4]  108     call print_int24
+      000119 CC 00 C2         [ 2]  109     jp eval_exit
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 
 
+      00011C                        110 test_div:
+      00011C 90 AE 02 C4      [ 2]  111     ldw y,#div24s_test
+      000120                        112     _dbg_puts
                            000001     1     .if DEBUG 
-      000119                          2     _dbg_save_regs
+      000120                          2     _dbg_save_regs
                            000001     1     .if DEBUG
-      000119 8A               [ 1]    2     push cc ; (6,sp)
-      00011A 88               [ 1]    3     push a   ; (5,sp)
-      00011B 89               [ 2]    4     pushw x  ; (3,sp)
-      00011C 90 89            [ 2]    5     pushw y  ; (1,sp)
+      000120 8A               [ 1]    2     push cc ; (6,sp)
+      000121 88               [ 1]    3     push a   ; (5,sp)
+      000122 89               [ 2]    4     pushw x  ; (3,sp)
+      000123 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      00011E CD 00 00         [ 4]    3     call uart3_puts 
-      000121                          4     _dbg_restore_regs
+      000125 CD 00 00         [ 4]    3     call uart3_puts 
+      000128                          4     _dbg_restore_regs
                            000001     1     .if DEBUG 
-      000121 90 85            [ 2]    2     popw y 
-      000123 85               [ 2]    3     popw x 
-      000124 84               [ 1]    4     pop a 
-      000125 86               [ 1]    5     pop cc 
+      000128 90 85            [ 2]    2     popw y 
+      00012A 85               [ 2]    3     popw x 
+      00012B 84               [ 1]    4     pop a 
+      00012C 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      000126 CD 01 A3         [ 4]  110     call print_arguments
-      000129 CD 00 00         [ 4]  111     call div24s 
-      00012C CD 01 DF         [ 4]  112     call print_int24
-      00012F A6 52            [ 1]  113     ld a,#'R 
-      000131                        114     _dbg_putc 
+      00012D CD 01 C4         [ 4]  113     call print_arguments
+      000130 CD 00 00         [ 4]  114     call div24s 
+      000133 CD 02 00         [ 4]  115     call print_int24
+      000136 A6 52            [ 1]  116     ld a,#'R 
+      000138                        117     _dbg_putc 
                            000001     1     .if DEBUG
-      000131                          2     _dbg_save_regs  
+      000138                          2     _dbg_save_regs  
                            000001     1     .if DEBUG
-      000131 8A               [ 1]    2     push cc ; (6,sp)
-      000132 88               [ 1]    3     push a   ; (5,sp)
-      000133 89               [ 2]    4     pushw x  ; (3,sp)
-      000134 90 89            [ 2]    5     pushw y  ; (1,sp)
+      000138 8A               [ 1]    2     push cc ; (6,sp)
+      000139 88               [ 1]    3     push a   ; (5,sp)
+      00013A 89               [ 2]    4     pushw x  ; (3,sp)
+      00013B 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      000136 CD 00 00         [ 4]    3     call uart3_putc 
-      000139                          4     _dbg_restore_regs 
+      00013D CD 00 00         [ 4]    3     call uart3_putc 
+      000140                          4     _dbg_restore_regs 
                            000001     1     .if DEBUG 
-      000139 90 85            [ 2]    2     popw y 
-      00013B 85               [ 2]    3     popw x 
-      00013C 84               [ 1]    4     pop a 
-      00013D 86               [ 1]    5     pop cc 
+      000140 90 85            [ 2]    2     popw y 
+      000142 85               [ 2]    3     popw x 
+      000143 84               [ 1]    4     pop a 
+      000144 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      00013E A6 3D            [ 1]  115     ld a,#'=
-      000140                        116     _dbg_putc 
+      000145 A6 3D            [ 1]  118     ld a,#'=
+      000147                        119     _dbg_putc 
                            000001     1     .if DEBUG
-      000140                          2     _dbg_save_regs  
+      000147                          2     _dbg_save_regs  
                            000001     1     .if DEBUG
-      000140 8A               [ 1]    2     push cc ; (6,sp)
-      000141 88               [ 1]    3     push a   ; (5,sp)
-      000142 89               [ 2]    4     pushw x  ; (3,sp)
-      000143 90 89            [ 2]    5     pushw y  ; (1,sp)
+      000147 8A               [ 1]    2     push cc ; (6,sp)
+      000148 88               [ 1]    3     push a   ; (5,sp)
+      000149 89               [ 2]    4     pushw x  ; (3,sp)
+      00014A 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      000145 CD 00 00         [ 4]    3     call uart3_putc 
-      000148                          4     _dbg_restore_regs 
+      00014C CD 00 00         [ 4]    3     call uart3_putc 
+      00014F                          4     _dbg_restore_regs 
                            000001     1     .if DEBUG 
-      000148 90 85            [ 2]    2     popw y 
-      00014A 85               [ 2]    3     popw x 
-      00014B 84               [ 1]    4     pop a 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 8.
 Hexadecimal [24-Bits]
 
 
 
-      00014C 86               [ 1]    5     pop cc 
+      00014F 90 85            [ 2]    2     popw y 
+      000151 85               [ 2]    3     popw x 
+      000152 84               [ 1]    4     pop a 
+      000153 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      00014D 1E 01            [ 2]  117     ldw x,(1,sp)
-      00014F 7B 03            [ 1]  118     ld a,(3,sp)
-      000151 CD 01 DF         [ 4]  119     call print_int24  
-      000154 CC 00 BB         [ 2]  120     jp eval_exit
-      000157                        121 test_neg:
-      000157 90 AE 02 AD      [ 2]  122     ldw y,#neg24_test
-      00015B                        123     _dbg_puts 
+      000154 1E 01            [ 2]  120     ldw x,(1,sp)
+      000156 7B 03            [ 1]  121     ld a,(3,sp)
+      000158 CD 02 00         [ 4]  122     call print_int24  
+      00015B CC 00 C2         [ 2]  123     jp eval_exit
+      00015E                        124 test_neg:
+      00015E 90 AE 02 CE      [ 2]  125     ldw y,#neg24_test
+      000162                        126     _dbg_puts 
                            000001     1     .if DEBUG 
-      00015B                          2     _dbg_save_regs
+      000162                          2     _dbg_save_regs
                            000001     1     .if DEBUG
-      00015B 8A               [ 1]    2     push cc ; (6,sp)
-      00015C 88               [ 1]    3     push a   ; (5,sp)
-      00015D 89               [ 2]    4     pushw x  ; (3,sp)
-      00015E 90 89            [ 2]    5     pushw y  ; (1,sp)
+      000162 8A               [ 1]    2     push cc ; (6,sp)
+      000163 88               [ 1]    3     push a   ; (5,sp)
+      000164 89               [ 2]    4     pushw x  ; (3,sp)
+      000165 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      000160 CD 00 00         [ 4]    3     call uart3_puts 
-      000163                          4     _dbg_restore_regs
+      000167 CD 00 00         [ 4]    3     call uart3_puts 
+      00016A                          4     _dbg_restore_regs
                            000001     1     .if DEBUG 
-      000163 90 85            [ 2]    2     popw y 
-      000165 85               [ 2]    3     popw x 
-      000166 84               [ 1]    4     pop a 
-      000167 86               [ 1]    5     pop cc 
+      00016A 90 85            [ 2]    2     popw y 
+      00016C 85               [ 2]    3     popw x 
+      00016D 84               [ 1]    4     pop a 
+      00016E 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      000168 CD 01 A3         [ 4]  124     call print_arguments 
-      00016B 7B 03            [ 1]  125     ld a,(N1+2,sp)
-      00016D 1E 01            [ 2]  126     ldw x,(N1,sp)
-      00016F CD 00 00         [ 4]  127     call neg24 
-      000172 CD 01 DF         [ 4]  128     call print_int24 
-      000175 7B 06            [ 1]  129     ld a,(N2+2,sp)
-      000177 1E 04            [ 2]  130     ldw x,(N2,sp)
-      000179 CD 00 00         [ 4]  131     call neg24 
-      00017C CD 01 DF         [ 4]  132     call print_int24 
-      00017F CC 00 BB         [ 2]  133     jp eval_exit 
-                                    134 
-      000182                        135 print_error:
-      000182 90 AE 01 F6      [ 2]  136     ldw y,#msg_erreur
-      000186 72 5F 00 00      [ 1]  137     clr acc16 
-      00018A 48               [ 1]  138     sll a 
-      00018B C7 00 00         [ 1]  139     ld acc8,a
-      00018E 72 B9 00 00      [ 2]  140     addw y,acc16 
-      000192 90 FE            [ 2]  141     ldw y,(y)
-      000194                        142     _dbg_puts
+      00016F CD 01 C4         [ 4]  127     call print_arguments 
+      000172 7B 03            [ 1]  128     ld a,(N1+2,sp)
+      000174 1E 01            [ 2]  129     ldw x,(N1,sp)
+      000176 CD 00 00         [ 4]  130     call neg24 
+      000179 CD 02 00         [ 4]  131     call print_int24 
+      00017C 7B 06            [ 1]  132     ld a,(N2+2,sp)
+      00017E 1E 04            [ 2]  133     ldw x,(N2,sp)
+      000180 CD 00 00         [ 4]  134     call neg24 
+      000183 CD 02 00         [ 4]  135     call print_int24 
+      000186 CC 00 C2         [ 2]  136     jp eval_exit 
+      000189                        137 test_cmp:
+      000189 90 AE 02 D7      [ 2]  138     ldw y,#cmp24_test
+      00018D                        139     _dbg_puts 
                            000001     1     .if DEBUG 
-      000194                          2     _dbg_save_regs
+      00018D                          2     _dbg_save_regs
                            000001     1     .if DEBUG
-      000194 8A               [ 1]    2     push cc ; (6,sp)
-      000195 88               [ 1]    3     push a   ; (5,sp)
-      000196 89               [ 2]    4     pushw x  ; (3,sp)
-      000197 90 89            [ 2]    5     pushw y  ; (1,sp)
+      00018D 8A               [ 1]    2     push cc ; (6,sp)
+      00018E 88               [ 1]    3     push a   ; (5,sp)
+      00018F 89               [ 2]    4     pushw x  ; (3,sp)
+      000190 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      000199 CD 00 00         [ 4]    3     call uart3_puts 
+      000192 CD 00 00         [ 4]    3     call uart3_puts 
+      000195                          4     _dbg_restore_regs
+                           000001     1     .if DEBUG 
+      000195 90 85            [ 2]    2     popw y 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 
 
-      00019C                          4     _dbg_restore_regs
-                           000001     1     .if DEBUG 
-      00019C 90 85            [ 2]    2     popw y 
-      00019E 85               [ 2]    3     popw x 
-      00019F 84               [ 1]    4     pop a 
-      0001A0 86               [ 1]    5     pop cc 
+      000197 85               [ 2]    3     popw x 
+      000198 84               [ 1]    4     pop a 
+      000199 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      0001A1 20 FE            [ 2]  143     jra .
-                                    144 
-                                    145 ;-------------------------
-                                    146 ; name: print_arguments
-                                    147 ; input:
-                                    148 ;  N1     int24_t 
-                                    149 ;  N2     int24_t 
-                                    150 ; output:
-                                    151 ;  none
-                                    152 ;------------------------
-                           000002   153     ARG_OFS=2
-                           000003   154     N1=ARG_OFS+1 
-                           000006   155     N2=ARG_OFS+4
-      0001A3                        156 print_arguments:
-      0001A3 A6 20            [ 1]  157     ld a,#SPACE 
-      0001A5                        158     _dbg_putc 
-                           000001     1     .if DEBUG
-      0001A5                          2     _dbg_save_regs  
-                           000001     1     .if DEBUG
-      0001A5 8A               [ 1]    2     push cc ; (6,sp)
-      0001A6 88               [ 1]    3     push a   ; (5,sp)
-      0001A7 89               [ 2]    4     pushw x  ; (3,sp)
-      0001A8 90 89            [ 2]    5     pushw y  ; (1,sp)
-                                      6     .endif 
-      0001AA CD 00 00         [ 4]    3     call uart3_putc 
-      0001AD                          4     _dbg_restore_regs 
+      00019A CD 00 00         [ 4]  140     call cmp24 
+      00019D CD 02 00         [ 4]  141 1$: call print_int24 
+      0001A0 CC 00 C2         [ 2]  142     jp eval_exit 
+                                    143 
+      0001A3                        144 print_error:
+      0001A3 90 AE 02 17      [ 2]  145     ldw y,#msg_erreur
+      0001A7 72 5F 00 00      [ 1]  146     clr acc16 
+      0001AB 48               [ 1]  147     sll a 
+      0001AC C7 00 00         [ 1]  148     ld acc8,a
+      0001AF 72 B9 00 00      [ 2]  149     addw y,acc16 
+      0001B3 90 FE            [ 2]  150     ldw y,(y)
+      0001B5                        151     _dbg_puts
                            000001     1     .if DEBUG 
-      0001AD 90 85            [ 2]    2     popw y 
-      0001AF 85               [ 2]    3     popw x 
-      0001B0 84               [ 1]    4     pop a 
-      0001B1 86               [ 1]    5     pop cc 
+      0001B5                          2     _dbg_save_regs
+                           000001     1     .if DEBUG
+      0001B5 8A               [ 1]    2     push cc ; (6,sp)
+      0001B6 88               [ 1]    3     push a   ; (5,sp)
+      0001B7 89               [ 2]    4     pushw x  ; (3,sp)
+      0001B8 90 89            [ 2]    5     pushw y  ; (1,sp)
+                                      6     .endif 
+      0001BA CD 00 00         [ 4]    3     call uart3_puts 
+      0001BD                          4     _dbg_restore_regs
+                           000001     1     .if DEBUG 
+      0001BD 90 85            [ 2]    2     popw y 
+      0001BF 85               [ 2]    3     popw x 
+      0001C0 84               [ 1]    4     pop a 
+      0001C1 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      0001B2 1E 03            [ 2]  159     ldw x,(N1,sp)
-      0001B4 7B 05            [ 1]  160     ld a,(N1+2,sp)
-      0001B6 CD 01 DF         [ 4]  161     call print_int24 
-      0001B9 A6 20            [ 1]  162     ld a,#SPACE 
-      0001BB                        163     _dbg_putc 
+      0001C2 20 FE            [ 2]  152     jra .
+                                    153 
+                                    154 ;-------------------------
+                                    155 ; name: print_arguments
+                                    156 ; input:
+                                    157 ;  N1     int24_t 
+                                    158 ;  N2     int24_t 
+                                    159 ; output:
+                                    160 ;  none
+                                    161 ;------------------------
+                           000002   162     ARG_OFS=2
+                           000003   163     N1=ARG_OFS+1 
+                           000006   164     N2=ARG_OFS+4
+      0001C4                        165 print_arguments:
+      0001C4 A6 20            [ 1]  166     ld a,#SPACE 
+      0001C6                        167     _dbg_putc 
                            000001     1     .if DEBUG
-      0001BB                          2     _dbg_save_regs  
+      0001C6                          2     _dbg_save_regs  
                            000001     1     .if DEBUG
-      0001BB 8A               [ 1]    2     push cc ; (6,sp)
-      0001BC 88               [ 1]    3     push a   ; (5,sp)
-      0001BD 89               [ 2]    4     pushw x  ; (3,sp)
-      0001BE 90 89            [ 2]    5     pushw y  ; (1,sp)
-                                      6     .endif 
-      0001C0 CD 00 00         [ 4]    3     call uart3_putc 
+      0001C6 8A               [ 1]    2     push cc ; (6,sp)
+      0001C7 88               [ 1]    3     push a   ; (5,sp)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 10.
 Hexadecimal [24-Bits]
 
 
 
-      0001C3                          4     _dbg_restore_regs 
+      0001C8 89               [ 2]    4     pushw x  ; (3,sp)
+      0001C9 90 89            [ 2]    5     pushw y  ; (1,sp)
+                                      6     .endif 
+      0001CB CD 00 00         [ 4]    3     call uart3_putc 
+      0001CE                          4     _dbg_restore_regs 
                            000001     1     .if DEBUG 
-      0001C3 90 85            [ 2]    2     popw y 
-      0001C5 85               [ 2]    3     popw x 
-      0001C6 84               [ 1]    4     pop a 
-      0001C7 86               [ 1]    5     pop cc 
+      0001CE 90 85            [ 2]    2     popw y 
+      0001D0 85               [ 2]    3     popw x 
+      0001D1 84               [ 1]    4     pop a 
+      0001D2 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      0001C8 1E 06            [ 2]  164     ldw x,(N2,sp)
-      0001CA 7B 08            [ 1]  165     ld a,(N2+2,sp)
-      0001CC CD 01 DF         [ 4]  166     call print_int24 
-      0001CF A6 3D            [ 1]  167     ld a,#'= 
-      0001D1                        168     _dbg_putc 
+      0001D3 1E 03            [ 2]  168     ldw x,(N1,sp)
+      0001D5 7B 05            [ 1]  169     ld a,(N1+2,sp)
+      0001D7 CD 02 00         [ 4]  170     call print_int24 
+      0001DA A6 20            [ 1]  171     ld a,#SPACE 
+      0001DC                        172     _dbg_putc 
                            000001     1     .if DEBUG
-      0001D1                          2     _dbg_save_regs  
+      0001DC                          2     _dbg_save_regs  
                            000001     1     .if DEBUG
-      0001D1 8A               [ 1]    2     push cc ; (6,sp)
-      0001D2 88               [ 1]    3     push a   ; (5,sp)
-      0001D3 89               [ 2]    4     pushw x  ; (3,sp)
-      0001D4 90 89            [ 2]    5     pushw y  ; (1,sp)
+      0001DC 8A               [ 1]    2     push cc ; (6,sp)
+      0001DD 88               [ 1]    3     push a   ; (5,sp)
+      0001DE 89               [ 2]    4     pushw x  ; (3,sp)
+      0001DF 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      0001D6 CD 00 00         [ 4]    3     call uart3_putc 
-      0001D9                          4     _dbg_restore_regs 
+      0001E1 CD 00 00         [ 4]    3     call uart3_putc 
+      0001E4                          4     _dbg_restore_regs 
                            000001     1     .if DEBUG 
-      0001D9 90 85            [ 2]    2     popw y 
-      0001DB 85               [ 2]    3     popw x 
-      0001DC 84               [ 1]    4     pop a 
-      0001DD 86               [ 1]    5     pop cc 
+      0001E4 90 85            [ 2]    2     popw y 
+      0001E6 85               [ 2]    3     popw x 
+      0001E7 84               [ 1]    4     pop a 
+      0001E8 86               [ 1]    5     pop cc 
                                       6     .endif 
                                       5     .endif 
-      0001DE 81               [ 4]  169     ret 
-                                    170 
-      0001DF                        171 print_int24:
-      0001DF CF 00 00         [ 2]  172     ldw acc24,x 
-      0001E2 C7 00 00         [ 1]  173     ld acc8,a 
-      0001E5 5F               [ 1]  174     clrw x 
-      0001E6 A6 0A            [ 1]  175     ld a,#10
-      0001E8                        176     _dbg_prti24 
-                           000001     1     .if DEBUG 
-      0001E8                          2     _dbg_save_regs
+      0001E9 1E 06            [ 2]  173     ldw x,(N2,sp)
+      0001EB 7B 08            [ 1]  174     ld a,(N2+2,sp)
+      0001ED CD 02 00         [ 4]  175     call print_int24 
+      0001F0 A6 3D            [ 1]  176     ld a,#'= 
+      0001F2                        177     _dbg_putc 
                            000001     1     .if DEBUG
-      0001E8 8A               [ 1]    2     push cc ; (6,sp)
-      0001E9 88               [ 1]    3     push a   ; (5,sp)
-      0001EA 89               [ 2]    4     pushw x  ; (3,sp)
-      0001EB 90 89            [ 2]    5     pushw y  ; (1,sp)
+      0001F2                          2     _dbg_save_regs  
+                           000001     1     .if DEBUG
+      0001F2 8A               [ 1]    2     push cc ; (6,sp)
+      0001F3 88               [ 1]    3     push a   ; (5,sp)
+      0001F4 89               [ 2]    4     pushw x  ; (3,sp)
+      0001F5 90 89            [ 2]    5     pushw y  ; (1,sp)
                                       6     .endif 
-      0001ED CD 00 00         [ 4]    3     call uart3_prti24 
-      0001F0                          4     _dbg_restore_regs
+      0001F7 CD 00 00         [ 4]    3     call uart3_putc 
+      0001FA                          4     _dbg_restore_regs 
                            000001     1     .if DEBUG 
-      0001F0 90 85            [ 2]    2     popw y 
-      0001F2 85               [ 2]    3     popw x 
-      0001F3 84               [ 1]    4     pop a 
-      0001F4 86               [ 1]    5     pop cc 
+      0001FA 90 85            [ 2]    2     popw y 
+      0001FC 85               [ 2]    3     popw x 
+      0001FD 84               [ 1]    4     pop a 
+      0001FE 86               [ 1]    5     pop cc 
                                       6     .endif 
-                                      5     .endif
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 11.
 Hexadecimal [24-Bits]
 
 
 
-      0001F5 81               [ 4]  177     ret 
-                                    178 
+                                      5     .endif 
+      0001FF 81               [ 4]  178     ret 
                                     179 
-      0001F6 02 00 02 0E 02 1A 02   180 msg_erreur: .word erreur_add,erreur_sub,erreur_mul,erreur_div,erreur_neg
-             27 02 33
-                                    181 
-      000200 65 72 72 65 75 72 20   182 erreur_add: .asciz "erreur somme\n"
-             73 6F 6D 6D 65 0A 00
-      00020E 65 72 72 65 75 72 20   183 erreur_sub: .asciz "erreur sub\n"
-             73 75 62 0A 00
-      00021A 65 72 72 65 75 72 20   184 erreur_mul: .asciz "erreur mult\n"
-             6D 75 6C 74 0A 00
-      000227 65 72 72 65 75 72 20   185 erreur_div: .asciz "erreur div\n"
-             64 69 76 0A 00
-      000233 65 72 72 65 75 72 20   186 erreur_neg: .asciz "erreur neg\n"
-             6E 65 67 0A 00
+      000200                        180 print_int24:
+      000200 CF 00 00         [ 2]  181     ldw acc24,x 
+      000203 C7 00 00         [ 1]  182     ld acc8,a 
+      000206 5F               [ 1]  183     clrw x 
+      000207 A6 0A            [ 1]  184     ld a,#10
+      000209                        185     _dbg_prti24 
+                           000001     1     .if DEBUG 
+      000209                          2     _dbg_save_regs
+                           000001     1     .if DEBUG
+      000209 8A               [ 1]    2     push cc ; (6,sp)
+      00020A 88               [ 1]    3     push a   ; (5,sp)
+      00020B 89               [ 2]    4     pushw x  ; (3,sp)
+      00020C 90 89            [ 2]    5     pushw y  ; (1,sp)
+                                      6     .endif 
+      00020E CD 00 00         [ 4]    3     call uart3_prti24 
+      000211                          4     _dbg_restore_regs
+                           000001     1     .if DEBUG 
+      000211 90 85            [ 2]    2     popw y 
+      000213 85               [ 2]    3     popw x 
+      000214 84               [ 1]    4     pop a 
+      000215 86               [ 1]    5     pop cc 
+                                      6     .endif 
+                                      5     .endif
+      000216 81               [ 4]  186     ret 
                                     187 
-      00023F 0A 61 6C 6C 20 74 65   188 test_ok: .asciz "\nall tests ok\n"
+                                    188 
+      000217 02 21 02 2F 02 3B 02   189 msg_erreur: .word erreur_add,erreur_sub,erreur_mul,erreur_div,erreur_neg
+             48 02 54
+                                    190 
+      000221 65 72 72 65 75 72 20   191 erreur_add: .asciz "erreur somme\n"
+             73 6F 6D 6D 65 0A 00
+      00022F 65 72 72 65 75 72 20   192 erreur_sub: .asciz "erreur sub\n"
+             73 75 62 0A 00
+      00023B 65 72 72 65 75 72 20   193 erreur_mul: .asciz "erreur mult\n"
+             6D 75 6C 74 0A 00
+      000248 65 72 72 65 75 72 20   194 erreur_div: .asciz "erreur div\n"
+             64 69 76 0A 00
+      000254 65 72 72 65 75 72 20   195 erreur_neg: .asciz "erreur neg\n"
+             6E 65 67 0A 00
+                                    196 
+      000260 0A 61 6C 6C 20 74 65   197 test_ok: .asciz "\nall tests ok\n"
              73 74 73 20 6F 6B 0A
              00
-      00024E 0A 54 65 73 74 20 70   189 whatisit: .asciz "\nTest pour la librairie math24.\n"
+      00026F 0A 54 65 73 74 20 70   198 whatisit: .asciz "\nTest pour la librairie math24.\n"
              6F 75 72 20 6C 61 20
              6C 69 62 72 61 69 72
              69 65 20 6D 61 74 68
              32 34 2E 0A 00
-      00026F 0A 61 64 64 32 34 3A   190 add24_test: .asciz "\nadd24: "
+      000290 0A 61 64 64 32 34 3A   199 add24_test: .asciz "\nadd24: "
              20 00
-      000278 0A 73 75 62 32 34 3A   191 sub24_test: .asciz "\nsub24: "
+      000299 0A 73 75 62 32 34 3A   200 sub24_test: .asciz "\nsub24: "
              20 00
-      000281 0A 6D 75 6C 32 34 5F   192 mul24_8u_test: .asciz "\nmul24_8u: " 
-             38 75 3A 20 00
-      00028D 0A 6D 75 6C 32 34 73   193 mul24s_test: .asciz "\nmul24s: "
-             3A 20 00
-      000297 0A 64 69 76 32 34 5F   194 div24_8u_test: .asciz "\ndiv24_8u: "
-             38 75 3A 20 00
-      0002A3 0A 64 69 76 32 34 73   195 div24s_test: .asciz "\ndiv24s: "
-             3A 20 00
-      0002AD 0A 6E 65 67 32 34 3A   196 neg24_test: .asciz "\nneg24: "
-             20 00
-                                    197 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 12.
+Hexadecimal [24-Bits]
+
+
+
+      0002A2 0A 6D 75 6C 32 34 5F   201 mul24_8u_test: .asciz "\nmul24_8u: " 
+             38 75 3A 20 00
+      0002AE 0A 6D 75 6C 32 34 73   202 mul24s_test: .asciz "\nmul24s: "
+             3A 20 00
+      0002B8 0A 64 69 76 32 34 5F   203 div24_8u_test: .asciz "\ndiv24_8u: "
+             38 75 3A 20 00
+      0002C4 0A 64 69 76 32 34 73   204 div24s_test: .asciz "\ndiv24s: "
+             3A 20 00
+      0002CE 0A 6E 65 67 32 34 3A   205 neg24_test: .asciz "\nneg24: "
+             20 00
+      0002D7 0A 63 6D 70 32 34 3A   206 cmp24_test: .asciz "\ncmp24: " 
+             20 00
+                                    207 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1903,7 +1936,7 @@ Symbol Table
     CLK_SWIM=  0050CD     |     CLK_SWR =  0050C4     |     CLK_SWR_=  0000B4 
     CLK_SWR_=  0000E1     |     CLK_SWR_=  0000D2     |     CPU_A   =  007F00 
     CPU_CCR =  007F0A     |     CPU_PCE =  007F01     |     CPU_PCH =  007F02 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 13.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -1963,7 +1996,7 @@ Symbol Table
     I2C_OARH=  005214     |     I2C_OARH=  000001     |     I2C_OARH=  000002 
     I2C_OARH=  000006     |     I2C_OARH=  000007     |     I2C_OARL=  005213 
     I2C_OARL=  000000     |     I2C_OAR_=  000813     |     I2C_OAR_=  000009 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 14.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2023,7 +2056,7 @@ Symbol Table
     PB_ODR  =  005005     |     PC      =  00000A     |     PC_BASE =  00500A 
     PC_CR1  =  00500D     |     PC_CR2  =  00500E     |     PC_DDR  =  00500C 
     PC_IDR  =  00500B     |     PC_ODR  =  00500A     |     PD      =  00000F 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 15.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2083,7 +2116,7 @@ Symbol Table
     TIM1_ETR=  000004     |     TIM1_ETR=  000005     |     TIM1_IER=  005254 
     TIM1_IER=  000007     |     TIM1_IER=  000001     |     TIM1_IER=  000002 
     TIM1_IER=  000003     |     TIM1_IER=  000004     |     TIM1_IER=  000005 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 16.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2143,7 +2176,7 @@ Symbol Table
     UART_CR2=  000004     |     UART_CR2=  000002     |     UART_CR2=  000005 
     UART_CR2=  000001     |     UART_CR2=  000000     |     UART_CR2=  000006 
     UART_CR2=  000003     |     UART_CR2=  000007     |     UART_CR3=  000006 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 17.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
 Hexadecimal [24-Bits]
 
 Symbol Table
@@ -2166,27 +2199,28 @@ Symbol Table
     WDGOPT  =  004805     |     WDGOPT_I=  000002     |     WDGOPT_L=  000003 
     WDGOPT_W=  000000     |     WDGOPT_W=  000001     |     WWDG_CR =  0050D1 
     WWDG_WR =  0050D2     |     acc16      ****** GX  |     acc24      ****** GX
-    acc8       ****** GX  |     add24      ****** GX  |   1 add24_te   00026F R
-  1 div24_8u   000297 R   |     div24s     ****** GX  |   1 div24s_t   0002A3 R
-  1 erreur_a   000200 R   |   1 erreur_d   000227 R   |   1 erreur_m   00021A R
-  1 erreur_n   000233 R   |   1 erreur_s   00020E R   |   1 eval       000054 R
-  1 eval_exi   0000BB R   |   1 msg_erre   0001F6 R   |   1 mul24_8u   000281 R
-    mul24s     ****** GX  |   1 mul24s_t   00028D R   |     neg24      ****** GX
-  1 neg24_te   0002AD R   |     next_wor   ****** GX  |     number     ****** GX
-    pad        ****** GX  |     parser_i   ****** GX  |   1 presenta   000000 R
-  1 print_ar   0001A3 R   |   1 print_er   000182 R   |   1 print_in   0001DF R
-  1 repl       000011 R   |     sub24      ****** GX  |   1 sub24_te   000278 R
-  1 test_add   0000BE R   |   1 test_div   000115 R   |   1 test_mai   000000 GR
-  1 test_mul   0000F8 R   |   1 test_neg   000157 R   |   1 test_ok    00023F R
-  1 test_sub   0000DB R   |     tib        ****** GX  |     uart3_pr   ****** GX
+    acc8       ****** GX  |     add24      ****** GX  |   1 add24_te   000290 R
+    cmp24      ****** GX  |   1 cmp24_te   0002D7 R   |   1 div24_8u   0002B8 R
+    div24s     ****** GX  |   1 div24s_t   0002C4 R   |   1 erreur_a   000221 R
+  1 erreur_d   000248 R   |   1 erreur_m   00023B R   |   1 erreur_n   000254 R
+  1 erreur_s   00022F R   |   1 eval       000054 R   |   1 eval_exi   0000C2 R
+  1 msg_erre   000217 R   |   1 mul24_8u   0002A2 R   |     mul24s     ****** GX
+  1 mul24s_t   0002AE R   |     neg24      ****** GX  |   1 neg24_te   0002CE R
+    next_wor   ****** GX  |     number     ****** GX  |     pad        ****** GX
+    parser_i   ****** GX  |   1 presenta   000000 R   |   1 print_ar   0001C4 R
+  1 print_er   0001A3 R   |   1 print_in   000200 R   |   1 repl       000011 R
+    sub24      ****** GX  |   1 sub24_te   000299 R   |   1 test_add   0000C5 R
+  1 test_cmp   000189 R   |   1 test_div   00011C R   |   1 test_mai   000000 GR
+  1 test_mul   0000FF R   |   1 test_neg   00015E R   |   1 test_ok    000260 R
+  1 test_sub   0000E2 R   |     tib        ****** GX  |     uart3_pr   ****** GX
     uart3_pu   ****** GX  |     uart3_pu   ****** GX  |     uart3_re   ****** GX
-  1 whatisit   00024E R
+  1 whatisit   00026F R
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 18.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 19.
 Hexadecimal [24-Bits]
 
 Area Table
 
    0 _CODE      size      0   flags    0
-   1 CODE       size    2B6   flags    0
+   1 CODE       size    2E0   flags    0
 

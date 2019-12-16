@@ -22,6 +22,7 @@
     .nlist
     .include "../../inc/nucleo_8s208.inc"
     .include "../../inc/stm8s208.inc"
+    .include "../../inc/gen_macros.inc"
     .list 
 
 ; NOTE: pour l'assembleur sdas une étiquette terminée par **::** est une 
@@ -487,7 +488,7 @@ div24s::
 ;       X:A         abs(X:A)
 ;       Y           0 si était positif, -1 si était négatif
 ;-----------------------------------------------------
-abs24:
+abs24::
     push a 
     ld a,xh 
     bcp a,#0x80
@@ -504,7 +505,7 @@ abs24:
 ; output:
 ;   X:A         entier incrémenté de 1.
 ;-----------------------------------------------
-inc24u:
+inc24u::
     add a,#1  
     jrnc 1$ 
     incw x 
@@ -525,4 +526,40 @@ neg24::
     jrnc 1$
     incw x 
 1$: ret 
+
+;-------------------------------------------------------------
+; name: cmp24 
+; compare 2 entiers , retourne 1,0,-1
+; input:
+;  n1       int24_t
+;  n2       int24_t 
+; output:
+;   X:A     n1>n2 alors X:A=1, n1=n2 alors X:A=0, n1<n2 alors X:A=-1 
+;--------------------------------------------------------------
+    _argofs 0 
+    _arg N1 1 
+    _arg N2 4 
+cmp24::
+    ld a,(N1,sp)
+    cp a,(N2,sp) 
+    jrslt  1$ 
+    jrsgt  3$ 
+    ld a,(N1+1,sp)
+    cp a,(N2+1,sp)
+    jrslt 1$ 
+    jrsgt 3$ 
+    ld a,(N1+2,sp)
+    cp a,(N2+2,sp)
+    jrslt 1$ 
+    jrsgt 3$
+    clr a 
+    jra 9$ 
+1$: ld a,#0xff 
+    jra 9$ 
+3$: ld a,#1 
+9$: clrw x 
+    bcp a,#0x80 
+    jreq 4$ 
+    cplw x 
+4$: ret 
 

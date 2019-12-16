@@ -17,7 +17,7 @@ Area                                    Addr        Size        Decimal Bytes (A
      00000080  l_HOME                          
      000000A8  l_DATA                          
      00000100  l_SSEG0                         
-     00000A24  l_CODE                          
+     00000A76  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 
@@ -59,7 +59,7 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00000A24 =        2596. bytes (REL,CON)
+CODE                                00008080    00000A76 =        2678. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
@@ -83,16 +83,19 @@ CODE                                00008080    00000A24 =        2596. bytes (R
      000084F9  next_word                          TEST_HELP
      00008524  to_lower                           TEST_HELP
      000085ED  test_main                          MATH24_TEST
-     000088A3  add24                              MATH24
-     000088B0  sub24                              MATH24
-     000088BD  mul24_8u                           MATH24
-     000088E6  mul24u                             MATH24
-     0000892A  mul24s                             MATH24
-     0000895D  div24_8u                           MATH24
-     00008973  clz24                              MATH24
-     0000898F  div24u                             MATH24
-     00008A1B  div24s                             MATH24
-     00008A9C  neg24                              MATH24
+     000088CD  add24                              MATH24
+     000088DA  sub24                              MATH24
+     000088E7  mul24_8u                           MATH24
+     00008910  mul24u                             MATH24
+     00008954  mul24s                             MATH24
+     00008987  div24_8u                           MATH24
+     0000899D  clz24                              MATH24
+     000089B9  div24u                             MATH24
+     00008A45  div24s                             MATH24
+     00008AB5  abs24                              MATH24
+     00008AC0  inc24u                             MATH24
+     00008AC6  neg24                              MATH24
+     00008ACE  cmp24                              MATH24
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 
 Files Linked                              [ module(s) ]

@@ -78,7 +78,10 @@ eval:
     jrne 5$
     jp test_neg
 5$:
-
+    cp a,#'c 
+    jrne 6$
+    jp test_cmp
+6$:
 eval_exit:
     addw sp,#LOCAL_SIZE 
     ret 
@@ -130,6 +133,12 @@ test_neg:
     ldw x,(N2,sp)
     call neg24 
     call print_int24 
+    jp eval_exit 
+test_cmp:
+    ldw y,#cmp24_test
+    _dbg_puts 
+    call cmp24 
+1$: call print_int24 
     jp eval_exit 
 
 print_error:
@@ -194,4 +203,5 @@ mul24s_test: .asciz "\nmul24s: "
 div24_8u_test: .asciz "\ndiv24_8u: "
 div24s_test: .asciz "\ndiv24s: "
 neg24_test: .asciz "\nneg24: "
+cmp24_test: .asciz "\ncmp24: " 
 

@@ -59,6 +59,9 @@ Incréente de **1** la valeur de **n**.  **n** est passé dans **X:A**  et sa va
 
 Retourne l'niverse de l'entier **n**. **n** est passé dans **X:A**  et sa valeur inverse est retournée aussi dans **X:A**.  Il s'agit du complément à 2. 
 
+### int24_t cmp24(int24_t n1, int24_t n2)
+Compare n1 et n2 et retourne **1** si n1&gt;n2, **0** si n1=n2 et **-1** si n1&lt;n2.
+
 # exemple d'appel d'une fonction.
 
 Pour en savoir plus sur la façon d'utiliser cette librairie vous pouvez étudier le [fichier de test](math24_test.asm).  Voici deux bref extraits:
