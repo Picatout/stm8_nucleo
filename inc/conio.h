@@ -55,6 +55,9 @@ int getchar(void);
 int putchar(int c);
 int puts(const char*);
 char* gets(char *buffer);
+uint8_t is_digit(char c);
+uint8_t is_hex(char c);
+int printf(cont char* fmt,...);
 
 
 #endif // CONIO_H
