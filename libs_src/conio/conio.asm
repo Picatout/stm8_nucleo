@@ -82,6 +82,7 @@ conio_init::
 ;-------------------------------------
     ARG_OFS=2 
     DEV_ID=ARG_OFS+1
+_set_dev::
 set_dev::
     ld a,(DEV_ID,sp)
     ld std_dev,a 
@@ -95,6 +96,7 @@ set_dev::
 ; output:
 ;   A           std_dev
 ;-------------------------------------
+_get_dev::
 get_dev::
     ld a,std_dev
     ret 

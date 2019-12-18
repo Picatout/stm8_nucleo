@@ -170,6 +170,8 @@ PD = 15
 PE = 20
 PF = 25
 PG = 30
+PH = 35 
+PI = 40 
 
 ; GPIO
 ; gpio register offset to base

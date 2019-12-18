@@ -496,18 +496,18 @@ typedef struct{
 #define I2C_READ 1
 #define I2C_WRITE 0
 
-typedef enum {
-// baudrate constant for brr_value table access
-B2400=0,
-B4800,
-B9600,
-B19200,
-B38400,
-B57600,
-B115200,
-B230400,
-B460800,
-B921600,
+/* baudrate constant for brr_value table access */
+typedef enum baudrate {
+BR2400,
+BR4800,
+BR9600,
+BR19200,
+BR38400,
+BR57600,
+BR115200,
+BR230400,
+BR460800,
+BR921600,
 }baud_t;
 
 /* UART registers offset from */
@@ -905,7 +905,7 @@ B921600,
 #define TIM4_PSCR_64 6
 #define TIM4_PSCR_128 7
 
-; ADC2 
+// ADC2 
 #define ADC_CSR sfrp(0x5400)
 #define ADC_CR1 sfrp(0x5401)
 #define ADC_CR2 sfrp(0x5402)
@@ -941,7 +941,7 @@ B921600,
 #define ADC_CR3_DBUF (1 << 7)
 #define ADC_CR3_DRH (1 << 6)
 
-; beCAN
+// beCAN
 #define CAN_MCR sfrp(0x5420)
 #define CAN_MSR sfrp(0x5421)
 #define CAN_TSR sfrp(0x5422)
@@ -1077,7 +1077,8 @@ B921600,
 #define _clrbit(reg, mask) reg &= ~mask
 #define _setbit(reg, mask) reg |= mask
 #define _togglebit(reg,mask) reg ^= mask
-
+#define _ledon() PC_ODR|=(1<<5)
+#define _ledoff() PC_ODR&=~(1<<5)
 
 
 #endif //STM8S208_H

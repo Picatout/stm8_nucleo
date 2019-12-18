@@ -1,5 +1,5 @@
 XH3
-H 3 areas 1B global symbols
+H 3 areas 1D global symbols
 M CONIO
 S uart_delete Ref000000
 S uart_init Ref000000
@@ -14,6 +14,7 @@ A DATA size 13 flags 0 addr 0
 S fmt_buffer Def000003
 A CODE size 1F2 flags 0 addr 0
 S is_hex Def000104
+S _set_dev Def00000E
 S _conio_init Def000006
 S is_digit Def0000F8
 S puts Def000035
@@ -31,6 +32,7 @@ S _printf Def000118
 S gets Def00004F
 S putchar Def000018
 S _getchar Def00002B
+S _get_dev Def000014
 T 00 00 00
 R 00 00 00 01
 T 00 00 01
@@ -47,8 +49,12 @@ T 00 00 06 7B 04 C7 00 00 CC 00 00
 R 00 00 00 02 10 06 00 01 02 09 00 01
 T 00 00 0E
 R 00 00 00 02
+T 00 00 0E
+R 00 00 00 02
 T 00 00 0E 7B 03 C7 00 00 81
 R 00 00 00 02 10 06 00 01
+T 00 00 14
+R 00 00 00 02
 T 00 00 14
 R 00 00 00 02
 T 00 00 14 C6 00 00 81
