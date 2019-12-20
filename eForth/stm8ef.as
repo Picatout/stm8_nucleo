@@ -81,8 +81,9 @@
 	.area DATA (ABS) ; eForth variables
         .org RAM_BASE
         .ds 0x80
-
+;**********************************************************
         .area HOME ; vectors table
+
 	int main	        ; reset
 	int NonHandledInterrupt	; trap
 	int NonHandledInterrupt	; irq0
@@ -225,8 +226,8 @@ uart3_init:
 	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
 	mov UART3_BRR2,#0x05 ; must be loaded first
 	mov UART3_BRR1,#0x4
-	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN)|(1<<UART_CR2_RIEN))
-        JP      COLD   ;default=MN1
+	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));|(1<<UART_CR2_RIEN))
+        jp  COLD   ;default=MN1
 
 ; COLD start initiates these variables.
 UZERO:
@@ -304,15 +305,16 @@ LINK	= 	.
 	.byte      COMPO+4
         .ascii     "next"
 DONXT:
-        LDW Y,(3,SP)
-        DECW Y
-        JRPL NEX1
+	LDW Y,(3,SP)
+	DECW Y
+	JRPL NEX1
 	POPW Y
 	POP A
 	POP A
-        JP (2,Y)
-NEX1:   LDW (3,SP),Y
-        POPW Y
+    JP (2,Y)
+NEX1:
+    LDW (3,SP),Y
+    POPW Y
 	LDW Y,(Y)
 	JP (Y)
 

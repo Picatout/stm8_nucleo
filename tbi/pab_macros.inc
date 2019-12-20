@@ -19,38 +19,69 @@
 ;--------------------------------------
 ; set of macros to use with test_help
 ;--------------------------------------
+    CELL_SIZE=2 ; dstack cell size is 2 bytes 
+    ERR_NONE=0
+    ERR_DSTK_UNF = 1 ; overflow
+    ERR_DSTK_OVF = 2 ; underflow 
 
+;------------------------------
+; arguments stack macros 
+;------------------------------
+    CHECK_DSTK=0
+    ; enable dstack limits control
+    .macro _chk_dstk 
+    CHECK_DSTK=1 
+    .endm 
+
+    ; disable dstack limits control 
+    .macro _no_chk_dstk
+    CHECK_DSTK=0
+    .endm 
+
+    
     ; drop dstack top element 
-    .macro _ddrop
-    pushw x 
-    ldw x,dstackptr 
-    addw x,#2 
-    ldw dstackptr,x 
-    popw x 
+    .macro _ddrop n
+    .if CHECK_DSTK
+    cpw x,#dstack_unf-2*(n-1)   
+    jrmi .+5 
+    ld a,#ERR_DSTK_UNF
+    jp tb_error
+    .endif     
+    addw x,#2*n  
     .endm
 
     ; _dpush y on dstack 
-    .macro _dpush 
-    pushw x 
-    ldw x,dstackptr 
-    addw x,#-2 
-    ldw dstackptr,x 
-    ldw [dstackptr],y 
-    popw x 
+    .macro _dpush
+    .if CHECK_DSTK
+    cpw x,#dstack_full+CELL_SIZE 
+    jrpl .+5
+    ld a,#ERR_DSTK_OVF
+    jp tb_error 
+    .endif   
+    subw x,#2 
+    ldw (x),y 
     .endm 
 
     ; _dpop in y 
     .macro _dpop 
-    pushw x 
-    ldw y,[dstackptr]
-    ldw x,dstackptr 
+    .if CHECK_DSTK
+    cpw x,#dstack_unf 
+    jrmi .+5 
+    ld a,#ERR_DSTK_UNF
+    jp tb_error 
+    .endif 
+    ldw y,x 
+    ldw y,(y)
     addw x,#2 
-    ldw dstackptr,x 
-    popw x 
     .endm 
 
+;-------------------------------
+;  macros used to help debugging
+;-------------------------------
+    DEBUG=0
     .macro _dbg 
     DEBUG=1
+    _chk_dstk
     .endm
 
     .macro _nodbg

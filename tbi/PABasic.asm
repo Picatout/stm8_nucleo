@@ -25,6 +25,9 @@
 ;   This is design to avoid dependicies.
 ; 
 ; USAGE:
+;   X used as dstack pointer 
+;   Y,A   working register 
+; 
 ;--------------------------------------------------
 
     .module PA_BASIC
@@ -40,10 +43,12 @@
 ;--------------------------------------
     .area DATA 
 ;--------------------------------------	
-    TIB_SIZE=80
+	TIB_SIZE=80
     PAD_SIZE=40
 	DSTACK_SIZE=64
-	RSTACK_SIZE=128 
+	CSTACK_SIZE=128
+	CSTACK_EMPTY=RAM_SIZE-1  
+	FRUN=0 ; flags run code in variable flags 
 in.w:  .blkb 1 ; parser position in tib
 in:    .blkb 1 ; low byte of in.w
 acc24: .blkb 1 ; 24 accumulator
@@ -57,7 +62,7 @@ txtbgn: .ds 2 ; BASIC text beginning address
 txtend: .ds 2 ; BASIC text end address 
 arrayptr: .ds 2 ; address of @ array 
 arraysize: .ds 2 ; array size 
-
+flags: .ds 1 ; boolean flags
 vars: .ds 2*26 ; BASIC variables A-Z, keep it as but last .
 ; keep as last variable 
 free_ram: ; from here RAM free for BASIC text 
@@ -65,55 +70,57 @@ free_ram: ; from here RAM free for BASIC text
 ;-----------------------------------
     .area SSEG (ABS)
 ;-----------------------------------	
-    .org RAM_SIZE-RSTACK_SIZE-DSTACK_SIZE-TIB_SIZE-PAD_SIZE
-dstack_top:  .ds DSTACK_SIZE  ; expression stack
+    .org RAM_SIZE-CSTACK_SIZE-DSTACK_SIZE-TIB_SIZE-PAD_SIZE
+dstack_full:  .ds DSTACK_SIZE  ; expression stack
+dstack_unf: ;
 tib: .ds TIB_SIZE             ; transaction input buffer
 pad: .ds PAD_SIZE             ; working buffer
-cstack_top: .ds RSTACK_SIZE   ; control stack 
-
+cstack_full: .ds CSTACK_SIZE   ; control stack 
+cstack_unf: ; cstack underflow  
 
 
 ;--------------------------------------
     .area HOME 
 ;--------------------------------------
-    INT cold_start
-    INT TrapHandler
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
-    INT NonHandledInterrupt
+    int cold_start
+    int TrapHandler
+	int TrapHandler 		;TRAP  software interrupt
+	int NonHandledInterrupt ;int0 TLI   external top level interrupt
+	int NonHandledInterrupt ;int1 AWU   auto wake up from halt
+	int NonHandledInterrupt ;int2 CLK   clock controller
+	int NonHandledInterrupt ;int3 EXTI0 port A external interrupts
+	int NonHandledInterrupt ;int4 EXTI1 port B external interrupts
+	int NonHandledInterrupt ;int5 EXTI2 port C external interrupts
+	int NonHandledInterrupt ;int6 EXTI3 port D external interrupts
+	int UserButtonHandler   ;int7 EXTI4 port E external interrupts
+	int NonHandledInterrupt ;int8 beCAN RX interrupt
+	int NonHandledInterrupt ;int9 beCAN TX/ER/SC interrupt
+	int NonHandledInterrupt ;int10 SPI End of transfer
+	int NonHandledInterrupt ;int11 TIM1 update/overflow/underflow/trigger/break
+	int NonHandledInterrupt ;int12 TIM1 capture/compare
+	int NonHandledInterrupt ;int13 TIM2 update /overflow
+	int NonHandledInterrupt ;int14 TIM2 capture/compare
+	int NonHandledInterrupt ;int15 TIM3 Update/overflow
+	int NonHandledInterrupt ;int16 TIM3 Capture/compare
+	int NonHandledInterrupt ;int17 UART1 TX completed
+	int NonHandledInterrupt ;int18 UART1 RX full
+	int NonHandledInterrupt ;int19 I2C 
+	int NonHandledInterrupt ;int20 UART3 TX completed
+	int NonHandledInterrupt ;int21 UART3 RX full
+	int NonHandledInterrupt ;int22 ADC2 end of conversion
+	int NonHandledInterrupt	;int23 TIM4 update/overflow
+	int NonHandledInterrupt ;int24 flash writing EOP/WR_PG_DIS
+	int NonHandledInterrupt ;int25  not used
+	int NonHandledInterrupt ;int26  not used
+	int NonHandledInterrupt ;int27  not used
+	int NonHandledInterrupt ;int28  not used
+	int NonHandledInterrupt ;int29  not used
 
 ;---------------------------------------
     .area CODE
 ;---------------------------------------
 .asciz "PA_BASIC" ; I like to put module name here.
-_dbg 
+;_dbg 
 NonHandledInterrupt:
     .byte 0x71  ; reinitialize MCU
 
@@ -122,8 +129,10 @@ NonHandledInterrupt:
 ; software interrupt handler  
 ;------------------------------------
 TrapHandler:
+.if DEBUG 
 	call print_registers
 	call cmd_itf
+.endif 	
 	iret
 
 ;------------------------------------
@@ -209,6 +218,7 @@ delete:
 1$:	pop a 
 	ret
 
+.if DEBUG 
 ;; print actual registers states 
 	_argofs 0  
 	_arg R_Y 1 
@@ -245,6 +255,7 @@ prt_regs:
 	ret 
 
 regs_state: .asciz "\nregisters state\n--------------------"
+.endif 
 
 ;--------------------
 ; print content at address in hex.
@@ -273,16 +284,218 @@ prt_peek:
 	ret 
 
 ;-------------------------------------
+; retrun string length
+;-------------------------------------
+strlen: ;	{ addr -- length }
+	ldw y,x 
+	ldw y,(y)
+	clr (x)
+	clr (1,x) 
+1$:	tnz (y) 
+	jreq 9$ 
+	inc (1,x)
+	jrne 2$
+	inc (x)
+2$:	incw y 
+	jra 1$ 
+9$: ret 
+
+
+;---------------------------------------
+; move memory block 
+; registers use:
+;   X 		destination 
+;   Y 	    source 
+;   acc16	size 
+;--------------------------------------
+	INCR=1 ; increament high byte 
+	LB=2 ; increament low byte 
+	VSIZE=2
+move: ; {dest src count -- }
+	ldw dstackptr,x 
+	clrw y  
+	pushw y  ; incr on cstack 
+	_dpop  ; { dest src -- }
+	ldw acc16,y ; acc16=count   
+	_dpop ; y=src 	
+	ldw x,(x)
+	pushw y 
+	cpw x,(1,sp) ; compare DEST to SRC 
+	popw y 
+	jreq move_exit ; x==y 
+	jrmi move_down
+move_up: ; start from top address with incr=-1
+	addw x,acc16
+	addw y,acc16
+	cpl (INCR,sp)
+	cpl (LB,sp)   ; increment = -1 
+	jra move_loop  
+move_down: ; start from bottom address with incr=1 
+    decw x 
+	decw y
+	inc (INCR+1,sp) ; incr=1 
+move_loop:	
+    ld a, acc16 
+	or a, acc8
+	jreq move_exit 
+	addw x,(INCR,sp)
+	addw y,(INCR,sp) 
+	ld a,(y)
+	ld (x),a 
+	dec acc8
+	jrpl move_loop
+	dec acc16
+	jra move_loop
+move_exit:
+	addw sp,#VSIZE ; drop increment 
+	ldw x,dstackptr
+	_ddrop 3 ; drop move arguments 
+	ret 	
+
+;-------------------------------------
+; search text area for a line with 
+; same number as lineno  
+;-------------------------------------
+	LL=1 ; line length 
+	LB=2 ; line length low byte 
+	VSIZE=2 
+search_lineno: ; {lineno -- addr|0 }
+	ldw y,x 
+	ldw y,(y) 
+	ldw acc16,y 
+	ldw dstackptr,x 
+	sub sp,#VSIZE
+	clr (LL,sp)
+	ldw x,txtend 
+	ldw y,txtbgn
+search_ln_loop:
+	pushw y
+	cpw x,(1,sp)
+	popw y  
+	jrpl 8$ 
+	ld a,(1,y) 
+	cp a,acc8 
+	jrne 2$
+	ld a,(y) 
+	cp a,acc16 
+	jreq 9$
+2$:	addw y,#2  
+	ld a,(y)
+	ld (LB,sp),a
+	incw y  
+	addw y,(LL,sp)
+	jra search_ln_loop 
+8$: clrw y 	
+9$: 	
+	_drop VSIZE
+	ldw x,dstackptr
+	ldw (x),y   
+	ret 
+
+;-------------------------------------
+; delete line which is at addr
+;-------------------------------------
+del_line: ; {addr -- }
+	ldw y,x 
+	ldw y,(y)
+	ld a,(2,y) ; line length
+	ld acc8,a 
+	clr acc16 
+; keek it to adjust txtend after move 
+	push a
+	push #0  
+	addw y,acc16
+	addw y,#3  
+	_dpush  ; {dest src -- }    
+	ldw acc16,y 
+	ldw y,txtend 
+	subw y,acc16 ; y=count 
+	_dpush  ; {dest src count -- }
+	call move
+	popw y 
+	ldw acc16,y 
+	ldw y,txtend 
+	subw y,acc16 
+	ldw txtend,y    
+	ret 
+
+;---------------------------------------------
+; create a gap in text area 
+;--------------------------------------------
+create_gap: ; {addr length -- addr }
+	_dpop 
+	ldw acc16,y 
+	ldw y,x 
+	ldw y,(y) 
+	addw y,acc16 
+	_dpush  ; {addr dest -- }
+	_over ; {addr dest src -- }
+	ldw y,x 
+	ldw y,(y)
+
+	ret 
+
+;--------------------------------------------
+; insert line in text area 
+; input:
+;   X 		line number 
+;   Y 		address of insert 
+; output:
+;   none
+;---------------------------------------------
+insert_line:
+	cpw y,txtend
+	jrpl 4$ 
+
+4$: ; insert at end. 
+	ldw y,txtend 
+	ldw (y),x  
+	addw y,#2
+	ldw x,#tib 
+	addw x,in.w
+	pushw y  
+	call strlen
+	ldw acc16,y  
+	popw y 
+	exgw x,y 
+	call move 
+	incw x 
+	ldw txtend,x 
+	ret
+	
+
+;-------------------------------------
+; check if A is a letter
+; input:
+;   A 			character to test 
+; output:
+;   C flag      1 true, 0 false 
+;-------------------------------------
+is_alpha:
+	cp a,#'A 
+	ccf 
+	jrnc 9$ 
+	cp a,#'Z+1 
+	jrc 9$ 
+	cp a,#'a 
+	ccf 
+	jrnc 9$
+	cp a,#'z+1   
+9$: ret 	
+
+;-------------------------------------
 ;  program initialization entry point 
 ;-------------------------------------
 	MAJOR=1
 	MINOR=0
-software: .asciz "\n\nPalo Alto BASIC for STM8\nJacques Deschenes, Copyright 2019,2020\nversion "
+software: .asciz "\n\nPalo Alto BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
 cold_start:
-    ldw x,#RAM_SIZE-1 
-    ldw sp,x 
+    ldw x,#CSTACK_EMPTY 
+    ldw sp,x
     call clock_init 
     call uart3_init
+; activate PE_4 (user button interrupt)
+    bset PE_CR2,#USR_BTN_BIT
 	ldw y,#software 
 	call puts 
 	ld a,#MAJOR 
@@ -307,13 +520,28 @@ cold_start:
     bset PC_DDR,#LED2_BIT
     jra warm_start 
 
-;----------------------------
-;    MAIN function 
-;----------------------------	
+err_msg: 
+.if CHECK_DSTK
+dstk_err_msg:
+	.word err_dstk_unf, err_dstk_ovf
+
+err_dstk_unf: .asciz "arguments stack underflow\n" 
+err_dstk_ovf: .asciz "arguments stack overflow\n" 
+.endif 
+
+tb_error:
+	ldw y, #err_msg 
+	sll a 
+	ld acc8, a 
+	clr acc16 
+	addw y,acc16 
+	ldw y,(y)
+	call puts 
+    ldw x,#CSTACK_EMPTY 
+    ldw sp,x
 warm_start:
-	ldw x,#dstack_top 
-	addw x,#DSTACK_SIZE-1
-	ldw dstackptr,x
+	ldw x,#dstack_unf  
+	ldw dstackptr,x ; save pointer 
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
@@ -326,10 +554,29 @@ interp:
 	call putc 
 	ld a,#'> 
 	call putc 
-	call readln 
+	call readln
+; skip white space 	
+	ldw y,#tib
+	ld a,#SPACE   
+	call skip
+	tnz ([in.w],y)  
+	jreq interp 
 	call next_word
-	tnz pad+1
-	jrne 2$ 
+; if line start with a number
+; save it in text area and loop to interp	
+	ld a,pad 
+	call is_digit 
+	jrne 1$ 
+; convert number string to integer 
+	call atoi
+; check if this line number exist  
+; if exist replace with new line 
+; or if new line empty delete existing 
+; else insert new line 	 
+	call search_lineno
+; X = lineno if exist otherwise 0.
+
+
 	ld a,#'d 
 	cp a,pad 
 	jrne 2$ 
@@ -348,8 +595,10 @@ interp:
 	call search_dict 
 	_dpop 
 	tnzw y 
-	jreq interp
-	call (y)
+	jrne 3$
+	tnz pad+1
+	call is_alpha 
+3$:	call (y)
 	jra interp
 
     trap 
@@ -683,17 +932,17 @@ neg_acc24:
 ; input:
 ;	none
 ; local variable on stack:
-;	LEN (1,sp)
+;	LL (1,sp)
 ;   RXCHAR (2,sp)
 ; output:
 ;   text in tib  buffer
 ;------------------------------------
 	; local variables
-	LEN = 1  ; accepted line length
+	LL = 1  ; accepted line length
 	RXCHAR = 2 ; last char received
 readln:
 	push #0  ; RXCHAR 
-	push #0  ; LEN
+	push #0  ; LL
  	ldw y,#tib ; input buffer
 readln_loop:
 	call getc
@@ -706,39 +955,39 @@ readln_loop:
 	cp a,#BSP
 	jreq del_back
 	cp a,#CTRL_D
-	jreq del_line
+	jreq del_ln
 	cp a,#CTRL_R 
 	jreq reprint 
 	cp a,#SPACE
 	jrpl accept_char
 	jra readln_loop
 reprint: 
-	tnz (LEN,sp)
+	tnz (LL,sp)
 	jrne readln_loop
 	ldw y,#tib 
 	call puts
 	jra readln_loop 
-del_line:
-	ld a,(LEN,sp)
+del_ln:
+	ld a,(LL,sp)
 	call delete
 	ldw y,#tib
-	clr (LEN,sp)
+	clr (LL,sp)
 	jra readln_loop
 del_back:
-    tnz (LEN,sp)
+    tnz (LL,sp)
     jreq readln_loop
-    dec (LEN,sp)
+    dec (LL,sp)
     decw y
     clr  (y)
     call bksp 
     jra readln_loop	
 accept_char:
 	ld a,#TIB_SIZE-1
-	cp a, (LEN,sp)
+	cp a, (LL,sp)
 	jreq readln_loop
 	ld a,(RXCHAR,sp)
 	ld (y),a
-	inc (LEN,sp)
+	inc (LL,sp)
 	incw y
 	clr (y)
 	call putc 
@@ -748,6 +997,8 @@ readln_quit:
 	ld a,#NL
 	call putc
 	ret
+
+.if DEBUG 	
 ;----------------------------
 ; command interface
 ; only 2 commands:
@@ -833,6 +1084,7 @@ peek_byte:
 
 
 invalid_cmd: .asciz "not a command\n" 
+.endif 
 
 ;----------------------------
 ; display farptr address
@@ -1157,6 +1409,63 @@ search_exit:
 	popw x 
 	ret 
 
+; increment T 
+oneplus: ; { n -- n+1 }
+	inc (1,x)
+	jrne 1$ 
+	inc (x)
+1$: ret 
+
+; decrement T 
+oneminus: ; {n -- n-1 }
+	dec (1,x)
+	jrpl 1$ 
+	dec (x)
+1$:	ret 
+
+; copy second element 
+dover: ; { n1 n2 -- n1 n2 n1 }
+    .if CHECK_DSTK
+    cpw x,#dstack_full+CELL_SIZE 
+    jrpl 1$
+    ld a,#ERR_DSTK_OVF
+	.endif 
+    jp tb_error  
+1$: ldw y,x 
+	ldw y,(2,y)
+	subw x,#CELL_SIZE
+	ldw (x),y 
+	ret 
+
+; swap top 2 elements 
+dswap: ; {n1 n2 -- n2 n1 }
+    ldw y,x 
+	ldw y,(y)
+    pushw y
+	ldw y,x  
+    ldw y,(2,y)
+    ldw (x),y 
+    popw y 
+    ldw (2,x),y 
+	ret
+
+; duplicate top element 
+ddup: ; { n -- n n }
+    .if CHECK_DSTK
+    cpw x,#dstack_full+CELL_SIZE 
+    jrpl .+5
+    ld a,#ERR_DSTK_OVF
+    jp tb_error
+    .endif   
+    ldw y,x 
+    ldw y,(y)
+    subw x,#CELL_SIZE
+	ldw (x),y  
+	ret 
+
+
+
+
 ;--------------------------------
 ;   BASIC commnands 
 ;--------------------------------
@@ -1289,6 +1598,13 @@ name:
 
 	LINK=0
 dict_end:
+	_dict_entry 3,DEC,oneminus 
+	_dict_entry 3,INC,oneplus 
+	_dict_entry 4,OVER,dover 
+	_dict_entry 4,SWAP,dswap
+	_dict_entry 3,DUP,ddup 
+	_dict_entry 3,LEN,strlen 
+
 	_dict_entry 5,INPUT,input 
 	_dict_entry 3,OUT,out 
 	_dict_entry 4,WAIT,wait 
