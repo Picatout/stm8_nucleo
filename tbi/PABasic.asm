@@ -21,13 +21,6 @@
 ;   Palo Alto BASIC is 4th version of TinyBasic
 ;   DATE: 2019-12-17
 ;
-; DEPENDENCIES:
-;   This is design to avoid dependicies.
-; 
-; USAGE:
-;   X used as dstack pointer 
-;   Y,A   working register 
-; 
 ;--------------------------------------------------
 
     .module PA_BASIC
@@ -45,9 +38,8 @@
 ;--------------------------------------	
 	TIB_SIZE=80
     PAD_SIZE=40
-	DSTACK_SIZE=64
-	CSTACK_SIZE=128
-	CSTACK_EMPTY=RAM_SIZE-1  
+	STACK_SIZE=128
+	STACK_EMPTY=RAM_SIZE-1  
 	FRUN=0 ; flags run code in variable flags 
 in.w:  .blkb 1 ; parser position in tib
 in:    .blkb 1 ; low byte of in.w
@@ -56,7 +48,6 @@ acc16: .blkb 1
 acc8:  .blkb 1
 farptr: .blkb 3 ; far pointer 
 basicptr: .blkb 3 ; BASIC parse pointer 
-dstackptr: .ds 2
 lineno: .blkb 2  ; BASIC line number 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
@@ -70,13 +61,11 @@ free_ram: ; from here RAM free for BASIC text
 ;-----------------------------------
     .area SSEG (ABS)
 ;-----------------------------------	
-    .org RAM_SIZE-CSTACK_SIZE-DSTACK_SIZE-TIB_SIZE-PAD_SIZE
-dstack_full:  .ds DSTACK_SIZE  ; expression stack
-dstack_unf: ;
+    .org RAM_SIZE-STACK_SIZE-TIB_SIZE-PAD_SIZE
 tib: .ds TIB_SIZE             ; transaction input buffer
 pad: .ds PAD_SIZE             ; working buffer
-cstack_full: .ds CSTACK_SIZE   ; control stack 
-cstack_unf: ; cstack underflow  
+stack_full: .ds STACK_SIZE   ; control stack 
+stack_unf: ; stack underflow  
 
 
 ;--------------------------------------
@@ -120,7 +109,7 @@ cstack_unf: ; cstack underflow
     .area CODE
 ;---------------------------------------
 .asciz "PA_BASIC" ; I like to put module name here.
-;_dbg 
+_dbg 
 NonHandledInterrupt:
     .byte 0x71  ; reinitialize MCU
 
@@ -146,7 +135,7 @@ UserButtonHandler:
 	jrne 1$
 	btjt USR_BTN_PORT,#USR_BTN_BIT, 2$
 	jra 0$
-2$:	ldw y,#USER_ABORT
+2$:	ldw x,#USER_ABORT
 	call puts 
     call print_registers 
 	rim 
@@ -181,24 +170,71 @@ uart3_init:
 	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));
 	ret
 	
+;---------------------------------
+; send character to UART3 
+; input:
+;   A 
+; output:
+;   none 
+;--------------------------------	
 putc:
 	btjf UART3_SR,#UART_SR_TXE,.
 	ld UART3_DR,a 
 	ret 
 
+;---------------------------------
+; wait character from UART3 
+; input:
+;   none
+; output:
+;   A 			char  
+;--------------------------------	
 getc:
 	btjf UART3_SR,#UART_SR_RXNE,.
 	ld a,UART3_DR 
 	ret 
 
+;-----------------------------
+; send an ASCIZ string to UART3 
+; input: 
+;   x 		char * 
+; output:
+;   none 
+;-------------------------------
 puts:
-    ld a,(y)
+    ld a,(x)
 	jreq 1$
 	call putc 
-	incw y 
+	incw x 
 	jra puts 
 1$:	ret 
 
+;-----------------------------
+; send a counted string to UART3 
+; input: 
+;   X  		char *
+;   Y 		length 
+; output:
+;   none 
+;-------------------------------
+prt_cstr:
+	tnzw y 
+	jreq 9$ 
+	ld a,(x)
+	call putc 
+	incw x 
+	decw y
+	jra prt_cstr 
+9$:	ret 
+
+;---------------------------
+; delete character at left 
+; of cursor on terminal 
+; input:
+;   none 
+; output:
+;	none 
+;---------------------------
 bksp:
 	ld a,#BSP 
 	call putc 
@@ -207,7 +243,14 @@ bksp:
 	ld a,#BSP 
 	call putc 
 	ret 
-
+;---------------------------
+; delete n character left of cursor 
+; at terminal.
+; input: 
+;   A   	number of characters to delete.
+; output:
+;    none 
+;--------------------------	
 delete:
 	push a 
 0$:	tnz (1,sp)
@@ -218,15 +261,18 @@ delete:
 1$:	pop a 
 	ret
 
-.if DEBUG 
+;---------------------------------
 ;; print actual registers states 
+;; as pushed on stack 
+;; {Y,X,CC,A}
+;---------------------------------
 	_argofs 0  
 	_arg R_Y 1 
 	_arg R_X 3
 	_arg R_A 5
 	_arg R_CC 6
 prt_regs:
-	ldw y,#regs_state 
+	ldw x,#regs_state 
 	call puts
 ; register CC 
 	ld a,(R_CC,sp)
@@ -255,7 +301,7 @@ prt_regs:
 	ret 
 
 regs_state: .asciz "\nregisters state\n--------------------"
-.endif 
+
 
 ;--------------------
 ; print content at address in hex.
@@ -285,40 +331,36 @@ prt_peek:
 
 ;-------------------------------------
 ; retrun string length
+; input:
+;   X         .asciz  
+; output:
+;   X         length 
 ;-------------------------------------
-strlen: ;	{ addr -- length }
+strlen:
 	ldw y,x 
-	ldw y,(y)
-	clr (x)
-	clr (1,x) 
+	clrw x 
 1$:	tnz (y) 
 	jreq 9$ 
-	inc (1,x)
-	jrne 2$
-	inc (x)
-2$:	incw y 
+	incw x
+	incw y 
 	jra 1$ 
 9$: ret 
 
 
 ;---------------------------------------
 ; move memory block 
-; registers use:
+; input:
 ;   X 		destination 
 ;   Y 	    source 
 ;   acc16	size 
+; output:
+;   none 
 ;--------------------------------------
 	INCR=1 ; increament high byte 
 	LB=2 ; increament low byte 
 	VSIZE=2
-move: ; {dest src count -- }
-	ldw dstackptr,x 
-	clrw y  
-	pushw y  ; incr on cstack 
-	_dpop  ; { dest src -- }
-	ldw acc16,y ; acc16=count   
-	_dpop ; y=src 	
-	ldw x,(x)
+move:
+	_vars VSIZE 
 	pushw y 
 	cpw x,(1,sp) ; compare DEST to SRC 
 	popw y 
@@ -347,70 +389,61 @@ move_loop:
 	dec acc16
 	jra move_loop
 move_exit:
-	addw sp,#VSIZE ; drop increment 
-	ldw x,dstackptr
-	_ddrop 3 ; drop move arguments 
+	_drop VSIZE
 	ret 	
 
 ;-------------------------------------
 ; search text area for a line with 
 ; same number as lineno  
+; input:
+;	X 			lineno 
+; output:
+;   X 			addr of line | 0 
 ;-------------------------------------
 	LL=1 ; line length 
 	LB=2 ; line length low byte 
 	VSIZE=2 
-search_lineno: ; {lineno -- addr|0 }
-	ldw y,x 
-	ldw y,(y) 
-	ldw acc16,y 
-	ldw dstackptr,x 
-	sub sp,#VSIZE
+search_lineno:
+	_vars VSIZE
+	ldw acc16,x 
 	clr (LL,sp)
-	ldw x,txtend 
 	ldw y,txtbgn
 search_ln_loop:
-	pushw y
-	cpw x,(1,sp)
-	popw y  
-	jrpl 8$ 
-	ld a,(1,y) 
-	cp a,acc8 
-	jrne 2$
-	ld a,(y) 
-	cp a,acc16 
-	jreq 9$
-2$:	addw y,#2  
-	ld a,(y)
-	ld (LB,sp),a
-	incw y  
+	cpw y,txtend 
+	jreq 8$
+	ldw x,y 
+	ldw x,(x) ; x=line number 
+	cpw x,acc16 
+	jreq 9$ 
+	ld a,(2,y)
+	ld (LB,sp),a 
+	addw y,#3 
 	addw y,(LL,sp)
 	jra search_ln_loop 
 8$: clrw y 	
-9$: 	
-	_drop VSIZE
-	ldw x,dstackptr
-	ldw (x),y   
+9$: _drop VSIZE
+	ldw x,y   
 	ret 
 
 ;-------------------------------------
 ; delete line which is at addr
+; input:
+;   X 			addr of line 
 ;-------------------------------------
-del_line: ; {addr -- }
-	ldw y,x 
-	ldw y,(y)
-	ld a,(2,y) ; line length
+del_line: 
+	ld a,(2,x) ; line length
 	ld acc8,a 
 	clr acc16 
 ; keek it to adjust txtend after move 
 	push a
 	push #0  
+	ldw y,x 
 	addw y,acc16
 	addw y,#3  
-	_dpush  ; {dest src -- }    
 	ldw acc16,y 
 	ldw y,txtend 
 	subw y,acc16 ; y=count 
-	_dpush  ; {dest src count -- }
+	ldw acc16,y 
 	call move
 	popw y 
 	ldw acc16,y 
@@ -419,48 +452,103 @@ del_line: ; {addr -- }
 	ldw txtend,y    
 	ret 
 
+;--------------------------------------------
+;  return text area free space 
+; input: 
+;   none 
+; output:
+;   X  		free space in byte 
+;---------------------------------------------
+size:
+	ldw x,#tib 
+	subw x,txtend 
+	ret 
+
+
 ;---------------------------------------------
 ; create a gap in text area 
+; input:
+;    X 			addr 
+;    Y 			length 
+; output:
+;    X 			addr 
 ;--------------------------------------------
-create_gap: ; {addr length -- addr }
-	_dpop 
+	SRC=1
+	DEST=3
+	LEN=5 
+	VSIZE=6 
+create_gap:
+	_vars VSIZE
+	ldw (LEN,sp),y  
 	ldw acc16,y 
-	ldw y,x 
-	ldw y,(y) 
-	addw y,acc16 
-	_dpush  ; {addr dest -- }
-	_over ; {addr dest src -- }
-	ldw y,x 
-	ldw y,(y)
-
+	ldw (SRC,sp),x 
+	addw x,(LEN,sp) 
+	ldw y,(SRC,sp)
+	call move
+	ldw x,txtend 
+	addw x,(LEN,sp)
+	ldw txtend,x
+	_drop VSIZE 
 	ret 
+
 
 ;--------------------------------------------
 ; insert line in text area 
 ; input:
 ;   X 		line number 
-;   Y 		address of insert 
+;   Y 		address of insert | 0 
 ; output:
 ;   none
 ;---------------------------------------------
+	XSAVE=1 
+	YSAVE=3 
+	LLEN=5  ; line length
+	VSIZE=6 
 insert_line:
-	cpw y,txtend
-	jrpl 4$ 
-
-4$: ; insert at end. 
-	ldw y,txtend 
-	ldw (y),x  
-	addw y,#2
+	_vars VSIZE 
+	ldw (XSAVE,sp),x  ; lineno
+	ldw (YSAVE,sp),y  ; insert addr. 
 	ldw x,#tib 
-	addw x,in.w
-	pushw y  
+	addw x,in.w 
 	call strlen
-	ldw acc16,y  
-	popw y 
-	exgw x,y 
-	call move 
+	tnzw x 
+	jreq 9$ ; empty line 
+	ldw (LLEN,sp),x 
+	call size ; free space available 
+	subw x,#3 ; space for lineno and linelen
+	jrmi 0$  
+	subw x,(LLEN,sp)
+	jrpl 1$ 
+0$:	ld a,ERR_TXT_FULL  ; not enough space 
+	jp tb_error  
+1$:	ldw x,(YSAVE,sp)
+	tnzw x ; if addr==0 insert at txtend 
+	jreq 4$ 
+; must create a gap 
+	ld a,(LLEN+1,sp)
+	add a,#3 ; space for lineno and linelen 
+	call create_gap 
+	jra 5$ 
+4$: ; insert at end. 
+	ldw y,txtend
+	ldw (YSAVE,sp),y
+	addw y,(LLEN,sp)
+	addw y,#3 
+	ldw txtend,y   
+5$:	ldw x,(YSAVE,sp) ; dest address 
+	ldw y,(XSAVE,sp) ; line number 
+	ldw (x),y 
+	addw x,#2
+	ld a,(LLEN+1,sp)
+	ld (x),a 
 	incw x 
-	ldw txtend,x 
+	ldw (XSAVE,sp),x ; dest 
+	ldw y,(LLEN,sp) ; src addr  
+	ldw acc16,y
+	ldw y,#tib 
+	addw y,in.w 
+	call move  
+9$:	_drop VSIZE
 	ret
 	
 
@@ -490,13 +578,13 @@ is_alpha:
 	MINOR=0
 software: .asciz "\n\nPalo Alto BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
 cold_start:
-    ldw x,#CSTACK_EMPTY 
+    ldw x,#STACK_EMPTY 
     ldw sp,x
     call clock_init 
     call uart3_init
 ; activate PE_4 (user button interrupt)
     bset PE_CR2,#USR_BTN_BIT
-	ldw y,#software 
+	ldw x,#software 
 	call puts 
 	ld a,#MAJOR 
 	ld acc8,a 
@@ -520,28 +608,22 @@ cold_start:
     bset PC_DDR,#LED2_BIT
     jra warm_start 
 
-err_msg: 
-.if CHECK_DSTK
-dstk_err_msg:
-	.word err_dstk_unf, err_dstk_ovf
+err_msg:
+	.word err_text_full
 
-err_dstk_unf: .asciz "arguments stack underflow\n" 
-err_dstk_ovf: .asciz "arguments stack overflow\n" 
-.endif 
+err_text_full: .asciz "Memory full\n" 
 
 tb_error:
-	ldw y, #err_msg 
+	ldw x, #err_msg 
 	sll a 
 	ld acc8, a 
 	clr acc16 
-	addw y,acc16 
-	ldw y,(y)
+	addw x,acc16 
+	ldw x,(x)
 	call puts 
-    ldw x,#CSTACK_EMPTY 
+    ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
-	ldw x,#dstack_unf  
-	ldw dstackptr,x ; save pointer 
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
@@ -593,7 +675,6 @@ interp:
 1$: 
 	call upper
 	call search_dict 
-	_dpop 
 	tnzw y 
 	jrne 3$
 	tnz pad+1
@@ -635,7 +716,7 @@ left_paren:
 ;------------------------------
 ; print 8 bit register 
 ; input:
-;   Y  point to register name 
+;   X  point to register name 
 ;   A  register value to print 
 ; output:
 ;   none
@@ -663,13 +744,13 @@ prt_reg8:
 ;--------------------------------
 ; print 16 bits register 
 ; input:
-;   Y   point register name 
-;   X   register value to print 
+;   X   point register name 
+;   Y   register value to print 
 ; output:
 ;  none
 ;--------------------------------
 prt_reg16: 
-	pushw x 
+	pushw y 
 	call puts 
 	ldw x,(1,sp) 
 	ldw acc16,x 
@@ -697,7 +778,7 @@ print_registers:
 	ldw y,#STATES
 	call puts
 ; print EPC 
-	ldw y, #REG_EPC
+	ldw x, #REG_EPC
 	call puts 
 	ld a, (11,sp)
 	ld acc8,a 
@@ -709,24 +790,24 @@ print_registers:
 	ld a,#16
 	call prti24  
 ; print X
-	ldw y,#REG_X
-	ldw x,(5,sp)
+	ldw x,#REG_X
+	ldw y,(5,sp)
 	call prt_reg16  
 ; print Y 
-	ldw y,#REG_Y
-	ldw x, (7,sp)
+	ldw x,#REG_Y
+	ldw y, (7,sp)
 	call prt_reg16  
 ; print A 
-	ldw y,#REG_A
+	ldw x,#REG_A
 	ld a, (4,sp) 
 	call prt_reg8
 ; print CC 
-	ldw y,#REG_CC 
+	ldw x,#REG_CC 
 	ld a, (3,sp) 
 	call prt_reg8 
 ; print SP 
-	ldw y,#REG_SP
-	ldw x,sp 
+	ldw x,#REG_SP
+	ldw y,sp 
 	addw x,#12
 	call prt_reg16  
 	ld a,#'\n' 
@@ -787,7 +868,8 @@ prti24:
 	ld (y),a 
 	dec (WIDTH,sp) 
 	jra 3$
-4$: call puts 
+4$: ldw x,y 
+	call puts 
 	ld a,#0x80
 	bcp a,(ADD_SPACE,sp)
 	jreq 5$
@@ -964,7 +1046,7 @@ readln_loop:
 reprint: 
 	tnz (LL,sp)
 	jrne readln_loop
-	ldw y,#tib 
+	ldw x,#tib 
 	call puts
 	jra readln_loop 
 del_ln:
@@ -1032,7 +1114,7 @@ repl_exit:
 	addw sp,#LOCAL_SIZE 	
 	ret  
 invalid:
-	ldw y,#invalid_cmd 
+	ldw x,#invalid_cmd 
 	call puts 
 	jra repl 
 test_p:	
@@ -1042,7 +1124,7 @@ test_p:
 	jrne invalid 
 print_string:	
 	call number
-	ldw y,acc16 
+	ldw x,acc16 
 	call puts
 	jp repl 	
 mem_peek:	 
@@ -1392,7 +1474,6 @@ no_match:
 	ldw y,(y)
 	jrne search_loop 
 ;not found 
-	_dpush
 	jra search_exit 
 str_match:
 	popw y
@@ -1403,180 +1484,123 @@ str_match:
 	addw y,(1,sp)
 	addw sp,#2
 	ldw y,(y)
-	_dpush
 search_exit: 	 
 	popw y 
 	popw x 
 	ret 
-
-; increment T 
-oneplus: ; { n -- n+1 }
-	inc (1,x)
-	jrne 1$ 
-	inc (x)
-1$: ret 
-
-; decrement T 
-oneminus: ; {n -- n-1 }
-	dec (1,x)
-	jrpl 1$ 
-	dec (x)
-1$:	ret 
-
-; copy second element 
-dover: ; { n1 n2 -- n1 n2 n1 }
-    .if CHECK_DSTK
-    cpw x,#dstack_full+CELL_SIZE 
-    jrpl 1$
-    ld a,#ERR_DSTK_OVF
-	.endif 
-    jp tb_error  
-1$: ldw y,x 
-	ldw y,(2,y)
-	subw x,#CELL_SIZE
-	ldw (x),y 
-	ret 
-
-; swap top 2 elements 
-dswap: ; {n1 n2 -- n2 n1 }
-    ldw y,x 
-	ldw y,(y)
-    pushw y
-	ldw y,x  
-    ldw y,(2,y)
-    ldw (x),y 
-    popw y 
-    ldw (2,x),y 
-	ret
-
-; duplicate top element 
-ddup: ; { n -- n n }
-    .if CHECK_DSTK
-    cpw x,#dstack_full+CELL_SIZE 
-    jrpl .+5
-    ld a,#ERR_DSTK_OVF
-    jp tb_error
-    .endif   
-    ldw y,x 
-    ldw y,(y)
-    subw x,#CELL_SIZE
-	ldw (x),y  
-	ret 
-
-
 
 
 ;--------------------------------
 ;   BASIC commnands 
 ;--------------------------------
 let:
-	ldw y,#LET+1 
+	ldw x,#LET+1 
 	call puts
 	ret 
 
 list:
-	ldw y,#LIST+1 
+	ldw x,#LIST+1 
 	call puts
 	ret 
 
 print:
-	ldw y,#PRINT+1 
+	ldw x,#PRINT+1 
 	call puts 
 	ret 
 
 run: 
-	ldw y,#RUN+1 
+	ldw x,#RUN+1 
 	call puts 
 	ret 
 
 rem: 
-	ldw y,#REM+1 
+	ldw x,#REM+1 
 	call puts 
 	ret 
 
 input:
-	ldw y,#INPUT+1 
+	ldw x,#INPUT+1 
 	call puts 
 	ret 
 
 out:
-	ldw y,#OUT+1 
+	ldw x,#OUT+1 
 	call puts 
 	ret 
 
 wait: 
-	ldw y,#WAIT+1 
+	ldw x,#WAIT+1 
 	call puts 
 	ret 
 
 poke:
-	ldw y,#POKE+1 
+	ldw x,#POKE+1 
 	call puts 
 	ret 
 
 peek:
-	ldw y,#PEEK+1 
+	ldw x,#PEEK+1 
 	call puts 
 	ret 
 
 if:
-	ldw y,#IF+1 
+	ldw x,#IF+1 
 	call puts 
 	ret 
 
 for:
-	ldw y,#FOR+1 
+	ldw x,#FOR+1 
 	call puts 
 	ret 
 
 next: 
-	ldw y,#NEXT+1 
+	ldw x,#NEXT+1 
 	call puts 
 	ret 
 
 
 goto:
-	ldw y,#GOTO+1 
+	ldw x,#GOTO+1 
 	call puts 
 	ret 
 
 gosub:
-	ldw y,#GOSUB+1 
+	ldw x,#GOSUB+1 
 	call puts 
 	ret 
 
 return:
-	ldw y,#RETURN+1 
+	ldw x,#RETURN+1 
 	call puts 
 	ret 
 
 stop: 
-	ldw y,#STOP+1 
+	ldw x,#STOP+1 
 	call puts 
 	ret 
 
 new: 
-	ldw y,#NEW+1 
+	ldw x,#NEW+1 
 	call puts 
 	ret 
 
 save:
-	ldw y,#SAVE+1 
+	ldw x,#SAVE+1 
 	call puts 
 	ret 
 
 load:
-	ldw y,#LOAD+1 
+	ldw x,#LOAD+1 
 	call puts 
 	ret 
 
 usr:
-	ldw y,#USR+1 
+	ldw x,#USR+1 
 	call puts 
 	ret 
 
 on: 
-	ldw y,#ON+1 
+	ldw x,#ON+1 
 	call puts 
 	ret 
 
@@ -1598,12 +1622,6 @@ name:
 
 	LINK=0
 dict_end:
-	_dict_entry 3,DEC,oneminus 
-	_dict_entry 3,INC,oneplus 
-	_dict_entry 4,OVER,dover 
-	_dict_entry 4,SWAP,dswap
-	_dict_entry 3,DUP,ddup 
-	_dict_entry 3,LEN,strlen 
 
 	_dict_entry 5,INPUT,input 
 	_dict_entry 3,OUT,out 
@@ -1625,7 +1643,8 @@ dict_end:
 	_dict_entry,4,LOAD,load 
 	_dict_entry,4,SAVE,save 
 	_dict_entry,3,USR,usr
-	_dict_entry,3,NEW,new   
+	_dict_entry,3,NEW,new
+	_dict_entry,4,SIZE,size    
 last:
 	_dict_entry 3,LET,let 
 	
