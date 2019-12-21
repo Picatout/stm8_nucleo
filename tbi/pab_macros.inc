@@ -17,49 +17,50 @@
 ;;
 ;--------------------------------------
 ;--------------------------------------
+;       token attribute
+;--------------------------------------
+        TK_NONE=0       ; undefined
+        TK_VAR=1        ; variable {A..Z}
+        TK_LPAREN=2     ; left parenthesis
+        TK_RPAREN=3     ; right parenthesis
+        TK_QSTR=4       ; quoted string
+        TK_LABEL=5      ; label 
+        TK_INTGR=6      ; integer 
+        TK_MATOP=7      ; math operator
+        TK_RELOP=8      ; relation operator "=",">=","<=",">","<", "<>" 
+        TK_CMDEND=9     ; command end marker ':' 
+
+
+
+;--------------------------------------
 ;   error codes 
 ;--------------------------------------
     ERR_NONE=0
     ERR_TXT_FULL=1 
-
+    ERR_SYNTAX=2
+    
 ;---------------------------------------
 ;  data stack macros 
 ;---------------------------------------
     CELL_SIZE=2 
-    ; push r on data stack 
-    ; r is x or y 
-    .macro _dpush r 
-    ld a,dstkptr+1
-    sub a,#CELL_SIZE
-    ld dstkptr+1,a 
-    ld a,dstkptr  
-    sbc a,#0  
-    ld dstkptr,a  
-    ldw [dstkptr],r 
+    ; open space on data stack
+    .macro _dp_down n 
+    pushw x 
+    ldw x, dstkptr 
+    subw x,#CELL_SIZE*n 
+    ldw dstkptr,x
+    popw x 
     .endm 
 
-    ; pop r from data stack
-    ; r is x or y 
-    .macro _dpop r 
-    ldw r, [dstkptr]
-    ld a,dstkptr+1 
-    add a,#CELL_SIZE 
-    ld dstkptr+1,a 
-    clr a 
-    adc a,dstkptr 
-    ld dstkptr,a 
-    .endm
-
-    ; drop n cells from data stack 
-    .macro _ddrop n 
-    ld a, n 
-    sll a 
-    add a,dstkptr+1 
-    ld dstkptr+1,a 
-    clr a 
-    adc a,dstkptr 
-    ld dstkptr,a 
+    ;release space on data stack 
+    .macro _dp_up n
+    pushw x 
+    ldw x,dstkptr 
+    addw x,#CELL_SIZE*n  
+    ldw dstkptr,x 
+    popw x 
     .endm 
+
 
 
 ;-------------------------------

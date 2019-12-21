@@ -30,7 +30,7 @@ $(NAME).rel:
 	$(SDAS) -g -l -o $(BUILD)$(NAME).rel $(NAME).asm
 
 $(NAME).ihx: $(NAME).rel 
-	$(SDCC) $(CFLAGS) -o $(BUILD)$(NAME).ihx  $(BUILD)$(NAME).rel
+	$(SDCC) $(CFLAGS)  -o $(BUILD)$(NAME).ihx  $(BUILD)$(NAME).rel
 
 
 .PHONY: clean 

@@ -355,6 +355,25 @@ strlen:
 	jra 1$ 
 9$: ret 
 
+;---------------------------------------
+;  copy src to dest 
+; input:
+;   X 		dest 
+;   Y 		src 
+; output: 
+;   X 		dest 
+;----------------------------------
+strcpy:
+	pushw x 
+1$: ld a,(y)
+	jreq 9$ 
+	ld (x),a 
+	incw x 
+	incw y 
+	jra 1$ 
+9$:	clr (x)
+	popw x 
+	ret 
 
 ;---------------------------------------
 ; move memory block 
@@ -370,6 +389,8 @@ strlen:
 	VSIZE=2
 move:
 	_vars VSIZE 
+	clr (INCR,sp)
+	clr (LB,sp)
 	pushw y 
 	cpw x,(1,sp) ; compare DEST to SRC 
 	popw y 
@@ -384,7 +405,7 @@ move_up: ; start from top address with incr=-1
 move_down: ; start from bottom address with incr=1 
     decw x 
 	decw y
-	inc (INCR+1,sp) ; incr=1 
+	inc (LB,sp) ; incr=1 
 move_loop:	
     ld a, acc16 
 	or a, acc8
@@ -585,7 +606,7 @@ clear_vars:
 ;-------------------------------------
 is_alpha:
 	cp a,#'A 
-	ccf 
+	ccf
 	jrnc 9$ 
 	cp a,#'Z+1 
 	jrc 9$ 
@@ -634,32 +655,79 @@ cold_start:
     jra warm_start 
 
 err_msg:
-	.word err_text_full
+	.word 0,err_text_full, err_syntax  
 
 err_text_full: .asciz "Memory full\n" 
+err_syntax: .asciz "syntax error\n" 
 
 tb_error:
+	push a 
 	ldw x, #err_msg 
-	sll a 
-	ld acc8, a 
 	clr acc16 
+	sll a
+	rlc acc16  
+	ld acc8, a 
 	addw x,acc16 
 	ldw x,(x)
-	call puts 
-    ldw x,#STACK_EMPTY 
+	call puts
+	pop a 
+	cp a,#ERR_SYNTAX
+	jrne 1$
+	ldw x,#tib 
+	ld a,([in.w],x)
+	call putc 
+	ld a,#'? 
+	call putc  
+1$: ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
-	ldw x,#dstack_unf  
-	ldw dstkptr,x 
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
+	ldw x,#dstack_unf  
+	ldw dstkptr,x 
 	clrw x 
 	ldw lineno,x
 	call clear_vars 
+;----------------------------
+; tokenizer test
+;----------------------------
+  TOK_TEST=1
+.if TOK_TEST 
+test_tok:
+	clr in.w 
+	clr in 
+	ld a,#CR 
+	call putc 
+	ld a,#'> 
+	call putc 
+	call readln
+	ldw x,#tib 
+1$:	call get_token	
+	tnz a 
+	jrne 2$
+	jra test_tok 
+2$:	cp a,#TK_INTGR
+	jrne 3$
+	push a 
+	ld a,#10 
+	clrw x
+	call itoa
+	ldw x,#pad 
+	call strcpy    
+	pop a 
+3$:	add a,#'0 
+	call putc 
+	ld a,#SPACE 
+	call putc 
+	ldw x,#pad 
+	call puts 
+	ld a,#CR 
+	call putc 
+	jra 1$
+.endif
+;----------------------------
 interp:
-	_dpush x 
-	trap 
 	clr in.w
 	clr in
 	ld a,#CR 
@@ -667,13 +735,11 @@ interp:
 	ld a,#'> 
 	call putc 
 	call readln
-	call number 
-	tnz pad 
+	call get_token 
+	cp a,#TK_NONE
 	jreq interp ; empty line 
-	ld a,acc24 
-	or a,acc16 
-	or a,acc8 
-	jreq 2$
+	cp a,#TK_INTGR
+	jrne 2$ 
 ; check if this line number exist  
 ; if exist replace with new line 
 ; or if new line empty delete existing 
@@ -869,13 +935,6 @@ prti24:
 	ld a, (BASE,sp)  
     call itoa  ; conversion entier en  .asciz
 	ld acc8,a ; string length 
-	ld a,#16
-	cp a,(BASE,sp)
-	jrne 1$
-	decw y 
-	ld a,#'$
-	ld (y),a
-	inc acc8 
 1$: ld a,(WIDTH,sp) 
 	jreq 4$
 	sub a,acc8
@@ -956,11 +1015,13 @@ itoa_loop:
 	;conversion done, next add '$' or '-' as required
 	ld a,(BASE,sp)
 	cp a,#16
-	jreq 10$
-    ld a,(SIGN,sp)
+	jreq 8$
+	ld a,(SIGN,sp)
     jreq 10$
-    decw y
     ld a,#'-
+	jra 9$ 
+8$: ld a,#'$ 
+9$: decw y
     ld (y),a
 10$:
 	addw sp,#VSIZE
@@ -1069,11 +1130,20 @@ reprint:
 	jrne readln_loop
 	ldw x,#tib 
 	call puts
+	ldw x,#tib 
+	call strlen 
+	ld a,xl 
+	ld (LL,sp),a 
+	ldw y,#tib
+	pushw x  
+	addw y,(1,sp)
+	popw x   
 	jra readln_loop 
 del_ln:
 	ld a,(LL,sp)
 	call delete
 	ldw y,#tib
+	clr (y)
 	clr (LL,sp)
 	jra readln_loop
 del_back:
@@ -1125,7 +1195,7 @@ repl:
 	clr in.w 
 	clr in 
 	call readln
-	call next_word
+	call get_token
 	ldw y,#pad 
 	ld a,(y)
 	incw y
@@ -1144,12 +1214,12 @@ test_p:
     cp a,#'S 
 	jrne invalid 
 print_string:	
-	call number
+	call get_token
 	ldw x,acc16 
 	call puts
 	jp repl 	
 mem_peek:	 
-	call number
+	call get_token
 	ld a, acc24 
 	or a,acc16 
 	or a,acc8 
@@ -1229,7 +1299,7 @@ fetchc: ; @C
 ;    acc24   int24_t 
 ;------------------------------------
 number::
-	call next_word
+	call get_token
 	call atoi
 	ret
 
@@ -1342,9 +1412,31 @@ convert_escape:
 	ld a,#0xb 
 9$:	ret 
 
+;-------------------------
+; integer parser 
+; input:
+;   X 		point to pad 
+;   Y 		point to tib 
+;   A 	    first digit 
+; output:  
+;   pad     number string 
+;   acc24   actual integer 
+;-------------------------
+parse_integer:
+	ld (x),a 
+	incw x 
+	inc in 
+	ld a,([in.w],y)
+	call is_digit 
+	jrc parse_integer
+	clr (x) 
+	call atoi 
+	ret 	
+	
+
 ;------------------------------------
 ; Command line tokenizer
-; scan tib for next word
+; scan tib for next token
 ; move token in 'pad'
 ; input: 
 	none: 
@@ -1353,34 +1445,167 @@ convert_escape:
 ;   X	pointer to pad 
 ;   in.w   index in tib
 ; output:
+;   A       token attribute 
 ;   pad 	token as .asciz  
 ;------------------------------------
-next_word::
+	; use to check special character 
+	.macro _case c t  
+	ld a,#c 
+	cp a,(CHAR,sp) 
+	jrne t
+	.endm 
+
+	CHAR=1
+	ATTRIB=2 
+	VSIZE=2
+get_token:
 	pushw x 
-	pushw y 
+	pushw y
+	_vars VSIZE
+	clr (ATTRIB,sp)
 	ldw x, #pad 
 	ldw y, #tib  	
 	ld a,#SPACE
 	call skip
 	ld a,([in.w],y)
-	jreq 8$
-1$: cp a,#SPACE
-	jreq 8$
-
-	cp a,#'" 
-	jrne 2$ 
-	cpw x,#pad 
-	jrne 8$ ; stop there if char in pad.
+token_loop:	
+	jrne 1$
+	jp token_exit
+1$:		
+	ld (CHAR,sp),a  
+	_case SPACE str_tst
+	jp token_exit 
+str_tst: ; check for quoted string  	
+	_case '"' nbr_tst
+	tnz (ATTRIB,sp)
+	jreq 1$
+	jp token_exit ; stop there if char in pad.
+1$:	
 	call parse_quote 
-	jra 9$ 
-2$:	call to_upper 
-	ld (x),a 
+	ld a,#TK_QSTR 
+	ld (ATTRIB,sp),a
+	jp token_exit2
+nbr_tst: ; check for number 
+	ld a,#'$'
+	cp a,(CHAR,sp) 
+	jreq 1$
+	ld a,(CHAR,sp)
+	call is_digit
+	jrnc 3$
+1$:	tnz (ATTRIB,sp)
+	jreq 2$
+	jp token_exit  
+2$:	call parse_integer 
+	ld a,#TK_INTGR
+	ld (ATTRIB,sp),a 
+	jp token_exit2 
+3$: 
+	ld a,(CHAR,sp)
+	call to_upper 
+	ld (CHAR,sp),a 
+	_case '(' rparnt_tst 
+	ld a,#TK_LPAREN
+	jp end_tst 	
+rparnt_tst:		
+	_case ')' colon_tst 
+	ld a,#TK_RPAREN 
+	jp end_tst
+colon_tst:
+	_case ':' dash_tst 
+	ld a,#TK_CMDEND
+	jp end_tst 
+dash_tst: 	
+	_case '-' plus_tst 
+	ld a,#TK_MATOP 
+	jp end_tst
+plus_tst:
+	_case '+' star_tst 
+	ld a,#TK_MATOP 
+	jp end_tst
+star_tst:
+	_case '*' slash_tst 
+	ld a,#TK_MATOP 
+	jp end_tst 
+slash_tst: 
+	_case '/' prcnt_tst 
+	ld a,#TK_MATOP 
+	jra end_tst 
+prcnt_tst:
+	_case '%' eql_tst 
+	ld a,#TK_MATOP
+	jra end_tst 
+; 1 or 2 character tokens 	
+eql_tst:
+	_case '=' gt_tst 		
+	jra rel_tst
+gt_tst:
+	_case '>' lt_tst 
+	jra rel_tst 	 
+lt_tst:
+	_case '<' other
+	jra rel_tst
+other: ; not a special character 	 
+	ld a,(CHAR,sp)
+	cp a,#'@ 
+	jreq 30$
+	call is_alpha 
+	jrc 30$ 
+	ld a,#ERR_SYNTAX 
+	JP tb_error 
+30$:
+	tnz (ATTRIB,sp)
+	jreq 32$
+	ld a,#TK_LABEL 
+	cp a,(ATTRIB,sp) 
+	jrne token_exit 
+32$: ; first character of label
+	ld a,(CHAR,sp)
+	ld (x),a
+	ld a,#TK_LABEL 
+	ld (ATTRIB,sp),a   
+o_34:
 	incw x 
 	inc in
 	ld a,([in.w],y) 
-	jrne 1$
-8$: clr (x)
-9$:	popw y 
+	jp token_loop  
+ ; it may be 2 characters TK_RELOP '>=' or '<=' or '<>' or a single '=' 	
+rel_tst:
+	ld a,#TK_RELOP 
+	tnz (ATTRIB,sp)
+	jrne 44$
+	ld (ATTRIB,sp),a
+42$:
+	ld a,(CHAR,sp)
+	ld (x),a 
+	jra o_34	
+44$:	 
+	cp a,(ATTRIB,sp)
+	jreq 42$ 
+	jra token_exit
+end_tst:
+	tnz (ATTRIB,sp)
+	jrne token_exit ; signal end of token  
+	ld (ATTRIB,sp),a  ; new token 
+79$:
+	ld a,(CHAR,sp)
+	ld (x),a 
+	incw x 
+	inc in 
+token_exit:
+	 clr (x)
+token_exit2:
+	ld a,#TK_LABEL 
+	cp a,(ATTRIB,sp)
+	jrne 9$ 
+	ldw x,#pad 
+	tnz (1,x) ; if single letter is a variable 
+	jrne 9$ 
+	ld a,#TK_VAR 
+	ld (ATTRIB,sp),a 
+9$:	
+	ld a,(ATTRIB,sp)
+	_drop VSIZE 
+	popw y 
 	popw x 
 	ret
 
@@ -1597,6 +1822,50 @@ skip:
 2$: pop a
 	ret
 	
+;----------------------	
+; push X on data stack 
+; input:
+;	X 
+; output:
+;	none 
+;----------------------	
+dpush:
+    _dp_down 1
+    ldw [dstkptr],x 
+	ret 
+
+
+;----------------------	
+; pop data stack in X 
+; input:
+;	none
+; output:
+;	X   
+;----------------------	
+dpop: 
+    ldw x, [dstkptr]
+	_dp_up 1 
+	ret 
+
+;---------------------------------
+; drop n elements from data stack 
+; input: 
+;   X 		n 
+; output:
+;   none 
+;-------------------------------------
+ddrop_n: 
+	pushw y 
+	ldw y,dstkptr 
+	sllw x 
+	pushw x 
+	addw y,(1,sp)
+	ldw dstkptr,y 
+	popw x 
+	popw y 
+	ret 
+
+
 ;---------------------------------
 ; input:
 ;  pad		.asciz name to search 
@@ -1670,7 +1939,7 @@ list:
 	ret 
 
 print:
-	call next_word 
+	call get_token 
 	ldw x,#pad 
 	call puts 
 	ret 
