@@ -38,6 +38,7 @@
 ;--------------------------------------	
 	TIB_SIZE=80
     PAD_SIZE=40
+	DSTACK_SIZE=64 
 	STACK_SIZE=128
 	STACK_EMPTY=RAM_SIZE-1  
 	FRUN=0 ; flags run code in variable flags 
@@ -48,6 +49,7 @@ acc16: .blkb 1
 acc8:  .blkb 1
 farptr: .blkb 3 ; far pointer 
 basicptr: .blkb 3 ; BASIC parse pointer 
+dstkptr: .blkw 1  ; data stack pointer 
 lineno: .blkb 2  ; BASIC line number 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
@@ -61,7 +63,9 @@ free_ram: ; from here RAM free for BASIC text
 ;-----------------------------------
     .area SSEG (ABS)
 ;-----------------------------------	
-    .org RAM_SIZE-STACK_SIZE-TIB_SIZE-PAD_SIZE
+    .org RAM_SIZE-STACK_SIZE-TIB_SIZE-PAD_SIZE-DSTACK_SIZE 
+dstack: .ds DSTACK_SIZE 
+dstack_unf: 
 tib: .ds TIB_SIZE             ; transaction input buffer
 pad: .ds PAD_SIZE             ; working buffer
 stack_full: .ds STACK_SIZE   ; control stack 
@@ -138,9 +142,9 @@ UserButtonHandler:
 2$:	ldw x,#USER_ABORT
 	call puts 
     call print_registers 
-	rim 
 	ldw x, #RAM_SIZE-1
 	ldw sp, x
+	rim 
 	jp warm_start
 
 
@@ -211,21 +215,26 @@ puts:
 
 ;-----------------------------
 ; send a counted string to UART3 
+; first is length {0..255}
 ; input: 
 ;   X  		char *
-;   Y 		length 
 ; output:
 ;   none 
 ;-------------------------------
 prt_cstr:
-	tnzw y 
+	clrw y 
+	ld a,(x)
+	incw x 
+	ld yl,a 
+1$:	tnzw y 
 	jreq 9$ 
 	ld a,(x)
 	call putc 
 	incw x 
 	decw y
-	jra prt_cstr 
+	jra 1$ 
 9$:	ret 
+
 
 ;---------------------------
 ; delete character at left 
@@ -276,31 +285,31 @@ prt_regs:
 	call puts
 ; register CC 
 	ld a,(R_CC,sp)
-	ldw y,#REG_CC 
+	ldw x,#REG_CC 
 	call prt_reg8 
 ; register A 
 	ld a,(R_A,sp)
-	ldw y,#REG_A 
+	ldw x,#REG_A 
 	call prt_reg8 
 ; register X 
-	ldw x,(R_X,sp)
-	ldw y,#REG_X 
+	ldw y,(R_X,sp)
+	ldw x,#REG_X 
 	call prt_reg16 
 ; register Y 
-	ldw x,(R_Y,sp)
-	ldw y,#REG_Y 
+	ldw y,(R_Y,sp)
+	ldw x,#REG_Y 
 	call prt_reg16 
 ; register SP 
-	ldw x,sp
-	addw x,#6+ARG_OFS  
-	ldw y,#REG_SP
+	ldw y,sp
+	addw y,#6+ARG_OFS  
+	ldw x,#REG_SP
 	call prt_reg16
 	ld a,#CR 
 	call putc
 	call putc   
 	ret 
 
-regs_state: .asciz "\nregisters state\n--------------------"
+regs_state: .asciz "\nregisters state\n--------------------\n"
 
 
 ;--------------------
@@ -551,6 +560,21 @@ insert_line:
 9$:	_drop VSIZE
 	ret
 	
+;------------------------------------
+;  set all variables to zero 
+; input:
+;   none 
+; output:
+;	none
+;------------------------------------
+clear_vars:
+	ldw x,vars 
+	ldw y,#2*26 
+1$:	clr (x)
+	incw x 
+	decw y 
+	jrne 1$
+	ret 
 
 ;-------------------------------------
 ; check if A is a letter
@@ -583,7 +607,7 @@ cold_start:
     call clock_init 
     call uart3_init
 ; activate PE_4 (user button interrupt)
-    bset PE_CR2,#USR_BTN_BIT
+    bset PE_CR2,#USR_BTN_BIT 
 	ldw x,#software 
 	call puts 
 	ld a,#MAJOR 
@@ -606,6 +630,7 @@ cold_start:
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
+	rim 
     jra warm_start 
 
 err_msg:
@@ -624,12 +649,17 @@ tb_error:
     ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
+	ldw x,#dstack_unf  
+	ldw dstkptr,x 
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
 	clrw x 
-	ldw lineno,x 
+	ldw lineno,x
+	call clear_vars 
 interp:
+	_dpush x 
+	trap 
 	clr in.w
 	clr in
 	ld a,#CR 
@@ -637,49 +667,40 @@ interp:
 	ld a,#'> 
 	call putc 
 	call readln
-; skip white space 	
-	ldw y,#tib
-	ld a,#SPACE   
-	call skip
-	tnz ([in.w],y)  
-	jreq interp 
-	call next_word
-; if line start with a number
-; save it in text area and loop to interp	
-	ld a,pad 
-	call is_digit 
-	jrne 1$ 
-; convert number string to integer 
-	call atoi
+	call number 
+	tnz pad 
+	jreq interp ; empty line 
+	ld a,acc24 
+	or a,acc16 
+	or a,acc8 
+	jreq 2$
 ; check if this line number exist  
 ; if exist replace with new line 
 ; or if new line empty delete existing 
-; else insert new line 	 
-	call search_lineno
-; X = lineno if exist otherwise 0.
-
-
-	ld a,#'d 
-	cp a,pad 
-	jrne 2$ 
-	trap 
-	jra interp 
-2$:	ld a,pad 
-	call is_digit 
-	jrnc 1$ 
-	call atoi 
+; else insert new line
+	ld a,#0x7f 
+	and a,acc16  ; accept only positive integer 
+	ld acc16,a
+	clr acc24 
 	clrw x 
 	ld a,#10 
 	call prti24 
 	jra interp 
-1$: 
-	call upper
-	call search_dict 
-	tnzw y 
-	jrne 3$
+;	call search_lineno
+; X = lineno if exist otherwise 0.
+2$:	ld a,#'D  
+	cp a,pad 
+	jrne 3$ 
+	trap 
+	jra interp 
+3$: 
+	call search_dict
+	tnzw x
+	jrne 4$
+	jra interp 
 	tnz pad+1
 	call is_alpha 
-3$:	call (y)
+4$:	call (x)
 	jra interp
 
     trap 
@@ -775,7 +796,7 @@ prt_reg16:
 ; stack by trap interrupt.
 ;------------------------------------
 print_registers:
-	ldw y,#STATES
+	ldw x,#STATES
 	call puts
 ; print EPC 
 	ldw x, #REG_EPC
@@ -808,7 +829,7 @@ print_registers:
 ; print SP 
 	ldw x,#REG_SP
 	ldw y,sp 
-	addw x,#12
+	addw y,#12
 	call prt_reg16  
 	ld a,#'\n' 
 	call putc
@@ -836,10 +857,10 @@ REG_SP:  .asciz "\nSP: "
 	WIDTH = 1
 	BASE = 2
 	ADD_SPACE=3
-	LOCAL_SIZE = 3
+	VSIZE = 3
 prti24:
 	pushw y 
-	sub sp,#LOCAL_SIZE 
+	sub sp,#VSIZE 
 	ld (ADD_SPACE,sp),a 
 	and a,#31 
 	ld (BASE,sp),a
@@ -875,7 +896,7 @@ prti24:
 	jreq 5$
     ld a,#SPACE 
 	call putc 
-5$: addw sp,#LOCAL_SIZE 
+5$: addw sp,#VSIZE 
 	popw y 
     ret	
 
@@ -903,9 +924,9 @@ parser_init::
 ;------------------------------------
 	SIGN=1  ; integer sign 
 	BASE=2  ; numeric base 
-	LOCAL_SIZE=2  ;locals size
+	VSIZE=2  ;locals size
 itoa:
-	sub sp,#LOCAL_SIZE
+	sub sp,#VSIZE
 	ld (BASE,sp), a  ; base
 	clr (SIGN,sp)    ; sign
 	cp a,#10
@@ -942,7 +963,7 @@ itoa_loop:
     ld a,#'-
     ld (y),a
 10$:
-	addw sp,#LOCAL_SIZE
+	addw sp,#VSIZE
 	ret
 
 ;-------------------------------------
@@ -957,7 +978,7 @@ itoa_loop:
 ;------------------------------------- 
 ; offset  on sp of arguments and locals
 	U8   = 1   ; divisor on stack
-	LOCAL_SIZE =1
+	VSIZE =1
 divu24_8:
 	pushw x ; save x
 	push a 
@@ -1090,9 +1111,9 @@ readln_quit:
 ;----------------------------
 ;local variable 
 	PSIZE=1
-	LOCAL_SIZE=1 
+	VSIZE=1 
 cmd_itf:
-	sub sp,#LOCAL_SIZE 
+	sub sp,#VSIZE 
 	clr farptr 
 	clr farptr+1 
 	clr farptr+2  
@@ -1108,19 +1129,19 @@ repl:
 	ldw y,#pad 
 	ld a,(y)
 	incw y
-	cp a,#'q 
+	cp a,#'Q 
 	jrne test_p
 repl_exit:
-	addw sp,#LOCAL_SIZE 	
+	_drop #VSIZE 	
 	ret  
 invalid:
 	ldw x,#invalid_cmd 
 	call puts 
 	jra repl 
 test_p:	
-    cp a,#'p 
+    cp a,#'P 
 	jreq mem_peek
-    cp a,#'s 
+    cp a,#'S 
 	jrne invalid 
 print_string:	
 	call number
@@ -1213,6 +1234,115 @@ number::
 	ret
 
 ;------------------------------------
+; scan tib for charater 'c' starting from 'in'
+; input:
+;	y  point to tib 
+;	a character to skip
+; output:
+;	in point to chacter 'c'
+;------------------------------------
+	C = 1 ; local var
+scan: 
+	push a
+1$:	ld a,([in.w],y)
+	jreq 2$
+	cp a,(C,sp)
+	jreq 2$
+	inc in
+	jra 1$
+2$: pop a
+	ret
+
+;------------------------------------
+; parse quoted string 
+; input:
+;   Y 	pointer to tib 
+;   X   pointer to pab 
+; output:
+;	pad   parsed string 
+;------------------------------------
+	PREV = 1
+	CURR =2 
+	VSIZE=2 
+parse_quote:
+	_vars VSIZE 
+	clr a
+1$:	ld (PREV,sp),a 
+2$:	inc in
+	ld a,([in.w],y)
+	jreq 6$
+	ld (CURR,sp),a 
+	ld a,#'\
+	cp a, (PREV,sp)
+	jrne 3$
+	clr (PREV,sp)
+	ld a,(CURR,sp)
+	callr convert_escape
+	ld (x),a 
+	incw x 
+	jra 2$
+3$:
+	ld a,(CURR,sp)
+	cp a,#'\'
+	jreq 1$
+	cp a,#'"
+	jreq 5$ 
+	ld (x),a 
+	incw x 
+	jra 2$
+5$:	inc in 
+6$: clr (x)
+	_drop VSIZE  
+	ret 
+
+;---------------------------------------
+; called by parse_quote
+; subtitute escaped character 
+; by their ASCII value .
+; input:
+;   A  character following '\'
+; output:
+;   A  substitued char or same if not valid.
+;---------------------------------------
+convert_escape:
+	cp a,#'a'
+	jrne 1$
+	ld a,#7
+	ret 
+1$: cp a,#'b'
+	jrne 2$
+	ld a,#8
+	ret 
+2$: cp a,#'e' 
+    jrne 3$
+	ld a,#'\'
+	ret  
+3$: cp a,#'\'
+	jrne 4$
+	ld a,#'\'
+	ret 
+4$: cp a,#'f' 
+	jrne 5$ 
+	ld a,#FF 
+	ret  
+5$: cp a,#'n' 
+    jrne 6$ 
+	ld a,#0xa 
+	ret  
+6$: cp a,#'r' 
+	jrne 7$
+	ld a,#0xd 
+	ret  
+7$: cp a,#'t' 
+	jrne 8$ 
+	ld a,#9 
+	ret  
+8$: cp a,#'v' 
+	jrne 9$  
+	ld a,#0xb 
+9$:	ret 
+
+;------------------------------------
 ; Command line tokenizer
 ; scan tib for next word
 ; move token in 'pad'
@@ -1236,7 +1366,14 @@ next_word::
 	jreq 8$
 1$: cp a,#SPACE
 	jreq 8$
-	call to_lower 
+
+	cp a,#'" 
+	jrne 2$ 
+	cpw x,#pad 
+	jrne 8$ ; stop there if char in pad.
+	call parse_quote 
+	jra 9$ 
+2$:	call to_upper 
 	ld (x),a 
 	incw x 
 	inc in
@@ -1278,6 +1415,22 @@ to_lower::
 9$: ret
 
 ;------------------------------------
+; convert alpha to uppercase
+; input:
+;    a  character to convert
+; output:
+;    a  uppercase character
+;------------------------------------
+to_upper::
+	cp a,#'a
+	jrpl 1$
+0$:	ret
+1$: cp a,#'z	
+	jrugt 0$
+	sub a,#32
+	ret
+	
+;------------------------------------
 ; concert pad contend in uppercase 
 ; input:
 ;	pad      .asciz 
@@ -1310,10 +1463,10 @@ upper_loop:
 	SIGN=1 ; 1 byte, 
 	BASE=2 ; 1 byte, numeric base used in conversion
 	TEMP=3 ; 1 byte, temporary storage
-	LOCAL_SIZE=3 ; 3 bytes reserved for local storage
+	VSIZE=3 ; 3 bytes reserved for local storage
 atoi:
 	pushw x ;save x
-	sub sp,#LOCAL_SIZE
+	sub sp,#VSIZE
 	; acc24=0 
 	clr acc24    
 	clr acc16
@@ -1365,7 +1518,7 @@ atoi:
     jreq atoi_exit
     call neg_acc24
 atoi_exit: 
-	addw sp,#LOCAL_SIZE
+	addw sp,#VSIZE
 	popw x ; restore x
 	ret
 
@@ -1382,7 +1535,7 @@ atoi_exit:
 	U8   = 3   ; A pushed on stack
 	OVFL = 2  ; multiplicaton overflow low byte
 	OVFH = 1  ; multiplication overflow high byte
-	LOCAL_SIZE = 3
+	VSIZE = 3
 mulu24_8:
 	pushw x    ; save X
 	; local variables
@@ -1420,7 +1573,7 @@ mulu24_8:
 	addw x, (OVFH,sp)
 	ld a, xl
 	ld acc24,a
-    addw sp,#LOCAL_SIZE
+    addw sp,#VSIZE
 	popw x
 	ret
 
@@ -1448,160 +1601,174 @@ skip:
 ; input:
 ;  pad		.asciz name to search 
 ; output:
-;  dstack	execution address | 0 
+;  X		execution address | 0 
 ;---------------------------------
+	NLEN=1 ; cmd length 
+	YSAVE=2
+	VSIZE=3 
 search_dict:
-	pushw x 
-	pushw y 
-	ldw y,#last+2 
+	_vars VSIZE 
+	ldw y,#last+2
+search_prep:	
+	ld a,(y)
+	ld (NLEN,sp),a  
 search_loop:
 	ldw x,#pad 
-	pushw y
+	ldw (YSAVE,sp),y
 	incw y  
 cp_loop:
 	ld a,(x)
 	jreq str_match 
-	cp a,#'.
-	jreq str_match
+	tnz (NLEN,sp)
+	jreq no_match  
 	cp a,(y)
 	jrne no_match 
 	incw y 
-	incw x 
+	incw x
+	dec (NLEN,sp)
 	jra cp_loop 
 no_match:
-	popw y 
-	addw y,#-2 
-	ldw y,(y)
-	jrne search_loop 
-;not found 
-	jra search_exit 
+	ldw y,(YSAVE,sp) 
+	subw y,#2 
+	ldw y,(y) ; next word link 
+	jreq search_exit  ; not found  
+;try next 
+	jra search_prep 
 str_match:
-	popw y
-	ld a,(y) ; len field 
-	add a,#2  
-	push a 
-	push 0 
-	addw y,(1,sp)
-	addw sp,#2
+	ldw y,(YSAVE,sp)
+	ld a,(y)
+	inc a 
+	ld acc8,a 
+	clr acc16 
+	addw y,acc16 
 	ldw y,(y)
-search_exit: 	 
-	popw y 
-	popw x 
+search_exit: 
+	ldw x,y 
+	_drop VSIZE 	 
 	ret 
 
 
 ;--------------------------------
 ;   BASIC commnands 
 ;--------------------------------
+
+;--------------------------------
+; print command name 
+; input:
+;   X 		name field in dictionary 
+; output:
+;   none
+;-----------------------------------
 let:
-	ldw x,#LET+1 
-	call puts
+	ldw x,#LET
+	call prt_cstr  
 	ret 
 
 list:
-	ldw x,#LIST+1 
-	call puts
+	ldw x,#LIST
+	call prt_cstr
 	ret 
 
 print:
-	ldw x,#PRINT+1 
+	call next_word 
+	ldw x,#pad 
 	call puts 
 	ret 
 
 run: 
-	ldw x,#RUN+1 
-	call puts 
+	ldw x,#RUN
+	call prt_cstr 
 	ret 
 
 rem: 
-	ldw x,#REM+1 
-	call puts 
+	ldw x,#REM 
+	call prt_cstr
 	ret 
 
 input:
-	ldw x,#INPUT+1 
-	call puts 
+	ldw x,#INPUT 
+	call prt_cstr 
 	ret 
 
 out:
-	ldw x,#OUT+1 
-	call puts 
+	ldw x,#OUT 
+	call prt_cstr 
 	ret 
 
 wait: 
-	ldw x,#WAIT+1 
-	call puts 
+	ldw x,#WAIT 
+	call prt_cstr 
 	ret 
 
 poke:
-	ldw x,#POKE+1 
-	call puts 
+	ldw x,#POKE 
+	call prt_cstr 
 	ret 
 
 peek:
-	ldw x,#PEEK+1 
-	call puts 
+	ldw x,#PEEK 
+	call prt_cstr 
 	ret 
 
 if:
-	ldw x,#IF+1 
-	call puts 
+	ldw x,#IF 
+	call prt_cstr 
 	ret 
 
 for:
-	ldw x,#FOR+1 
-	call puts 
+	ldw x,#FOR 
+	call prt_cstr 
 	ret 
 
 next: 
-	ldw x,#NEXT+1 
-	call puts 
+	ldw x,#NEXT 
+	call prt_cstr 
 	ret 
 
 
 goto:
-	ldw x,#GOTO+1 
-	call puts 
+	ldw x,#GOTO 
+	call prt_cstr 
 	ret 
 
 gosub:
-	ldw x,#GOSUB+1 
-	call puts 
+	ldw x,#GOSUB 
+	call prt_cstr 
 	ret 
 
 return:
-	ldw x,#RETURN+1 
-	call puts 
+	ldw x,#RETURN 
+	call prt_cstr 
 	ret 
 
 stop: 
-	ldw x,#STOP+1 
-	call puts 
+	ldw x,#STOP 
+	call prt_cstr 
 	ret 
 
 new: 
-	ldw x,#NEW+1 
-	call puts 
+	ldw x,#NEW 
+	call prt_cstr 
 	ret 
 
 save:
-	ldw x,#SAVE+1 
-	call puts 
+	ldw x,#SAVE 
+	call prt_cstr 
 	ret 
 
 load:
-	ldw x,#LOAD+1 
-	call puts 
+	ldw x,#LOAD 
+	call prt_cstr 
 	ret 
 
 usr:
-	ldw x,#USR+1 
-	call puts 
+	ldw x,#USR 
+	call prt_cstr 
 	ret 
 
 on: 
-	ldw x,#ON+1 
-	call puts 
+	ldw x,#ON 
+	call prt_cstr 
 	ret 
 
 ;------------------------------
@@ -1616,7 +1783,7 @@ on:
 	LINK=.
 name:
 	.byte len 	
-	.asciz "name"
+	.ascii "name"
 	.word cmd 
 	.endm 
 

@@ -243,6 +243,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
                                         
                                         ; GPIO
                                         ; gpio register offset to base
@@ -1449,6 +1451,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
                                         
                                         ; GPIO
                                         ; gpio register offset to base
@@ -2445,7 +2449,7 @@ Hexadecimal [24-Bits]
                                      39 
                                      40 
                                      41     .area CODE 
-      008E77 47 4C 4F 42 41 4C 53    42 .ascii "GLOBALS"
+      008E79 47 4C 4F 42 41 4C 53    42 .ascii "GLOBALS"
                                      43 ;--------------------------------
                                      44 ; <format> is a simplifide version
                                      45 ; of 'C' <printf>
@@ -2473,113 +2477,113 @@ Hexadecimal [24-Bits]
                                      67 ;  mona_dasm
                                      68 ;--------------------------------
                            000008    69     LOCAL_OFS=8 ; offset on stack of arguments frame 
-      008E7E                         70 format::
+      008E80                         70 format::
                                      71 ; preserve X
-      008E7E 89               [ 2]   72     pushw x 
+      008E80 89               [ 2]   72     pushw x 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
 Hexadecimal [24-Bits]
 
 
 
                                      73 ; preserve farptr
-      008E7F C6 00 B0         [ 1]   74     ld a, farptr+2
-      008E82 88               [ 1]   75     push a 
-      008E83 C6 00 AF         [ 1]   76     ld a, farptr+1 
-      008E86 88               [ 1]   77     push a 
-      008E87 C6 00 AE         [ 1]   78     ld a, farptr
-      008E8A 88               [ 1]   79     push a
+      008E81 C6 00 B0         [ 1]   74     ld a, farptr+2
+      008E84 88               [ 1]   75     push a 
+      008E85 C6 00 AF         [ 1]   76     ld a, farptr+1 
+      008E88 88               [ 1]   77     push a 
+      008E89 C6 00 AE         [ 1]   78     ld a, farptr
+      008E8C 88               [ 1]   79     push a
                                      80 ; X used as frame pointer     
-      008E8B 96               [ 1]   81     ldw x,sp 
-      008E8C 1C 00 08         [ 2]   82     addw x,#LOCAL_OFS
-      008E8F                         83 format_loop:    
-      008E8F 90 F6            [ 1]   84     ld a,(y)
-      008E91 26 03            [ 1]   85     jrne 1$
-      008E93 CC 8F 0F         [ 2]   86     jp format_exit
-      008E96 90 5C            [ 1]   87 1$: incw y 
-      008E98 A1 25            [ 1]   88     cp a,#'%
-      008E9A 27 05            [ 1]   89     jreq 2$
-      008E9C CD 8F 2D         [ 4]   90     call uart_tx
-      008E9F 20 EE            [ 2]   91     jra format_loop  
-      008EA1                         92 2$:
-      008EA1 90 F6            [ 1]   93     ld a,(y)
-      008EA3 27 6A            [ 1]   94     jreq format_exit 
-      008EA5 90 5C            [ 1]   95     incw y
-      008EA7 A1 61            [ 1]   96     cp a,#'a' 
-      008EA9 26 07            [ 1]   97     jrne 24$
-      008EAB F6               [ 1]   98     ld a,(x)
-      008EAC 5C               [ 1]   99     incw x 
-      008EAD CD 8F 1D         [ 4]  100     call spaces 
-      008EB0 20 DD            [ 2]  101     jra format_loop 
-      008EB2                        102 24$:
-      008EB2 A1 62            [ 1]  103     cp a,#'b'
-      008EB4 26 07            [ 1]  104     jrne 3$
+      008E8D 96               [ 1]   81     ldw x,sp 
+      008E8E 1C 00 08         [ 2]   82     addw x,#LOCAL_OFS
+      008E91                         83 format_loop:    
+      008E91 90 F6            [ 1]   84     ld a,(y)
+      008E93 26 03            [ 1]   85     jrne 1$
+      008E95 CC 8F 11         [ 2]   86     jp format_exit
+      008E98 90 5C            [ 1]   87 1$: incw y 
+      008E9A A1 25            [ 1]   88     cp a,#'%
+      008E9C 27 05            [ 1]   89     jreq 2$
+      008E9E CD 8F 2F         [ 4]   90     call uart_tx
+      008EA1 20 EE            [ 2]   91     jra format_loop  
+      008EA3                         92 2$:
+      008EA3 90 F6            [ 1]   93     ld a,(y)
+      008EA5 27 6A            [ 1]   94     jreq format_exit 
+      008EA7 90 5C            [ 1]   95     incw y
+      008EA9 A1 61            [ 1]   96     cp a,#'a' 
+      008EAB 26 07            [ 1]   97     jrne 24$
+      008EAD F6               [ 1]   98     ld a,(x)
+      008EAE 5C               [ 1]   99     incw x 
+      008EAF CD 8F 1F         [ 4]  100     call spaces 
+      008EB2 20 DD            [ 2]  101     jra format_loop 
+      008EB4                        102 24$:
+      008EB4 A1 62            [ 1]  103     cp a,#'b'
+      008EB6 26 07            [ 1]  104     jrne 3$
                                     105 ; byte type paramter     
-      008EB6 F6               [ 1]  106     ld a,(x)
-      008EB7 5C               [ 1]  107     incw x 
-      008EB8 CD 8F E4         [ 4]  108     call print_byte
-      008EBB 20 D2            [ 2]  109     jra format_loop
-      008EBD A1 63            [ 1]  110 3$: cp a,#'c 
-      008EBF 26 07            [ 1]  111     jrne 4$
+      008EB8 F6               [ 1]  106     ld a,(x)
+      008EB9 5C               [ 1]  107     incw x 
+      008EBA CD 8F E6         [ 4]  108     call print_byte
+      008EBD 20 D2            [ 2]  109     jra format_loop
+      008EBF A1 63            [ 1]  110 3$: cp a,#'c 
+      008EC1 26 07            [ 1]  111     jrne 4$
                                     112 ; ASCII character 
-      008EC1 F6               [ 1]  113     ld a,(x)
-      008EC2 5C               [ 1]  114     incw x 
-      008EC3 CD 8F 2D         [ 4]  115     call uart_tx 
-      008EC6 20 C7            [ 2]  116     jra format_loop         
-      008EC8 A1 65            [ 1]  117 4$: cp a,#'e 
-      008ECA 26 13            [ 1]  118     jrne 6$
+      008EC3 F6               [ 1]  113     ld a,(x)
+      008EC4 5C               [ 1]  114     incw x 
+      008EC5 CD 8F 2F         [ 4]  115     call uart_tx 
+      008EC8 20 C7            [ 2]  116     jra format_loop         
+      008ECA A1 65            [ 1]  117 4$: cp a,#'e 
+      008ECC 26 13            [ 1]  118     jrne 6$
                                     119 ; int24_t parameter     
-      008ECC 90 89            [ 2]  120     pushw y 
-      008ECE F6               [ 1]  121     ld a,(x)
-      008ECF 90 95            [ 1]  122     ld yh,a 
-      008ED1 5C               [ 1]  123     incw x
-      008ED2 F6               [ 1]  124     ld a,(x)
-      008ED3 90 97            [ 1]  125     ld yl,a 
-      008ED5 5C               [ 1]  126     incw x 
-      008ED6 F6               [ 1]  127     ld a,(x)
+      008ECE 90 89            [ 2]  120     pushw y 
+      008ED0 F6               [ 1]  121     ld a,(x)
+      008ED1 90 95            [ 1]  122     ld yh,a 
+      008ED3 5C               [ 1]  123     incw x
+      008ED4 F6               [ 1]  124     ld a,(x)
+      008ED5 90 97            [ 1]  125     ld yl,a 
+      008ED7 5C               [ 1]  126     incw x 
+      008ED8 F6               [ 1]  127     ld a,(x)
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 3.
 Hexadecimal [24-Bits]
 
 
 
-      008ED7 5C               [ 1]  128     incw x 
-      008ED8 CD 90 0F         [ 4]  129     call print_extd
-      008EDB 90 85            [ 2]  130     popw y  
-      008EDD 20 B0            [ 2]  131     jra format_loop
-      008EDF A1 73            [ 1]  132 6$: cp a,#'s 
-      008EE1 26 10            [ 1]  133     jrne 8$
+      008ED9 5C               [ 1]  128     incw x 
+      008EDA CD 90 11         [ 4]  129     call print_extd
+      008EDD 90 85            [ 2]  130     popw y  
+      008EDF 20 B0            [ 2]  131     jra format_loop
+      008EE1 A1 73            [ 1]  132 6$: cp a,#'s 
+      008EE3 26 10            [ 1]  133     jrne 8$
                                     134 ; string type parameter     
-      008EE3 90 89            [ 2]  135     pushw y
-      008EE5 90 93            [ 1]  136     ldw y,x 
-      008EE7 1C 00 02         [ 2]  137     addw x,#2
-      008EEA 90 FE            [ 2]  138     ldw y,(y)
-      008EEC CD 8F 37         [ 4]  139     call uart_print 
-      008EEF 90 85            [ 2]  140 7$: popw y 
-      008EF1 20 9C            [ 2]  141     jra format_loop 
-      008EF3 A1 77            [ 1]  142 8$: cp a,#'w 
-      008EF5 26 12            [ 1]  143     jrne 9$
+      008EE5 90 89            [ 2]  135     pushw y
+      008EE7 90 93            [ 1]  136     ldw y,x 
+      008EE9 1C 00 02         [ 2]  137     addw x,#2
+      008EEC 90 FE            [ 2]  138     ldw y,(y)
+      008EEE CD 8F 39         [ 4]  139     call uart_print 
+      008EF1 90 85            [ 2]  140 7$: popw y 
+      008EF3 20 9C            [ 2]  141     jra format_loop 
+      008EF5 A1 77            [ 1]  142 8$: cp a,#'w 
+      008EF7 26 12            [ 1]  143     jrne 9$
                                     144 ; word type paramter     
-      008EF7 90 89            [ 2]  145     pushw y 
-      008EF9 F6               [ 1]  146     ld a,(x)
-      008EFA 5C               [ 1]  147     incw x 
-      008EFB 90 95            [ 1]  148     ld yh,a
-      008EFD F6               [ 1]  149     ld a,(x)
-      008EFE 5C               [ 1]  150     incw x 
-      008EFF 90 97            [ 1]  151     ld yl,a 
-      008F01 CD 8F FA         [ 4]  152     call print_word 
-      008F04 90 85            [ 2]  153     popw y 
-      008F06 CC 8E 8F         [ 2]  154     jp format_loop 
-      008F09 CD 8F 2D         [ 4]  155 9$: call uart_tx         
-      008F0C CC 8E 8F         [ 2]  156     jp format_loop 
-      008F0F                        157 format_exit:
+      008EF9 90 89            [ 2]  145     pushw y 
+      008EFB F6               [ 1]  146     ld a,(x)
+      008EFC 5C               [ 1]  147     incw x 
+      008EFD 90 95            [ 1]  148     ld yh,a
+      008EFF F6               [ 1]  149     ld a,(x)
+      008F00 5C               [ 1]  150     incw x 
+      008F01 90 97            [ 1]  151     ld yl,a 
+      008F03 CD 8F FC         [ 4]  152     call print_word 
+      008F06 90 85            [ 2]  153     popw y 
+      008F08 CC 8E 91         [ 2]  154     jp format_loop 
+      008F0B CD 8F 2F         [ 4]  155 9$: call uart_tx         
+      008F0E CC 8E 91         [ 2]  156     jp format_loop 
+      008F11                        157 format_exit:
                                     158 ; restore farptr 
-      008F0F 84               [ 1]  159     pop a 
-      008F10 C7 00 AE         [ 1]  160     ld farptr,a 
-      008F13 84               [ 1]  161     pop a 
-      008F14 C7 00 AF         [ 1]  162     ld farptr+1,a 
-      008F17 84               [ 1]  163     pop a 
-      008F18 C7 00 B0         [ 1]  164     ld farptr+2,a 
-      008F1B 85               [ 2]  165     popw x 
-      008F1C 81               [ 4]  166     ret 
+      008F11 84               [ 1]  159     pop a 
+      008F12 C7 00 AE         [ 1]  160     ld farptr,a 
+      008F15 84               [ 1]  161     pop a 
+      008F16 C7 00 AF         [ 1]  162     ld farptr+1,a 
+      008F19 84               [ 1]  163     pop a 
+      008F1A C7 00 B0         [ 1]  164     ld farptr+2,a 
+      008F1D 85               [ 2]  165     popw x 
+      008F1E 81               [ 4]  166     ret 
                                     167 
                                     168 ;------------------------------------
                                     169 ; print n spaces 
@@ -2588,21 +2592,21 @@ Hexadecimal [24-Bits]
                                     172 ; output:
                                     173 ;	none 
                                     174 ;------------------------------------
-      008F1D                        175 spaces::
-      008F1D 88               [ 1]  176 	push a 
-      008F1E A6 20            [ 1]  177 	ld a,#SPACE 
-      008F20 0D 01            [ 1]  178 1$:	tnz (1,sp)
-      008F22 27 07            [ 1]  179 	jreq 2$ 
-      008F24 CD 8F 2D         [ 4]  180 	call uart_tx 
-      008F27 0A 01            [ 1]  181 	dec (1,sp)
-      008F29 20 F5            [ 2]  182 	jra 1$
+      008F1F                        175 spaces::
+      008F1F 88               [ 1]  176 	push a 
+      008F20 A6 20            [ 1]  177 	ld a,#SPACE 
+      008F22 0D 01            [ 1]  178 1$:	tnz (1,sp)
+      008F24 27 07            [ 1]  179 	jreq 2$ 
+      008F26 CD 8F 2F         [ 4]  180 	call uart_tx 
+      008F29 0A 01            [ 1]  181 	dec (1,sp)
+      008F2B 20 F5            [ 2]  182 	jra 1$
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 4.
 Hexadecimal [24-Bits]
 
 
 
-      008F2B 84               [ 1]  183 2$:	pop a 
-      008F2C 81               [ 4]  184 	ret
+      008F2D 84               [ 1]  183 2$:	pop a 
+      008F2E 81               [ 4]  184 	ret
                                     185 
                                     186 
                                     187 ;------------------------------------
@@ -2612,81 +2616,81 @@ Hexadecimal [24-Bits]
                                     191 ; transmit character in a via UART3
                                     192 ; character to transmit on (3,sp)
                                     193 ;------------------------------------
-      008F2D                        194 uart_tx::
-      008F2D 72 5D 52 40      [ 1]  195 	tnz UART3_SR
-      008F31 2A FA            [ 1]  196 	jrpl uart_tx
-      008F33 C7 52 41         [ 1]  197 	ld UART3_DR,a
-      008F36 81               [ 4]  198     ret
+      008F2F                        194 uart_tx::
+      008F2F 72 5D 52 40      [ 1]  195 	tnz UART3_SR
+      008F33 2A FA            [ 1]  196 	jrpl uart_tx
+      008F35 C7 52 41         [ 1]  197 	ld UART3_DR,a
+      008F38 81               [ 4]  198     ret
                                     199 
                                     200 ;------------------------------------
                                     201 ; send string via UART2
                                     202 ; y is pointer to str
                                     203 ;------------------------------------
-      008F37                        204 uart_print::
+      008F39                        204 uart_print::
                                     205 ; check for null pointer  
-      008F37 90 A3 00 00      [ 2]  206 	cpw y,#0
-      008F3B 27 0B            [ 1]  207     jreq 1$ 
-      008F3D 90 F6            [ 1]  208 0$: ld a,(y)
-      008F3F 27 07            [ 1]  209 	jreq 1$
-      008F41 CD 8F 2D         [ 4]  210 	call uart_tx
-      008F44 90 5C            [ 1]  211 	incw y
-      008F46 20 F5            [ 2]  212 	jra 0$
-      008F48 81               [ 4]  213 1$: ret
+      008F39 90 A3 00 00      [ 2]  206 	cpw y,#0
+      008F3D 27 0B            [ 1]  207     jreq 1$ 
+      008F3F 90 F6            [ 1]  208 0$: ld a,(y)
+      008F41 27 07            [ 1]  209 	jreq 1$
+      008F43 CD 8F 2F         [ 4]  210 	call uart_tx
+      008F46 90 5C            [ 1]  211 	incw y
+      008F48 20 F5            [ 2]  212 	jra 0$
+      008F4A 81               [ 4]  213 1$: ret
                                     214 
                                     215 ;------------------------------------
                                     216 ; check if char available
                                     217 ;------------------------------------
-      008F49                        218 uart_qchar::
-      008F49 72 5D 00 5A      [ 1]  219 	tnz rx_char
-      008F4D 27 01            [ 1]  220 	jreq 1$
-      008F4F 81               [ 4]  221     ret
-      008F50 A6 05            [ 1]  222 1$: ld a,#UART_SR_RXNE 
-      008F52 C4 52 40         [ 1]  223 	and a,UART3_SR
-      008F55 81               [ 4]  224 	ret 
+      008F4B                        218 uart_qchar::
+      008F4B 72 5D 00 5A      [ 1]  219 	tnz rx_char
+      008F4F 27 01            [ 1]  220 	jreq 1$
+      008F51 81               [ 4]  221     ret
+      008F52 A6 05            [ 1]  222 1$: ld a,#UART_SR_RXNE 
+      008F54 C4 52 40         [ 1]  223 	and a,UART3_SR
+      008F57 81               [ 4]  224 	ret 
                                     225 
                                     226 ;------------------------------------
                                     227 ; return char in A to queue
                                     228 ;------------------------------------
                                     229 ;ungetchar:: 
-      008F56 C7 00 5A         [ 1]  230 	ld rx_char,a
-      008F59 81               [ 4]  231     ret
+      008F58 C7 00 5A         [ 1]  230 	ld rx_char,a
+      008F5B 81               [ 4]  231     ret
                                     232     
                                     233 ;------------------------------------
                                     234 ; wait for character from uart3
                                     235 ;------------------------------------
-      008F5A                        236 uart_getchar::
+      008F5C                        236 uart_getchar::
                                     237 ; if there is a char in rx_char return it.
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 5.
 Hexadecimal [24-Bits]
 
 
 
-      008F5A C6 00 5A         [ 1]  238 	ld a,rx_char 
-      008F5D 27 05            [ 1]  239 	jreq 1$
-      008F5F 72 5F 00 5A      [ 1]  240 	clr rx_char
-      008F63 81               [ 4]  241 	ret
-      008F64 72 0B 52 40 FB   [ 2]  242 1$:	btjf UART3_SR,#UART_SR_RXNE,.
-      008F69 C6 52 41         [ 1]  243 	ld a, UART3_DR 
-      008F6C 81               [ 4]  244 	ret
+      008F5C C6 00 5A         [ 1]  238 	ld a,rx_char 
+      008F5F 27 05            [ 1]  239 	jreq 1$
+      008F61 72 5F 00 5A      [ 1]  240 	clr rx_char
+      008F65 81               [ 4]  241 	ret
+      008F66 72 0B 52 40 FB   [ 2]  242 1$:	btjf UART3_SR,#UART_SR_RXNE,.
+      008F6B C6 52 41         [ 1]  243 	ld a, UART3_DR 
+      008F6E 81               [ 4]  244 	ret
                                     245 
                                     246 ;------------------------------------
                                     247 ; delete n character from input line
                                     248 ;------------------------------------
-      008F6D                        249 uart_delete::
-      008F6D 88               [ 1]  250 	push a ; n 
-      008F6E                        251 del_loop:
-      008F6E 0D 01            [ 1]  252 	tnz (1,sp)
-      008F70 27 13            [ 1]  253 	jreq 1$
-      008F72 A6 08            [ 1]  254 	ld a,#BSP
-      008F74 CD 8F 2D         [ 4]  255 	call uart_tx
-      008F77 A6 20            [ 1]  256     ld a,#SPACE
-      008F79 CD 8F 2D         [ 4]  257     call uart_tx
-      008F7C A6 08            [ 1]  258     ld a,#BSP
-      008F7E CD 8F 2D         [ 4]  259     call uart_tx
-      008F81 0A 01            [ 1]  260     dec (1,sp)
-      008F83 20 E9            [ 2]  261     jra del_loop
-      008F85 84               [ 1]  262 1$: pop a
-      008F86 81               [ 4]  263 	ret 
+      008F6F                        249 uart_delete::
+      008F6F 88               [ 1]  250 	push a ; n 
+      008F70                        251 del_loop:
+      008F70 0D 01            [ 1]  252 	tnz (1,sp)
+      008F72 27 13            [ 1]  253 	jreq 1$
+      008F74 A6 08            [ 1]  254 	ld a,#BSP
+      008F76 CD 8F 2F         [ 4]  255 	call uart_tx
+      008F79 A6 20            [ 1]  256     ld a,#SPACE
+      008F7B CD 8F 2F         [ 4]  257     call uart_tx
+      008F7E A6 08            [ 1]  258     ld a,#BSP
+      008F80 CD 8F 2F         [ 4]  259     call uart_tx
+      008F83 0A 01            [ 1]  260     dec (1,sp)
+      008F85 20 E9            [ 2]  261     jra del_loop
+      008F87 84               [ 1]  262 1$: pop a
+      008F88 81               [ 4]  263 	ret 
                                     264 
                                     265 ;-----------------------------------
                                     266 ; print a string (.asciz) pointed
@@ -2696,18 +2700,18 @@ Hexadecimal [24-Bits]
                                     270 ; output:
                                     271 ;   none
                                     272 ;----------------------------------- 
-      008F87                        273 uart_prints::
-      008F87 90 89            [ 2]  274     pushw y 
-      008F89 90 5F            [ 1]  275     clrw y
-      008F8B                        276 1$:
-      008F8B 91 AF 00 AE      [ 1]  277     ldf a,([farptr],y)
-      008F8F 27 07            [ 1]  278     jreq 2$
-      008F91 CD 8F 2D         [ 4]  279     call uart_tx 
-      008F94 90 5C            [ 1]  280     incw y 
-      008F96 20 F3            [ 2]  281     jra 1$
-      008F98                        282 2$:
-      008F98 90 85            [ 2]  283     popw y 
-      008F9A 81               [ 4]  284     ret 
+      008F89                        273 uart_prints::
+      008F89 90 89            [ 2]  274     pushw y 
+      008F8B 90 5F            [ 1]  275     clrw y
+      008F8D                        276 1$:
+      008F8D 91 AF 00 AE      [ 1]  277     ldf a,([farptr],y)
+      008F91 27 07            [ 1]  278     jreq 2$
+      008F93 CD 8F 2F         [ 4]  279     call uart_tx 
+      008F96 90 5C            [ 1]  280     incw y 
+      008F98 20 F3            [ 2]  281     jra 1$
+      008F9A                        282 2$:
+      008F9A 90 85            [ 2]  283     popw y 
+      008F9C 81               [ 4]  284     ret 
                                     285 
                                     286 ;------------------------------------
                                     287 ; print integer in acc24 
@@ -2726,41 +2730,41 @@ Hexadecimal [24-Bits]
                            000002   295 	BASE = 2
                            000001   296 	WIDTH = 1
                            000002   297 	LOCAL_SIZE = 2
-      008F9B                        298 print_int::
-      008F9B 90 89            [ 2]  299 	pushw y 
-      008F9D 52 02            [ 2]  300 	sub sp,#LOCAL_SIZE 
-      008F9F 6B 02            [ 1]  301 	ld (BASE,sp),a 
-      008FA1 9F               [ 1]  302 	ld a,xl
-      008FA2 6B 01            [ 1]  303 	ld (WIDTH,sp),a 
-      008FA4 7B 02            [ 1]  304 	ld a, (BASE,sp)  
-      008FA6 CD 90 3A         [ 4]  305     call itoa  ; conversion entier en  .asciz
-      008FA9 C7 00 AD         [ 1]  306 	ld acc8,a ; string length 
-      008FAC A6 10            [ 1]  307 	ld a,#16
-      008FAE 11 02            [ 1]  308 	cp a,(BASE,sp)
-      008FB0 26 0A            [ 1]  309 	jrne 1$
-      008FB2 90 5A            [ 2]  310 	decw y 
-      008FB4 A6 24            [ 1]  311 	ld a,#'$
-      008FB6 90 F7            [ 1]  312 	ld (y),a
-      008FB8 72 5C 00 AD      [ 1]  313 	inc acc8 
-      008FBC 7B 01            [ 1]  314 1$: ld a,(WIDTH,sp) 
-      008FBE 27 17            [ 1]  315 	jreq 4$
-      008FC0 C0 00 AD         [ 1]  316 	sub a,acc8
-      008FC3 23 12            [ 2]  317 	jrule 4$
-      008FC5 6B 01            [ 1]  318 	ld (WIDTH,sp),a 
-      008FC7 A6 20            [ 1]  319 	ld  a,#SPACE
-      008FC9 0D 01            [ 1]  320 3$: tnz (WIDTH,sp)
-      008FCB 27 0A            [ 1]  321 	jreq 4$
-      008FCD 2B 08            [ 1]  322 	jrmi 4$
-      008FCF 90 5A            [ 2]  323 	decw y 
-      008FD1 90 F7            [ 1]  324 	ld (y),a 
-      008FD3 0A 01            [ 1]  325 	dec (WIDTH,sp) 
-      008FD5 20 F2            [ 2]  326 	jra 3$
-      008FD7 CD 8F 37         [ 4]  327 4$: call uart_print
-      008FDA A6 20            [ 1]  328 	ld a,#SPACE 
-      008FDC CD 8F 2D         [ 4]  329 	call uart_tx 
-      008FDF 5B 02            [ 2]  330     addw sp,#LOCAL_SIZE 
-      008FE1 90 85            [ 2]  331 	popw y 
-      008FE3 81               [ 4]  332     ret	
+      008F9D                        298 print_int::
+      008F9D 90 89            [ 2]  299 	pushw y 
+      008F9F 52 02            [ 2]  300 	sub sp,#LOCAL_SIZE 
+      008FA1 6B 02            [ 1]  301 	ld (BASE,sp),a 
+      008FA3 9F               [ 1]  302 	ld a,xl
+      008FA4 6B 01            [ 1]  303 	ld (WIDTH,sp),a 
+      008FA6 7B 02            [ 1]  304 	ld a, (BASE,sp)  
+      008FA8 CD 90 3C         [ 4]  305     call itoa  ; conversion entier en  .asciz
+      008FAB C7 00 AD         [ 1]  306 	ld acc8,a ; string length 
+      008FAE A6 10            [ 1]  307 	ld a,#16
+      008FB0 11 02            [ 1]  308 	cp a,(BASE,sp)
+      008FB2 26 0A            [ 1]  309 	jrne 1$
+      008FB4 90 5A            [ 2]  310 	decw y 
+      008FB6 A6 24            [ 1]  311 	ld a,#'$
+      008FB8 90 F7            [ 1]  312 	ld (y),a
+      008FBA 72 5C 00 AD      [ 1]  313 	inc acc8 
+      008FBE 7B 01            [ 1]  314 1$: ld a,(WIDTH,sp) 
+      008FC0 27 17            [ 1]  315 	jreq 4$
+      008FC2 C0 00 AD         [ 1]  316 	sub a,acc8
+      008FC5 23 12            [ 2]  317 	jrule 4$
+      008FC7 6B 01            [ 1]  318 	ld (WIDTH,sp),a 
+      008FC9 A6 20            [ 1]  319 	ld  a,#SPACE
+      008FCB 0D 01            [ 1]  320 3$: tnz (WIDTH,sp)
+      008FCD 27 0A            [ 1]  321 	jreq 4$
+      008FCF 2B 08            [ 1]  322 	jrmi 4$
+      008FD1 90 5A            [ 2]  323 	decw y 
+      008FD3 90 F7            [ 1]  324 	ld (y),a 
+      008FD5 0A 01            [ 1]  325 	dec (WIDTH,sp) 
+      008FD7 20 F2            [ 2]  326 	jra 3$
+      008FD9 CD 8F 39         [ 4]  327 4$: call uart_print
+      008FDC A6 20            [ 1]  328 	ld a,#SPACE 
+      008FDE CD 8F 2F         [ 4]  329 	call uart_tx 
+      008FE1 5B 02            [ 2]  330     addw sp,#LOCAL_SIZE 
+      008FE3 90 85            [ 2]  331 	popw y 
+      008FE5 81               [ 4]  332     ret	
                                     333 
                                     334 ;----------------------------
                                     335 ; print byte in A 
@@ -2770,22 +2774,22 @@ Hexadecimal [24-Bits]
                                     339 ; use: 
                                     340 ;   XL		field width
                                     341 ;----------------------------
-      008FE4                        342 print_byte::
-      008FE4 89               [ 2]  343 	pushw x
-      008FE5 C7 00 AD         [ 1]  344 	ld acc8,a  
-      008FE8 72 5F 00 AB      [ 1]  345 	clr acc24 
-      008FEC 72 5F 00 AC      [ 1]  346 	clr acc16  
-      008FF0 A6 03            [ 1]  347 	ld a,#3
+      008FE6                        342 print_byte::
+      008FE6 89               [ 2]  343 	pushw x
+      008FE7 C7 00 AD         [ 1]  344 	ld acc8,a  
+      008FEA 72 5F 00 AB      [ 1]  345 	clr acc24 
+      008FEE 72 5F 00 AC      [ 1]  346 	clr acc16  
+      008FF2 A6 03            [ 1]  347 	ld a,#3
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 7.
 Hexadecimal [24-Bits]
 
 
 
-      008FF2 97               [ 1]  348 	ld xl,a
-      008FF3 A6 10            [ 1]  349 	ld a,#16
-      008FF5 CD 8F 9B         [ 4]  350 	call print_int 
-      008FF8 85               [ 2]  351 	popw x 
-      008FF9 81               [ 4]  352 	ret 
+      008FF4 97               [ 1]  348 	ld xl,a
+      008FF5 A6 10            [ 1]  349 	ld a,#16
+      008FF7 CD 8F 9D         [ 4]  350 	call print_int 
+      008FFA 85               [ 2]  351 	popw x 
+      008FFB 81               [ 4]  352 	ret 
                                     353 
                                     354 ;----------------------------
                                     355 ; print word in Y  
@@ -2796,18 +2800,18 @@ Hexadecimal [24-Bits]
                                     360 ;   A       conversion base 
                                     361 ;   XL		field width
                                     362 ;----------------------------
-      008FFA                        363 print_word::
-      008FFA 88               [ 1]  364 	push A 
-      008FFB 89               [ 2]  365 	pushw x
-      008FFC 90 CF 00 AC      [ 2]  366 	ldw acc16,y  
-      009000 72 5F 00 AB      [ 1]  367 	clr acc24 
-      009004 A6 05            [ 1]  368 	ld a,#5
-      009006 97               [ 1]  369 	ld xl,a
-      009007 A6 10            [ 1]  370 	ld a,#16
-      009009 CD 8F 9B         [ 4]  371 	call print_int 
-      00900C 85               [ 2]  372 	popw x 
-      00900D 84               [ 1]  373 	pop a 
-      00900E 81               [ 4]  374 	ret 
+      008FFC                        363 print_word::
+      008FFC 88               [ 1]  364 	push A 
+      008FFD 89               [ 2]  365 	pushw x
+      008FFE 90 CF 00 AC      [ 2]  366 	ldw acc16,y  
+      009002 72 5F 00 AB      [ 1]  367 	clr acc24 
+      009006 A6 05            [ 1]  368 	ld a,#5
+      009008 97               [ 1]  369 	ld xl,a
+      009009 A6 10            [ 1]  370 	ld a,#16
+      00900B CD 8F 9D         [ 4]  371 	call print_int 
+      00900E 85               [ 2]  372 	popw x 
+      00900F 84               [ 1]  373 	pop a 
+      009010 81               [ 4]  374 	ret 
                                     375 
                                     376 ;----------------------------
                                     377 ; print 24 bits integer in Y:A 
@@ -2819,16 +2823,16 @@ Hexadecimal [24-Bits]
                                     383 ;   A       conversion base 
                                     384 ;   XL		field width
                                     385 ;----------------------------
-      00900F                        386 print_extd::
-      00900F C7 00 AD         [ 1]  387     ld acc8,a 
-      009012 90 CF 00 AB      [ 2]  388     ldw acc24,y 
-      009016 89               [ 2]  389     pushw x 
-      009017 A6 07            [ 1]  390     ld a,#7
-      009019 97               [ 1]  391     ld xl,a 
-      00901A A6 10            [ 1]  392     ld a,#16 
-      00901C CD 8F 9B         [ 4]  393     call print_int 
-      00901F 85               [ 2]  394     popw x 
-      009020 81               [ 4]  395     ret 
+      009011                        386 print_extd::
+      009011 C7 00 AD         [ 1]  387     ld acc8,a 
+      009014 90 CF 00 AB      [ 2]  388     ldw acc24,y 
+      009018 89               [ 2]  389     pushw x 
+      009019 A6 07            [ 1]  390     ld a,#7
+      00901B 97               [ 1]  391     ld xl,a 
+      00901C A6 10            [ 1]  392     ld a,#16 
+      00901E CD 8F 9D         [ 4]  393     call print_int 
+      009021 85               [ 2]  394     popw x 
+      009022 81               [ 4]  395     ret 
                                     396 
                                     397 ;------------------------------------
                                     398 ; print *farptr
@@ -2844,20 +2848,20 @@ Hexadecimal [24-Bits]
                                     403 ;   A 		conversion base
                                     404 ;   XL		field width 
                                     405 ;------------------------------------
-      009021                        406 print_addr::
-      009021 89               [ 2]  407 	pushw x
-      009022 88               [ 1]  408 	push a 
-      009023 CE 00 AE         [ 2]  409 	ldw x, farptr 
-      009026 CF 00 AB         [ 2]  410 	ldw acc24,x 
-      009029 C6 00 B0         [ 1]  411 	ld a,farptr+2 
-      00902C C7 00 AD         [ 1]  412 	ld acc8,a 
-      00902F A6 06            [ 1]  413 	ld a,#6  
-      009031 97               [ 1]  414 	ld xl, a  ; field width 
-      009032 A6 10            [ 1]  415 	ld a,#16 ; convert in hexadecimal 
-      009034 CD 8F 9B         [ 4]  416 	call print_int 
-      009037 84               [ 1]  417 	pop a 
-      009038 85               [ 2]  418 	popw x 
-      009039 81               [ 4]  419 	ret 
+      009023                        406 print_addr::
+      009023 89               [ 2]  407 	pushw x
+      009024 88               [ 1]  408 	push a 
+      009025 CE 00 AE         [ 2]  409 	ldw x, farptr 
+      009028 CF 00 AB         [ 2]  410 	ldw acc24,x 
+      00902B C6 00 B0         [ 1]  411 	ld a,farptr+2 
+      00902E C7 00 AD         [ 1]  412 	ld acc8,a 
+      009031 A6 06            [ 1]  413 	ld a,#6  
+      009033 97               [ 1]  414 	ld xl, a  ; field width 
+      009034 A6 10            [ 1]  415 	ld a,#16 ; convert in hexadecimal 
+      009036 CD 8F 9D         [ 4]  416 	call print_int 
+      009039 84               [ 1]  417 	pop a 
+      00903A 85               [ 2]  418 	popw x 
+      00903B 81               [ 4]  419 	ret 
                                     420 
                                     421 ;------------------------------------
                                     422 ; convert integer to string
@@ -2871,50 +2875,50 @@ Hexadecimal [24-Bits]
                            000001   430 	SIGN=1  ; integer sign 
                            000002   431 	BASE=2  ; numeric base 
                            000002   432 	LOCAL_SIZE=2  ;locals size
-      00903A                        433 itoa::
-      00903A 52 02            [ 2]  434 	sub sp,#LOCAL_SIZE
-      00903C 6B 02            [ 1]  435 	ld (BASE,sp), a  ; base
-      00903E 0F 01            [ 1]  436 	clr (SIGN,sp)    ; sign
-      009040 A1 0A            [ 1]  437 	cp a,#10
-      009042 26 0A            [ 1]  438 	jrne 1$
+      00903C                        433 itoa::
+      00903C 52 02            [ 2]  434 	sub sp,#LOCAL_SIZE
+      00903E 6B 02            [ 1]  435 	ld (BASE,sp), a  ; base
+      009040 0F 01            [ 1]  436 	clr (SIGN,sp)    ; sign
+      009042 A1 0A            [ 1]  437 	cp a,#10
+      009044 26 0A            [ 1]  438 	jrne 1$
                                     439 	; base 10 string display with negative sign if bit 23==1
-      009044 72 0F 00 AB 05   [ 2]  440 	btjf acc24,#7,1$
-      009049 03 01            [ 1]  441 	cpl (SIGN,sp)
-      00904B CD 85 3E         [ 4]  442 	call neg_acc24
-      00904E                        443 1$:
+      009046 72 0F 00 AB 05   [ 2]  440 	btjf acc24,#7,1$
+      00904B 03 01            [ 1]  441 	cpl (SIGN,sp)
+      00904D CD 85 40         [ 4]  442 	call neg_acc24
+      009050                        443 1$:
                                     444 ; initialize string pointer 
-      00904E 90 AE 00 AA      [ 2]  445 	ldw y,#pad+PAD_SIZE-1
-      009052 90 7F            [ 1]  446 	clr (y)
-      009054                        447 itoa_loop:
-      009054 7B 02            [ 1]  448     ld a,(BASE,sp)
-      009056 CD 85 16         [ 4]  449     call divu24_8 ; acc24/A 
-      009059 AB 30            [ 1]  450     add a,#'0  ; remainder of division
-      00905B A1 3A            [ 1]  451     cp a,#'9+1
-      00905D 2B 02            [ 1]  452     jrmi 2$
-      00905F AB 07            [ 1]  453     add a,#7 
-      009061 90 5A            [ 2]  454 2$: decw y
-      009063 90 F7            [ 1]  455     ld (y),a
+      009050 90 AE 00 AA      [ 2]  445 	ldw y,#pad+PAD_SIZE-1
+      009054 90 7F            [ 1]  446 	clr (y)
+      009056                        447 itoa_loop:
+      009056 7B 02            [ 1]  448     ld a,(BASE,sp)
+      009058 CD 85 18         [ 4]  449     call divu24_8 ; acc24/A 
+      00905B AB 30            [ 1]  450     add a,#'0  ; remainder of division
+      00905D A1 3A            [ 1]  451     cp a,#'9+1
+      00905F 2B 02            [ 1]  452     jrmi 2$
+      009061 AB 07            [ 1]  453     add a,#7 
+      009063 90 5A            [ 2]  454 2$: decw y
+      009065 90 F7            [ 1]  455     ld (y),a
                                     456 	; if acc24==0 conversion done
-      009065 C6 00 AB         [ 1]  457 	ld a,acc24
+      009067 C6 00 AB         [ 1]  457 	ld a,acc24
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 9.
 Hexadecimal [24-Bits]
 
 
 
-      009068 CA 00 AC         [ 1]  458 	or a,acc16
-      00906B CA 00 AD         [ 1]  459 	or a,acc8
-      00906E 26 E4            [ 1]  460     jrne itoa_loop
+      00906A CA 00 AC         [ 1]  458 	or a,acc16
+      00906D CA 00 AD         [ 1]  459 	or a,acc8
+      009070 26 E4            [ 1]  460     jrne itoa_loop
                                     461 	;conversion done, next add '$' or '-' as required
-      009070 7B 02            [ 1]  462 	ld a,(BASE,sp)
-      009072 A1 10            [ 1]  463 	cp a,#16
-      009074 27 0A            [ 1]  464 	jreq 10$
-      009076 7B 01            [ 1]  465     ld a,(SIGN,sp)
-      009078 27 06            [ 1]  466     jreq 10$
-      00907A 90 5A            [ 2]  467     decw y
-      00907C A6 2D            [ 1]  468     ld a,#'-
-      00907E 90 F7            [ 1]  469     ld (y),a
-      009080                        470 10$:
-      009080 5B 02            [ 2]  471 	addw sp,#LOCAL_SIZE
-      009082 CD 86 2C         [ 4]  472 	call strlen
-      009085 81               [ 4]  473 	ret
+      009072 7B 02            [ 1]  462 	ld a,(BASE,sp)
+      009074 A1 10            [ 1]  463 	cp a,#16
+      009076 27 0A            [ 1]  464 	jreq 10$
+      009078 7B 01            [ 1]  465     ld a,(SIGN,sp)
+      00907A 27 06            [ 1]  466     jreq 10$
+      00907C 90 5A            [ 2]  467     decw y
+      00907E A6 2D            [ 1]  468     ld a,#'-
+      009080 90 F7            [ 1]  469     ld (y),a
+      009082                        470 10$:
+      009082 5B 02            [ 2]  471 	addw sp,#LOCAL_SIZE
+      009084 CD 86 2E         [ 4]  472 	call strlen
+      009087 81               [ 4]  473 	ret
                                     474 

@@ -19,7 +19,7 @@ Area                                    Addr        Size        Decimal Bytes (A
      000000B1  l_DATA                          
      000000B2  s_USER_RAM_BASE                 
      00000100  l_SSEG0                         
-     00002952  l_CODE                          
+     00002954  l_CODE                          
      00008000  s_HOME                          
      00008080  s_CODE                          
 ASxxxx Linker V03.00 + NoICE + sdld,  page 2.
@@ -62,48 +62,48 @@ Hexadecimal  [32-Bits]
 
 Area                                    Addr        Size        Decimal Bytes (Attributes)
 --------------------------------        ----        ----        ------- ----- ------------
-CODE                                00008080    00002952 =       10578. bytes (REL,CON)
+CODE                                00008080    00002954 =       10580. bytes (REL,CON)
 
       Value  Global                              Global Defined In Module
       -----  --------------------------------   ------------------------
      00008344  readln                             MONA
-     0000847C  next_word                          MONA
-     000084B2  to_lower                           MONA
-     000084BD  to_upper                           MONA
-     000084C9  add24                              MONA
-     000084DC  mulu24_8                           MONA
-     00008516  divu24_8                           MONA
-     0000853E  neg_acc24                          MONA
-     00008561  inc_var24                          MONA
-     0000856E  copy_var24                         MONA
-     0000857E  is_alpha                           MONA
-     0000858F  is_digit                           MONA
-     0000859C  is_hex                             MONA
-     000085BB  atoi                               MONA
-     0000862C  strlen                             MONA
-     0000863E  print_padded                       MONA
-     00008656  sex_acc8                           MONA
-     00008665  peek                               MONA
-     0000866B  peek16                             MONA
-     0000867E  peek24                             MONA
-     00008697  number                             MONA
-     00008B45  error_print                        MONA
-     00008E7E  format                             GLOBALS
-     00008F1D  spaces                             GLOBALS
-     00008F2D  uart_tx                            GLOBALS
-     00008F37  uart_print                         GLOBALS
-     00008F49  uart_qchar                         GLOBALS
-     00008F5A  uart_getchar                       GLOBALS
-     00008F6D  uart_delete                        GLOBALS
-     00008F87  uart_prints                        GLOBALS
-     00008F9B  print_int                          GLOBALS
-     00008FE4  print_byte                         GLOBALS
-     00008FFA  print_word                         GLOBALS
-     0000900F  print_extd                         GLOBALS
-     00009021  print_addr                         GLOBALS
-     0000903A  itoa                               GLOBALS
-     00009E9A  dasm                               DASM
-     0000A99F  mona_end                           APPLICATION_TEST
+     0000847E  next_word                          MONA
+     000084B4  to_lower                           MONA
+     000084BF  to_upper                           MONA
+     000084CB  add24                              MONA
+     000084DE  mulu24_8                           MONA
+     00008518  divu24_8                           MONA
+     00008540  neg_acc24                          MONA
+     00008563  inc_var24                          MONA
+     00008570  copy_var24                         MONA
+     00008580  is_alpha                           MONA
+     00008591  is_digit                           MONA
+     0000859E  is_hex                             MONA
+     000085BD  atoi                               MONA
+     0000862E  strlen                             MONA
+     00008640  print_padded                       MONA
+     00008658  sex_acc8                           MONA
+     00008667  peek                               MONA
+     0000866D  peek16                             MONA
+     00008680  peek24                             MONA
+     00008699  number                             MONA
+     00008B47  error_print                        MONA
+     00008E80  format                             GLOBALS
+     00008F1F  spaces                             GLOBALS
+     00008F2F  uart_tx                            GLOBALS
+     00008F39  uart_print                         GLOBALS
+     00008F4B  uart_qchar                         GLOBALS
+     00008F5C  uart_getchar                       GLOBALS
+     00008F6F  uart_delete                        GLOBALS
+     00008F89  uart_prints                        GLOBALS
+     00008F9D  print_int                          GLOBALS
+     00008FE6  print_byte                         GLOBALS
+     00008FFC  print_word                         GLOBALS
+     00009011  print_extd                         GLOBALS
+     00009023  print_addr                         GLOBALS
+     0000903C  itoa                               GLOBALS
+     00009E9C  dasm                               DASM
+     0000A9A1  mona_end                           APPLICATION_TEST
 
 ASxxxx Linker V03.00 + NoICE + sdld,  page 6.
 

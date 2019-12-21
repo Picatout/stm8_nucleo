@@ -241,6 +241,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
                                         
                                         ; GPIO
                                         ; gpio register offset to base
@@ -1440,6 +1442,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                         ; PORTS SFR OFFSET
+                                 
+                                 
                                  
                                  
                                  

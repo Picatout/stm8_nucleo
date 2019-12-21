@@ -22,6 +22,46 @@
     ERR_NONE=0
     ERR_TXT_FULL=1 
 
+;---------------------------------------
+;  data stack macros 
+;---------------------------------------
+    CELL_SIZE=2 
+    ; push r on data stack 
+    ; r is x or y 
+    .macro _dpush r 
+    ld a,dstkptr+1
+    sub a,#CELL_SIZE
+    ld dstkptr+1,a 
+    ld a,dstkptr  
+    sbc a,#0  
+    ld dstkptr,a  
+    ldw [dstkptr],r 
+    .endm 
+
+    ; pop r from data stack
+    ; r is x or y 
+    .macro _dpop r 
+    ldw r, [dstkptr]
+    ld a,dstkptr+1 
+    add a,#CELL_SIZE 
+    ld dstkptr+1,a 
+    clr a 
+    adc a,dstkptr 
+    ld dstkptr,a 
+    .endm
+
+    ; drop n cells from data stack 
+    .macro _ddrop n 
+    ld a, n 
+    sll a 
+    add a,dstkptr+1 
+    ld dstkptr+1,a 
+    clr a 
+    adc a,dstkptr 
+    ld dstkptr,a 
+    .endm 
+
+
 ;-------------------------------
 ;  macros used to help debugging
 ;-------------------------------

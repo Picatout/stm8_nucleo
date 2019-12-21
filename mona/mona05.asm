@@ -646,35 +646,35 @@ scan:
 ;	pad   containt string 
 ;------------------------------------
 	PREV = 1
+	CURR= 2
+	VSIZE=2
 parse_quote:
+	sub sp,#VSIZE
 	clr a
-	push a
 1$:	ld (PREV,sp),a 
-	inc in
+2$:	inc in
 	ld a,([in.w],y)
-	jreq 4$
-	push a
-	ld a, (PREV,sp)
-	cp a,#'\
-	pop a 
-	jrne 11$
+	jreq 6$
+	ld (CURR,sp),a 
+	ld a,#'\
+	cp a, (PREV,sp)
+	jrne 3$
 	clr (PREV,sp)
 	callr convert_escape
 	ld (x),a 
 	incw x 
-	jra 1$
-11$: 
-	cp a,#'\'
-	jrne 2$
-	ld (PREV,sp),a 
-	jra 1$
-2$:	ld (x),a 
+	jra 2$
+3$: ld a,(CURR,sp)
+	cp a,#'\ 
+	jreq 1$  
+	cp a,#'"
+	jreq 5$
+	ld (x),a 
 	incw x 
-	cp a,#'"'
-	jrne 1$
-	inc in 
-4$:	clr (x)
-	pop a 
+	jra 2$
+5$:	inc in 
+6$:	clr (x)
+	addw sp,#VSIZE  
 	ret 
 
 ;---------------------------------------

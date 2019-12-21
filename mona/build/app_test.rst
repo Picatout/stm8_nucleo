@@ -241,6 +241,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
                                         
                                         ; GPIO
                                         ; gpio register offset to base
@@ -1447,6 +1449,8 @@ Hexadecimal [24-Bits]
                                  
                                  
                                  
+                                 
+                                 
                                         
                                         ; GPIO
                                         ; gpio register offset to base
@@ -2440,33 +2444,33 @@ Hexadecimal [24-Bits]
                                      30     .area CODE 
                                      31 
                                      32 
-      00A997 55 53 45 52 5F 41 50    33 	.ascii "USER_APP"
+      00A999 55 53 45 52 5F 41 50    33 	.ascii "USER_APP"
              50
                                      34 ;	.bndry 128 ; align on FLASH block.
                                      35 ; following flash memory is not used by MONA
-      00A99F                         36 mona_end::
+      00A9A1                         36 mona_end::
                            000000    37 	AUTO_APP=0 ; 1 to execute application at reset 
                            000000    38 .if AUTO_APP
                                      39 	nop  
                            000001    40 .else
-      00A99F 00                      41 	.byte 0
+      00A9A1 00                      41 	.byte 0
                                      42 .endif
-      00A9A0                         43 blink:
-      00A9A0 90 AE A9 BF      [ 2]   44 	ldw y,#hello
-      00A9A4 CD 8F 37         [ 4]   45 	call uart_print 
-      00A9A7                         46 blink_loop:	
-      00A9A7 C6 50 0A         [ 1]   47 	ld a,LED2_PORT
-      00A9AA A8 20            [ 1]   48 	xor a,#LED2_MASK
-      00A9AC C7 50 0A         [ 1]   49 	ld LED2_PORT,a 
-      00A9AF 90 AE 00 08      [ 2]   50 	ldw y,#8 
-      00A9B3 AE FF FF         [ 2]   51 1$: ldw x,#0xffff
-      00A9B6 5A               [ 2]   52 2$:	decw x 
-      00A9B7 26 FD            [ 1]   53 	jrne 2$
-      00A9B9 90 5A            [ 2]   54     decw y 
-      00A9BB 26 F6            [ 1]   55     jrne 1$
-      00A9BD 20 E8            [ 2]   56 	jra blink_loop 
+      00A9A2                         43 blink:
+      00A9A2 90 AE A9 C1      [ 2]   44 	ldw y,#hello
+      00A9A6 CD 8F 39         [ 4]   45 	call uart_print 
+      00A9A9                         46 blink_loop:	
+      00A9A9 C6 50 0A         [ 1]   47 	ld a,LED2_PORT
+      00A9AC A8 20            [ 1]   48 	xor a,#LED2_MASK
+      00A9AE C7 50 0A         [ 1]   49 	ld LED2_PORT,a 
+      00A9B1 90 AE 00 08      [ 2]   50 	ldw y,#8 
+      00A9B5 AE FF FF         [ 2]   51 1$: ldw x,#0xffff
+      00A9B8 5A               [ 2]   52 2$:	decw x 
+      00A9B9 26 FD            [ 1]   53 	jrne 2$
+      00A9BB 90 5A            [ 2]   54     decw y 
+      00A9BD 26 F6            [ 1]   55     jrne 1$
+      00A9BF 20 E8            [ 2]   56 	jra blink_loop 
                                      57 
-      00A9BF 48 65 6C 6C 6F 20 66    58 hello: .asciz "Hello from blinky\n"
+      00A9C1 48 65 6C 6C 6F 20 66    58 hello: .asciz "Hello from blinky\n"
              72 6F 6D 20 62 6C 69
              6E 6B 79 0A 00
                                      59 
