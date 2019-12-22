@@ -48,6 +48,7 @@ in:    .blkb 1 ; low byte of in.w
 acc24: .blkb 1 ; 24 accumulator
 acc16: .blkb 1
 acc8:  .blkb 1
+untok: .blkb 1 
 farptr: .blkb 3 ; far pointer 
 basicptr: .blkb 3 ; BASIC parse pointer 
 dstkptr: .blkw 1  ; data stack pointer 
@@ -694,7 +695,8 @@ tb_error:
     ldw sp,x
 warm_start:
 	ld a,#TAB_WIDTH 
-	ld tab_width,a 
+	ld tab_width,a
+	clr untok  
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
@@ -706,7 +708,7 @@ warm_start:
 ;----------------------------
 ; tokenizer test
 ;----------------------------
-  TOK_TEST=0
+  TOK_TEST=1
 .if TOK_TEST 
 test_tok:
 	clr in.w 
@@ -721,21 +723,36 @@ test_tok:
 	tnz a 
 	jrne 2$
 	jra test_tok 
-2$:	cp a,#TK_INTGR
+2$:	push a 
+	cp a,#TK_INTGR
 	jrne 3$
-	push a 
 	ld a,#10 
 	clrw x
 	call itoa
 	ldw y,x 
 	ldw x,#pad 
 	call strcpy    
+3$:	ld a,(1,sp) 
+	cp a,#20
+	jrmi 34$
+	ld a,#'2 
+	call putc 
+	ld a,(1,sp)
+	sub a,#20
+	ld (1,sp),a
+	jra 36$   
+34$: 
+	cp a,#10
+	jrmi 36$ 
+	ld a,#'1 
+	call putc
+	ld a,(1,sp)
+	sub a,#10 
+	ld (1,sp),a  
+36$:
 	pop a 
-3$:	add a,#'0
-	cp a,#'9+1 
-	jrmi 4$
-	add a,#7 
-4$:	call putc 
+	add a,#'0 
+	call putc 
 	ld a,#SPACE 
 	call putc 
 	ldw x,#pad 
@@ -779,6 +796,7 @@ interp_loop:
 	trap 
 	jra interp 
 3$: 
+	_ldx_dict kword_dict
 	call search_dict
 	tnzw x
 	jrne 4$
@@ -1199,6 +1217,7 @@ accept_char:
 	call putc 
 	jra readln_loop
 readln_quit:
+	clr (y)
 	addw sp,#2
 	ld a,#NL
 	call putc
@@ -1395,7 +1414,8 @@ parse_quote:
 	jra 2$
 5$:	inc in 
 6$: clr (x)
-	_drop VSIZE  
+	_drop VSIZE
+	ld a,#TK_QSTR  
 	ret 
 
 ;---------------------------------------
@@ -1454,6 +1474,7 @@ convert_escape:
 ; output:  
 ;   pad     number string 
 ;   acc24   actual integer 
+;   A 		TK_INTGR
 ;-------------------------
 	BASE=1
 	CHAR=2 
@@ -1483,9 +1504,87 @@ parse_integer:
 	jrc 2$ 
 3$:	clr (x) 
 	call atoi
+	ld a,#TK_INTGR
 	_drop VSIZE  
 	ret 	
-	
+
+;---------------------------
+;  token begin with a letter,
+;  is keyword or variable. 	
+; input:
+;   X 		point to pad 
+;   Y 		point to tib 
+;   A 	    first letter  
+; output:
+;   X 		exec_addr|var_addr 
+;   A 		token attribute 
+;   pad 	keyword|var_name  
+;--------------------------  
+parse_keyword:
+	call to_upper 
+	ld (x),a 
+	incw x 
+	inc in 
+	ld a,([in.w],y)
+	call is_alpha 
+	jrc parse_keyword 
+1$: clr (x)
+	ldw x,#pad
+	call strlen 
+	cpw x,#1 
+	jrne 2$
+; one letter variable name 
+	sub a,#'A 
+	sll a 
+	push a 
+	push #0
+	ldw x,vars 
+	addw x,(1,sp) ; X=var address 
+	_drop 2 
+	ld a,#TK_VAR  
+	ret 
+2$: ; check for keyword, otherwise syntax error.
+	_ldx_dict kword_dict
+	call search_dict
+	tnzw x
+	jrne 4$ 
+	ld a,#ERR_SYNTAX
+	jp tb_error 
+4$: ; X=execution address 
+	ld a,#TK_KWORD 
+	ret 
+
+
+;---------------------------
+;  token begin with one of {'=','<','>'}
+;  is relation operator. 	
+; input:
+;   X 		point to pad 
+;   Y 		point to tib 
+;   A 	    first character  
+; output:
+;	A 		token attribute 
+;   pad 	relation operator string  
+;--------------------------  
+parse_relop:
+	ld (x),a 
+	incw x 
+	inc in 
+	ld a,([in.w],y)
+	cp a,#'=
+	jreq 4$
+	cp a,#'>
+	jreq 4$
+	cp a,#'< 
+	jrne 6$ 
+4$: ld (x),a
+	incw x 
+	inc in 
+6$:	clr(x)
+	_ldx_dict relop_dict	
+	call search_dict
+	ld a,xl 
+	ret 
 
 ;------------------------------------
 ; Command line tokenizer
@@ -1512,32 +1611,28 @@ parse_integer:
 	ATTRIB=2 
 	VSIZE=2
 get_token:
-	pushw x 
-	pushw y
+	tnz untok 
+	jreq 1$
+	ld a,untok
+	clr untok  
+	ret 
+1$:	
 	_vars VSIZE
-	clr (ATTRIB,sp)
-	ldw x, #pad 
+	ldw x, #pad
 	ldw y, #tib  	
 	ld a,#SPACE
 	call skip
 	ld a,([in.w],y)
-token_loop:	
-	jrne 1$
+	jrne 2$
 	jp token_exit
-1$:		
+2$:		
 	ld (CHAR,sp),a  
 	_case SPACE str_tst
 	jp token_exit 
 str_tst: ; check for quoted string  	
 	_case '"' nbr_tst
-	tnz (ATTRIB,sp)
-	jreq 1$
-	jp token_exit ; stop there if char in pad.
-1$:	
 	call parse_quote 
-	ld a,#TK_QSTR 
-	ld (ATTRIB,sp),a
-	jp token_exit2
+	jp token_exit
 nbr_tst: ; check for number 
 	ld a,#'$'
 	cp a,(CHAR,sp) 
@@ -1545,144 +1640,88 @@ nbr_tst: ; check for number
 	ld a,(CHAR,sp)
 	call is_digit
 	jrnc 3$
-1$:	tnz (ATTRIB,sp)
-	jreq 2$
-	jp token_exit  
-2$:	call parse_integer 
-	ld a,#TK_INTGR
-	ld (ATTRIB,sp),a 
-	jp token_exit2 
+1$:	call parse_integer 
+	jp token_exit 
 3$: 
 	ld a,(CHAR,sp)
 	call to_upper 
 	ld (CHAR,sp),a 
 	_case '(' rparnt_tst 
 	ld a,#TK_LPAREN
-	jp end_tst 	
+	jp token_exit2  	
 rparnt_tst:		
 	_case ')' colon_tst 
 	ld a,#TK_RPAREN 
-	jp end_tst
+	jp token_exit2 
 colon_tst:
 	_case ':' comma_tst 
 	ld a,#TK_COLON 
-	jp end_tst
+	jp token_exit2
 comma_tst:
 	_case COMMA sharp_tst 
 	ld a,#TK_COMMA 
-	jp end_tst
+	jp token_exit2 
 sharp_tst:
 	_case SHARP dash_tst 
 	ld a,#TK_SHARP
-	jp end_tst 	 	 
+	jp token_exit2  	 	 
 dash_tst: 	
-	_case '-' plus_tst 
-	ld a,#TK_MATOP 
-	jp end_tst
+	_case '-' at_tst 
+	ld a,#TK_MINUS  
+	jp token_exit2
+at_tst:
+	_case '@' plus_tst 
+	ld a,#TK_ARRAY 
+	jp token_exit2  	
 plus_tst:
 	_case '+' star_tst 
-	ld a,#TK_MATOP 
-	jp end_tst
+	ld a,#TK_PLUS  
+	jp token_exit2 
 star_tst:
 	_case '*' slash_tst 
-	ld a,#TK_MATOP 
-	jp end_tst 
+	ld a,#TK_MULT 
+	jp token_exit2 
 slash_tst: 
 	_case '/' prcnt_tst 
-	ld a,#TK_MATOP 
-	jra end_tst 
+	ld a,#TK_DIV 
+	jra token_exit2 
 prcnt_tst:
 	_case '%' eql_tst 
-	ld a,#TK_MATOP
-	jra end_tst 
+	ld a,#TK_MOD
+	jra token_exit2 
 ; 1 or 2 character tokens 	
 eql_tst:
 	_case '=' gt_tst 		
-	jra rel_tst
+	jra rel_op 
 gt_tst:
 	_case '>' lt_tst 
-	jra rel_tst 	 
+	jra rel_op 	 
 lt_tst:
 	_case '<' other
-	jra rel_tst
+rel_op:
+	call parse_relop 
+	jra token_exit 
 other: ; not a special character 	 
 	ld a,(CHAR,sp)
-	cp a,#'@ 
-	jreq 30$
 	call is_alpha 
 	jrc 30$ 
 	ld a,#ERR_SYNTAX 
 	JP tb_error 
-30$:
-	tnz (ATTRIB,sp)
-	jreq 32$
-	ld a,#TK_LABEL 
-	cp a,(ATTRIB,sp) 
-	jrne token_exit 
-32$: ; first character of label
-	ld a,(CHAR,sp)
-	ld (x),a
-	ld a,#TK_LABEL 
-	ld (ATTRIB,sp),a   
-o_34:
-	incw x 
-	inc in
-	ld a,([in.w],y) 
-	jp token_loop  
- ; it may be 2 characters TK_RELOP '>=' or '<=' or '<>' or a single '=' 	
-rel_tst:
-	ld a,#TK_RELOP 
-	tnz (ATTRIB,sp)
-	jrne 44$
-	ld (ATTRIB,sp),a
-42$:
-	ld a,(CHAR,sp)
-	ld (x),a 
-	jra o_34	
-44$:	 
-	cp a,(ATTRIB,sp)
-	jreq 46$ 
-	jra token_exit
-46$: ; if already 2 character in pad it's a syntax error 
-	clr (x) 
-	pushw x 
-	pushw y 
-	ldw x,#pad 
-	call strlen
-	popw y
-	ld a,xl 
-	popw x   
-	cp a,#2
-	jrmi  42$ 
-; syntax error 
-	ld a,#ERR_SYNTAX
-	jp tb_error 				
-end_tst:
-	tnz (ATTRIB,sp)
-	jrne token_exit ; signal end of token  
-	ld (ATTRIB,sp),a  ; new token 
-79$:
+30$: 
+	call parse_keyword
+	jra token_exit 
+token_exit2:
+	ld (ATTRIB,sp),a 
 	ld a,(CHAR,sp)
 	ld (x),a 
 	incw x 
 	inc in 
-token_exit:
-	 clr (x)
-token_exit2:
-	ld a,#TK_LABEL 
-	cp a,(ATTRIB,sp)
-	jrne 9$ 
-	ldw x,#pad 
-	tnz (1,x) ; if single letter is a variable 
-	jrne 9$ 
-	ld a,#TK_VAR 
-	ld (ATTRIB,sp),a 
-9$:	
 	ld a,(ATTRIB,sp)
+token_exit:
+	clr (x)
 	_drop VSIZE 
-	popw y 
-	popw x 
 	ret
+
 
 ;------------------------------------
 ; check if character in {'0'..'9'}
@@ -1943,6 +1982,7 @@ ddrop_n:
 
 ;---------------------------------
 ; input:
+;	X 		dictionary entry point 
 ;  pad		.asciz name to search 
 ; output:
 ;  X		execution address | 0 
@@ -1952,7 +1992,8 @@ ddrop_n:
 	VSIZE=3 
 search_dict:
 	_vars VSIZE 
-	ldw y,#last+2
+;	ldw y,#last+2
+	ldw y,x 
 search_prep:	
 	ld a,(y)
 	ld (NLEN,sp),a  
@@ -1992,9 +2033,33 @@ search_exit:
 	ret 
 
 
+
 ;--------------------------------
 ;   BASIC commnands 
 ;--------------------------------
+
+;--------------------------------
+;  relation parser routines
+;--------------------------------
+
+relation:
+
+	ret 
+
+factor:
+
+	ret 
+
+term:
+
+	ret 
+
+expression:
+
+	ret 
+
+
+
 
 ;--------------------------------------------
 ;  return text area free space 
@@ -2010,8 +2075,6 @@ size:
 	clr acc24 
 	ld a,#TK_INTGR
 	ret 
-
-
 
 let:
 	ldw x,#LET
@@ -2039,11 +2102,8 @@ print_token:
 	ld a,#10+128  
 	call prti24 	
 	jra print 
-2$: cp a,#TK_LABEL 
+2$: cp a,#TK_KWORD 
 	jrne 3$ 
-	call search_dict
-	tnzw x 
-	jreq print_exit
 	call (x)
 	jra print_token   
 3$: cp a,#TK_COMMA 
@@ -2181,7 +2241,7 @@ name:
 	.endm 
 
 	LINK=0
-dict_end:
+kwor_end:
 
 	_dict_entry 5,INPUT,input 
 	_dict_entry 3,OUT,out 
@@ -2205,6 +2265,51 @@ dict_end:
 	_dict_entry,3,USR,usr
 	_dict_entry,3,NEW,new
 	_dict_entry,4,SIZE,size    
-last:
+kword_dict:
 	_dict_entry 3,LET,let 
 	
+	LINK=0 	
+rel_end:
+	.word LINK 
+	LINK=.
+	.byte 2
+	.ascii "><"
+	.word TK_NE 
+
+	.word LINK 
+	LINK=.
+	.byte 2
+	.ascii "<>"
+	.word TK_NE 
+
+	.word LINK 
+	LINK=.
+	.byte 2
+	.ascii ">="
+	.word TK_GE 
+
+	.word LINK 
+	LINK=.
+	.byte 2
+	.ascii "<="
+	.word TK_LE 
+
+	.word LINK 
+	LINK=.
+	.byte 1
+	.ascii ">"
+	.word TK_GT 
+
+	.word LINK 
+	LINK=.
+	.byte 1
+	.ascii "<"
+	.word TK_LT 
+ 
+relop_dict:
+	.word LINK 
+	LINK=.
+	.byte 1
+	.ascii "="
+	.word TK_EQUAL
+

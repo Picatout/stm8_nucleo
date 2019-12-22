@@ -21,17 +21,28 @@
 ;       token attribute
 ;--------------------------------------
         TK_NONE=0       ; undefined
-        TK_VAR=1        ; variable {A..Z}
-        TK_LPAREN=2     ; left parenthesis
-        TK_RPAREN=3     ; right parenthesis
-        TK_QSTR=4       ; quoted string
-        TK_LABEL=5      ; label 
-        TK_INTGR=6      ; integer 
-        TK_MATOP=7      ; math operator
-        TK_RELOP=8      ; relation operator "=",">=","<=",">","<", "<>" 
-        TK_COLON=9     ; command end marker ':' 
-        TK_COMMA=10     ; item separator ',' 
-        TK_SHARP=11     ; print colon width '#' 
+        TK_VAR=1        ; variable letters {A..Z}
+        TK_ARRAY=2      ; array variable '@' 
+        TK_LPAREN=3     ; left parenthesis '('
+        TK_RPAREN=4     ; right parenthesis ')'
+        TK_QSTR=5       ; quoted string  
+        TK_KWORD=6      ; BASIC keyword  
+        TK_INTGR=7      ; integer 
+        TK_PLUS=8       ; addition operator '+'
+        TK_MINUS=9      ; subtraction operator '-'
+        TK_MULT=10      ; multiplication operator '*'
+        TK_DIV=11       ; division operator '/'
+        TK_MOD=12       ; modulo operator '%'
+        TK_EQUAL=13     ; assignment or relation operator '='
+        TK_GT=14        ; relation operator '>'
+        TK_GE=15        ; relation operator '>='
+        TK_LT=16        ; relation operator '<'
+        TK_LE=17        ; relation operator '<='
+        TK_NE=18        ; relation operator '<>' not equal 
+        TK_COLON=19     ; command end marker ':' 
+        TK_COMMA=20     ; item separator ',' 
+        TK_SHARP=21     ; print colon width '#' 
+
 
 ;--------------------------------------
 ;   error codes 
@@ -62,7 +73,17 @@
     popw x 
     .endm 
 
+    ; return token to pool 
+    .macro _unget_tok 
+    ld untok,a 
+    .endm 
 
+    ; load X register with 
+    ; entry point of dictionary
+    ; before calling 'search_dict'
+    .macro _ldx_dict dict_name
+    ldw x,#dict_name+2
+    .endm 
 
 ;-------------------------------
 ;  macros used to help debugging
