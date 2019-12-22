@@ -16,6 +16,7 @@
 ;     along with STM8_NUCLEO.  If not, see <http://www.gnu.org/licenses/>.
 ;;
 ;--------------------------------------
+        TAB_WIDTH=4 ; default tabulation width 
 ;--------------------------------------
 ;       token attribute
 ;--------------------------------------
@@ -28,9 +29,9 @@
         TK_INTGR=6      ; integer 
         TK_MATOP=7      ; math operator
         TK_RELOP=8      ; relation operator "=",">=","<=",">","<", "<>" 
-        TK_CMDEND=9     ; command end marker ':' 
-
-
+        TK_COLON=9     ; command end marker ':' 
+        TK_COMMA=10     ; item separator ',' 
+        TK_SHARP=11     ; print colon width '#' 
 
 ;--------------------------------------
 ;   error codes 
@@ -38,7 +39,7 @@
     ERR_NONE=0
     ERR_TXT_FULL=1 
     ERR_SYNTAX=2
-    
+
 ;---------------------------------------
 ;  data stack macros 
 ;---------------------------------------

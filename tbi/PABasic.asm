@@ -36,6 +36,7 @@
 ;--------------------------------------
     .area DATA 
 ;--------------------------------------	
+
 	TIB_SIZE=80
     PAD_SIZE=40
 	DSTACK_SIZE=64 
@@ -56,6 +57,7 @@ txtend: .ds 2 ; BASIC text end address
 arrayptr: .ds 2 ; address of @ array 
 arraysize: .ds 2 ; array size 
 flags: .ds 1 ; boolean flags
+tab_width: .ds 1 ; print colon width (4)
 vars: .ds 2*26 ; BASIC variables A-Z, keep it as but last .
 ; keep as last variable 
 free_ram: ; from here RAM free for BASIC text 
@@ -270,6 +272,25 @@ delete:
 1$:	pop a 
 	ret
 
+;--------------------------
+; print n spaces on terminal
+; input:
+;  A 		number of spaces 
+; output:
+;	none 
+;---------------------------
+spaces:
+	push a 
+	ld a,#SPACE 
+1$:	tnz (1,sp)
+	jreq 9$
+	call putc 
+	dec (1,sp)
+	jra 1$
+9$: pop a 
+	ret 
+
+
 ;---------------------------------
 ;; print actual registers states 
 ;; as pushed on stack 
@@ -482,18 +503,6 @@ del_line:
 	ldw txtend,y    
 	ret 
 
-;--------------------------------------------
-;  return text area free space 
-; input: 
-;   none 
-; output:
-;   X  		free space in byte 
-;---------------------------------------------
-size:
-	ldw x,#tib 
-	subw x,txtend 
-	ret 
-
 
 ;---------------------------------------------
 ; create a gap in text area 
@@ -673,14 +682,19 @@ tb_error:
 	pop a 
 	cp a,#ERR_SYNTAX
 	jrne 1$
-	ldw x,#tib 
-	ld a,([in.w],x)
+	ldw x,#tib
+	call puts 
+	ld a,#CR 
 	call putc 
-	ld a,#'? 
+	ld a,in 
+	call spaces 
+	ld a,#'^' 
 	call putc  
 1$: ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
+	ld a,#TAB_WIDTH 
+	ld tab_width,a 
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
@@ -692,7 +706,7 @@ warm_start:
 ;----------------------------
 ; tokenizer test
 ;----------------------------
-  TOK_TEST=1
+  TOK_TEST=0
 .if TOK_TEST 
 test_tok:
 	clr in.w 
@@ -713,11 +727,15 @@ test_tok:
 	ld a,#10 
 	clrw x
 	call itoa
+	ldw y,x 
 	ldw x,#pad 
 	call strcpy    
 	pop a 
-3$:	add a,#'0 
-	call putc 
+3$:	add a,#'0
+	cp a,#'9+1 
+	jrmi 4$
+	add a,#7 
+4$:	call putc 
 	ld a,#SPACE 
 	call putc 
 	ldw x,#pad 
@@ -735,6 +753,7 @@ interp:
 	ld a,#'> 
 	call putc 
 	call readln
+interp_loop:
 	call get_token 
 	cp a,#TK_NONE
 	jreq interp ; empty line 
@@ -766,9 +785,23 @@ interp:
 	jra interp 
 	tnz pad+1
 	call is_alpha 
-4$:	call (x)
-	jra interp
-
+4$:	
+	call (x)
+	cp a,#TK_NONE 
+	jreq interp
+	push a  
+	ld a,lineno 
+	or a,lineno+1 
+	pop a 
+	jrne interp_loop  
+	cp a,#TK_INTGR
+	jrne interp_loop 
+	clrw x 
+	ld a,#TAB_WIDTH
+	ld xl,a 
+	ld a,#10 
+	call prti24  
+	jra interp_loop 	
     trap 
 	.blkb 0x71 ; reset MCU
 
@@ -934,7 +967,6 @@ prti24:
 	ld (WIDTH,sp),a 
 	ld a, (BASE,sp)  
     call itoa  ; conversion entier en  .asciz
-	ld acc8,a ; string length 
 1$: ld a,(WIDTH,sp) 
 	jreq 4$
 	sub a,acc8
@@ -979,7 +1011,7 @@ parser_init::
 ;   A	  	base
 ;	acc24	integer to convert
 ; output:
-;   y  		pointer to string
+;   X  		pointer to string
 ;------------------------------------
 	SIGN=1  ; integer sign 
 	BASE=2  ; numeric base 
@@ -1025,6 +1057,7 @@ itoa_loop:
     ld (y),a
 10$:
 	addw sp,#VSIZE
+	ldw x,y 
 	ret
 
 ;-------------------------------------
@@ -1422,15 +1455,35 @@ convert_escape:
 ;   pad     number string 
 ;   acc24   actual integer 
 ;-------------------------
+	BASE=1
+	CHAR=2 
+	VSIZE=2 
 parse_integer:
-	ld (x),a 
+	push #0 
+	cp a,#'$
+	jreq 1$ 
+	push #10
+	jra 2$ 
+1$: push #16 
+2$:	ld (x),a 
 	incw x 
 	inc in 
 	ld a,([in.w],y)
+	call to_upper 
+	ld (CHAR,sp),a 
 	call is_digit 
-	jrc parse_integer
-	clr (x) 
-	call atoi 
+	jrc 2$
+	ld a,#16 
+	cp a,(BASE,sp)
+	jrne 3$ 
+	ld a,(CHAR,sp)
+	cp a,#'A 
+	jrc 3$ 
+	cp a,#'F 
+	jrc 2$ 
+3$:	clr (x) 
+	call atoi
+	_drop VSIZE  
 	ret 	
 	
 
@@ -1511,9 +1564,17 @@ rparnt_tst:
 	ld a,#TK_RPAREN 
 	jp end_tst
 colon_tst:
-	_case ':' dash_tst 
-	ld a,#TK_CMDEND
-	jp end_tst 
+	_case ':' comma_tst 
+	ld a,#TK_COLON 
+	jp end_tst
+comma_tst:
+	_case COMMA sharp_tst 
+	ld a,#TK_COMMA 
+	jp end_tst
+sharp_tst:
+	_case SHARP dash_tst 
+	ld a,#TK_SHARP
+	jp end_tst 	 	 
 dash_tst: 	
 	_case '-' plus_tst 
 	ld a,#TK_MATOP 
@@ -1580,8 +1641,22 @@ rel_tst:
 	jra o_34	
 44$:	 
 	cp a,(ATTRIB,sp)
-	jreq 42$ 
+	jreq 46$ 
 	jra token_exit
+46$: ; if already 2 character in pad it's a syntax error 
+	clr (x) 
+	pushw x 
+	pushw y 
+	ldw x,#pad 
+	call strlen
+	popw y
+	ld a,xl 
+	popw x   
+	cp a,#2
+	jrmi  42$ 
+; syntax error 
+	ld a,#ERR_SYNTAX
+	jp tb_error 				
 end_tst:
 	tnz (ATTRIB,sp)
 	jrne token_exit ; signal end of token  
@@ -1921,13 +1996,23 @@ search_exit:
 ;   BASIC commnands 
 ;--------------------------------
 
-;--------------------------------
-; print command name 
-; input:
-;   X 		name field in dictionary 
+;--------------------------------------------
+;  return text area free space 
+; input: 
+;   none 
 ; output:
-;   none
-;-----------------------------------
+;   acc24 		free space in byte 
+;---------------------------------------------
+size:
+	ldw x,#tib 
+	subw x,txtend 
+	ldw acc16,x
+	clr acc24 
+	ld a,#TK_INTGR
+	ret 
+
+
+
 let:
 	ldw x,#LET
 	call prt_cstr  
@@ -1940,8 +2025,47 @@ list:
 
 print:
 	call get_token 
+print_token:	
+	cp a,#TK_QSTR
+	jrne 1$   
 	ldw x,#pad 
 	call puts 
+	jra print_exit
+1$: cp a,#TK_INTGR 
+	jrne 2$ 
+	clrw x
+	ld a,tab_width
+	ld xl,a  
+	ld a,#10+128  
+	call prti24 	
+	jra print 
+2$: cp a,#TK_LABEL 
+	jrne 3$ 
+	call search_dict
+	tnzw x 
+	jreq print_exit
+	call (x)
+	jra print_token   
+3$: cp a,#TK_COMMA 
+	jrne 4$
+	call get_token 
+	cp a,#TK_NONE
+	jrne print_token 
+	ret  
+4$: cp a,#TK_SHARP
+	jrne print_exit  
+	call get_token 
+	cp a,#TK_INTGR 
+	jreq 5$ 
+	ld a,#ERR_SYNTAX
+	jp tb_error 
+5$: ld a,acc8 
+	and a,#15 
+	ld tab_width,a 
+	jra print 
+print_exit:	
+	ld a,#CR 
+    call putc 
 	ret 
 
 run: 

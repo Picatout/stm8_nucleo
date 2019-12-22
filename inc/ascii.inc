@@ -63,3 +63,6 @@
 		CTRL_Z = 26
 		ESC = 27
 		SPACE = 32
+		COMMA = 44 
+		SHARP = 35
+		
