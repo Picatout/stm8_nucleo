@@ -599,7 +599,7 @@ insert_line:
 ;	none
 ;------------------------------------
 clear_vars:
-	ldw x,vars 
+	ldw x,#vars 
 	ldw y,#2*26 
 1$:	clr (x)
 	incw x 
@@ -708,7 +708,7 @@ warm_start:
 ;----------------------------
 ; tokenizer test
 ;----------------------------
-  TOK_TEST=1
+  TOK_TEST=0 
 .if TOK_TEST 
 test_tok:
 	clr in.w 
@@ -1516,7 +1516,7 @@ parse_integer:
 ;   Y 		point to tib 
 ;   A 	    first letter  
 ; output:
-;   X 		exec_addr|var_addr 
+;   acc16	exec_addr|var_addr 
 ;   A 		token attribute 
 ;   pad 	keyword|var_name  
 ;--------------------------  
@@ -1534,14 +1534,17 @@ parse_keyword:
 	cpw x,#1 
 	jrne 2$
 ; one letter variable name 
+	ld a,pad 
 	sub a,#'A 
 	sll a 
 	push a 
 	push #0
-	ldw x,vars 
+	ldw x,#vars 
 	addw x,(1,sp) ; X=var address 
+	ldw acc16,x
+	clr acc24 
 	_drop 2 
-	ld a,#TK_VAR  
+	ld a,#TK_VAR 
 	ret 
 2$: ; check for keyword, otherwise syntax error.
 	_ldx_dict kword_dict
@@ -1551,6 +1554,8 @@ parse_keyword:
 	ld a,#ERR_SYNTAX
 	jp tb_error 
 4$: ; X=execution address 
+	ldw acc16,x
+	clr acc24  
 	ld a,#TK_KWORD 
 	ret 
 
@@ -1706,10 +1711,10 @@ other: ; not a special character
 	call is_alpha 
 	jrc 30$ 
 	ld a,#ERR_SYNTAX 
-	JP tb_error 
+	jp tb_error 
 30$: 
 	call parse_keyword
-	jra token_exit 
+	jra token_exit3 
 token_exit2:
 	ld (ATTRIB,sp),a 
 	ld a,(CHAR,sp)
@@ -1719,6 +1724,7 @@ token_exit2:
 	ld a,(ATTRIB,sp)
 token_exit:
 	clr (x)
+token_exit3:	
 	_drop VSIZE 
 	ret
 
@@ -2040,6 +2046,7 @@ search_exit:
 
 ;--------------------------------
 ;  relation parser routines
+; rel_op have same precedence as *,/,%
 ;--------------------------------
 
 relation:
@@ -2051,10 +2058,23 @@ factor:
 	ret 
 
 term:
-
+	call factor 
+	call get_token
+	cp a,#TOK_NONE
+	
 	ret 
 
 expression:
+	call get_token 
+	cp a,#TK_LPAREN
+	jrne 1$ 
+	call expression 
+1$: cp a,#TK_MINUS 
+	jrne 3$ 
+	clrw x 
+	call dpush 
+	push a 
+	call term 
 
 	ret 
 
@@ -2076,17 +2096,34 @@ size:
 	ld a,#TK_INTGR
 	ret 
 
+	VADDR=1 
+	VSIZE=2 
 let:
-	ldw x,#LET
-	call prt_cstr  
+	_vars VSIZE 
+	call get_token 
+	cp a,#TK_VAR 
+	jrne let_bad_syntax 
+	ldw (VADDR,sp),x 
+	call get_token 
+	cp a,#TK_EQUAL
+	jrne let_bad_syntax 
+	call expression 
+	ldw y,acc16 
+	ldw x,(VADDR,sp) 
+	ldw (x),y 
+	_drop VSIZE 
+	ld a,#TK_NONE 
 	ret 
+let_bad_syntax:
+	ld a,#ERR_SYNTAX
+	jp tb_error 
 
 list:
 	ldw x,#LIST
 	call prt_cstr
 	ret 
 
-print:
+print: 
 	call get_token 
 print_token:	
 	cp a,#TK_QSTR
@@ -2113,7 +2150,7 @@ print_token:
 	jrne print_token 
 	ret  
 4$: cp a,#TK_SHARP
-	jrne print_exit  
+	jrne 6$  
 	call get_token 
 	cp a,#TK_INTGR 
 	jreq 5$ 
@@ -2122,7 +2159,19 @@ print_token:
 5$: ld a,acc8 
 	and a,#15 
 	ld tab_width,a 
-	jra print 
+	jra print
+6$: 
+	cp a,#TK_VAR
+	jrne print_exit 
+	ldw x,(x)
+	ldw acc16,x 
+	clr acc24 
+	clrw x
+	ld a,tab_width
+	ld xl,a 
+	ld a,#10+128
+	call prti24 
+	jra print 	 
 print_exit:	
 	ld a,#CR 
     call putc 
