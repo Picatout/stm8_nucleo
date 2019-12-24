@@ -20,6 +20,11 @@
 ;--------------------------------------
 ;       token attribute
 ;--------------------------------------
+        ; bits 4:5 identify token group 
+        ; 0x0n -> miscelinous 
+        ; 0x1n -> +|- operators 
+        ; 0x2n -> *|/|% operators
+        ; 0x3n -> relational operators 
         TK_NONE=0       ; undefined
         TK_VAR=1        ; variable letters {A..Z}
         TK_ARRAY=2      ; array variable '@' 
@@ -27,22 +32,30 @@
         TK_RPAREN=4     ; right parenthesis ')'
         TK_QSTR=5       ; quoted string  
         TK_KWORD=6      ; BASIC keyword  
-        TK_INTGR=7      ; integer 
-        TK_PLUS=8       ; addition operator '+'
-        TK_MINUS=9      ; subtraction operator '-'
-        TK_MULT=10      ; multiplication operator '*'
-        TK_DIV=11       ; division operator '/'
-        TK_MOD=12       ; modulo operator '%'
-        TK_EQUAL=13     ; assignment or relation operator '='
-        TK_GT=14        ; relation operator '>'
-        TK_GE=15        ; relation operator '>='
-        TK_LT=16        ; relation operator '<'
-        TK_LE=17        ; relation operator '<='
-        TK_NE=18        ; relation operator '<>' not equal 
-        TK_COLON=19     ; command end marker ':' 
-        TK_COMMA=20     ; item separator ',' 
-        TK_SHARP=21     ; print colon width '#' 
-
+        TK_COLON=7      ; command end marker ':' 
+        TK_COMMA=8      ; item separator ',' 
+        TK_SHARP=9      ; print colon width '#' 
+        TK_INTGR=10     ; integer 
+        TK_PLUS=0x10    ; addition operator '+'
+        TK_MINUS=0x11   ; subtraction operator '-'
+        TK_MULT=0x20    ; multiplication operator '*'
+        TK_DIV=0x21     ; division operator '/'
+        TK_MOD=0x22     ; modulo operator '%'
+        ; don't change these token values 
+        ; values chosen to be used as a mask with CC.
+        ; bits 4:5 identify group 
+        ; bits 0:2 are CC mask 
+        TK_GT=0x31      ; relation operator '>'
+        TK_EQUAL=0x32   ; assignment or relation operator '='
+        TK_GE=0x33      ; relation operator '>='
+        TK_LT=0x34      ; relation operator '<'
+        TK_NE=0x35      ; relation operator '<>' not equal 
+        TK_LE=0x36      ; relation operator '<='
+        TK_GRP_MASK=0X30 ; token groups: additive group 0x10, mult. group 0x20, rel_op group 0x30 
+        TK_GRP_MISC=0x00 
+        TK_GRP_ADD=0x10 
+        TK_GRP_MULT=0x20 
+        TK_GRP_RELOP=0x30 
 
 ;--------------------------------------
 ;   error codes 
@@ -50,6 +63,13 @@
     ERR_NONE=0
     ERR_TXT_FULL=1 
     ERR_SYNTAX=2
+    ERR_MATH_OVF=3
+    ERR_DIV0=4 
+
+;--------------------------------------
+;   assembler flags 
+;-------------------------------------
+    MATH_OVF=0 ; if 1 the stop on math overflow 
 
 ;---------------------------------------
 ;  data stack macros 

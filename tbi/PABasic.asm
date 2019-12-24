@@ -55,7 +55,7 @@ dstkptr: .blkw 1  ; data stack pointer
 lineno: .blkb 2  ; BASIC line number 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
-arrayptr: .ds 2 ; address of @ array 
+array_addr: .ds 2 ; address of @ array 
 arraysize: .ds 2 ; array size 
 flags: .ds 1 ; boolean flags
 tab_width: .ds 1 ; print colon width (4)
@@ -662,13 +662,15 @@ cold_start:
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
 	rim 
-    jra warm_start 
+    jp warm_start 
 
 err_msg:
-	.word 0,err_text_full, err_syntax  
+	.word 0,err_text_full, err_syntax, err_math_ovf, err_div0   
 
-err_text_full: .asciz "Memory full\n" 
-err_syntax: .asciz "syntax error\n" 
+err_text_full: .asciz "\nMemory full\n" 
+err_syntax: .asciz "\nsyntax error\n" 
+err_math_ovf: .asciz "\nmath operation overflow\n"
+err_div0: .asciz "\ndivision by 0\n" 
 
 tb_error:
 	push a 
@@ -694,14 +696,17 @@ tb_error:
 1$: ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
+	ldw x,#dstack_unf 
+	ldw dstkptr,x 
+	ldw x,#dstack 
+	subw x,#CELL_SIZE  
+	ldw array_addr,x 
 	ld a,#TAB_WIDTH 
 	ld tab_width,a
 	clr untok  
 	ldw x,#free_ram 
 	ldw txtbgn,x 
 	ldw txtend,x 
-	ldw x,#dstack_unf  
-	ldw dstkptr,x 
 	clrw x 
 	ldw lineno,x
 	call clear_vars 
@@ -772,6 +777,8 @@ interp:
 	call readln
 interp_loop:
 	call get_token 
+	cp a,#TK_KWORD
+	jreq 4$ 
 	cp a,#TK_NONE
 	jreq interp ; empty line 
 	cp a,#TK_INTGR
@@ -794,16 +801,10 @@ interp_loop:
 	cp a,pad 
 	jrne 3$ 
 	trap 
-	jra interp 
-3$: 
-	_ldx_dict kword_dict
-	call search_dict
-	tnzw x
-	jrne 4$
-	jra interp 
-	tnz pad+1
-	call is_alpha 
+3$:	jra interp 
+
 4$:	
+	call dpop 
 	call (x)
 	cp a,#TK_NONE 
 	jreq interp
@@ -1473,7 +1474,7 @@ convert_escape:
 ;   A 	    first digit 
 ; output:  
 ;   pad     number string 
-;   acc24   actual integer 
+;   dstack  actual integer 
 ;   A 		TK_INTGR
 ;-------------------------
 	BASE=1
@@ -1504,6 +1505,8 @@ parse_integer:
 	jrc 2$ 
 3$:	clr (x) 
 	call atoi
+	ldw x,acc16 
+	call dpush 
 	ld a,#TK_INTGR
 	_drop VSIZE  
 	ret 	
@@ -1516,10 +1519,11 @@ parse_integer:
 ;   Y 		point to tib 
 ;   A 	    first letter  
 ; output:
-;   acc16	exec_addr|var_addr 
+;   dstack	exec_addr|var_addr 
 ;   A 		token attribute 
 ;   pad 	keyword|var_name  
 ;--------------------------  
+
 parse_keyword:
 	call to_upper 
 	ld (x),a 
@@ -1541,22 +1545,19 @@ parse_keyword:
 	push #0
 	ldw x,#vars 
 	addw x,(1,sp) ; X=var address 
-	ldw acc16,x
-	clr acc24 
 	_drop 2 
 	ld a,#TK_VAR 
-	ret 
+	jra 4$ 
 2$: ; check for keyword, otherwise syntax error.
 	_ldx_dict kword_dict
 	call search_dict
+	ld a,#TK_KWORD
 	tnzw x
 	jrne 4$ 
 	ld a,#ERR_SYNTAX
 	jp tb_error 
-4$: ; X=execution address 
-	ldw acc16,x
-	clr acc24  
-	ld a,#TK_KWORD 
+4$: 
+	call dpush ; push execution address on dstack
 	ret 
 
 
@@ -1967,6 +1968,276 @@ dpop:
 	_dp_up 1 
 	ret 
 
+;--------------------------
+; duplicate TOS 
+;  dstack: { ix...n -- ix...n n }
+ddup:
+	ldw x,[dstkptr]
+	call dpush 
+	ret 
+
+
+;----------------------------------
+; pick value n from dstack 
+; put it on TOS
+; dstack: {ix,..,p -- ix,...,np }
+;-----------------------------------
+dpick:
+	ldw x,[dstkptr]
+	sllw x 
+	addw x,dstkptr 
+	ldw x,(x)
+	ldw [dstkptr],x 
+	ret
+
+;---------------------------
+;  fetch variable in X 
+;  dstack:{ addr -- value }
+;---------------------------
+fetch:
+	ldw x,[dstkptr]
+	ldw x,(x)
+	ldw [dstkptr],x
+	ret 
+
+;----------------------------
+; print TOS 
+; dstack: {n -- }
+;----------------------------
+prt_tos:
+	call dpop 
+	ldw acc16,x
+	clr acc24 
+	ld a,tab_width 
+	ld xl,a 
+	ld a,#10 
+	call prti24
+	ret 
+
+.if DEBUG 
+ds_msg: .asciz "\ndstack: " 
+;----------------------------
+; print dstack content 
+;---------------------------
+	XSAVE=1
+	VSIZE=2
+dots:
+	push a 
+	_vars VSIZE 
+	ldw x,#ds_msg 
+	call puts
+	ldw x,#dstack_unf 
+1$:	subw x,#CELL_SIZE  
+	ldw (XSAVE,sp),x
+	ldw  x,(x)
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#10+128
+	call prti24 
+	ldw x,(XSAVE,sp)
+	cpw x,dstkptr 
+	jreq 4$ 
+	jra 1$  
+4$: ld a,#CR 
+	call putc 
+	_drop VSIZE
+	pop a  
+	ret
+.endif 
+
+;----------------------------
+; store variable 
+; dstack: {addr value -- }
+;----------------------------
+store:
+	call dpop 
+	ldw y,x   ; y=value 
+	call dpop 
+	ldw (x),y 
+	ret 
+
+;--------------------------------
+;  add 2 top integer on dstack 
+;  dstack: {n2 n1-- n2+n1}
+;--------------------------------
+add:
+	call dpop
+	ldw acc16,x  
+	ldw x,[dstkptr]
+	addw x,acc16
+	ldw [dstkptr],x  
+	ret 
+
+;--------------------------------
+;  substract 2 top integer on dstack 
+;  dstack: {n2 n1 -- n2-n1}
+;--------------------------------
+subtract:
+	call dpop 
+	ldw acc16,x  
+	ldw x,[dstkptr]
+	subw x,acc16  
+	ldw [dstkptr],x 
+	ret 
+
+;-------------------------------------
+; multiply 2 top integers on dstack
+; dstack: {n2 n1 -- n2*n1}
+; product overflow is ignored unless
+; MATH_OVF assembler flag is set to 1
+;-------------------------------------
+   ; local variables 
+	SIGN=1
+	PROD=2
+	N1_HB=4
+	N1_LB=5
+	N2_HB=6
+	N2_LB=7 
+	VSIZE=7
+multiply:
+	_vars VSIZE 
+	clr (SIGN,sp)
+	call dpop 
+	ldw (N1_HB,sp),x
+	ld a,xh 
+	bcp a,#0x80 
+	jreq 2$
+	cpl (SIGN,sp)
+	negw x 
+	ldw (N1_HB,sp),x 
+2$: ldw x,[dstkptr]
+	ldw (N2_HB,sp),x 
+	ld a,xh  
+	bcp a,#0x80 
+	jreq 3$
+	cpl (SIGN,sp)
+	negw x 
+	ldw (N2_HB,sp),x 
+; N1_LB * N2_LB 	
+3$:	ld a,(N1_LB,sp)
+	ld xl,a 
+	ld a,(N2_LB,sp) 
+	mul x,a 
+.if MATH_OVF 	
+	ld a,xh 
+	bcp a,#0x80 
+	jreq 4$ 
+	ld a,#ERR_MATH_OVF 
+	jp tb_error
+.endif 	 
+4$:	ldw (PROD,sp),x
+; N1_LB * N2_HB	 
+	ld a,(N1_LB,sp) 
+	ld xl,a 
+	ld a,(N2_HB,sp)
+	mul x,a
+	ld a,xl 
+	add a,(PROD,sp)
+.if MATH_OVF 	
+	bcp a,#0x80 
+	jreq 5$ 
+	ld a,#ERR_MATH_OVF 
+	jp tb_error
+.endif 	 
+5$:	ld (PROD,sp),a 
+; N1_HB * N2_LB 
+	ld a,(N1_HB,sp)
+	ld xl,a 
+	ld a,(N2_LB,sp)
+	mul x,a 
+	ld a,xl 
+	add a,(PROD,sp)
+.if MATH_OVF 	
+	bcp a,#0x80 
+	jreq 6$ 
+	ld a,#ERR_MATH_OVF 
+	jp tb_error
+.endif 	 
+6$:	ld (PROD,sp),a 
+; N1_HB * N2_HB 	
+; it is pointless to multiply N1_HB*N2_HB 
+; as this product is over 65535 or 0 
+;
+; sign adjust product
+	tnz (SIGN,sp)
+	jreq 7$
+	ldw x, (PROD,sp)
+	negw x
+	ldw (PROD,sp),x  
+7$: ldw x,#1 
+	call ddrop_n 
+	ldw x,(PROD,sp) 
+	ldw [dstkptr],x 	
+	_drop VSIZE 
+	ret
+
+;----------------------------------
+;  euclidian divide n2/n1 
+; dstack: {n2 n1 -- n2/n1 }
+; leave remainder in acc16
+;----------------------------------
+	; local variables
+	SQUOT=1 ; sign quotient
+	SDIVD=2 ; sign dividend  
+	DIVISR=3 ; divisor 
+	VSIZE=4
+divide:
+	_vars VSIZE 
+	clr (SQUOT,sp)
+	clr (SDIVD,sp)
+; check for 0 divisor
+	call dpop 
+	tnzw x 
+    jrne 0$
+	ld a,#ERR_DIV0 
+	jp tb_error 
+; check divisor sign 	
+0$:	ld a,xh 
+	bcp a,#0x80 
+	jreq 1$
+	cpl (SQUOT,sp)
+	negw x 
+1$:	ldw (DIVISR,sp),x
+; check dividend sign 	 
+    ldw x,[dstkptr]
+	ld a,xh 
+	bcp a,#0x80 
+	jreq 2$ 
+	cpl (SQUOT,sp)
+	cpl (SDIVD,sp)
+	negw x 
+2$:	ldw y,(DIVISR,sp)
+	divw x,y
+	ldw acc16,y 
+; if sign dividend is negative and remainder!=0 inc divisor 	 
+	tnz (SDIVD,sp)
+	jreq 7$
+	tnzw y 
+	jreq 7$
+	incw x
+	ldw y,(DIVISR,sp)
+	subw y,acc16
+	ldw acc16,y  
+7$: tnz (SQUOT,sp)
+	jreq 9$ 	 
+8$:	negw x 
+9$: ldw [dstkptr],x
+	_drop VSIZE 
+	ret 
+
+
+;----------------------------------
+;  remainder resulting from euclidian 
+;  division of n2/n1 
+; dstack: {n2 n1 -- n2%n1 }
+;----------------------------------
+modulo:
+	call divide 
+	ldw x,acc16 
+	ldw [dstkptr],x 
+	ret 
+
 ;---------------------------------
 ; drop n elements from data stack 
 ; input: 
@@ -2045,39 +2316,189 @@ search_exit:
 ;--------------------------------
 
 ;--------------------------------
-;  relation parser routines
-; rel_op have same precedence as *,/,%
+;  arithmetic and relational 
+;  routines
+;  operators precedence
+;  highest to lowest
+;  operators on same row have 
+;  same precedence and are executed
+;  from left to right.
+;	'*','/','%'
+;   '-','+'
+;   '=','>','<','>=','<=','<>','><'
+;   '<>' and '><' are equivalent for not equal.
 ;--------------------------------
 
-relation:
-
+;------------------------------
+; negate value on dstack
+; dstack: {n -- -n}
+;------------------------------
+negate:	
+	ldw x,[dstkptr]
+	negw x 
+	ldw [dstkptr],x 
 	ret 
 
+
+;-----------------------------------
+; factor ::= var | integer | (relation)
+; output:
+;   integer pushed on dstack 
+; ---------------------------------
+	NEG=1
+	VSIZE=1
 factor:
-
-	ret 
-
-term:
-	call factor 
+	_vars VSIZE 
 	call get_token
-	cp a,#TOK_NONE
-	
-	ret 
-
-expression:
-	call get_token 
-	cp a,#TK_LPAREN
-	jrne 1$ 
-	call expression 
-1$: cp a,#TK_MINUS 
+	ld (NEG,sp),a 
+	and a,#TK_GRP_MASK 
+	cp a,#TK_GRP_ADD 
+	jreq 0$ 
+	ld a,(NEG,sp)
+	clr (NEG,sp)
+	jra 1$
+0$:	call get_token 
+1$:	cp a,#TK_LPAREN
+	jrne 2$
+	call relation
+	jra 5$	
+2$:	cp a,#TK_VAR 
 	jrne 3$ 
-	clrw x 
-	call dpush 
-	push a 
-	call term 
+	call fetch  
+	jra 5$  
+3$: cp a,#TK_INTGR
+    jrne 4$
+	jra 5$ 
+4$: ld a,#ERR_SYNTAX
+	jp tb_error
+5$:
+	ld a,#TK_MINUS 
+	cp a,(NEG,sp)
+	jrne 6$
+	call negate 
+6$:	_drop VSIZE
+	ld a,#TK_INTGR 
+	ret
 
+;-----------------------------------
+; term ::= factor ((*|/|%) factor)* 
+; output:
+;	integer pushed on dstack 
+;-----------------------------------
+	MULOP=1
+	VSIZE=1
+term:
+	_vars VSIZE
+	call factor
+	ld a,#TK_MINUS 
+	cp a,(MULOP,sp)
+	jrne term01 
+	call negate 
+term01:	 ; get operator 
+	call get_token
+	ld (MULOP,sp),a
+	and a,#TK_GRP_MASK
+	cp a,#TK_GRP_MULT
+	jreq 1$ 
+	_unget_tok 
+	jra term_exit
+1$:	call factor
+	ld a,(MULOP,sp) 
+	cp a,#TK_MULT 
+	jrne 3$
+	call multiply 
+	jra term01
+3$: cp a,#TK_DIV 
+	jrne 4$ 
+	call divide 
+	jra term01 
+4$: call modulo
+	jra term01 
+term_exit:
+	ld a,#TK_INTGR
+	_drop VSIZE 
+	call dots 
 	ret 
 
+;-------------------------------
+;  expr ::= (+|-|e) term (+|- term)*
+;  result range {-32768..32767}
+;  output:
+;     pushed on dstack 
+;-------------------------------
+	OP=1 
+	VSIZE =1 
+expression:
+	_vars VSIZE 
+	call term 
+2$: call get_token 
+	ld (OP,sp),a  
+	and a,#TK_GRP_MASK
+	cp a,#TK_GRP_ADD 
+	jreq 3$ 
+	_unget_tok 
+	jra exp_exit 
+3$: call term 	
+	ld a,(OP,sp)
+	cp a,#TK_PLUS 
+	jrne 4$
+	call add 
+	jra 2$ 
+4$:	call subtract
+	jra 2$ 
+exp_exit:
+	_drop VSIZE 
+	ld a,#TK_INTGR
+	ret 
+
+;---------------------------------------------
+; rel ::= expr (rel_op expr)
+; rel_op ::=  '=','<','>','>=','<=','<>','><'
+;  relation return 1 | 0  for true | false 
+;  output:
+;	 1|0 pushed on dtsack 
+;---------------------------------------------
+	RELOP=1 
+	VSIZE=1 
+relation: 
+	_vars VSIZE 
+	call expression
+	cp a,#TK_INTGR
+	jreq 1$ 
+	ld a,#ERR_SYNTAX
+	jp tb_error
+1$:	call get_token 
+	ld (RELOP,sp),a 
+	and a,#TK_GRP_MASK
+	cp a,#0x30 
+	jreq 2$
+	ld a,#TK_RPAREN 
+	cp a,(RELOP,sp)
+	jreq 5$
+	_unget_tok  
+	jra 5$
+2$:	
+	call expression
+	cp a,#TK_INTGR 
+	jreq 3$ 
+	ld a,#ERR_SYNTAX
+	jp tb_error 
+3$:	call dpop 
+	cpw x,[dstkptr]
+	ccf 
+	push cc 
+	pop a
+	and a,#7  
+	and a,(RELOP,sp)
+	tnz a 
+	jreq 4$
+	ld a,#1 
+4$:	clrw x
+	ld xl,a 
+	ldw [dstkptr],x 	
+5$:	_drop VSIZE
+	ld a,#TK_INTGR  
+	ret 
 
 
 
@@ -2096,22 +2517,18 @@ size:
 	ld a,#TK_INTGR
 	ret 
 
-	VADDR=1 
-	VSIZE=2 
 let:
-	_vars VSIZE 
 	call get_token 
 	cp a,#TK_VAR 
 	jrne let_bad_syntax 
-	ldw (VADDR,sp),x 
 	call get_token 
 	cp a,#TK_EQUAL
 	jrne let_bad_syntax 
-	call expression 
-	ldw y,acc16 
-	ldw x,(VADDR,sp) 
+	call expression  
+	call dpop 
+	ldw y,x 
+	call dpop 
 	ldw (x),y 
-	_drop VSIZE 
 	ld a,#TK_NONE 
 	ret 
 let_bad_syntax:
@@ -2163,14 +2580,8 @@ print_token:
 6$: 
 	cp a,#TK_VAR
 	jrne print_exit 
-	ldw x,(x)
-	ldw acc16,x 
-	clr acc24 
-	clrw x
-	ld a,tab_width
-	ld xl,a 
-	ld a,#10+128
-	call prti24 
+	call fetch 
+	call prt_tos 
 	jra print 	 
 print_exit:	
 	ld a,#CR 
