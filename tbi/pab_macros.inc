@@ -65,7 +65,8 @@
     ERR_SYNTAX=2
     ERR_MATH_OVF=3
     ERR_DIV0=4 
-
+    ERR_NO_LINE=5
+    
 ;--------------------------------------
 ;   assembler flags 
 ;-------------------------------------
@@ -205,7 +206,8 @@
     .endif
     .endm
 
-    .macro _dbg_number 
+    .macro _dbg_number 	_dbg_prt_regs 
+
     .if DEBUG 
     _dbg_save_regs
     call number 
@@ -216,8 +218,33 @@
     .macro _dbg_nextword
     .if DEBUG 
     _dbg_save_regs
-    call next_word  
+    call get_token   
     _dbg_restore_regs
     .endif
     .endm  
 
+    .macro _dbg_dots 
+    .if DEBUG 
+    _dbg_save_regs
+    call dots 
+    _dbg_restore_regs
+    .endif 
+    .endm 
+
+    .macro _dbg_trap
+    .if DEBUG 
+    .byte 0x72,0x2 
+    .word flags 
+    .byte 1  
+    trap 
+    .endif 
+    .endm 
+
+    .macro _dbg_mark n  
+    .if DEBUG 
+    push a 
+    ld a,#n 
+    call putc 
+    pop a 
+    .endif 
+    .endm 
