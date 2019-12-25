@@ -458,6 +458,7 @@ move_exit:
 ;	X 			lineno 
 ; output:
 ;   X 			addr of line | 0 
+;   Y           lineno|insert address if not found  
 ;-------------------------------------
 	LL=1 ; line length 
 	LB=2 ; line length low byte 
@@ -469,19 +470,21 @@ search_lineno:
 	ldw y,txtbgn
 search_ln_loop:
 	cpw y,txtend 
-	jreq 8$
+	jrpl 8$
 	ldw x,y 
 	ldw x,(x) ; x=line number 
 	cpw x,acc16 
 	jreq 9$ 
+	jrpl 8$ ; 
 	ld a,(2,y)
 	ld (LB,sp),a 
 	addw y,#3 
 	addw y,(LL,sp)
 	jra search_ln_loop 
-8$: clrw y 	
+8$: exgw x,y 
+	clrw y 	
 9$: _drop VSIZE
-	ldw x,y   
+	exgw x,y   
 	ret 
 
 ;-------------------------------------
@@ -526,6 +529,8 @@ del_line:
 	VSIZE=6 
 create_gap:
 	_vars VSIZE
+	cpw x,txtend 
+	jrpl 9$ 
 	ldw (LEN,sp),y  
 	ldw acc16,y 
 	ldw (SRC,sp),x 
@@ -535,67 +540,86 @@ create_gap:
 	ldw x,txtend 
 	addw x,(LEN,sp)
 	ldw txtend,x
-	_drop VSIZE 
+9$:	_drop VSIZE 
 	ret 
 
 
 ;--------------------------------------------
-; insert line in text area 
+; insert line in tib into text area 
+; first search for already existing 
+; replace existing 
+; if strlen(tib)==0 delete existing 
 ; input:
-;   X 		line number 
-;   Y 		address of insert | 0 
+;   X 				line number 
+;   tib[in.w]  		text to insert  
 ; output:
 ;   none
 ;---------------------------------------------
-	XSAVE=1 
-	YSAVE=3 
-	LLEN=5  ; line length
-	VSIZE=6 
+	DEST=1  ; text area insertion address 
+	SRC=3   ; str to insert address 
+	LINENO=5 ; line number 
+	LLEN=7 ; line length 
+	VSIZE=8  
 insert_line:
 	_vars VSIZE 
-	ldw (XSAVE,sp),x  ; lineno
-	ldw (YSAVE,sp),y  ; insert addr. 
+	ldw (LINENO,sp),x 
 	ldw x,#tib 
 	addw x,in.w 
-	call strlen
+	ldw (SRC,sp),x 
+	call strlen 
+	ldw (LLEN,sp),x
+	ldw x,(LINENO,sp)
+	call search_lineno 
 	tnzw x 
-	jreq 9$ ; empty line 
-	ldw (LLEN,sp),x 
-	call size ; free space available 
-	subw x,#3 ; space for lineno and linelen
-	jrmi 0$  
-	subw x,(LLEN,sp)
-	jrpl 1$ 
-0$:	ld a,ERR_TXT_FULL  ; not enough space 
-	jp tb_error  
-1$:	ldw x,(YSAVE,sp)
-	tnzw x ; if addr==0 insert at txtend 
-	jreq 4$ 
+	jrne 2$
+; line doesn't exit 	
+	ldw (DEST,sp),y 
+	jra 3$
+; line exit delete it.	
+2$: ldw (DEST,sp),x 
+	call del_line
+; leave or insert new line if LLEN>0
+3$: 
+; check for available space 
+	call size 
+	call dpop 
+	subw x,#3 
+    subw x,(LLEN,sp)
+	jrpl 31$
+	ld a,#ERR_TXT_FULL
+	jp tb_error 
+31$:	
+	tnz (LLEN+1,sp)
+	jreq insert_ln_exit ; empty line forget it.
+	ldw x,(DEST,sp)
+	cpw x,txtend 
+	jrpl 4$ 
 ; must create a gap 
-	ld a,(LLEN+1,sp)
-	add a,#3 ; space for lineno and linelen 
+	ldw y,(LLEN,sp)
+	addw y,#3 ; space for lineno and linelen 
 	call create_gap 
 	jra 5$ 
 4$: ; insert at end. 
 	ldw y,txtend
-	ldw (YSAVE,sp),y
+	ldw (DEST,sp),y
 	addw y,(LLEN,sp)
 	addw y,#3 
-	ldw txtend,y   
-5$:	ldw x,(YSAVE,sp) ; dest address 
-	ldw y,(XSAVE,sp) ; line number 
+	ldw txtend,y  
+5$:	
+	ldw x,(DEST,sp) ; dest address 
+	ldw y,(LINENO,sp) ; line number 
 	ldw (x),y 
 	addw x,#2
 	ld a,(LLEN+1,sp)
 	ld (x),a 
 	incw x 
-	ldw (XSAVE,sp),x ; dest 
+	ldw (DEST,sp),x ; dest 
 	ldw y,(LLEN,sp) ; src addr  
 	ldw acc16,y
-	ldw y,#tib 
-	addw y,in.w 
+	ldw y,(SRC,sp)
 	call move  
-9$:	_drop VSIZE
+insert_ln_exit:	
+	_drop VSIZE
 	ret
 	
 ;------------------------------------
@@ -818,21 +842,14 @@ interp_loop:
 ; if exist replace with new line 
 ; or if new line empty delete existing 
 ; else insert new line
-	ld a,#0x7f 
-	and a,acc16  ; accept only positive integer 
-	ld acc16,a
-	clr acc24 
-	clrw x
-	ld a,#5
-	ld xl,a  
-	ld a,#10  
-	call prti24
-	ldw x,#tib 
-	addw x,in.w 
-	call puts  
+	call dpop 
+	ld a,xh 
+	jrpl 1$   
+	jp syntax_error
+1$:
+	call insert_line 
 	jra interp 
-;	call search_lineno
-; X = lineno if exist otherwise 0.
+
 2$:	ld a,#'D  
 	cp a,pad 
 	jrne 3$ 
@@ -2388,25 +2405,43 @@ expect:
 ; arguments list.
 ; arg_list::= '(' rel[','rel]*')'
 ; all arguments are of integer type
+; missing argument replace by 0.
 ; input:
-;   none 
+;   A 			number of expected arguments  
 ; output:
+;   A 			should be >=0 
 ;	arguments pushed on dstack 
 ;--------------------------------
+	ARG_CNT=1 
 arg_list:
+	push a 
 	ld a,#TK_LPAREN 
 	call expect 
 1$: call relation 
 	cp a,#TK_INTGR
-	jreq 2$
-	jp syntax_error 
-2$:	call get_token 
-	cp a,#TK_RPAREN
-	jreq 9$ 
+	jreq 4$
+	call get_token 
+	cp a,#TK_RPAREN 
+	jreq 9$ ; list end 
+2$:	cp a,#TK_COMMA  
+	jreq 3$
+	jp syntax_error
+3$:
+; missing args replaced by 0.
+	clrw x 
+	call dpush
+4$: dec (ARG_CNT,sp)
+	call get_token 
 	cp a,#TK_COMMA 
 	jreq 1$ 
-	call syntax_error 
-9$: ret 
+	_unget_tok 
+	jra 1$ 
+9$: pop a 
+	bcp a,#0x80 
+	jreq 10$
+	jp syntax_error ; more arguments than expected 
+10$:
+	ret 
 
 
 
@@ -2663,10 +2698,112 @@ let_bad_syntax:
 	ld a,#ERR_SYNTAX
 	jp tb_error 
 
+;----------------------------
+; BASIC: LIST([[start][,end]])
+; list program lines 
+; form start to end 
+; if empty argument list then 
+; list all.
+;----------------------------
+	FIRST=1
+	LAST=3 
+	LN_PTR=5
+	VSIZE=6 
 list:
-	ldw x,#LIST
+	_vars VSIZE
+	clrw x 
+	ldw (FIRST,sp),x ; list from start 
+	ldw x,0x7fff ; biggest line number 
+	ldw (LAST,sp),x 
+	call get_token 
+	cp a,#TK_NONE 
+	jreq lines_skip
+	cp a,#TK_INTGR
+	jreq first_line 
+minus_test:
+    cp a,#TK_MINUS
+	jreq get_last 
+	jp syntax_error
+first_line:
+	call dpop 
+	ldw (FIRST,sp),x 
+	call get_token
+	cp a,#TK_NONE 
+	jreq lines_skip  
+	jra minus_test 
+get_last:	
+	call get_token
+	cp a,#TK_NONE 
+	jreq lines_skip 
+	cp a,#TK_INTGR
+	jreq last_line 
+	jp syntax_error  
+last_line:
+	call dpop 
+	ldw (LAST,sp),x 
+lines_skip:
+	ldw x,txtbgn
+2$:	ldw (LN_PTR,sp),x 
+	cpw x,txtend 
+	jrpl list_exit 
+	ldw x,(x) ;lineno 
+	cpw x,(FIRST,sp)
+	jrpl list_start 
+	ldw x,(LN_PTR,sp) 
+	addw x,#2 
+	ld a,(x)
+	incw x 
+	ld acc8,a 
+	clr acc16 
+	addw x,acc16
+	jra 2$ 
+; print loop
+list_start:
+	ldw x,(LN_PTR,sp)
+3$:	
+	call prt_basic_line
+	ldw x,(LN_PTR,sp)
+	addw x,#2 
+	ld a,(x)
+	incw x 
+	ld acc8,a 
+	clr acc16 
+	addw x,acc16
+	cpw x,txtend 
+	jrpl list_exit
+	ldw (LN_PTR,sp),x
+	ldw x,(x)
+	cpw x,(LAST,sp)  
+	jrpl list_exit 
+	ldw x,(LN_PTR,sp)
+	jra 3$
+list_exit:
+	_drop VSIZE 
+	clr a 	
+	ret
+
+empty: .asciz "Nothing to list\n"
+
+;--------------------------
+; input:
+;   X 		pointer at line
+; output:
+;   none 
+;--------------------------	
+prt_basic_line:
+	pushw x 
+	ldw x,(x)
+	ldw acc16,x 
+	clr acc24 
+	ldw x,#5 
+	ld a,#10 
+	call prti24 
+	popw x 
+	addw x,#2
 	call prt_cstr
-	ret 
+	ld a,#CR 
+	call putc 
+	ret 	
 
 	COMMA=1
 	VSIZE=1
@@ -2760,6 +2897,7 @@ wait:
 ; put a byte at addr 
 ;--------------------
 poke:
+	ld a,#2 ; expect 2 arguments
 	call arg_list 
 	call dpop 
     ld a,xl 
@@ -2773,6 +2911,7 @@ poke:
 ; get the byte at addr 
 ;-----------------------
 peek:
+	ld a,#1 ; expect 1 arguments 
 	call arg_list
 	call dpop 
 	ld a,(x)
