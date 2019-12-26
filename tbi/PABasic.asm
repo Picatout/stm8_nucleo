@@ -492,26 +492,34 @@ search_ln_loop:
 ; input:
 ;   X 			addr of line 
 ;-------------------------------------
+	LLEN=1
+	SRC=3
+	VSIZE=4
 del_line: 
+	_vars VSIZE 
 	ld a,(2,x) ; line length
 	ld acc8,a 
-	clr acc16 
+	clr acc16
+	ldw y, acc16 
+	ldw (LLEN,sp),y  
 ; keek it to adjust txtend after move 
-	push a
-	push #0  
 	ldw y,x 
+	addw y,#3
 	addw y,acc16
-	addw y,#3  
+	ldw (SRC,sp),y  ;save source 
 	ldw acc16,y 
 	ldw y,txtend 
 	subw y,acc16 ; y=count 
 	ldw acc16,y 
+	ldw y,(SRC,sp)    ; source
 	call move
-	popw y 
+	ldw y,(LLEN,sp)    ; count 
 	ldw acc16,y 
-	ldw y,txtend 
+	ldw y,txtend
+	subw y,#3 
 	subw y,acc16 
-	ldw txtend,y    
+	ldw txtend,y
+	_drop VSIZE     
 	ret 
 
 
@@ -694,6 +702,14 @@ cold_start:
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
 	rim 
+clear_basic:
+	clrw x 
+	ldw lineno,x
+	clr count 
+	ldw x,#free_ram 
+	ldw txtbgn,x 
+	ldw txtend,x 
+	call clear_vars 
     jp warm_start 
 
 err_msg:
@@ -753,18 +769,11 @@ warm_start:
 	ldw x,#dstack_unf 
 	ldw dstkptr,x 
 	ldw x,#dstack 
+	clr untok
 	subw x,#CELL_SIZE  
 	ldw array_addr,x 
 	mov tab_width,#TAB_WIDTH 
-	clr untok
 	mov base,#10 
-	ldw x,#free_ram 
-	ldw txtbgn,x 
-	ldw txtend,x 
-	clrw x 
-	ldw lineno,x
-	clr count 
-	call clear_vars 
 ;----------------------------
 ; tokenizer test
 ;----------------------------
@@ -3020,9 +3029,8 @@ new:
 	clr a 
 	ret 
 0$:	
-	call clear_vars 
 	_drop 2 
-	jp warm_start
+	jp clear_basic
 	 
 
 save:
