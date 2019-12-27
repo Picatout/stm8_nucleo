@@ -488,9 +488,9 @@ search_ln_loop:
 	ret 
 
 ;-------------------------------------
-; delete line which is at addr
+; delete line at addr
 ; input:
-;   X 			addr of line i.e DEST for move 
+;   X 		addr of line i.e DEST for move 
 ;-------------------------------------
 	LLEN=1
 	SRC=3
@@ -501,18 +501,17 @@ del_line:
 	add a,#3
 	ld (LLEN+1,sp),a 
 	clr (LLEN,sp)
-; keek it to adjust txtend after move 
-	ldw y,x 
-	addw y,(LLEN,sp)
+	ldw y,x  
+	addw y,(LLEN,sp) ;SRC  
 	ldw (SRC,sp),y  ;save source 
 	ldw y,txtend 
 	subw y,(SRC,sp) ; y=count 
 	ldw acc16,y 
 	ldw y,(SRC,sp)    ; source
 	call move
-	ldw y,txtend
+	ldw y,txtend 
 	subw y,(LLEN,sp)
-	ldw txtend,y
+	ldw txtend,y  
 	_drop VSIZE     
 	ret 
 
@@ -521,25 +520,31 @@ del_line:
 ; create a gap in text area 
 ; input:
 ;    X 			addr 
-;    Y 			length 
+;    Y 			gap length 
 ; output:
 ;    X 			addr 
 ;--------------------------------------------
-	SRC=1
-	DEST=3
-	LEN=5 
+	DEST=1
+	SRC=3
+	LEN=5
 	VSIZE=6 
 create_gap:
 	_vars VSIZE
 	cpw x,txtend 
 	jrpl 9$ ; no need for a gap since at end of text.
-	ldw (LEN,sp),y  
-	ldw acc16,y 
 	ldw (SRC,sp),x 
-	addw x,(LEN,sp) 
-	ldw y,(SRC,sp)
-	call move
+	ldw (LEN,sp),y 
+	ldw acc16,y 
+	ldw y,x ; SRC
+	addw x,acc16  
+	ldw (DEST,sp),x 
+;compute size to move 	
 	ldw x,txtend 
+	subw x,(SRC,sp)
+	ldw acc16,x
+	ldw x,(DEST,sp) 
+	call move
+	ldw x,txtend
 	addw x,(LEN,sp)
 	ldw txtend,x
 9$:	_drop VSIZE 
@@ -2657,7 +2662,7 @@ expr_exit:
 ;  output:
 ;	 1|0 pushed on dtsack 
 ;---------------------------------------------
-	RELOP=1 
+	RELOP=1
 	VSIZE=1 
 relation: 
 	_vars VSIZE
@@ -2681,16 +2686,23 @@ relation:
 	jp tb_error 
 3$:	
 	call substract
-	ccf 
-	push cc 
-	pop a
-	and a,#7  
+	jrne 31$
+	mov acc8,#2 ; n1==n2
+	jra 34$ 
+31$: 
+	jrsgt 32$  
+	mov acc8,#4 ; n1<2 
+	jra 34$
+32$:
+	mov acc8,#1 ; n1>n2 
+34$:
+	clrw x 
+	ld a, acc8  
 	and a,(RELOP,sp)
 	tnz a 
 	jreq 4$
-	ld a,#1 
-4$:	clrw x
-	ld xl,a 
+	incw x 
+4$:	 
 	ldw [dstkptr],x 	
 5$:
 	ld a,#TK_INTGR
@@ -3130,11 +3142,6 @@ usr:
 	call prt_cstr 
 	ret 
 
-on: 
-	ldw x,#ON 
-	call prt_cstr 
-	ret 
-
 ;------------------------------
 ;      dictionary 
 ; format:
@@ -3154,6 +3161,8 @@ name:
 	LINK=0
 kwor_end:
 
+	_dict_entry,4,LOAD,load 
+	_dict_entry,4,SAVE,save 
 	_dict_entry,3,HEX,hex_base
 	_dict_entry,3,DEC,dec_base
 	_dict_entry 5,INPUT,input 
@@ -3170,11 +3179,8 @@ kwor_end:
 	_dict_entry,4,NEXT,next 
 	_dict_entry,4,STOP,stop 
 	_dict_entry,6,RETURN,return 
-	_dict_entry,2,ON,on 
 	_dict_entry,4,PEEK,peek 
 	_dict_entry,4,POKE,poke 
-	_dict_entry,4,LOAD,load 
-	_dict_entry,4,SAVE,save 
 	_dict_entry,3,USR,usr
 	_dict_entry,3,NEW,new
 	_dict_entry,4,SIZE,size    
