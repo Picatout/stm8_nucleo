@@ -44,18 +44,18 @@
 	STACK_EMPTY=RAM_SIZE-1  
 	FRUN=0 ; flags run code in variable flags
 	FTRAP=1 ; inside trap handler  
-in.w:  .blkb 1 ; parser position in tib
+in.w:  .blkb 1 ; parser position in text line
 in:    .blkb 1 ; low byte of in.w
-count: .blkb 1 ; length of string in tib 
+count: .blkb 1 ; length of string in text line  
+basicptr:  .blkb 2  ; point to text buffer 
+lineno: .blkb 2  ; BASIC line number 
+base:  .blkb 1 ; nemeric base used to print integer 
 acc24: .blkb 1 ; 24 accumulator
 acc16: .blkb 1
 acc8:  .blkb 1
 untok: .blkb 1 
-base:  .blkb 1 ; nemeric base used to print integer 
 farptr: .blkb 3 ; far pointer 
-basicptr: .blkb 3 ; BASIC parse pointer 
 dstkptr: .blkw 1  ; data stack pointer 
-lineno: .blkb 2  ; BASIC line number 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
 array_addr: .ds 2 ; address of @ array 
@@ -475,7 +475,7 @@ search_ln_loop:
 	ldw x,(x) ; x=line number 
 	cpw x,acc16 
 	jreq 9$ 
-	jrpl 8$ ; 
+	jrpl 8$ ; from here all lines are > lineno 
 	ld a,(2,y)
 	ld (LB,sp),a 
 	addw y,#3 
@@ -490,7 +490,7 @@ search_ln_loop:
 ;-------------------------------------
 ; delete line which is at addr
 ; input:
-;   X 			addr of line 
+;   X 			addr of line i.e DEST for move 
 ;-------------------------------------
 	LLEN=1
 	SRC=3
@@ -498,26 +498,20 @@ search_ln_loop:
 del_line: 
 	_vars VSIZE 
 	ld a,(2,x) ; line length
-	ld acc8,a 
-	clr acc16
-	ldw y, acc16 
-	ldw (LLEN,sp),y  
+	add a,#3
+	ld (LLEN+1,sp),a 
+	clr (LLEN,sp)
 ; keek it to adjust txtend after move 
 	ldw y,x 
-	addw y,#3
-	addw y,acc16
+	addw y,(LLEN,sp)
 	ldw (SRC,sp),y  ;save source 
-	ldw acc16,y 
 	ldw y,txtend 
-	subw y,acc16 ; y=count 
+	subw y,(SRC,sp) ; y=count 
 	ldw acc16,y 
 	ldw y,(SRC,sp)    ; source
 	call move
-	ldw y,(LLEN,sp)    ; count 
-	ldw acc16,y 
 	ldw y,txtend
-	subw y,#3 
-	subw y,acc16 
+	subw y,(LLEN,sp)
 	ldw txtend,y
 	_drop VSIZE     
 	ret 
@@ -538,7 +532,7 @@ del_line:
 create_gap:
 	_vars VSIZE
 	cpw x,txtend 
-	jrpl 9$ 
+	jrpl 9$ ; no need for a gap since at end of text.
 	ldw (LEN,sp),y  
 	ldw acc16,y 
 	ldw (SRC,sp),x 
@@ -574,8 +568,11 @@ insert_line:
 	ldw x,#tib 
 	addw x,in.w 
 	ldw (SRC,sp),x 
-	call strlen 
-	ldw (LLEN,sp),x
+	call strlen
+	tnzw x 
+	jreq 1$
+	incw x 
+1$:	ldw (LLEN,sp),x
 	ldw x,(LINENO,sp)
 	call search_lineno 
 	tnzw x 
@@ -621,11 +618,8 @@ insert_line:
 	ld a,(LLEN+1,sp)
 	ld (x),a 
 	incw x 
-	ldw (DEST,sp),x ; dest 
-	ldw y,(LLEN,sp) ; src addr  
-	ldw acc16,y
-	ldw y,(SRC,sp)
-	call move  
+	ldw y,(SRC,sp) ; src addr  
+	call strcpy   
 insert_ln_exit:	
 	_drop VSIZE
 	ret
@@ -672,9 +666,12 @@ is_alpha:
 	MINOR=0
 software: .asciz "\n\nPalo Alto BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
 cold_start:
-	clr flags 
-    ldw x,#STACK_EMPTY 
-    ldw sp,x
+; clear all ram 
+	ldw x,#STACK_EMPTY
+	ldw sp,x   
+0$: clr (x)
+	decw x 
+	jrne 0$ 
     call clock_init 
     call uart3_init
 ; activate PE_4 (user button interrupt)
@@ -702,6 +699,9 @@ cold_start:
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
 	rim 
+	ldw x,#dstack 
+	subw x,#CELL_SIZE  
+	ldw array_addr,x 
 clear_basic:
 	clrw x 
 	ldw lineno,x
@@ -725,7 +725,6 @@ syntax_error:
 	ld a,#ERR_SYNTAX 
 
 tb_error:
-	push a 
 	ldw x, #err_msg 
 	clr acc16 
 	sll a
@@ -734,46 +733,45 @@ tb_error:
 	addw x,acc16 
 	ldw x,(x)
 	call puts
-	btjf flags,#FRUN,0$ 
-	ldw x,basicptr 
+	ldw x,lineno 
+	tnzw x 
+	jreq 2$
 	ldw acc16,x 
-	clr acc24
-	clrw x   
-	ld a,#5
-	ld xl,a 
+	clr acc24 
+	ldw x,#5 
 	ld a,#10 
 	call prti24
+2$:	 
 	ldw x,basicptr   
-	addw x,#2 
-	call prt_cstr
+	ld a,lineno 
+	or a,lineno+1
+	jreq 3$
+	addw x,#3 
+3$:	call puts 
 	ld a,#CR 
-	call puts 
-	ldw x,in.w 
+	call putc 
+	clrw x 
+	ld a,lineno 
+	or a,lineno+1
+	jreq 4$
+	ldw x,#5 
+4$:	addw x,in.w 
 	call spaces
 	ld a,#'^ 
 	call putc 
-0$:	pop a 
-	cp a,#ERR_SYNTAX
-	jrne 1$
-	ldw x,#tib
-	call puts 
-	ld a,#CR 
-	call putc 
-	ld a,in 
-	call spaces 
-	ld a,#'^' 
-	call putc  
 1$: ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
+	clr untok
 	ldw x,#dstack_unf 
 	ldw dstkptr,x 
-	ldw x,#dstack 
-	clr untok
-	subw x,#CELL_SIZE  
-	ldw array_addr,x 
 	mov tab_width,#TAB_WIDTH 
 	mov base,#10 
+	clrw x 
+	ldw lineno,x 
+	ldw x,#tib 
+	ldw basicptr,x 
+
 ;----------------------------
 ; tokenizer test
 ;----------------------------
@@ -833,6 +831,28 @@ test_tok:
 ;----------------------------
 interp:
 	clr in.w
+	ld a,lineno 
+	or a,lineno+1
+	jreq 4$
+; running program
+; goto next basic line 
+	ldw x,basicptr
+	ld a,(2,x) ; line length 
+	ld acc8,a 
+	clr acc16 
+	addw x,#3 
+	addw x,acc16
+	cpw x,txtend 
+	jrpl warm_start
+	ldw basicptr,x ; start of next line  
+	ld a,(2,x)
+	add a,#2 ; because 'in' start at 3.
+	ld count,a 
+	ldw x,(x) ; line no 
+	ldw lineno,x 
+	mov in,#3 ; skip first 3 bytes of line 
+	jra interp_loop 
+4$: ; commande line mode 	
 	clr in
 	ld a,#CR 
 	call putc 
@@ -840,30 +860,38 @@ interp:
 	call putc 
 	call readln
 interp_loop:
+	ld a,in 
+	cp a,count 
+	jrpl interp 
 	call get_token
-	cp a,#TK_KWORD
+	cp a,#TK_COLON 
+	jreq interp_loop  
+	cp a,#TK_VAR
+	jrne 0$ 
+	_unget_tok 
+	call let 
+	jra interp_loop 
+0$:	cp a,#TK_KWORD
 	jreq 4$ 
 	cp a,#TK_NONE
-	jreq interp ; empty line 
+	jreq interp_loop ; empty line 
 	cp a,#TK_INTGR
 	jrne 2$ 
-; check if this line number exist  
-; if exist replace with new line 
-; or if new line empty delete existing 
-; else insert new line
+;if line begin with number 
+;insert it in text area 
 	call dpop 
 	ld a,xh 
 	jrpl 1$   
 	jp syntax_error
 1$:
 	call insert_line 
-	jra interp 
+	jp interp 
 
 2$:	ld a,#'D  
 	cp a,pad 
 	jrne 3$ 
 	_dbg_trap 
-3$:	jra interp 
+3$:	jp interp 
 
 4$:	
 	call dpop 
@@ -1668,6 +1696,8 @@ parse_relop:
 	popw x 
 	ret 
 
+
+
 ;------------------------------------
 ; Command line tokenizer
 ; scan tib for next token
@@ -1699,6 +1729,7 @@ get_token:
 	clr untok  
 	ret 
 1$:	
+	ldw y, basicptr   	
 	ld a,in 
 	cp a,count 
 	jrmi 11$
@@ -1707,7 +1738,6 @@ get_token:
 11$:	
 	_vars VSIZE
 	ldw x, #pad
-	ldw y, #tib  	
 	ld a,#SPACE
 	call skip
 	ld a,([in.w],y)
@@ -1744,7 +1774,7 @@ colon_tst:
 	jp token_exit2
 comma_tst:
 	_case COMMA sharp_tst 
-	ld a,#TK_COMMA 
+	ld a,#TK_COMMA
 	jp token_exit2 
 sharp_tst:
 	_case SHARP dash_tst 
@@ -2003,9 +2033,9 @@ mulu24_8:
 	ret
 
 ;------------------------------------
-; skip character c in tib starting from 'in'
+; skip character c in text starting from 'in'
 ; input:
-;	 y 		point to tib 
+;	 y 		point to text buffer
 ;    a 		character to skip
 ; output:  
 ;	'in' ajusted to new position
@@ -2808,8 +2838,8 @@ prt_basic_line:
 	ld a,#10 
 	call prti24 
 	popw x 
-	addw x,#2
-	call prt_cstr
+	addw x,#3
+	call puts 
 	ld a,#CR 
 	call putc 
 	ret 	
@@ -2817,7 +2847,7 @@ prt_basic_line:
 	COMMA=1
 	VSIZE=1
 print:
-	push #0 
+	push #0 ; local variable COMMA 
 prt_loop: 	
 	call relation 
 	cp a,#TK_INTGR 
@@ -2825,7 +2855,11 @@ prt_loop:
 	call prt_tos 
 	jra prt_loop 
 1$: 
-	call get_token	
+	call get_token
+	cp a,#TK_COLON 
+	jreq print_exit
+	cp a,#TK_NONE 
+	jreq print_exit 
 	cp a,#TK_QSTR
 	jrne 2$   
 	ldw x,#pad 
@@ -2848,7 +2882,7 @@ prt_loop:
 	ld (COMMA,sp),a 
 	jra prt_loop   
 4$: cp a,#TK_SHARP
-	jrne 6$  
+	jrne 20$  
 	call get_token
 	cp a,#TK_INTGR 
 	jreq 5$ 
@@ -2859,25 +2893,13 @@ prt_loop:
 	and a,#15 
 	ld tab_width,a 
 	jp prt_loop 
-6$: 
-	cp a,#TK_NONE 
-	jreq print_exit 
-7$: cp a,#TK_COLON 
-	jreq print_exit 
-	jra 20$
 print_exit:
 	tnz (COMMA,sp)
-	jreq 9$
+	jrne 9$
 	ld a,#CR 
     call putc 
 9$:	_drop VSIZE 
-	ld a,#TK_NONE 
-	ret 
-
-; run BASIC program 
-run: 
-	ldw x,#RUN
-	call prt_cstr 
+	clr a
 	ret 
 
 ; BASIC remark 
@@ -2930,9 +2952,18 @@ peek:
 	ld a,#TK_INTGR
 	ret 
 
-if:
-	ldw x,#IF 
-	call prt_cstr 
+if: 
+	call relation 
+	cp a,#TK_INTGR
+	jreq 1$ 
+	jp syntax_error
+1$:	clr a 
+	call dpop 
+	tnzw x 
+	jreq 9$  
+	ret  
+;skip to next line
+9$:	mov in,count
 	ret 
 
 for:
@@ -2950,7 +2981,9 @@ next:
 ; jump to lineno 
 ;------------------------
 goto:
-	btjt flags,#FRUN,0$ 
+	ld a,lineno 
+	or a,lineno+1 
+	jrne 0$  
 	ret 
 0$:	_drop 2 ; don't use return address 
 	jra go_common
@@ -2962,28 +2995,37 @@ goto:
 ; are saved on cstack
 ;--------------------
 gosub:
-	btjt flags,#FRUN,0$ 
+	ld a,lineno 
+	or a,lineno+1 
+	jrne 0$  
 	ret 
-0$:	ldw x,lineno 
+0$:	ldw x,basicptr
+	ld a,(2,x)
+	add a,#3 
+	ld acc8,a 
+	clr acc16 
+	addw x,acc16 
 	ldw (1,sp),x ; overwrite return addr, will not be used  
-	ldw x,basicptr 
-	pushw x 
 go_common: 
 	call relation 
 	cp a,#TK_INTGR
 	jreq 1$ 
 	jp syntax_error
-1$: ldw x,[dstkptr] 
+1$: call dpop 
 	call search_lineno  
 	tnzw x 
 	jrne 2$ 
 	ld a,#ERR_NO_LINE 
 	jp tb_error 
-2$: addw x,#3 
+2$: 
 	ldw basicptr,x 
-	call dpop 
+	ld a,(2,x)
+	add a,#3 
+	ld count,a 
+	ldw x,(x)
 	ldw lineno,x 
-	jp interp
+	mov in,#3 
+	jp interp_loop 
 
 ;------------------------
 ; BASIC: RETURN 
@@ -2993,28 +3035,57 @@ go_common:
 	_arg BASICPTR 1 
 	_arg LINENO 3 
 return:
-	btjt flags,#FRUN,0$
+	ld a,lineno 
+	or a,lineno+1 
+	jrne 0$ 
+	ret 
+0$:	ldw x,(3,sp) 
+	ldw basicptr,x 
+	ld a,(2,x)
+	add a,#3 
+	ld count,a 
+	mov in,#3 
+	_drop 4 
+	jp interp_loop 
+
+
+;----------------------------------
+; BASIC: RUN ["program_name"]
+; run BASIC program in RAM or flash
+;----------------------------------- 
+run: 
+	tnz lineno 
+	jreq 0$ 
+	clr a 
+	ret
+0$: ldw x,txtbgn
+	cpw x,txtend 
+	jrmi 1$ 
 	clr a 
 	ret 
-0$:	ldw x,(BASICPTR,sp)
-	ldw basicptr,x
-	ldw x,(LINENO,sp)
-	ldw lineno,x 
-	ldw x,(1,sp)
-	_drop 6 
-	jp (x) 
+1$: _drop 2 
+	ldw basicptr,x 
+	ld a,(2,x)
+	add a,#2 ; consider that in start at 3  
+	ld count,a
+	ldw x,(x)
+	ldw lineno,x
+	mov in,#3	
+	jp interp_loop 
+
 
 ;----------------------
 ; BASIC: STOP 
 ; stop running program
 ;---------------------- 
 stop: 
-	btjt flags,#FRUN,0$ 
+	ld a,lineno 
+	or a,lineno+1 
+	jrne 0$
 	clr a 
 	ret 
 ; clean dstack and cstack 
-0$: bres flags,#FRUN 
-	ldw x,RAM_SIZE-1 
+0$: ldw x,#STACK_EMPTY 
 	ldw sp,x 
 	jp warm_start
 
@@ -3025,7 +3096,8 @@ stop:
 ; and clear variables 
 ;------------------------
 new: 
-	btjf flags,#FRUN,0$
+	tnz lineno 
+	jreq 0$
 	clr a 
 	ret 
 0$:	
@@ -3034,7 +3106,8 @@ new:
 	 
 
 save:
-	btjf flags,#FRUN,0$
+	tnz lineno 
+	jreq 0$ 
 	clr a 
 	ret 
 0$:	
@@ -3043,7 +3116,8 @@ save:
 	ret 
 
 load:
-	btjf flags,#FRUN,0$
+	tnz lineno 
+	jreq 0$ 
 	clr a 
 	ret 
 0$:	
