@@ -43,7 +43,9 @@
 	STACK_SIZE=128
 	STACK_EMPTY=RAM_SIZE-1  
 	FRUN=0 ; flags run code in variable flags
-	FTRAP=1 ; inside trap handler  
+	FTRAP=1 ; inside trap handler 
+	FFOR=2 ; FOR loop in preparation 
+	
 in.w:  .blkb 1 ; parser position in text line
 in:    .blkb 1 ; low byte of in.w
 count: .blkb 1 ; length of string in text line  
@@ -53,11 +55,13 @@ base:  .blkb 1 ; nemeric base used to print integer
 acc24: .blkb 1 ; 24 accumulator
 acc16: .blkb 1
 acc8:  .blkb 1
-untok: .blkb 1 
+untok: .blkb 1  ; last ungotten token attribute 
+tokval: .blkw 1 ; last parsed token value  
 farptr: .blkb 3 ; far pointer 
 dstkptr: .blkw 1  ; data stack pointer 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
+loop_depth: .ds 1 ; FOR loop depth 
 array_addr: .ds 2 ; address of @ array 
 arraysize: .ds 2 ; array size 
 flags: .ds 1 ; boolean flags
@@ -592,7 +596,6 @@ insert_line:
 3$: 
 ; check for available space 
 	call size 
-	call dpop 
 	subw x,#3 
     subw x,(LLEN,sp)
 	jrpl 31$
@@ -767,9 +770,14 @@ tb_error:
 1$: ldw x,#STACK_EMPTY 
     ldw sp,x
 warm_start:
+	clr flags 
 	clr untok
+	clrw x 
+	ldw tokval,x 
+	clr loop_depth 
 	ldw x,#dstack_unf 
 	ldw dstkptr,x 
+_dbg_prt_var dstkptr 	
 	mov tab_width,#TAB_WIDTH 
 	mov base,#10 
 	clrw x 
@@ -836,8 +844,7 @@ test_tok:
 ;----------------------------
 interp:
 	clr in.w
-	ld a,lineno 
-	or a,lineno+1
+	btjf flags,#FRUN,4$ 
 	jreq 4$
 ; running program
 ; goto next basic line 
@@ -884,7 +891,6 @@ interp_loop:
 	jrne 2$ 
 ;if line begin with number 
 ;insert it in text area 
-	call dpop 
 	ld a,xh 
 	jrpl 1$   
 	jp syntax_error
@@ -899,7 +905,6 @@ interp_loop:
 3$:	jp interp 
 
 4$:	
-	call dpop 
 	call (x)
 	cp a,#TK_NONE 
 	jreq interp_loop 
@@ -910,9 +915,9 @@ interp_loop:
 	jrne interp_loop  
 	cp a,#TK_INTGR
 	jrne interp_loop 
+	call dpush 
 	call prt_tos  
 	jra interp_loop 	
-    _dbg_trap 
 	.blkb 0x71 ; reset MCU
 
 ;----------------------------------------
@@ -1483,7 +1488,8 @@ scan:
 ;   Y 	pointer to tib 
 ;   X   pointer to pab 
 ; output:
-;	pad   parsed string 
+;	pad   parsed string
+;   tokval  char* to pad  
 ;------------------------------------
 	PREV = 1
 	CURR =2 
@@ -1516,6 +1522,8 @@ parse_quote:
 	jra 2$
 5$:	inc in 
 6$: clr (x)
+	ldw x,#pad 
+	ldw tokval,x 
 	_drop VSIZE
 	ld a,#TK_QSTR  
 	ret 
@@ -1575,8 +1583,9 @@ convert_escape:
 ;   A 	    first digit 
 ; output:  
 ;   pad     number string 
-;   dstack  actual integer 
+;   X 		actual integer 
 ;   A 		TK_INTGR
+;   tokval   actual integer 
 ;-------------------------
 	BASE=1
 	CHAR=2 
@@ -1605,13 +1614,9 @@ parse_integer:
 	cp a,#'F 
 	jrc 2$ 
 3$:	clr (x)
-	pushw x
-	pushw y 
 	call atoi
 	ldw x,acc16 
-	call dpush
-	popw y 
-	popw x  
+	ldw tokval,x 
 	ld a,#TK_INTGR
 	_drop VSIZE  
 	ret 	
@@ -1624,11 +1629,11 @@ parse_integer:
 ;   Y 		point to tib 
 ;   A 	    first letter  
 ; output:
-;   dstack	exec_addr|var_addr 
+;   X		exec_addr|var_addr 
 ;   A 		token attribute 
 ;   pad 	keyword|var_name  
+;   tokval  exec_addr|var_addr 
 ;--------------------------  
-
 parse_keyword:
 	call to_upper 
 	ld (x),a 
@@ -1638,9 +1643,7 @@ parse_keyword:
 	call is_alpha 
 	jrc parse_keyword 
 1$: clr (x)
-	ldw x,#pad
-	call strlen 
-	cpw x,#1 
+	tnz pad+1 
 	jrne 2$
 ; one letter variable name 
 	ld a,pad 
@@ -1662,7 +1665,7 @@ parse_keyword:
 	ld a,#ERR_SYNTAX
 	jp tb_error 
 4$: 
-	call dpush ; push execution address on dstack
+	ldw tokval,x 
 	ret 
 
 
@@ -1692,13 +1695,11 @@ parse_relop:
 	incw x 
 	inc in 
 6$:	clr(x)
-	pushw x
-	pushw y  
 	_ldx_dict relop_dict	
 	call search_dict
 	ld a,xl
-	popw y  
-	popw x 
+	ldw x,#pad 
+	ldw tokval,x 
 	ret 
 
 
@@ -1715,7 +1716,8 @@ parse_relop:
 ;   in.w   index in tib
 ; output:
 ;   A       token attribute 
-;   pad 	token as .asciz  
+;   pad 	token as .asciz
+;   tokval   interger|addr|char|ptr to pad   
 ;------------------------------------
 	; use to check special character 
 	.macro _case c t  
@@ -1731,7 +1733,8 @@ get_token:
 	tnz untok 
 	jreq 1$
 	ld a,untok
-	clr untok  
+	clr untok 
+	ldw x,tokval 
 	ret 
 1$:	
 	ldw y, basicptr   	
@@ -1742,18 +1745,22 @@ get_token:
 	ret 
 11$:	
 	_vars VSIZE
+	clr tokval 
 	ldw x, #pad
 	ld a,#SPACE
 	call skip
 	ld a,([in.w],y)
 	jrne str_tst
+	clrw x 
+	ldw tokval,x 
+	clr pad 
 	jp token_exit
 
 str_tst: ; check for quoted string  	
 	call to_upper 
 	ld (CHAR,sp),a 
 	_case '"' nbr_tst
-	call parse_quote 
+	call parse_quote
 	jp token_exit
 nbr_tst: ; check for number 
 	ld a,#'$'
@@ -1768,47 +1775,47 @@ nbr_tst: ; check for number
 	ld (CHAR,sp),a 
 	_case '(' rparnt_tst 
 	ld a,#TK_LPAREN
-	jp token_exit2  	
+	jp token_char   	
 rparnt_tst:		
 	_case ')' colon_tst 
 	ld a,#TK_RPAREN 
-	jp token_exit2 
+	jp token_char 
 colon_tst:
 	_case ':' comma_tst 
 	ld a,#TK_COLON 
-	jp token_exit2
+	jp token_char
 comma_tst:
 	_case COMMA sharp_tst 
 	ld a,#TK_COMMA
-	jp token_exit2 
+	jp token_char
 sharp_tst:
 	_case SHARP dash_tst 
 	ld a,#TK_SHARP
-	jp token_exit2  	 	 
+	jp token_char  	 	 
 dash_tst: 	
 	_case '-' at_tst 
 	ld a,#TK_MINUS  
-	jp token_exit2
+	jp token_char 
 at_tst:
 	_case '@' plus_tst 
 	ld a,#TK_ARRAY 
-	jp token_exit2  	
+	jp token_char 	
 plus_tst:
 	_case '+' star_tst 
 	ld a,#TK_PLUS  
-	jp token_exit2 
+	jp token_char 
 star_tst:
 	_case '*' slash_tst 
 	ld a,#TK_MULT 
-	jp token_exit2 
+	jp token_char 
 slash_tst: 
 	_case '/' prcnt_tst 
 	ld a,#TK_DIV 
-	jra token_exit2 
+	jra token_char 
 prcnt_tst:
 	_case '%' eql_tst 
 	ld a,#TK_MOD
-	jra token_exit2 
+	jra token_char  
 ; 1 or 2 character tokens 	
 eql_tst:
 	_case '=' gt_tst 		
@@ -1820,7 +1827,7 @@ lt_tst:
 	_case '<' other
 rel_op:
 	call parse_relop
-	jra token_exit3 
+	jra token_exit 
 other: ; not a special character 	 
 	ld a,(CHAR,sp)
 	call is_alpha 
@@ -1829,19 +1836,20 @@ other: ; not a special character
 	jp tb_error 
 30$: 
 	call parse_keyword
-	jra token_exit3 
-token_exit2:
+	jra token_exit 
+token_char:
 	ld (ATTRIB,sp),a 
 	ld a,(CHAR,sp)
+	ld tokval+1,a 
 	ld (x),a 
 	incw x 
+	clr(x)
 	inc in 
 	ld a,(ATTRIB,sp)
 token_exit:
-	clr (x)
-token_exit3:
 	_drop VSIZE 
 	ret
+
 
 
 ;------------------------------------
@@ -2066,7 +2074,7 @@ skip:
 ;----------------------	
 dpush:
     _dp_down 1
-    ldw [dstkptr],x 
+    ldw [dstkptr],x  
 	ret 
 
 
@@ -2142,10 +2150,9 @@ dots:
 	_vars VSIZE 
 	ldw x,#ds_msg 
 	call puts
-	ldw x,#dstack_unf 
-	cpw x,dstkptr
-	jreq 4$  
-1$:	subw x,#CELL_SIZE  
+	ldw x,#dstack_unf-CELL_SIZE 
+1$:	cpw x,dstkptr 
+	jrult 4$ 
 	ldw (XSAVE,sp),x
 	ldw  x,(x)
 	ldw acc16,x 
@@ -2154,9 +2161,8 @@ dots:
 	ld a,#10+128
 	call prti24 
 	ldw x,(XSAVE,sp)
-	cpw x,dstkptr 
-	jreq 4$ 
-	jra 1$  
+	subw x,#CELL_SIZE 
+	jra 1$ 
 4$: ld a,#CR 
 	call putc 
 	_drop VSIZE
@@ -2363,7 +2369,7 @@ modulo:
 ; output:
 ;   none 
 ;-------------------------------------
-ddrop_n: 
+ddrop_n:
 	pushw y 
 	ldw y,dstkptr 
 	sllw x 
@@ -2371,7 +2377,7 @@ ddrop_n:
 	addw y,(1,sp)
 	ldw dstkptr,y 
 	popw x 
-	popw y 
+	popw y
 	ret 
 
 
@@ -2521,7 +2527,8 @@ negate:
 ;-----------------------------------
 ; factor ::= ['+'|'-'|e] var | integer | function | '('relation')' 
 ; output:
-;   integer pushed on dstack 
+;   A    token attribute 
+;   dstack 	 integer
 ; ---------------------------------
 	NEG=1
 	VSIZE=1
@@ -2539,24 +2546,23 @@ factor:
 1$:	cp a,#TK_KWORD 
 	jrne 11$ 
 	clr a 
-	call dpop 
 	call (x)
 	jra 3$
 11$:	
 	cp a,#TK_LPAREN
 	jrne 2$
-	call relation 
+	call relation
 	ld a,#TK_RPAREN 
 	call expect
+	call dpop  
 	jra 5$	
 2$:	cp a,#TK_VAR 
 	jrne 3$ 
-	call fetch  
+	ldw x,(x)  
 	jra 5$  
 3$: cp a,#TK_INTGR
-    jrne 4$
-	jra 5$ 
-4$: _unget_tok
+    jreq 5$
+	 _unget_tok
 	ld a,#TK_MINUS 
 	cp a,(NEG,sp)
 	jrne 42$
@@ -2565,19 +2571,21 @@ factor:
 42$:	
 	ld a,#TK_NONE 
 	jra 7$
-5$:
+5$: 
 	ld a,#TK_MINUS 
 	cp a,(NEG,sp)
 	jrne 6$
-	call negate
-6$:	ld a,#TK_INTGR
+	negw x
+6$:	call dpush  
+	ld a,#TK_INTGR
 7$:	_drop VSIZE
 	ret
 
 ;-----------------------------------
 ; term ::= factor [['*'|'/'|'%'] factor]* 
 ; output:
-;	integer pushed on dstack 
+;   A    	token attribute 
+;	dstack	integer
 ;-----------------------------------
 	MULOP=1
 	VSIZE=1
@@ -2620,7 +2628,8 @@ term_exit:
 ;  expr ::= term [['+'|'-'] term]*
 ;  result range {-32768..32767}
 ;  output:
-;     pushed on dstack 
+;   A    token attribute 
+;   integer    pushed on dstack 
 ;-------------------------------
 	OP=1 
 	VSIZE=1 
@@ -2712,25 +2721,31 @@ rel_exit:
 
 
 ;--------------------------------------------
-;  return text area free space 
-; input: 
-;   none 
-; output:
-;   acc24 		free space in byte 
+; BASIC: HEX 
+; select hexadecimal base for integer print
 ;---------------------------------------------
-
 hex_base:
 	mov base,#16 
 	ret 
 
+;--------------------------------------------
+; BASIC: DEC 
+; select decimal base for integer print
+;---------------------------------------------
 dec_base:
 	mov base,#10
 	ret 
 
+;------------------------
+; BASIC: SIZE 
+; return free size in text area
+; output:
+;   A 		TK_INTGR
+;   X 	    size integer
+;--------------------------
 size:
 	ldw x,#tib 
 	subw x,txtend 
-	call dpush 
 	ld a,#TK_INTGR
 	ret 
 
@@ -2738,10 +2753,14 @@ let:
 	call get_token 
 	cp a,#TK_VAR 
 	jrne let_bad_syntax 
+let02:
+	call dpush
 	call get_token 
 	cp a,#TK_EQUAL
 	jrne let_bad_syntax 
 	call relation   
+	cp a,#TK_INTGR 
+	jrne let_bad_syntax 
 	call store  
 	ld a,#TK_NONE 
 	ret 
@@ -2886,6 +2905,7 @@ prt_loop:
 	ld a,#ERR_SYNTAX
 	jp tb_error 
 21$:
+	call dpush 
 	call prt_tos 
 	jra prt_loop   
 3$: cp a,#TK_COMMA 
@@ -2900,7 +2920,6 @@ prt_loop:
 	jreq 5$ 
 	jra 20$
 5$: 
-	call dpop
 	ld a,xl 
 	and a,#15 
 	ld tab_width,a 
@@ -2978,15 +2997,153 @@ if:
 9$:	mov in,count
 	ret 
 
-for:
-	ldw x,#FOR 
-	call prt_cstr 
+;------------------------
+; BASIC: FOR var=expr 
+; set variable to expression 
+; leave variable address 
+; on dstack and set
+; FFOR bit in 'flags'
+;-----------------
+for: ; { -- var_addr }
+	ld a,#TK_VAR 
+	call expect 
+	call dpush 
+_dbg_dots 
+	call let02 
+; leave with variable addr on dstack 		
+	bset flags,#FFOR 
+	call get_token 
+	cp a,#TK_KWORD 
+	jreq 1$
+	jp syntax_error
+1$:  
+_dbg_mark 'A 
+_dbg_dots 
+	cpw x,#to 
+	jreq to
+	jp syntax_error 
+
+;-----------------------------------
+; BASIC: TO expr 
+; second part of FOR loop initilization
+; leave limit on dstack and set 
+; FTO bit in 'flags'
+;-----------------------------------
+to: ; { var_addr -- var_addr limit step }
+_dbg_mark 'C 
+	btjt flags,#FFOR,1$
+	jp syntax_error
+1$: call expression 
+_dbg_mark 'D 
+_dbg_dots 
+	cp a,#TK_INTGR 
+	jreq 2$ 
+	jp syntax_error
+2$: 
+	call get_token
+	cp a,#TK_KWORD
+	jrne 3$
+	cpw x,#step 
+	jreq step 
+3$:	 
+	_unget_tok 
+	ldw x,#1   ; default step  
+	call dpush ; save step on dstack 
+	jra store_loop_addr 
+
+
+;----------------------------------
+; BASIC: STEP expr 
+; optional third par of FOR loop
+; initialization. 	
+;------------------------------------
+step: ; {var limit -- var limit step}
+_dbg_mark 'E
+_dbg_dots  
+	btjt flags,#FFOR,1$
+	jp syntax_error
+1$: call expression 
+	cp a,#TK_INTGR
+	jreq store_loop_addr  
+	jp syntax_error
+; leave loop back entry point on cstack 
+store_loop_addr:
+	_vars 4 ; reserve 4 bytes 
+; move return address on top 	
+	ldw x,(5,sp)
+	ldw (1,sp),x 
+	ldw x,basicptr  
+	ldw (5,sp),x 
+	ldw x,in.w 
+	ldw x,in.w 
+	ldw (3,sp),x   
+	bres flags,#FFOR 
+	inc loop_depth 
+_dbg_dots 
 	ret 
 
-next: 
-	ldw x,#NEXT 
-	call prt_cstr 
+;--------------------------------
+; BASIC: NEXT var 
+; FOR loop control 
+; increment variable with step 
+; and compare with limit 
+; loop if threshold not crossed.
+; else clean both stacks. 
+; and decrement 'loop_depth' 
+;--------------------------------
+; loop address arguments on cstack 
+	BPTR=3
+	IN=5
+next: ; {var limit step var -- [var limit step ] }
+	tnz loop_depth 
+	jrne 1$ 
+	jp syntax_error 
+1$: ld a,#TK_VAR 
+	call expect
+; chech for good variable after NEXT 	 
+	ldw y,x 
+	ldw x,#4  
+	cpw y,([dstkptr],x) ; compare variables address 
+	jreq 2$  
+	jp syntax_error ; not the good one 
+2$: ; increment variable 
+	ldw x,y
+	ldw x,(x)  ; get var value 
+	ldw acc16,x 
+	ldw x,[dstkptr]
+	addw x,acc16 
+	ldw (y),x ; save var new value 
+; compare with limit 
+	ldw y,x 
+	ld a,[dstkptr] ; step in x 
+	ldw x,#2 
+	bcp a,#0x80 
+	jreq 4$ ; positive step 
+;negative step 
+	cpw y,([dstkptr],x)
+	jrsle loop_done
+	jra loop_back 
+4$: ; positive step 
+	cpw y,([dstkptr],x)
+	jrsge loop_done 
+loop_back:
+	ldw x,(BPTR,sp)
+	ldw basicptr,x 
+	ldw x,(IN,sp)
+	ldw in.w,x 
 	ret 
+loop_done:
+	; remove var limit step on dstack 
+	ldw x,dstkptr 
+	addw x,#3*CELL_SIZE
+	ldw dstkptr,x 
+	; remove return address on cstack 
+	ldw x,(1,sp)
+	_drop 4 
+	ldw (1,sp),x 
+	dec loop_depth 
+	ret 
+
 
 ;------------------------
 ; BASIC: GOTO lineno 
@@ -3066,8 +3223,7 @@ return:
 ; run BASIC program in RAM or flash
 ;----------------------------------- 
 run: 
-	tnz lineno 
-	jreq 0$ 
+	btjf flags,#FRUN,0$  
 	clr a 
 	ret
 0$: ldw x,txtbgn
@@ -3083,6 +3239,7 @@ run:
 	ldw x,(x)
 	ldw lineno,x
 	mov in,#3	
+	bset flags,#FRUN 
 	jp interp_loop 
 
 
@@ -3091,14 +3248,13 @@ run:
 ; stop running program
 ;---------------------- 
 stop: 
-	ld a,lineno 
-	or a,lineno+1 
-	jrne 0$
+	btjt flags,#FRUN,0$  
 	clr a 
 	ret 
 ; clean dstack and cstack 
 0$: ldw x,#STACK_EMPTY 
 	ldw sp,x 
+	bres flags,#FRUN 
 	jp warm_start
 
 ;-----------------------
@@ -3108,8 +3264,7 @@ stop:
 ; and clear variables 
 ;------------------------
 new: 
-	tnz lineno 
-	jreq 0$
+	btjf flags,#FRUN,0$ 
 	clr a 
 	ret 
 0$:	
@@ -3118,8 +3273,7 @@ new:
 	 
 
 save:
-	tnz lineno 
-	jreq 0$ 
+	btjf flags,#FRUN,0$ 
 	clr a 
 	ret 
 0$:	
@@ -3128,7 +3282,7 @@ save:
 	ret 
 
 load:
-	tnz lineno 
+	btjf flags,#FRUN,0$ 
 	jreq 0$ 
 	clr a 
 	ret 
@@ -3176,6 +3330,8 @@ kwor_end:
 	_dict_entry,5,GOSUB,gosub 
 	_dict_entry,4,GOTO,goto 
 	_dict_entry,3,FOR,for 
+	_dict_entry,2,TO,to
+	_dict_entry,4,STEP,step 
 	_dict_entry,4,NEXT,next 
 	_dict_entry,4,STOP,stop 
 	_dict_entry,6,RETURN,return 

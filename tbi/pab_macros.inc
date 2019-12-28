@@ -248,3 +248,19 @@
     pop a 
     .endif 
     .endm 
+    
+    .macro _dbg_prt_var var 
+    .if DEBUG
+    _dbg_save_regs 
+    ldw x,var 
+    ldw acc16,x 
+    clr acc24 
+    clrw x 
+    ld a,#16+128  
+    call prti24
+    ld a,#CR 
+    call putc  
+    _dbg_restore_regs 
+    .endif 
+    .endm 
+
