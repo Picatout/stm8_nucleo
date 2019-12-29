@@ -155,6 +155,7 @@ call print_registers
 	ldw x, #RAM_SIZE-1
 	ldw sp, x
 	rim 
+	jp cmd_itf 
 	jp warm_start
 
 
@@ -777,7 +778,6 @@ warm_start:
 	clr loop_depth 
 	ldw x,#dstack_unf 
 	ldw dstkptr,x 
-_dbg_prt_var dstkptr 	
 	mov tab_width,#TAB_WIDTH 
 	mov base,#10 
 	clrw x 
@@ -845,7 +845,6 @@ test_tok:
 interp:
 	clr in.w
 	btjf flags,#FRUN,4$ 
-	jreq 4$
 ; running program
 ; goto next basic line 
 	ldw x,basicptr
@@ -3008,7 +3007,6 @@ for: ; { -- var_addr }
 	ld a,#TK_VAR 
 	call expect 
 	call dpush 
-_dbg_dots 
 	call let02 
 ; leave with variable addr on dstack 		
 	bset flags,#FFOR 
@@ -3017,8 +3015,6 @@ _dbg_dots
 	jreq 1$
 	jp syntax_error
 1$:  
-_dbg_mark 'A 
-_dbg_dots 
 	cpw x,#to 
 	jreq to
 	jp syntax_error 
@@ -3030,12 +3026,9 @@ _dbg_dots
 ; FTO bit in 'flags'
 ;-----------------------------------
 to: ; { var_addr -- var_addr limit step }
-_dbg_mark 'C 
 	btjt flags,#FFOR,1$
 	jp syntax_error
 1$: call expression 
-_dbg_mark 'D 
-_dbg_dots 
 	cp a,#TK_INTGR 
 	jreq 2$ 
 	jp syntax_error
@@ -3058,8 +3051,6 @@ _dbg_dots
 ; initialization. 	
 ;------------------------------------
 step: ; {var limit -- var limit step}
-_dbg_mark 'E
-_dbg_dots  
 	btjt flags,#FFOR,1$
 	jp syntax_error
 1$: call expression 
@@ -3075,11 +3066,10 @@ store_loop_addr:
 	ldw x,basicptr  
 	ldw (5,sp),x 
 	ldw x,in.w 
-	ldw x,in.w 
 	ldw (3,sp),x   
 	bres flags,#FFOR 
 	inc loop_depth 
-_dbg_dots 
+	clr a 
 	ret 
 
 ;--------------------------------
@@ -3092,8 +3082,8 @@ _dbg_dots
 ; and decrement 'loop_depth' 
 ;--------------------------------
 ; loop address arguments on cstack 
-	BPTR=3
-	IN=5
+	IN=3
+	BPTR=5
 next: ; {var limit step var -- [var limit step ] }
 	tnz loop_depth 
 	jrne 1$ 
@@ -3121,16 +3111,22 @@ next: ; {var limit step var -- [var limit step ] }
 	jreq 4$ ; positive step 
 ;negative step 
 	cpw y,([dstkptr],x)
-	jrsle loop_done
+	jrslt loop_done
 	jra loop_back 
 4$: ; positive step 
 	cpw y,([dstkptr],x)
-	jrsge loop_done 
+	jrsgt loop_done 
 loop_back:
 	ldw x,(BPTR,sp)
 	ldw basicptr,x 
-	ldw x,(IN,sp)
+	btjf flags,#FRUN,1$ 
+	ldw x,(x)
+	ldw lineno,x
+	ld a,(3,x)
+	ld count,a  
+1$:	ldw x,(IN,sp)
 	ldw in.w,x 
+	clr a 
 	ret 
 loop_done:
 	; remove var limit step on dstack 
@@ -3142,6 +3138,7 @@ loop_done:
 	_drop 4 
 	ldw (1,sp),x 
 	dec loop_depth 
+	clr a 
 	ret 
 
 
