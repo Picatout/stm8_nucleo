@@ -110,7 +110,7 @@ stack_unf: ; stack underflow
 	int NonHandledInterrupt ;int20 UART3 TX completed
 	int NonHandledInterrupt ;int21 UART3 RX full
 	int NonHandledInterrupt ;int22 ADC2 end of conversion
-	int NonHandledInterrupt	;int23 TIM4 update/overflow
+	int Timer4UpdateHandler	;int23 TIM4 update/overflow
 	int NonHandledInterrupt ;int24 flash writing EOP/WR_PG_DIS
 	int NonHandledInterrupt ;int25  not used
 	int NonHandledInterrupt ;int26  not used
@@ -139,6 +139,14 @@ TrapHandler:
 .endif 	
 	iret
 
+Timer4UpdateHandler:
+	clr TIM4_SR 
+	ldw x,(3,sp)
+	decw x
+	ldw (3,sp),x 
+	iret 
+
+
 ;------------------------------------
 ; Triggered by pressing USER UserButton 
 ; on NUCLEO card.
@@ -158,30 +166,58 @@ call print_registers
 	jp cmd_itf 
 	jp warm_start
 
-
-;initialize clock to use HSE 8 Mhz crystal
+;----------------------------------------
+; inialize MCU clock 
+; input:
+;   A 		source  HSI | 1 HSE 
+;   XL      CLK_CKDIVR , clock divisor 
+; output:
+;   none 
+;----------------------------------------
 clock_init:	
+	cp a,CLK_CMSR 
+	jreq 2$ ; no switching required 
+; select clock source 
 	bset CLK_SWCR,#CLK_SWCR_SWEN
-	ld a,#CLK_SWR_HSE
 	ld CLK_SWR,a
 1$:	cp a,CLK_CMSR
 	jrne 1$
+2$: 	
+; HSI and cpu clock divisor 
+	ld a,xl 
+	ld CLK_CKDIVR,a  
 	ret
 
 ;---------------------------------------------
 ;   UART3 subroutines
 ;---------------------------------------------
 
+;---------------------------------------------
 ; initialize UART3, 115200 8N1
-; to be used as debug i/o 
+; input:
+;	none
+; output:
+;   none
+;---------------------------------------------
 uart3_init:
 	; configure tx pin
 	bset PD_DDR,#BIT5 ; tx pin
 	bset PD_CR1,#BIT5 ; push-pull output
 	bset PD_CR2,#BIT5 ; fast output
-	; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
+uart3_set_baud: 
+; baud rate 115200 Fmaster=8Mhz  8000000/115200=69=0x45
+; 1) check clock source, HSI at 16Mhz or HSE at 8Mhz  
+	ld a,#CLK_SWR_HSI
+	cp a,CLK_CMSR 
+	jreq hsi_clock 
+hse_clock: ; 8 Mhz 	
 	mov UART3_BRR2,#0x05 ; must be loaded first
 	mov UART3_BRR1,#0x4
+	jra uart_enable
+hsi_clock: ; 16 Mhz 	
+	mov UART3_BRR2,#0x0b ; must be loaded first
+	mov UART3_BRR1,#0x08
+uart_enable:	
 	mov UART3_CR2,#((1<<UART_CR2_TEN)|(1<<UART_CR2_REN));
 	ret
 	
@@ -284,19 +320,18 @@ delete:
 ;--------------------------
 ; print n spaces on terminal
 ; input:
-;  A 		number of spaces 
+;  X 		number of spaces 
 ; output:
 ;	none 
 ;---------------------------
 spaces:
-	push a 
 	ld a,#SPACE 
-1$:	tnz (1,sp)
+1$:	tnzw x
 	jreq 9$
 	call putc 
-	dec (1,sp)
+	decw x
 	jra 1$
-9$: pop a 
+9$: 
 	ret 
 
 
@@ -680,9 +715,13 @@ cold_start:
 	ldw sp,x   
 0$: clr (x)
 	decw x 
-	jrne 0$ 
+	jrne 0$
+; select internal clock no divisor: 16 Mhz 	
+	ld a,#CLK_SWR_HSI 
+	clrw x  
     call clock_init 
-    call uart3_init
+; UART3 at 115200 BAUD
+	call uart3_init
 ; activate PE_4 (user button interrupt)
     bset PE_CR2,#USR_BTN_BIT 
 	ldw x,#software 
@@ -1590,12 +1629,12 @@ convert_escape:
 	CHAR=2 
 	VSIZE=2 
 parse_integer:
-	push #0 
+	push #0 ; CHAR 
 	cp a,#'$
 	jreq 1$ 
-	push #10
+	push #10 ; BASE=10 
 	jra 2$ 
-1$: push #16 
+1$: push #16  ; BASE=16
 2$:	ld (x),a 
 	incw x 
 	inc in 
@@ -1609,9 +1648,9 @@ parse_integer:
 	jrne 3$ 
 	ld a,(CHAR,sp)
 	cp a,#'A 
-	jrc 3$ 
-	cp a,#'F 
-	jrc 2$ 
+	jrmi 3$ 
+	cp a,#'G 
+	jrmi 2$ 
 3$:	clr (x)
 	call atoi
 	ldw x,acc16 
@@ -3112,18 +3151,21 @@ next: ; {var limit step var -- [var limit step ] }
 ;negative step 
 	cpw y,([dstkptr],x)
 	jrslt loop_done
+	jrv loop_done 
 	jra loop_back 
 4$: ; positive step 
 	cpw y,([dstkptr],x)
-	jrsgt loop_done 
+	jrsgt loop_done
+	jrv loop_done 
 loop_back:
 	ldw x,(BPTR,sp)
 	ldw basicptr,x 
 	btjf flags,#FRUN,1$ 
 	ldw x,(x)
 	ldw lineno,x
-	ld a,(3,x)
-	ld count,a  
+	ld a,(2,x)
+	add a,#2 
+	ld count,a
 1$:	ldw x,(IN,sp)
 	ldw in.w,x 
 	clr a 
@@ -3294,6 +3336,31 @@ usr:
 	ret 
 
 ;------------------------------
+; BASIC: PAUSE expr 
+; suspend execution for n msec.
+; input:
+;	none
+; output:
+;	none 
+;------------------------------
+pause:
+	call expression
+	cp a,#TK_INTGR
+	jreq 0$
+	jp syntax_error
+0$:	
+	mov TIM4_PSCR,#7 ; prescale 128  
+	mov TIM4_ARR,#125 ; set for 1msec.
+	mov TIM4_CR1,#((1<<TIM4_CR1_CEN)|(1<<TIM4_CR1_URS))
+	bset TIM4_IER,#TIM4_IER_UIE 
+1$: wfi 
+	tnzw x  
+	jrpl 1$
+    clr TIM4_CR1 
+	clr a 
+	ret 
+
+;------------------------------
 ;      dictionary 
 ; format:
 ;   link   2 bytes 
@@ -3316,6 +3383,7 @@ kwor_end:
 	_dict_entry,4,SAVE,save 
 	_dict_entry,3,HEX,hex_base
 	_dict_entry,3,DEC,dec_base
+	_dict_entry,5,PAUSE,pause 
 	_dict_entry 5,INPUT,input 
 	_dict_entry 3,OUT,out 
 	_dict_entry 4,WAIT,wait 
