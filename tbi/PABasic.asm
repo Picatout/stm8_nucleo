@@ -55,6 +55,8 @@ base:  .blkb 1 ; nemeric base used to print integer
 acc24: .blkb 1 ; 24 accumulator
 acc16: .blkb 1
 acc8:  .blkb 1
+seedx: .blkw 1  ; xorshift 16 seed x 
+seedy: .blkw 1  ; xorshift 16 seed y 
 untok: .blkb 1  ; last ungotten token attribute 
 tokval: .blkw 1 ; last parsed token value  
 farptr: .blkb 3 ; far pointer 
@@ -750,6 +752,8 @@ cold_start:
 	ldw x,#dstack 
 	subw x,#CELL_SIZE  
 	ldw array_addr,x 
+	inc seedy+1 
+	inc seedx+1 
 clear_basic:
 	clrw x 
 	ldw lineno,x
@@ -1618,7 +1622,7 @@ convert_escape:
 ; input:
 ;   X 		point to pad 
 ;   Y 		point to tib 
-;   A 	    first digit 
+;   A 	    first digit|'$' 
 ; output:  
 ;   pad     number string 
 ;   X 		actual integer 
@@ -1658,6 +1662,45 @@ parse_integer:
 	ld a,#TK_INTGR
 	_drop VSIZE  
 	ret 	
+
+;-------------------------
+; binary integer parser 
+; input:
+;   X 		point to pad 
+;   Y 		point to tib 
+;   A 	    '%' 
+; output:  
+;   pad     number string 
+;   X 		actual integer 
+;   A 		TK_INTGR
+;   tokval   actual integer 
+;-------------------------
+	BINARY=1
+	VSIZE=2
+parse_binary:
+	push #0
+	push #0
+1$: ld (x),a 
+	incw x 
+	inc in 
+	ld a,([in.w],y)
+	cp a,#'0 
+	jreq 2$
+	cp a,#'1 
+	jreq 2$ 
+	jra bin_exit 
+2$: sub a,#'0	
+	rrc a 
+	rlc (BINARY+1,sp)
+	rlc (BINARY,sp)
+	jra 1$  
+bin_exit:
+	clr (x)
+	ldw x,(BINARY,sp)
+	ldw tokval,x 
+	ld a,#TK_INTGR 	
+	_drop VSIZE 
+	ret
 
 ;---------------------------
 ;  token begin with a letter,
@@ -1804,7 +1847,12 @@ nbr_tst: ; check for number
 	ld a,#'$'
 	cp a,(CHAR,sp) 
 	jreq 1$
-	ld a,(CHAR,sp)
+	ld a,#'%
+	cp a,(CHAR,sp)
+	jrne 0$
+	call parse_binary ; expect binary integer 
+	jp token_exit 
+0$:	ld a,(CHAR,sp)
 	call is_digit
 	jrnc 3$
 1$:	call parse_integer 
@@ -1835,9 +1883,21 @@ dash_tst:
 	ld a,#TK_MINUS  
 	jp token_char 
 at_tst:
-	_case '@' plus_tst 
+	_case '@' qmark_tst 
 	ld a,#TK_ARRAY 
-	jp token_char 	
+	jp token_char
+qmark_tst:
+	_case '?' tick_tst 
+	ld a,#TK_KWORD 
+	ldw x,#print 
+	ldw tokval,x 
+	inc in 
+	jp token_exit
+tick_tst: ; ignore comment 
+	_case TICK plus_tst 
+	mov in,count  
+	ld a,#TK_NONE 
+	jp token_exit 
 plus_tst:
 	_case '+' star_tst 
 	ld a,#TK_PLUS  
@@ -2971,26 +3031,181 @@ print_exit:
 	clr a
 	ret 
 
-; BASIC remark 
+;------------------------------------------
+; BASIC: INPUT [string],var[,[string],var]
+; input value in variables 
+; [string] optionally can be used as prompt 
+;-----------------------------------------
+input:
+	call get_token 
+	cp a,#TK_NONE 
+	jreq input_exit 
+	cp a,#TK_QSTR 
+	jrne 1$ 
+	ldw x,tokval 
+	call puts
+	call get_token 
+1$: cp a,#TK_VAR  
+	jreq 2$ 
+	jp syntax_error
+2$:	call dpush
+	ld a,pad  
+	call putc
+	ld a,#': 
+	call putc  
+	clr tib
+	clr count  
+	call readln 
+	call relation 
+	cp a,#TK_INTGR
+	jreq 3$ 
+	jp syntax_error
+3$: call dpush 
+	call store 
+
+input_exit:
+	clr a 
+	ret 
+
+
+;---------------------
+; BASIC: REMARK | ' 
+; begin a comment 
+; comment are ignored 
+; use ' insted of REM 
+; it is faster 
+;---------------------- 
 rem: 
 	mov in,count 
 	clr untok 
 	ret 
 
-input:
-	ldw x,#INPUT 
-	call prt_cstr 
-	ret 
 
-out:
-	ldw x,#OUT 
-	call prt_cstr 
-	ret 
-
+;---------------------
+; BASIC: WAIT addr,mask[,xor_mask] 
+; read in loop 'addr'  
+; apply & 'mask' to value 
+; loop while result==0.  
+; if 'xor_mask' given 
+; apply ^ in second  
+; loop while result==0 
+;---------------------
+	XMASK=1 
+	MASK=2
+	ADDR=3
+	VSIZE=4
 wait: 
-	ldw x,#WAIT 
-	call prt_cstr 
+	_vars VSIZE
+	clr (XMASK,sp) 
+	call expression 
+	cp a,#TK_INTGR
+	jreq 1$ 
+	jp syntax_error
+1$: call dpop ; address 
+	ldw (ADDR,sp),x 
+	ld a,#TK_COMMA 
+	call expect 
+	call expression 
+	cp a,#TK_INTGR
+	jreq 2$ 
+	jp syntax_error
+2$: call dpop ; and mask 
+	ld a,xl 
+	ld (MASK,sp),a 
+	call get_token 
+	cp a,#TK_COMMA 
+	jreq 3$
+	_unget_tok 
+	jra 5$
+3$: call expression 
+	cp a,#TK_INTGR
+	jreq 4$
+	jp syntax_error 
+4$: call dpop ; xor mask 
+	ld a,xl 
+	ld (XMASK,sp),a 
+5$:	ldw x,(ADDR,sp)
+6$: ld a,(x)
+	and a,(MASK,sp)
+	xor a,(XMASK,sp)
+	jreq 6$ 
+	_drop VSIZE 
+	clr a 
 	ret 
+
+;---------------------
+; BASIC: BSET(addr,mask)
+; set bits at 'addr' corresponding 
+; to those of 'mask' that are at 1.
+; arguments:
+; 	addr 		memory address RAM|PERIPHERAL 
+;   mask        mask|addr
+; output:
+;	none 
+;--------------------------
+bit_set:
+	ld a,#2 
+	call arg_list 
+	tnz a 
+	jreq 1$ 
+	jp syntax_error
+1$: call dpop ; mask 
+	ld a,xl 
+	call dpop ; addr  
+	or a,(x)
+	ld (x),a 
+	clr a
+	ret 
+
+;---------------------
+; BASIC: BRES(addr,mask)
+; reset bits at 'addr' corresponding 
+; to those of 'mask' that are at 1.
+; arguments:
+; 	addr 		memory address RAM|PERIPHERAL 
+;   mask	    ~mask&*addr  
+; output:
+;	none 
+;--------------------------
+bit_reset:
+	ld a,#2 
+	call arg_list 
+	tnz a 
+	jreq 1$ 
+	jp syntax_error
+1$: call dpop ; mask 
+	ld a,xl 
+	cpl a 
+	call dpop ; addr  
+	and a,(x)
+	ld (x),a 
+	clr a 
+	ret 
+
+;---------------------
+; BASIC: BRES(addr,mask)
+; toggle bits at 'addr' corresponding 
+; to those of 'mask' that are at 1.
+; arguments:
+; 	addr 		memory address RAM|PERIPHERAL 
+;   mask	    mask^*addr  
+; output:
+;	none 
+;--------------------------
+bit_toggle:
+	ld a,#2 
+	call arg_list 
+	tnz a 
+	jreq 1$ 
+	jp syntax_error
+1$: call dpop ; mask 
+	ld a,xl 
+	call dpop ; addr  
+	xor a,(x)
+	ld (x),a 
+	clr a
+	ret 
+
 
 ;--------------------
 ; BASIC: POKE(addr,byte)
@@ -3348,7 +3563,7 @@ pause:
 	cp a,#TK_INTGR
 	jreq 0$
 	jp syntax_error
-0$:	
+0$:	call dpop
 	mov TIM4_PSCR,#7 ; prescale 128  
 	mov TIM4_ARR,#125 ; set for 1msec.
 	mov TIM4_CR1,#((1<<TIM4_CR1_CEN)|(1<<TIM4_CR1_URS))
@@ -3356,9 +3571,108 @@ pause:
 1$: wfi 
 	tnzw x  
 	jrpl 1$
+	bres TIM4_IER,#TIM4_IER_UIE 
     clr TIM4_CR1 
 	clr a 
 	ret 
+
+;------------------------------
+; BASIC: ABS(expr)
+; return absolute value of expr.
+; input:
+;   none
+; output:
+;   X     	positive integer
+;-------------------------------
+abs:
+	ld a,#1
+	call arg_list
+	tnz a
+	jreq 0$ 
+	jp syntax_error
+0$: 
+    call dpop 
+	ld a,xh 
+	bcp a,#0x80 
+	jreq 2$ 
+	negw x 
+2$: ld a,#TK_INTGR 
+	ret 
+
+;------------------------------
+; BASIC: RND(expr)
+; return random number 
+; between 1 and expr inclusive
+; xorshift16 ref: http://b2d-f9r.blogspot.com/2010/08/16-bit-xorshift-rng-now-with-more.html
+; input:
+; 	none 
+; output:
+;	X 		random positive integer 
+;------------------------------
+random:
+	ld a,#1 
+	call arg_list 
+	tnz a
+	jreq 1$
+	jp syntax_error
+1$: call dpop 
+	pushw x 
+	ld a,xh 
+	jrpl 2$
+	jp syntax_error 
+2$: 
+; acc16=(x<<5)^x 
+	ldw x,seedx 
+	sllw x 
+	sllw x 
+	sllw x 
+	sllw x 
+	sllw x 
+	ld a,xh 
+	xor a,seedx 
+	ld acc16,a 
+	ld a,xl 
+	xor a,seedx+1 
+	ld acc8,a 
+; seedx=seedy 
+	ldw x,seedy 
+	ldw seedx,x  
+; seedy=seedy^(seedy>>1)
+	srlw y 
+	ld a,yh 
+	xor a,seedy 
+	ld seedy,a  
+	ld a,yl 
+	xor a,seedy+1 
+	ld seedy+1,a 
+; acc16>>3 
+	ldw x,acc16 
+	srlw x 
+	srlw x 
+	srlw x 
+; x=acc16^x 
+	ld a,xh 
+	xor a,acc16 
+	ld xh,a 
+	ld a,xl 
+	xor a,acc8 
+	ld xl,a 
+; seedy=x^seedy 
+	xor a,seedy+1
+	ld xl,a 
+	ld a,xh 
+	xor a,seedy
+	ld xh,a 
+	ldw seedy,x 
+; return seedy modulo expr + 1 
+	popw y 
+	divw x,y 
+	ldw x,y 
+	incw x 
+	ld a,#TK_INTGR
+	ret 
+
+
 
 ;------------------------------
 ;      dictionary 
@@ -3383,9 +3697,12 @@ kwor_end:
 	_dict_entry,4,SAVE,save 
 	_dict_entry,3,HEX,hex_base
 	_dict_entry,3,DEC,dec_base
+	_dict_entry,3,ABS,abs
+	_dict_entry,3,RND,random 
 	_dict_entry,5,PAUSE,pause 
-	_dict_entry 5,INPUT,input 
-	_dict_entry 3,OUT,out 
+	_dict_entry,4,BSET,bit_set 
+	_dict_entry,4,BRES,bit_reset
+	_dict_entry,5,BTOGL,bit_toggle
 	_dict_entry 4,WAIT,wait 
 	_dict_entry 3,REM,rem 
     _dict_entry 3,RUN,run
@@ -3404,7 +3721,8 @@ kwor_end:
 	_dict_entry,4,POKE,poke 
 	_dict_entry,3,USR,usr
 	_dict_entry,3,NEW,new
-	_dict_entry,4,SIZE,size    
+	_dict_entry,4,SIZE,size
+	_dict_entry,5,INPUT,input 
 kword_dict:
 	_dict_entry 3,LET,let 
 	

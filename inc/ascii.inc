@@ -65,4 +65,4 @@
 		SPACE = 32
 		COMMA = 44 
 		SHARP = 35
-		
+		TICK = 39
