@@ -23,7 +23,7 @@
 ;
 ;--------------------------------------------------
 
-    .module PA_BASIC
+    .module TBI_STM8
 
     .nlist
 	.include "../inc/nucleo_8s208.inc"
@@ -123,8 +123,11 @@ stack_unf: ; stack underflow
 ;---------------------------------------
     .area CODE
 ;---------------------------------------
-.asciz "PA_BASIC" ; I like to put module name here.
 _dbg 
+.if DEBUG
+.asciz "TBI_STM8" ; I like to put module name here.
+.endif 
+
 NonHandledInterrupt:
     .byte 0x71  ; reinitialize MCU
 
@@ -766,12 +769,15 @@ clear_basic:
 
 err_msg:
 	.word 0,err_text_full, err_syntax, err_math_ovf, err_div0,err_no_line    
+	.word err_run_only,err_cmd_only 
 
 err_text_full: .asciz "\nMemory full\n" 
 err_syntax: .asciz "\nsyntax error\n" 
 err_math_ovf: .asciz "\nmath operation overflow\n"
 err_div0: .asciz "\ndivision by 0\n" 
 err_no_line: .asciz "\ninvalid line number.\n"
+err_run_only: .asciz "\nrun time only usage.\n" 
+err_cmd_only: .asciz "\ncommand line only usage.\n"
 
 syntax_error:
 	ld a,#ERR_SYNTAX 
@@ -3031,39 +3037,112 @@ print_exit:
 	clr a
 	ret 
 
+;----------------------
+; 'save_context' and
+; 'rest_context' must be 
+; called at the same 
+; call stack depth 
+; i.e. SP must have the 
+; save value at  
+; entry point of both 
+; routine. 
+;---------------------
+;--------------------
+; save current BASIC
+; interpreter context 
+; on cstack 
+;--------------------
+	_argofs 0 
+	_arg BPTR 1
+	_arg LNO 3 
+	_arg IN 5
+	_arg CNT 6
+save_context:
+	ldw x,basicptr 
+	ldw (BPTR,sp),x
+	ldw x,lineno 
+	ldw (LNO,sp),x 
+	ld a,in 
+	ld (IN,sp),a
+	ld a,count 
+	ld (CNT,sp),a  
+	ret
+
+;-----------------------
+; restore previously saved 
+; BASIC interpreter context 
+; from cstack 
+;-------------------------
+rest_context:
+	ldw x,(BPTR,sp)
+	ldw basicptr,x 
+	ldw x,(LNO,sp)
+	ldw lineno,x 
+	ld a,(IN,sp)
+	ld in,a
+	ld a,(CNT,sp)
+	ld count,a  
+	ret
+
 ;------------------------------------------
 ; BASIC: INPUT [string],var[,[string],var]
 ; input value in variables 
 ; [string] optionally can be used as prompt 
 ;-----------------------------------------
-input:
+	CX_BPTR=1
+	CX_LNO=3
+	CX_IN=4
+	CX_CNT=5
+	SKIP=6
+	VSIZE=7
+input_var:
+	btjt flags,#FRUN,1$ 
+	ld a,#ERR_RUN_ONLY 
+	jp tb_error 
+1$:	_vars VSIZE 
+input_loop:
+	clr (SKIP,sp)
 	call get_token 
 	cp a,#TK_NONE 
 	jreq input_exit 
 	cp a,#TK_QSTR 
 	jrne 1$ 
 	ldw x,tokval 
-	call puts
+	call puts 
+	cpl (SKIP,sp)
 	call get_token 
 1$: cp a,#TK_VAR  
 	jreq 2$ 
 	jp syntax_error
 2$:	call dpush
-	ld a,pad  
-	call putc
-	ld a,#': 
-	call putc  
-	clr tib
+	tnz (SKIP,sp)
+	jrne 21$ 
+	ld a,#':
+	ld pad+1,a 
+	clr pad+2
+	ldw x,#pad 
+	call puts   
+21$:
+	call save_context 
+	ldw x,#tib 
+	ldw basicptr,x  
 	clr count  
 	call readln 
+	clr in 
 	call relation 
 	cp a,#TK_INTGR
 	jreq 3$ 
 	jp syntax_error
-3$: call dpush 
+3$: 
 	call store 
-
+	call rest_context
+	clr untok 
+	call get_token 
+	cp a,#TK_COMMA 
+	jreq input_loop 
+	_unget_tok 
 input_exit:
+	_drop VSIZE 
 	clr a 
 	ret 
 
@@ -3697,6 +3776,10 @@ kwor_end:
 	_dict_entry,4,SAVE,save 
 	_dict_entry,3,HEX,hex_base
 	_dict_entry,3,DEC,dec_base
+	_dict_entry,3,NEW,new
+	_dict_entry,4,STOP,stop 
+    _dict_entry 3,RUN,run
+	_dict_entry,4,SIZE,size
 	_dict_entry,3,ABS,abs
 	_dict_entry,3,RND,random 
 	_dict_entry,5,PAUSE,pause 
@@ -3705,7 +3788,6 @@ kwor_end:
 	_dict_entry,5,BTOGL,bit_toggle
 	_dict_entry 4,WAIT,wait 
 	_dict_entry 3,REM,rem 
-    _dict_entry 3,RUN,run
 	_dict_entry 5,PRINT,print 
 	_dict_entry 4,LIST,list
 	_dict_entry,2,IF,if 
@@ -3715,14 +3797,11 @@ kwor_end:
 	_dict_entry,2,TO,to
 	_dict_entry,4,STEP,step 
 	_dict_entry,4,NEXT,next 
-	_dict_entry,4,STOP,stop 
 	_dict_entry,6,RETURN,return 
 	_dict_entry,4,PEEK,peek 
 	_dict_entry,4,POKE,poke 
 	_dict_entry,3,USR,usr
-	_dict_entry,3,NEW,new
-	_dict_entry,4,SIZE,size
-	_dict_entry,5,INPUT,input 
+	_dict_entry,5,INPUT,input_var  
 kword_dict:
 	_dict_entry 3,LET,let 
 	

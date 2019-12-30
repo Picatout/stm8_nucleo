@@ -66,6 +66,8 @@
     ERR_MATH_OVF=3
     ERR_DIV0=4 
     ERR_NO_LINE=5
+    ERR_RUN_ONLY=6
+    ERR_CMD_ONLY=7
     
 ;--------------------------------------
 ;   assembler flags 
