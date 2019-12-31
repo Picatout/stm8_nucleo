@@ -127,7 +127,7 @@ stack_unf: ; stack underflow
 ;---------------------------------------
     .area CODE
 ;---------------------------------------
-_dbg 
+;_dbg 
 .if DEBUG
 .asciz "TBI_STM8" ; I like to put module name here.
 .endif 
@@ -162,20 +162,22 @@ Timer4UpdateHandler:
 ;------------------------------------
 UserButtonHandler:
 ; wait button release
-	ldw x,0xffff
+	clrw x
 1$: decw x 
 	jrne 1$
 	btjf USR_BTN_PORT,#USR_BTN_BIT, 1$
+.if DEBUG 	
 	ldw x,#USER_ABORT
 	call puts 
 	ldw x, #RAM_SIZE-1
 	ldw sp, x
 	rim 
-.if DEBUG 	
 	call print_registers
 	jp cmd_itf 
-.endif 
 	jp warm_start
+.else 
+	iret 
+.endif 
 
 USER_ABORT: .asciz "\nProgram aborted by user.\n"
 
@@ -3451,11 +3453,11 @@ loop_back:
 	ldw x,(BPTR,sp)
 	ldw basicptr,x 
 	btjf flags,#FRUN,1$ 
-	ldw x,(x)
-	ldw lineno,x
 	ld a,(2,x)
 	add a,#2 
 	ld count,a
+	ldw x,(x)
+	ldw lineno,x
 1$:	ldw x,(IN,sp)
 	ldw in.w,x 
 	clr a 
@@ -3629,10 +3631,24 @@ usr:
 ; BASIC: BYE 
 ; halt mcu in its lowest power mode 
 ; wait for reset or external interrupt
+; do a cold start on wakeup.
 ;------------------------------
 bye:
+	btjf UART3_SR,#UART_SR_TC,.
 	halt
 	jp cold_start  
+
+;----------------------------------
+; BASIC: SLEEP 
+; halt mcu until reset or external
+; interrupt.
+; Resume progam after SLEEP command
+;----------------------------------
+sleep:
+	btjf UART3_SR,#UART_SR_TC,.
+	halt 
+	ret 
+
 
 ; BASIC: PAUSE expr 
 ; suspend execution for n msec.
@@ -3784,6 +3800,7 @@ name:
 kwor_end:
 
 	_dict_entry,3,BYE,bye 
+	_dict_entry,5,SLEEP,sleep 
 	_dict_entry,4,LOAD,load 
 	_dict_entry,4,SAVE,save 
 	_dict_entry,3,NEW,new
