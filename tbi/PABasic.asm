@@ -16,7 +16,7 @@
 ;     along with PABasic.  If not, see <http://www.gnu.org/licenses/>.
 ;;
 ;--------------------------------------
-;   Implementation of Palo Alto BASIC
+;   Implementation of Tiny BASIC
 ;   REF: https://en.wikipedia.org/wiki/Li-Chen_Wang#Palo_Alto_Tiny_BASIC
 ;   Palo Alto BASIC is 4th version of TinyBasic
 ;   DATE: 2019-12-17
@@ -88,7 +88,11 @@ stack_unf: ; stack underflow
     .area HOME 
 ;--------------------------------------
     int cold_start
+.if DEBUG
 	int TrapHandler 		;TRAP  software interrupt
+.else
+	int NonHandledInterrupt ;TRAP  software interrupt
+.endif
 	int NonHandledInterrupt ;int0 TLI   external top level interrupt
 	int NonHandledInterrupt ;int1 AWU   auto wake up from halt
 	int NonHandledInterrupt ;int2 CLK   clock controller
@@ -135,14 +139,14 @@ NonHandledInterrupt:
 ;------------------------------------
 ; software interrupt handler  
 ;------------------------------------
-TrapHandler:
 .if DEBUG 
+TrapHandler:
 	bset flags,#FTRAP 
 	call print_registers
 	call cmd_itf
-	bres flags,#FTRAP 
-.endif 	
+	bres flags,#FTRAP 	
 	iret
+.endif 
 
 Timer4UpdateHandler:
 	clr TIM4_SR 
@@ -157,7 +161,6 @@ Timer4UpdateHandler:
 ; on NUCLEO card.
 ;------------------------------------
 UserButtonHandler:
-call print_registers
 ; wait button release
 	ldw x,0xffff
 1$: decw x 
@@ -168,8 +171,14 @@ call print_registers
 	ldw x, #RAM_SIZE-1
 	ldw sp, x
 	rim 
+.if DEBUG 	
+	call print_registers
 	jp cmd_itf 
+.endif 
 	jp warm_start
+
+USER_ABORT: .asciz "\nProgram aborted by user.\n"
+
 
 ;----------------------------------------
 ; inialize MCU clock 
@@ -339,7 +348,7 @@ spaces:
 9$: 
 	ret 
 
-
+.if DEBUG 
 ;---------------------------------
 ;; print actual registers states 
 ;; as pushed on stack 
@@ -411,6 +420,7 @@ prt_peek:
 	ld a,#16 
 	call prti24
 	ret 
+.endif 
 
 ;-------------------------------------
 ; retrun string length
@@ -713,7 +723,7 @@ is_alpha:
 ;-------------------------------------
 	MAJOR=1
 	MINOR=0
-software: .asciz "\n\nPalo Alto BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
+software: .asciz "\n\nTiny BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
 cold_start:
 ; clear all ram 
 	ldw x,#STACK_EMPTY
@@ -969,9 +979,9 @@ interp_loop:
 	.blkb 0x71 ; reset MCU
 
 ;----------------------------------------
-;   exported LED control functions
+;   DEBUG support functions
 ;----------------------------------------
-
+.if DEBUG 
 ; turn LED on 
 ledon:
     bset PC_ODR,#LED2_BIT
@@ -1054,7 +1064,6 @@ prt_reg16:
 	call putc
 	ret 
 
-
 ;------------------------------------
 ; print registers contents saved on
 ; stack by trap interrupt.
@@ -1099,7 +1108,6 @@ print_registers:
 	call putc
 	ret
 
-USER_ABORT: .asciz "Program aborted by user.\n"
 STATES:  .asciz "\nRegisters state at abort point.\n--------------------------\n"
 REG_EPC: .asciz "EPC: "
 REG_Y:   .asciz "\nY: " 
@@ -1107,6 +1115,7 @@ REG_X:   .asciz "\nX: "
 REG_A:   .asciz "\nA: " 
 REG_CC:  .asciz "\nCC: "
 REG_SP:  .asciz "\nSP: "
+.endif 
 
 ;------------------------------------
 ; print integer in acc24 
@@ -2557,44 +2566,29 @@ expect:
 ;-------------------------------
 ; parse embedded BASIC routines 
 ; arguments list.
-; arg_list::= '(' rel[','rel]*')'
+; arg_list::=  rel[','rel]*
 ; all arguments are of integer type
-; missing argument replace by 0.
 ; input:
-;   A 			number of expected arguments  
+;   none
 ; output:
-;   A 			should be >=0 
-;	arguments pushed on dstack 
+;   A 			number of arguments pushed on dstack  
 ;--------------------------------
 	ARG_CNT=1 
 arg_list:
-	push a 
-	ld a,#TK_LPAREN 
-	call expect 
+	push #0  
 1$: call relation 
 	cp a,#TK_INTGR
-	jreq 4$
-	call get_token 
-	cp a,#TK_RPAREN 
-	jreq 9$ ; list end 
-2$:	cp a,#TK_COMMA  
 	jreq 3$
-	jp syntax_error
+	_unget_tok 
+	jra 10$
 3$:
-; missing args replaced by 0.
-	clrw x 
-	call dpush
-4$: dec (ARG_CNT,sp)
+    inc (ARG_CNT,sp)
 	call get_token 
 	cp a,#TK_COMMA 
 	jreq 1$ 
 	_unget_tok 
-	jra 1$ 
-9$: pop a 
-	bcp a,#0x80 
-	jreq 10$
-	jp syntax_error ; more arguments than expected 
 10$:
+	pop a 
 	ret 
 
 
@@ -3213,7 +3207,7 @@ wait:
 	ret 
 
 ;---------------------
-; BASIC: BSET(addr,mask)
+; BASIC: BSET addr,mask
 ; set bits at 'addr' corresponding 
 ; to those of 'mask' that are at 1.
 ; arguments:
@@ -3223,9 +3217,8 @@ wait:
 ;	none 
 ;--------------------------
 bit_set:
-	ld a,#2 
 	call arg_list 
-	tnz a 
+	cp a,#2	 
 	jreq 1$ 
 	jp syntax_error
 1$: call dpop ; mask 
@@ -3237,7 +3230,7 @@ bit_set:
 	ret 
 
 ;---------------------
-; BASIC: BRES(addr,mask)
+; BASIC: BRES addr,mask
 ; reset bits at 'addr' corresponding 
 ; to those of 'mask' that are at 1.
 ; arguments:
@@ -3247,9 +3240,8 @@ bit_set:
 ;	none 
 ;--------------------------
 bit_reset:
-	ld a,#2 
 	call arg_list 
-	tnz a 
+	cp a,#2  
 	jreq 1$ 
 	jp syntax_error
 1$: call dpop ; mask 
@@ -3262,7 +3254,7 @@ bit_reset:
 	ret 
 
 ;---------------------
-; BASIC: BRES(addr,mask)
+; BASIC: BRES addr,mask
 ; toggle bits at 'addr' corresponding 
 ; to those of 'mask' that are at 1.
 ; arguments:
@@ -3272,9 +3264,8 @@ bit_reset:
 ;	none 
 ;--------------------------
 bit_toggle:
-	ld a,#2 
 	call arg_list 
-	tnz a 
+	cp a,#2 
 	jreq 1$ 
 	jp syntax_error
 1$: call dpop ; mask 
@@ -3287,12 +3278,15 @@ bit_toggle:
 
 
 ;--------------------
-; BASIC: POKE(addr,byte)
+; BASIC: POKE addr,byte
 ; put a byte at addr 
 ;--------------------
 poke:
-	ld a,#2 ; expect 2 arguments
 	call arg_list 
+	cp a,#2
+	jreq 1$
+	jp syntax_error
+1$:	
 	call dpop 
     ld a,xl 
 	call dpop 
@@ -3305,9 +3299,11 @@ poke:
 ; get the byte at addr 
 ;-----------------------
 peek:
-	ld a,#1 ; expect 1 arguments 
 	call arg_list
-	call dpop 
+	cp a,#1 
+	jreq 1$
+	jp syntax_error
+1$:	call dpop 
 	ld a,(x)
 	clrw x 
 	ld xl,a 
@@ -3483,9 +3479,9 @@ loop_done:
 ; jump to lineno 
 ;------------------------
 goto:
-	ld a,lineno 
-	or a,lineno+1 
-	jrne 0$  
+	btjt flags,#FRUN,0$ 
+	ld a,#ERR_RUN_ONLY
+	jp tb_error 
 	ret 
 0$:	_drop 2 ; don't use return address 
 	jra go_common
@@ -3497,9 +3493,9 @@ goto:
 ; are saved on cstack
 ;--------------------
 gosub:
-	ld a,lineno 
-	or a,lineno+1 
-	jrne 0$  
+	btjt flags,#FRUN,0$ 
+	ld a,#ERR_RUN_ONLY
+	jp tb_error 
 	ret 
 0$:	ldw x,basicptr
 	ld a,(2,x)
@@ -3537,9 +3533,9 @@ go_common:
 	_arg BASICPTR 1 
 	_arg LINENO 3 
 return:
-	ld a,lineno 
-	or a,lineno+1 
-	jrne 0$ 
+	btjt flags,#FRUN,0$ 
+	ld a,#ERR_RUN_ONLY
+	jp tb_error 
 	ret 
 0$:	ldw x,(3,sp) 
 	ldw basicptr,x 
@@ -3630,6 +3626,14 @@ usr:
 	ret 
 
 ;------------------------------
+; BASIC: BYE 
+; halt mcu in its lowest power mode 
+; wait for reset or external interrupt
+;------------------------------
+bye:
+	halt
+	jp cold_start  
+
 ; BASIC: PAUSE expr 
 ; suspend execution for n msec.
 ; input:
@@ -3664,12 +3668,14 @@ pause:
 ;   X     	positive integer
 ;-------------------------------
 abs:
-	ld a,#1
+	ld a,#TK_LPAREN
+	call expect 
 	call arg_list
-	tnz a
+	cp a,#1 
 	jreq 0$ 
 	jp syntax_error
-0$: 
+0$: ld a,#TK_RPAREN 
+	call expect 
     call dpop 
 	ld a,xh 
 	bcp a,#0x80 
@@ -3689,15 +3695,19 @@ abs:
 ;	X 		random positive integer 
 ;------------------------------
 random:
-	ld a,#1 
+	ld a,#TK_LPAREN 
+	call expect 
 	call arg_list 
-	tnz a
+	cp a,#1
 	jreq 1$
 	jp syntax_error
-1$: call dpop 
+1$: ld a,#TK_RPAREN
+	call expect 
+	call dpop 
 	pushw x 
 	ld a,xh 
-	jrpl 2$
+	bcp a,#0x80 
+	jreq 2$
 	jp syntax_error 
 2$: 
 ; acc16=(x<<5)^x 
@@ -3752,6 +3762,7 @@ random:
 	ret 
 
 
+;*********************************
 
 ;------------------------------
 ;      dictionary 
@@ -3772,14 +3783,16 @@ name:
 	LINK=0
 kwor_end:
 
+	_dict_entry,3,BYE,bye 
 	_dict_entry,4,LOAD,load 
 	_dict_entry,4,SAVE,save 
-	_dict_entry,3,HEX,hex_base
-	_dict_entry,3,DEC,dec_base
 	_dict_entry,3,NEW,new
 	_dict_entry,4,STOP,stop 
     _dict_entry 3,RUN,run
+	_dict_entry,3,USR,usr
 	_dict_entry,4,SIZE,size
+	_dict_entry,3,HEX,hex_base
+	_dict_entry,3,DEC,dec_base
 	_dict_entry,3,ABS,abs
 	_dict_entry,3,RND,random 
 	_dict_entry,5,PAUSE,pause 
@@ -3800,7 +3813,6 @@ kwor_end:
 	_dict_entry,6,RETURN,return 
 	_dict_entry,4,PEEK,peek 
 	_dict_entry,4,POKE,poke 
-	_dict_entry,3,USR,usr
 	_dict_entry,5,INPUT,input_var  
 kword_dict:
 	_dict_entry 3,LET,let 
