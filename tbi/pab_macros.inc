@@ -61,14 +61,16 @@
 ;   error codes 
 ;--------------------------------------
     ERR_NONE=0
-    ERR_TXT_FULL=1 
+    ERR_MEM_FULL=1 
     ERR_SYNTAX=2
     ERR_MATH_OVF=3
     ERR_DIV0=4 
     ERR_NO_LINE=5
     ERR_RUN_ONLY=6
     ERR_CMD_ONLY=7
-    
+    ERR_DUPLICATE=8
+    ERR_NOT_FILE=9
+
 ;--------------------------------------
 ;   assembler flags 
 ;-------------------------------------

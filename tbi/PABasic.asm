@@ -33,6 +33,8 @@
 	.include "pab_macros.inc" 
     .list 
 
+_dbg 
+
 ;--------------------------------------
     .area DATA 
 ;--------------------------------------	
@@ -127,7 +129,6 @@ stack_unf: ; stack underflow
 ;---------------------------------------
     .area CODE
 ;---------------------------------------
-;_dbg 
 .if DEBUG
 .asciz "TBI_STM8" ; I like to put module name here.
 .endif 
@@ -203,6 +204,207 @@ clock_init:
 	ld a,xl 
 	ld CLK_CKDIVR,a  
 	ret
+
+;----------------------------------
+; unlock EEPROM for writing/erasing
+; wait endlessly for FLASH_IAPSR_DUL bit.
+; input:
+;  none
+; output:
+;  none 
+;----------------------------------
+unlock_eeprom:
+	mov FLASH_DUKR,#FLASH_DUKR_KEY1
+    mov FLASH_DUKR,#FLASH_DUKR_KEY2
+	btjf FLASH_IAPSR,#FLASH_IAPSR_DUL,.
+	ret
+
+;----------------------------------
+; unlock FLASH for writing/erasing
+; wait endlessly for FLASH_IAPSR_PUL bit.
+; input:
+;  none
+; output:
+;  none
+;----------------------------------
+unlock_flash:
+	mov FLASH_PUKR,#FLASH_PUKR_KEY1
+	mov FLASH_PUKR,#FLASH_PUKR_KEY2
+	btjf FLASH_IAPSR,#FLASH_IAPSR_PUL,.
+	ret
+
+;----------------------------
+; erase block code must be 
+;executed from RAM
+;-----------------------------
+
+; this code is copied to RAM 
+erase_start:
+	clr a 
+    bset FLASH_CR2,#FLASH_CR2_ERASE
+    bres FLASH_NCR2,#FLASH_CR2_ERASE
+	ldf [farptr],a
+    inc farptr+2 
+    ldf [farptr],a
+    inc farptr+2 
+    ldf [farptr],a
+    inc farptr+2 
+    ldf [farptr],a
+	btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
+	ret
+erase_end:
+
+
+move_code_in_ram:
+	ldw x,#erase_end 
+	subw x,#erase_start
+	ldw acc16,x 
+	ldw x,#pad 
+	ldw y,#erase_start 
+	call move 
+	ret 
+
+;-----------------------------------
+; erase flash or EEPROM block 
+; a block is 128 bytes 
+; input:
+;   farptr  address block begin
+; output:
+;   none
+;--------------------------------------
+erase_block:
+	ldw x,farptr+1 
+	pushw x 
+	call move_code_in_ram 
+	popw x 
+	ldw farptr+1,x 
+	tnz farptr
+	jrne erase_flash 
+	ldw x,#FLASH_BASE 
+	cpw x,farptr+1 
+	jrpl erase_flash 
+; erase eeprom block
+	call unlock_eeprom 
+_dbg_mark 'A 
+	sim 
+	call erase_start  
+	bres FLASH_IAPSR,#FLASH_IAPSR_DUL
+_dbg_mark 'C 
+	rim 
+	ret 
+; erase flash block:
+erase_flash:
+	call unlock_flash 
+	bset FLASH_CR2,#FLASH_CR2_ERASE
+	bres FLASH_NCR2,#FLASH_CR2_ERASE
+	clr a 
+	sim 
+	call pad 
+    bres FLASH_IAPSR,#FLASH_IAPSR_PUL
+	rim 
+	ret 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
+; write a byte to FLASH or EEPROM 
+; input:
+;    a  		byte to write
+;    farptr  	address
+;    x          farptr[x]
+; output:
+;    none
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; variables locales
+	BTW = 1   ; byte to write offset on stack
+	OPT = 2   ; OPTION flag offset on stack
+	VSIZE = 2
+write_byte:
+	pushw y
+	_vars VSIZE
+	ld (BTW,sp),a ; byte to write 
+	clr (OPT,sp)  ; OPTION flag
+; put addr[15:0] in Y, for bounds check.
+	ldw y,farptr+1   ; Y=addr15:0
+; check addr[23:16], if <> 0 then it is extened flash memory
+	tnz farptr 
+	jrne write_flash
+    cpw y,#flash_free 
+    jruge write_flash
+	cpw y,#EEPROM_BASE  
+    jrult write_exit
+	cpw y,#OPTION_BASE+OPTION_SIZE 
+	jrult write_eeprom
+    jra write_exit
+; write program memory
+write_flash:
+	call unlock_flash 
+1$:	sim 
+	ld a,(BTW,sp)
+	ldf ([farptr],x),a ; farptr[x]=A
+	btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
+    rim 
+    bres FLASH_IAPSR,#FLASH_IAPSR_PUL
+    jra write_exit
+; write eeprom and option
+write_eeprom:
+	call unlock_eeprom
+	; check for data eeprom or option eeprom
+	cpw y,#OPTION_BASE
+	jrmi 1$
+	cpw y,#OPTION_END+1
+	jrpl 1$
+	cpl (OPT,sp)
+1$: 
+    tnz (OPT,sp)
+    jreq 2$
+	; pour modifier une option il faut modifier ces 2 bits
+    bset FLASH_CR2,#FLASH_CR2_OPT
+    bres FLASH_NCR2,#FLASH_CR2_OPT 
+2$: 
+    ld a,(BTW,sp)
+    ldf ([farptr],x),a
+    tnz (OPT,sp)
+    jreq 3$
+    incw x
+    ld a,(BTW,sp)
+    cpl a
+    ldf ([farptr],x),a
+3$: btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
+_dbg_mark 'W 
+write_exit:
+	_drop VSIZE 
+	popw y
+    ret
+
+;--------------------------------------------
+; write a data block to eeprom or flash 
+; input:
+;   DATA    byte* data 
+;   BSIZE    data size in bytes 
+;   ADDR    write address 
+;---------------------------------------------
+	;arguments on stack 
+	_argofs 0 
+	_arg DATA 1 
+	_arg BSIZE 3 
+	_arg ADDR 5 
+write_block:
+	ld a,(ADDR,sp)
+	ld farptr,a 
+	ldw x,(ADDR+1,sp)
+	ldw farptr+1,x 
+	ldw y,(DATA,sp)
+	clrw x 
+1$:	ld a,(y)
+	call write_byte 
+	incw x 
+	incw y 
+	cpw x,(BSIZE,sp)
+	jrmi 1$ 
+	ret 
+
+
 
 ;---------------------------------------------
 ;   UART3 subroutines
@@ -441,6 +643,30 @@ strlen:
 	jra 1$ 
 9$: ret 
 
+;------------------------------------
+; compare 2 strings
+; input:
+;   X 		char* first string 
+;   Y       char* second string 
+; output:
+;   A 		0|1 
+;-------------------------------------
+strcmp:
+	ld a,(x)
+	jreq 5$ 
+	cp a,(y) 
+	jrne 4$ 
+	incw x 
+	incw y 
+	jra strcmp 
+4$: ; not same  
+	clr a 
+	ret 
+5$: ; same 
+	ld a,#1 
+	ret 
+
+
 ;---------------------------------------
 ;  copy src to dest 
 ; input:
@@ -652,7 +878,7 @@ insert_line:
 	subw x,#3 
     subw x,(LLEN,sp)
 	jrpl 31$
-	ld a,#ERR_TXT_FULL
+	ld a,#ERR_MEM_FULL
 	jp tb_error 
 31$:	
 	tnz (LLEN+1,sp)
@@ -780,16 +1006,18 @@ clear_basic:
     jp warm_start 
 
 err_msg:
-	.word 0,err_text_full, err_syntax, err_math_ovf, err_div0,err_no_line    
-	.word err_run_only,err_cmd_only 
+	.word 0,err_mem_full, err_syntax, err_math_ovf, err_div0,err_no_line    
+	.word err_run_only,err_cmd_only,err_duplicate,err_not_file 
 
-err_text_full: .asciz "\nMemory full\n" 
+err_mem_full: .asciz "\nMemory full\n" 
 err_syntax: .asciz "\nsyntax error\n" 
 err_math_ovf: .asciz "\nmath operation overflow\n"
 err_div0: .asciz "\ndivision by 0\n" 
 err_no_line: .asciz "\ninvalid line number.\n"
 err_run_only: .asciz "\nrun time only usage.\n" 
 err_cmd_only: .asciz "\ncommand line only usage.\n"
+err_duplicate: .asciz "\nduplicate name.\n"
+err_not_file: .asciz "\nFile not found.\n"
 
 syntax_error:
 	ld a,#ERR_SYNTAX 
@@ -3299,17 +3527,24 @@ poke:
 ;-----------------------
 ; BASIC: PEEK(addr)
 ; get the byte at addr 
+; input:
+;	none 
+; output:
+;	X 		value 
 ;-----------------------
 peek:
+	ld a,#TK_LPAREN 
+	call expect 
 	call arg_list
 	cp a,#1 
 	jreq 1$
 	jp syntax_error
-1$:	call dpop 
+1$:	ld a,#TK_RPAREN 
+	call expect 
+	call dpop 
 	ld a,(x)
 	clrw x 
 	ld xl,a 
-	call dpush 
 	ld a,#TK_INTGR
 	ret 
 
@@ -3557,7 +3792,8 @@ run:
 	btjf flags,#FRUN,0$  
 	clr a 
 	ret
-0$: ldw x,txtbgn
+0$: 
+	ldw x,txtbgn
 	cpw x,txtend 
 	jrmi 1$ 
 	clr a 
@@ -3602,26 +3838,228 @@ new:
 	_drop 2 
 	jp clear_basic
 	 
+;--------------------
+; input:
+;   X     increment 
+; output:
+;   farptr  incremented 
+;---------------------
+incr_farptr:
+	addw x,farptr+1 
+	jrnc 1$
+	inc farptr 
+	ldw farptr+1,x 
+1$: 
+	ret 
 
+;------------------------------
+; seek end of used flash  
+; input:
+;	none
+; output:
+;	farptr 		free flash address 
+;------------------------------
+seek_end: 
+	ldw x,#flash_free  
+	ldw farptr+1,x 
+	clr farptr
+; 4 consecutives 0 is considered empty memory 
+1$:	clrw x 
+	ldf a,([farptr],x) 
+	jrne 2$
+	incw x 
+	ldf a,([farptr],x)
+	jrne 2$ 
+	incw x 
+	ldf a,([farptr],x)
+	jrne 2$ 
+	incw x 
+	ldf a,([farptr],x)
+	jreq 4$ 
+2$: addw x,#1
+	call incr_farptr
+	ldw x,#0x27f 
+	cpw x,farptr
+	jrpl 1$
+	clrw x 
+	ldw farptr,x 
+	clr farptr+2 
+4$: 
+	ret 
+
+;--------------------------------
+; BASIC: SAVE "name" 
+; save text program in 
+; flash memory used as 
+;--------------------------------
 save:
 	btjf flags,#FRUN,0$ 
+	ld a,#ERR_CMD_ONLY 
+	jp tb_error
+0$:	 
+	ldw x,txtend 
+	subw x,txtbgn
+	jrne 10$
+; nothing to save 
 	clr a 
 	ret 
-0$:	
-	ldw x,#SAVE 
-	call prt_cstr 
+10$:	
+	call seek_end
+	ld a,farptr 
+	or a,farptr+1
+	or a,farptr+2 
+	jrne 1$
+	ld a,#ERR_MEM_FULL
+	jp tb_error 
+1$: call get_token	
+	cp a,#TK_QSTR
+	jreq 2$
+	jp syntax_error
+2$:  
+	clrw x 
+	ldw y,#pad 
+; write file name 	
+3$:	ld a,(y)
+	jreq 4$ 
+	call write_byte 	
+	incw y 
+	incw x
+	jra 3$ 
+4$:
+	call write_byte 
+	incw x 
+	call incr_farptr
+; write file length after name 
+	ldw x,txtend 
+	subw x,txtbgn
+	pushw x 
+	clrw x 
+	ld a,(1,sp)
+	call write_byte 
+	incw x 
+	ld a,(2,sp)
+	call write_byte
+	incw x  
+	call incr_farptr
+	popw x 
+; write BASIC text 	
+	clrw x 
+	ldw y,txtbgn
+	ld a,(y)
+5$:	call write_byte 
+	incw x 
+	incw y 
+	cpw y,txtend 
+	jrmi 5$
+; display saved size  
+	ldw x,txtend
+	subw x,txtbgn
+	ld a,#TK_INTGR 
 	ret 
 
+
+;-----------------------
+; compare file name 
+; with name in pad 
+; input:
+;   farptr   file name 
+;   pad      target name 
+; output:
+;   Carry    0|1 
+;----------------------
+cmp_name:
+	clrw x
+	ldw y,#pad  
+1$:	ld a,([farptr],x)
+	jreq 5$ 
+	cp a,(y)
+	jrne 4$
+    incw x 
+	incw y 
+	jra 1$
+4$: ;not this file 
+	incw x 
+	call incr_farptr
+	ldw x,[farptr] ; file line 
+	call incr_farptr 
+	ld a,[farptr]
+	jrne cmp_name
+	; not found 
+	rcf 
+	ret
+5$: ; found 
+	incw x 
+	call incr_farptr 
+	scf 
+	ret 
+
+
+;-----------------------
+; search file in 
+; flash memory 
+; input:
+;   pad    file name  
+; output:
+;   farptr  addr after name|0
+;-----------------------
+search_file:
+	ldw x,#flash_free
+	ldw farptr+1,x 
+	clr farptr 
+	call cmp_name
+
+	ret
+
+;------------------------
+; BASIC: LOAD "file" 
+; load file to RAM 
+; for execution 
+;------------------------
 load:
 	btjf flags,#FRUN,0$ 
 	jreq 0$ 
-	clr a 
-	ret 
+	ld a,#ERR_CMD_ONLY 
+	jp tb_error 
 0$:	
-	ldw x,#LOAD 
-	call prt_cstr 
+	call get_token 
+	cp a,#TK_QSTR
+	jreq 1$
+	jp syntax_error 
+1$:	call search_file 
+	ld a,farptr 
+	or a,farptr+1
+	or a,farptr+2 
+	jrne 2$ 
+	ld a,#ERR_NOT_FILE
+	jp tb_error  
+2$:	
+; get length 
+	clrw x
+	ldf a,([farptr],x)
+	ld yh,a 
+	incw x 
+	ldf a,([farptr],x)
+	incw x 
+	ld yl,a 
+	addw y,txtbgn
+	ldw txtend,y 
+	ldw y,txtbgn 
+3$:	; load BASIC text 	
+	ld a,([farptr],x)
+	ld (y),a 
+	incw x 
+	incw y 
+	cpw y,txtend 
+	jrmi 3$
+; return loaded size 	 
+	ldw x,txtend 
+	subw x,txtbgn
+	ld a,#TK_INTGR 
 	ret 
 
+;---------------------
+;
+;---------------------
 usr:
 	ldw x,#USR 
 	call prt_cstr 
@@ -3797,8 +4235,7 @@ name:
 	.endm 
 
 	LINK=0
-kwor_end:
-
+kword_end:
 	_dict_entry,3,BYE,bye 
 	_dict_entry,5,SLEEP,sleep 
 	_dict_entry,4,LOAD,load 
@@ -3879,3 +4316,5 @@ relop_dict:
 	.ascii "="
 	.word TK_EQUAL
 
+	.bndry 128 ; align on FLASH block.
+flash_free:
