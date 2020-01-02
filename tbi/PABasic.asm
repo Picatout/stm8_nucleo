@@ -286,11 +286,9 @@ erase_block:
 	jrpl erase_flash 
 ; erase eeprom block
 	call unlock_eeprom 
-_dbg_mark 'A 
 	sim 
 	call erase_start  
 	bres FLASH_IAPSR,#FLASH_IAPSR_DUL
-_dbg_mark 'C 
 	rim 
 	ret 
 ; erase flash block:
@@ -330,11 +328,11 @@ write_byte:
 ; check addr[23:16], if <> 0 then it is extened flash memory
 	tnz farptr 
 	jrne write_flash
-    cpw y,#flash_free 
+    cpw y,#fdrive 
     jruge write_flash
 	cpw y,#EEPROM_BASE  
     jrult write_exit
-	cpw y,#OPTION_BASE+OPTION_SIZE 
+	cpw y,#OPTION_BASE
 	jrult write_eeprom
     jra write_exit
 ; write program memory
@@ -372,7 +370,6 @@ write_eeprom:
     cpl a
     ldf ([farptr],x),a
 3$: btjf FLASH_IAPSR,#FLASH_IAPSR_EOP,.
-_dbg_mark 'W 
 write_exit:
 	_drop VSIZE 
 	popw y
@@ -997,7 +994,7 @@ cold_start:
 	call prti24 
 	ld a,#CR 
 	call putc 
-	call seek_flash_free  
+	call seek_fdrive  
 ; configure LED2 pin 
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
@@ -1024,6 +1021,7 @@ clear_basic:
 err_msg:
 	.word 0,err_mem_full, err_syntax, err_math_ovf, err_div0,err_no_line    
 	.word err_run_only,err_cmd_only,err_duplicate,err_not_file,err_bounds 
+	.word err_no_access 
 
 err_mem_full: .asciz "\nMemory full\n" 
 err_syntax: .asciz "\nsyntax error\n" 
@@ -1035,6 +1033,7 @@ err_cmd_only: .asciz "\ncommand line only usage.\n"
 err_duplicate: .asciz "\nduplicate name.\n"
 err_not_file: .asciz "\nFile not found.\n"
 err_bounds: .asciz "\narray index out of bounds.\n"
+err_no_access: .asciz "\nFile in extended memory, can't be run from there.\n" 
 
 syntax_error:
 	ld a,#ERR_SYNTAX 
@@ -3872,8 +3871,8 @@ return:
 
 
 ;----------------------------------
-; BASIC: RUN ["program_name"]
-; run BASIC program in RAM or flash
+; BASIC: RUN
+; run BASIC program in RAM
 ;----------------------------------- 
 run: 
 	btjf flags,#FRUN,0$  
@@ -3943,15 +3942,15 @@ incr_farptr:
 
 ;------------------------------
 ; seek end of used flash  
-; starting at 'flash_free' address.
+; starting at 'fdrive' address.
 ; 4 consecutives 0 bytes signal free space. 
 ; input:
 ;	none
 ; output:
 ;   ffree     free_addr| 0 if memory full.
 ;------------------------------
-seek_flash_free: 
-	ldw x,#flash_free  
+seek_fdrive: 
+	ldw x,#fdrive  
 	ldw farptr+1,x 
 	clr farptr
 1$:
@@ -3982,7 +3981,7 @@ seek_flash_free:
 	jra 5$
 4$: ; copy farptr to ffree	 
 	ldw x,farptr+1 
-	cpw x,#flash_free 
+	cpw x,#fdrive 
 	jreq 41$
 	; there is a file, last 0 of that file must be skipped.
 	ldw x,#1
@@ -4053,7 +4052,7 @@ cmp_name:
 search_file: 
 	_vars VSIZE
 	ldw (YSAVE,sp),y  
-	ldw x,#flash_free
+	ldw x,#fdrive
 	ldw farptr+1,x 
 	clr farptr
 1$:	
@@ -4158,7 +4157,17 @@ save:
 	ldw x,farptr 
 	ld a,farptr+2 
 	ldw ffree,x 
-	ld ffree+2,a 
+	ld ffree+2,a
+; write 4 zero bytes as a safe gard 
+    clrw x 
+	clr a 
+	call write_byte 
+	incw x 
+	clr a 
+	call write_byte
+	incw x 
+	clr a 
+	call write_byte
 ; display saved size  
 	popw x ; first copy of BSIZE 
 	ld a,#TK_INTGR 
@@ -4211,6 +4220,130 @@ load:
 	subw x,txtbgn
 	ld a,#TK_INTGR 
 	ret 
+
+;-----------------------------------
+; BASIC: FORGET ["file_name"] 
+; erase file_name and all others 
+; after it. 
+; without argument erase all files 
+;-----------------------------------
+forget:
+	call get_token 
+	cp a,#TK_NONE 
+	jreq 3$ 
+	cp a,#TK_QSTR
+	jreq 1$
+	jp syntax_error
+1$: ldw y,tokval 
+	call search_file
+	jrc 2$
+	ld a,#ERR_NOT_FILE 
+	jp tb_error 
+2$: 
+	ldw x,farptr
+	ld a,farptr+2
+	jra 4$ 
+3$: ; forget all files 
+	ldw x,#fdrive
+	clr a 
+	rrwa x 
+	ldw farptr,x 
+	ld farptr+2,a 
+4$:
+	ldw ffree,x 
+	ld ffree+2,a 
+5$:	clrw x 
+	clr a  
+	call write_byte 
+	ldw x,#1 
+	call incr_farptr
+	ld a,farptr
+	cp a,ffree 
+	jrmi 5$ 
+	ldw x,farptr+1 
+	cpw x,ffree+1
+	jrmi 5$
+	ret 
+
+;----------------------
+; BASIC: DIR 
+; list saved files 
+;----------------------
+	COUNT=1 ; files counter 
+	VSIZE=2 
+directory:
+	_vars VSIZE 
+	clrw x 
+	ldw (COUNT,sp),x 
+	ldw x,#fdrive 
+	ldw farptr+1,x 
+	clr farptr 
+dir_loop:
+	clrw x 
+	ldf a,([farptr],x)
+	jreq 8$ 
+1$: ;name loop 	
+	ldf a,([farptr],x)
+	jreq 2$ 
+	call putc 
+	incw x 
+	jra 1$
+2$: incw x ; skip ending 0. 
+	ld a,#SPACE 
+	call putc 
+; get file size 	
+	ldf a,([farptr],x)
+	ld yh,a 
+	incw x 
+	ldf a,([farptr],x)
+	incw x 
+	ld yl,a 
+	pushw y 
+	addw x,(1,sp)
+	call incr_farptr 
+	popw x ; file size 
+	call dpush 
+	call prt_tos 
+	ld a,#CR 
+	call putc
+	ldw x,(COUNT,sp)
+	incw x
+	ldw (COUNT,sp),x  
+	jra dir_loop 
+8$:
+	ldw x,(COUNT,sp)
+	call dpush 
+	call prt_tos
+	ldw x,#file_count 
+	call puts  
+	_drop VSIZE 
+	ret
+file_count: .asciz " files\n"
+
+;---------------------
+; BASIC: WRITE expr1,expr2 
+; write byte to FLASH or EEPROM 
+; input:
+;   expr1  	is address 
+;   expr2   is byte to write
+; output:
+;   none 
+;---------------------
+write:
+	clr farptr ; expect 16 bits address 
+	call arg_list  
+	cp a,#2
+	jreq 1$
+	jp syntax_error
+1$:
+	call dpop 
+	ld a,xl 
+	call dpop 
+	ldw farptr+1,x 
+	clrw x 
+	call write_byte 
+	ret 
+
 
 ;---------------------
 ;
@@ -4393,8 +4526,11 @@ name:
 kword_end:
 	_dict_entry,3,BYE,bye 
 	_dict_entry,5,SLEEP,sleep 
+	_dict_entry,6,FORGET,forget 
+	_dict_entry,3,DIR,directory 
 	_dict_entry,4,LOAD,load 
-	_dict_entry,4,SAVE,save 
+	_dict_entry,4,SAVE,save
+	_dict_entry,5,WRITE,write  
 	_dict_entry,3,NEW,new
 	_dict_entry,4,STOP,stop 
     _dict_entry 3,RUN,run
@@ -4473,5 +4609,8 @@ relop_dict:
 	.word TK_EQUAL
 
 	.bndry 128 ; align on FLASH block.
-flash_free:
-.byte 0
+; free space where files are saved 
+fdrive:
+.if DEBUG 
+.byte 0,0,0,0 
+.endif 
