@@ -62,12 +62,13 @@ seedy: .blkw 1  ; xorshift 16 seed y
 untok: .blkb 1  ; last ungotten token attribute 
 tokval: .blkw 1 ; last parsed token value  
 farptr: .blkb 3 ; far pointer 
+ffree: .blkb 3 ; flash free address 
 dstkptr: .blkw 1  ; data stack pointer 
 txtbgn: .ds 2 ; BASIC text beginning address 
 txtend: .ds 2 ; BASIC text end address 
 loop_depth: .ds 1 ; FOR loop depth 
 array_addr: .ds 2 ; address of @ array 
-arraysize: .ds 2 ; array size 
+array_size: .ds 2 ; array size 
 flags: .ds 1 ; boolean flags
 tab_width: .ds 1 ; print colon width (4)
 vars: .ds 2*26 ; BASIC variables A-Z, keep it as but last .
@@ -78,10 +79,10 @@ free_ram: ; from here RAM free for BASIC text
     .area SSEG (ABS)
 ;-----------------------------------	
     .org RAM_SIZE-STACK_SIZE-TIB_SIZE-PAD_SIZE-DSTACK_SIZE 
-dstack: .ds DSTACK_SIZE 
-dstack_unf: 
 tib: .ds TIB_SIZE             ; transaction input buffer
 pad: .ds PAD_SIZE             ; working buffer
+dstack: .ds DSTACK_SIZE 
+dstack_unf: ; dstack underflow 
 stack_full: .ds STACK_SIZE   ; control stack 
 stack_unf: ; stack underflow  
 
@@ -380,28 +381,39 @@ write_exit:
 ;--------------------------------------------
 ; write a data block to eeprom or flash 
 ; input:
-;   DATA    byte* data 
-;   BSIZE    data size in bytes 
-;   ADDR    write address 
+;   Y        source address   
+;   X        array index  destination  farptr[x]
+;   BSIZE    block size bytes 
+;   farptr   write address , byte* 
+; output:
+;	X 		after last byte written 
+;   Y 		after last byte read 
+;  farptr   point after block
 ;---------------------------------------------
-	;arguments on stack 
-	_argofs 0 
-	_arg DATA 1 
-	_arg BSIZE 3 
-	_arg ADDR 5 
+	_argofs 2 
+	_arg BSIZE 1  ; block size
+	; local var 
+	XSAVE=1 
+	VSIZE=2 
 write_block:
-	ld a,(ADDR,sp)
-	ld farptr,a 
-	ldw x,(ADDR+1,sp)
-	ldw farptr+1,x 
-	ldw y,(DATA,sp)
-	clrw x 
-1$:	ld a,(y)
+	_vars VSIZE
+	ldw (XSAVE,sp),x 
+	ldw x,(BSIZE,sp) 
+	jreq 9$
+1$:	ldw x,(XSAVE,sp)
+	ld a,(y)
 	call write_byte 
 	incw x 
 	incw y 
-	cpw x,(BSIZE,sp)
-	jrmi 1$ 
+	ldw (XSAVE,sp),x
+	ldw x,(BSIZE,sp)
+	decw x
+	ldw (BSIZE,sp),x 
+	jrne 1$
+9$:
+	ldw x,(XSAVE,sp)
+	call incr_farptr
+	_drop VSIZE
 	ret 
 
 
@@ -985,16 +997,19 @@ cold_start:
 	call prti24 
 	ld a,#CR 
 	call putc 
+	call seek_flash_free  
 ; configure LED2 pin 
     bset PC_CR1,#LED2_BIT
     bset PC_CR2,#LED2_BIT
     bset PC_DDR,#LED2_BIT
 	rim 
-	ldw x,#dstack 
-	subw x,#CELL_SIZE  
+	ldw x,#tib
 	ldw array_addr,x 
 	inc seedy+1 
 	inc seedx+1 
+	call clear_basic
+    jp warm_start 
+
 clear_basic:
 	clrw x 
 	ldw lineno,x
@@ -1003,11 +1018,12 @@ clear_basic:
 	ldw txtbgn,x 
 	ldw txtend,x 
 	call clear_vars 
-    jp warm_start 
+	call ubound 
+	ret 
 
 err_msg:
 	.word 0,err_mem_full, err_syntax, err_math_ovf, err_div0,err_no_line    
-	.word err_run_only,err_cmd_only,err_duplicate,err_not_file 
+	.word err_run_only,err_cmd_only,err_duplicate,err_not_file,err_bounds 
 
 err_mem_full: .asciz "\nMemory full\n" 
 err_syntax: .asciz "\nsyntax error\n" 
@@ -1018,6 +1034,7 @@ err_run_only: .asciz "\nrun time only usage.\n"
 err_cmd_only: .asciz "\ncommand line only usage.\n"
 err_duplicate: .asciz "\nduplicate name.\n"
 err_not_file: .asciz "\nFile not found.\n"
+err_bounds: .asciz "\narray index out of bounds.\n"
 
 syntax_error:
 	ld a,#ERR_SYNTAX 
@@ -1171,7 +1188,14 @@ interp_loop:
 	_unget_tok 
 	call let 
 	jra interp_loop 
-0$:	cp a,#TK_KWORD
+0$:	
+	cp a,#TK_ARRAY 
+	jrne 10$
+	call get_array_element
+	call let02 
+	jra interp_loop 
+10$:
+	cp a,#TK_KWORD
 	jreq 4$ 
 	cp a,#TK_NONE
 	jreq interp_loop ; empty line 
@@ -2416,7 +2440,8 @@ skip:
 ;	none 
 ;----------------------	
 dpush:
-    _dp_down 1
+    dec dstkptr+1
+	dec dstkptr+1
     ldw [dstkptr],x  
 	ret 
 
@@ -2430,15 +2455,19 @@ dpush:
 ;----------------------	
 dpop: 
     ldw x, [dstkptr]
-	_dp_up 1 
+	inc dstkptr+1 
+	inc dstkptr+1 
 	ret 
 
-;--------------------------
+;-----------------------------
 ; duplicate TOS 
 ;  dstack: { ix...n -- ix...n n }
+;-----------------------------
 ddup:
 	ldw x,[dstkptr]
-	call dpush 
+    dec dstkptr+1
+	dec dstkptr+1
+    ldw [dstkptr],x  
 	ret 
 
 
@@ -2463,6 +2492,17 @@ fetch:
 	ldw x,[dstkptr]
 	ldw x,(x)
 	ldw [dstkptr],x
+	ret 
+
+;----------------------------
+; store variable 
+; dstack: {addr value -- }
+;----------------------------
+store:
+	call dpop 
+	ldw y,x   ; y=value 
+	call dpop 
+	ldw (x),y 
 	ret 
 
 ;----------------------------
@@ -2511,17 +2551,6 @@ dots:
 	_drop VSIZE
 	ret
 .endif 
-
-;----------------------------
-; store variable 
-; dstack: {addr value -- }
-;----------------------------
-store:
-	call dpop 
-	ldw y,x   ; y=value 
-	call dpop 
-	ldw (x),y 
-	ret 
 
 ;--------------------------------
 ;  add 2 top integer on dstack 
@@ -2851,6 +2880,40 @@ negate:
 	ldw [dstkptr],x 
 	ret 
 
+;---------------------
+; return array element
+; address from @(expr)
+; input:
+;   A 		TK_ARRAY
+; output:
+;	X 		TK_INTGR, element address 
+;----------------------
+get_array_element:
+	ld a,#TK_LPAREN 
+	call expect
+	call relation 
+	cp a,#TK_INTGR 
+	jreq 1$
+	jp syntax_error
+1$: 
+	ld a,#TK_RPAREN 
+	call expect 
+	; check for bounds 
+	call dpop  
+	cpw x,array_size 
+	jrule 3$
+; bounds {1..array_size}	
+2$: ld a,#ERR_BOUNDS 
+	jp tb_error 
+3$: tnzw  x
+	jreq 2$ 
+	sllw x 
+	pushw x 
+	ldw x,array_addr  
+	subw x,(1,sp)
+	_drop 2   
+	ld a,#TK_INTGR
+	ret 
 
 ;-----------------------------------
 ; factor ::= ['+'|'-'|e] var | integer | function | '('relation')' 
@@ -2876,7 +2939,13 @@ factor:
 	clr a 
 	call (x)
 	jra 3$
-11$:	
+11$:
+	cp a,#TK_ARRAY
+	jrne 16$
+	call get_array_element
+	ldw x,(x)
+	jra 5$ 
+16$:		
 	cp a,#TK_LPAREN
 	jrne 2$
 	call relation
@@ -3074,6 +3143,24 @@ dec_base:
 size:
 	ldw x,#tib 
 	subw x,txtend 
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret 
+
+
+;------------------------
+; BASIC: UBOUND  
+; return array variable size 
+; output:
+;   A 		TK_INTGR
+;   X 	    array size 
+;--------------------------
+ubound:
+	ldw x,#tib
+	subw x,txtend 
+	srlw x 
+	ldw array_size,x
+	ldw tokval,x  
 	ld a,#TK_INTGR
 	ret 
 
@@ -3208,7 +3295,7 @@ prt_basic_line:
 print:
 	push #0 ; local variable COMMA 
 prt_loop: 	
-	call relation 
+	call relation
 	cp a,#TK_INTGR 
 	jrne 1$ 
 	call prt_tos 
@@ -3798,7 +3885,9 @@ run:
 	jrmi 1$ 
 	clr a 
 	ret 
-1$: _drop 2 
+1$: call ubound 
+	_drop 2 
+	ldw x,txtbgn 
 	ldw basicptr,x 
 	ld a,(2,x)
 	add a,#2 ; consider that in start at 3  
@@ -3835,8 +3924,9 @@ new:
 	clr a 
 	ret 
 0$:	
-	_drop 2 
-	jp clear_basic
+	call clear_basic 
+	clr a 
+	ret 
 	 
 ;--------------------
 ; input:
@@ -3848,23 +3938,24 @@ incr_farptr:
 	addw x,farptr+1 
 	jrnc 1$
 	inc farptr 
-	ldw farptr+1,x 
-1$: 
+1$:	ldw farptr+1,x  
 	ret 
 
 ;------------------------------
 ; seek end of used flash  
+; starting at 'flash_free' address.
+; 4 consecutives 0 bytes signal free space. 
 ; input:
 ;	none
 ; output:
-;	farptr 		free flash address 
+;   ffree     free_addr| 0 if memory full.
 ;------------------------------
-seek_end: 
+seek_flash_free: 
 	ldw x,#flash_free  
 	ldw farptr+1,x 
 	clr farptr
-; 4 consecutives 0 is considered empty memory 
-1$:	clrw x 
+1$:
+	clrw x 
 	ldf a,([farptr],x) 
 	jrne 2$
 	incw x 
@@ -3876,16 +3967,126 @@ seek_end:
 	incw x 
 	ldf a,([farptr],x)
 	jreq 4$ 
-2$: addw x,#1
+2$: 
+	addw x,#1
 	call incr_farptr
 	ldw x,#0x27f 
 	cpw x,farptr
 	jrpl 1$
+	clr ffree 
+	clr ffree+1 
+	clr ffree+2 
+	clr acc24 
+	clr acc16
+	clr acc8 
+	jra 5$
+4$: ; copy farptr to ffree	 
+	ldw x,farptr+1 
+	cpw x,#flash_free 
+	jreq 41$
+	; there is a file, last 0 of that file must be skipped.
+	ldw x,#1
+	call incr_farptr
+41$: 
+	ldw x,farptr 
+	ld a,farptr+2 
+	ldw ffree,x 
+	ld ffree+2,a  
+	ldw acc24,x 
+	ld acc8,a 
+5$:	ldw x,ffree_msg 
+	call puts 
 	clrw x 
-	ldw farptr,x 
-	clr farptr+2 
-4$: 
+	ld a,#16
+	call prti24 
+	ld a,#CR 
+	call putc 
 	ret 
+ffree_msg: .asciz "\nfree flash begin at: "
+
+;-----------------------
+; compare file name 
+; with name pointed by Y  
+; input:
+;   farptr   file name 
+;   Y        target name 
+; output:
+;   farptr 	 at file_name
+;   X 		 farptr[x] point at size field  
+;   Carry    0|1 no match|match  
+;----------------------
+cmp_name:
+	clrw x
+1$:	ldf a,([farptr],x)
+	cp a,(y)
+	jrne 4$
+	tnz a 
+	jreq 9$ 
+    incw x 
+	incw y 
+	jra 1$
+4$: ;no match 
+	tnz a 
+	jreq 5$
+	incw x 
+	ldf a,([farptr],x)
+	jra 4$  
+5$:	incw x ; farptr[x] point at 'size' field 
+	rcf 
+	ret
+9$: ; match  
+	incw x  ; farptr[x] at 'size' field 
+	scf 
+	ret 
+
+;-----------------------
+; search file in 
+; flash memory 
+; input:
+;   Y       file name  
+; output:
+;   farptr  addr at name|0
+;-----------------------
+	FSIZE=1
+	YSAVE=3
+	VSIZE=4 
+search_file: 
+	_vars VSIZE
+	ldw (YSAVE,sp),y  
+	ldw x,#flash_free
+	ldw farptr+1,x 
+	clr farptr
+1$:	
+; check if farptr is after any file 
+; if  0 then so.
+	ldf a,[farptr]
+	jreq 6$
+2$: clrw x 	
+	ldw y,(YSAVE,sp) 
+	call cmp_name
+	jrc 9$
+	ldf a,([farptr],x)
+	ld (FSIZE,sp),a 
+	incw x 
+	ldf a,([farptr],x)
+	ld (FSIZE+1,sp),a 
+	incw x 
+	addw x,(FSIZE,sp) ; count to skip 
+	call incr_farptr ; now at next file 'name_field'
+	ldw x,#0x280
+	cpw x,farptr 
+	jrpl 1$
+6$: ; file not found 
+	clr farptr
+	clr farptr+1 
+	clr farptr+2 
+	_drop VSIZE 
+	rcf
+	ret
+9$: ; file found  farptr[0] at 'name_field',farptr[x] at 'file_size' 
+	_drop VSIZE 
+	scf 	
+	ret
 
 ;--------------------------------
 ; BASIC: SAVE "name" 
@@ -3904,10 +4105,9 @@ save:
 	clr a 
 	ret 
 10$:	
-	call seek_end
-	ld a,farptr 
-	or a,farptr+1
-	or a,farptr+2 
+	ld a,ffree 
+	or a,ffree+1
+	or a,ffree+2 
 	jrne 1$
 	ld a,#ERR_MEM_FULL
 	jp tb_error 
@@ -3915,24 +4115,29 @@ save:
 	cp a,#TK_QSTR
 	jreq 2$
 	jp syntax_error
-2$:  
-	clrw x 
-	ldw y,#pad 
-; write file name 	
-3$:	ld a,(y)
-	jreq 4$ 
-	call write_byte 	
-	incw y 
-	incw x
-	jra 3$ 
-4$:
-	call write_byte 
-	incw x 
-	call incr_farptr
-; write file length after name 
+2$: ; check for existing file of that name 
+	ldw y,tokval ; file name pointer 
+	call search_file 
+	jrnc 3$ 
+	ld a,#ERR_DUPLICATE 
+	jp tb_error 
+3$:	;** write file name to flash **
+	ldw x,ffree 
+	ld a,ffree+2 
+	ldw farptr,x 
+	ld farptr+2,a 
+	ldw x,tokval 
+	call strlen 
+	incw  x
+	pushw x 
+	clrw x   
+	ldw y,tokval 
+	call write_block  
+	_drop 2 ; drop pushed X 
+;** write file length after name **
 	ldw x,txtend 
 	subw x,txtbgn
-	pushw x 
+	pushw x ; file size 
 	clrw x 
 	ld a,(1,sp)
 	call write_byte 
@@ -3940,75 +4145,25 @@ save:
 	ld a,(2,sp)
 	call write_byte
 	incw x  
-	call incr_farptr
-	popw x 
-; write BASIC text 	
+	call incr_farptr ; move farptr after SIZE field 
+;** write BASIC text **
+; copy BSIZE, cstack:{... bsize -- ... bsize bsize }	
+	ldw x,(1,sp)
+	pushw x 
 	clrw x 
-	ldw y,txtbgn
-	ld a,(y)
-5$:	call write_byte 
-	incw x 
-	incw y 
-	cpw y,txtend 
-	jrmi 5$
+	ldw y,txtbgn  ; BASIC text to save 
+	call write_block 
+	_drop 2 ;  drop BSIZE argument
+; save farptr in ffree
+	ldw x,farptr 
+	ld a,farptr+2 
+	ldw ffree,x 
+	ld ffree+2,a 
 ; display saved size  
-	ldw x,txtend
-	subw x,txtbgn
+	popw x ; first copy of BSIZE 
 	ld a,#TK_INTGR 
 	ret 
 
-
-;-----------------------
-; compare file name 
-; with name in pad 
-; input:
-;   farptr   file name 
-;   pad      target name 
-; output:
-;   Carry    0|1 
-;----------------------
-cmp_name:
-	clrw x
-	ldw y,#pad  
-1$:	ld a,([farptr],x)
-	jreq 5$ 
-	cp a,(y)
-	jrne 4$
-    incw x 
-	incw y 
-	jra 1$
-4$: ;not this file 
-	incw x 
-	call incr_farptr
-	ldw x,[farptr] ; file line 
-	call incr_farptr 
-	ld a,[farptr]
-	jrne cmp_name
-	; not found 
-	rcf 
-	ret
-5$: ; found 
-	incw x 
-	call incr_farptr 
-	scf 
-	ret 
-
-
-;-----------------------
-; search file in 
-; flash memory 
-; input:
-;   pad    file name  
-; output:
-;   farptr  addr after name|0
-;-----------------------
-search_file:
-	ldw x,#flash_free
-	ldw farptr+1,x 
-	clr farptr 
-	call cmp_name
-
-	ret
 
 ;------------------------
 ; BASIC: LOAD "file" 
@@ -4025,27 +4180,27 @@ load:
 	cp a,#TK_QSTR
 	jreq 1$
 	jp syntax_error 
-1$:	call search_file 
-	ld a,farptr 
-	or a,farptr+1
-	or a,farptr+2 
-	jrne 2$ 
+1$:	ldw y,tokval 
+	call search_file 
+	jrc 2$ 
 	ld a,#ERR_NOT_FILE
 	jp tb_error  
 2$:	
-; get length 
+	call incr_farptr  
+	call clear_basic  
+; get length
 	clrw x
 	ldf a,([farptr],x)
 	ld yh,a 
-	incw x 
+	incw x  
 	ldf a,([farptr],x)
 	incw x 
 	ld yl,a 
 	addw y,txtbgn
-	ldw txtend,y 
-	ldw y,txtbgn 
+	ldw txtend,y
+	ldw y,txtbgn
 3$:	; load BASIC text 	
-	ld a,([farptr],x)
+	ldf a,([farptr],x)
 	ld (y),a 
 	incw x 
 	incw y 
@@ -4243,6 +4398,7 @@ kword_end:
 	_dict_entry,3,NEW,new
 	_dict_entry,4,STOP,stop 
     _dict_entry 3,RUN,run
+	_dict_entry 4,LIST,list
 	_dict_entry,3,USR,usr
 	_dict_entry,4,SIZE,size
 	_dict_entry,3,HEX,hex_base
@@ -4256,7 +4412,6 @@ kword_end:
 	_dict_entry 4,WAIT,wait 
 	_dict_entry 3,REM,rem 
 	_dict_entry 5,PRINT,print 
-	_dict_entry 4,LIST,list
 	_dict_entry,2,IF,if 
 	_dict_entry,5,GOSUB,gosub 
 	_dict_entry,4,GOTO,goto 
@@ -4264,6 +4419,7 @@ kword_end:
 	_dict_entry,2,TO,to
 	_dict_entry,4,STEP,step 
 	_dict_entry,4,NEXT,next 
+	_dict_entry,6,UBOUND,ubound 
 	_dict_entry,6,RETURN,return 
 	_dict_entry,4,PEEK,peek 
 	_dict_entry,4,POKE,poke 
@@ -4318,3 +4474,4 @@ relop_dict:
 
 	.bndry 128 ; align on FLASH block.
 flash_free:
+.byte 0

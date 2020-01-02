@@ -70,6 +70,7 @@
     ERR_CMD_ONLY=7
     ERR_DUPLICATE=8
     ERR_NOT_FILE=9
+    ERR_BOUNDS=10
 
 ;--------------------------------------
 ;   assembler flags 
@@ -80,24 +81,6 @@
 ;  data stack macros 
 ;---------------------------------------
     CELL_SIZE=2 
-    ; open space on data stack
-    .macro _dp_down n 
-    pushw x 
-    ldw x, dstkptr 
-    subw x,#CELL_SIZE*n 
-    ldw dstkptr,x
-    popw x 
-    .endm 
-
-    ;release space on data stack 
-    .macro _dp_up n
-    pushw x 
-    ldw x,dstkptr 
-    addw x,#CELL_SIZE*n  
-    ldw dstkptr,x 
-    popw x 
-    .endm 
-
     ; return token to pool 
     .macro _unget_tok 
     ld untok,a 
