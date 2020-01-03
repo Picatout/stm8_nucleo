@@ -1169,7 +1169,7 @@ interp:
 	mov in,#3 ; skip first 3 bytes of line 
 	jra interp_loop 
 4$: ; commande line mode 	
-	clr in
+	clr in 
 	ld a,#CR 
 	call putc 
 	ld a,#'> 
@@ -1183,9 +1183,8 @@ interp_loop:
 	cp a,#TK_COLON 
 	jreq interp_loop  
 	cp a,#TK_VAR
-	jrne 0$ 
-	_unget_tok 
-	call let 
+	jrne 0$
+	call let02  
 	jra interp_loop 
 0$:	
 	cp a,#TK_ARRAY 
@@ -1228,7 +1227,7 @@ interp_loop:
 	jrne interp_loop 
 	call dpush 
 	call prt_tos  
-	jra interp_loop 	
+	jp interp_loop 	
 	.blkb 0x71 ; reset MCU
 
 ;----------------------------------------
@@ -3166,21 +3165,22 @@ ubound:
 let:
 	call get_token 
 	cp a,#TK_VAR 
-	jrne let_bad_syntax 
+	jreq let02
+	jp syntax_error
 let02:
 	call dpush
 	call get_token 
 	cp a,#TK_EQUAL
-	jrne let_bad_syntax 
-	call relation   
+	jreq 1$
+	jp syntax_error
+1$:	call relation   
 	cp a,#TK_INTGR 
-	jrne let_bad_syntax 
+	jreq 2$
+	jp syntax_error
+2$:	
 	call store  
 	ld a,#TK_NONE 
 	ret 
-let_bad_syntax:
-	ld a,#ERR_SYNTAX
-	jp tb_error 
 
 ;----------------------------
 ; BASIC: LIST([[start][,end]])
@@ -3293,12 +3293,14 @@ prt_basic_line:
 	VSIZE=1
 print:
 	push #0 ; local variable COMMA 
-prt_loop: 	
+reset_comma:
+	clr (COMMA,sp)
+prt_loop:
 	call relation
 	cp a,#TK_INTGR 
 	jrne 1$ 
 	call prt_tos 
-	jra prt_loop 
+	jra reset_comma  
 1$: 
 	call get_token
 	cp a,#TK_COLON 
@@ -3309,7 +3311,7 @@ prt_loop:
 	jrne 2$   
 	ldw x,#pad 
 	call puts 
-	jra prt_loop 
+	jra reset_comma
 2$: cp a,#TK_KWORD 
 	jrne 3$ 
 	call (x)
@@ -3321,7 +3323,7 @@ prt_loop:
 21$:
 	call dpush 
 	call prt_tos 
-	jra prt_loop   
+	jra reset_comma
 3$: cp a,#TK_COMMA 
 	jrne 4$
 	ld a,#1 
@@ -3337,7 +3339,7 @@ prt_loop:
 	ld a,xl 
 	and a,#15 
 	ld tab_width,a 
-	jp prt_loop 
+	jp reset_comma 
 print_exit:
 	tnz (COMMA,sp)
 	jrne 9$
@@ -3642,11 +3644,11 @@ if:
 1$:	clr a 
 	call dpop 
 	tnzw x 
-	jreq 9$  
-	ret  
+	jrne 9$  
 ;skip to next line
-9$:	mov in,count
-	ret 
+	mov in,count
+	clr untok 
+9$:	ret 
 
 ;------------------------
 ; BASIC: FOR var=expr 
