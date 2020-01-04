@@ -4442,13 +4442,13 @@ ascii:
 	jreq 1$
 	jp syntax_error
 1$: ldw x,tokval 
+	ld a,(x)
+	clrw x 
+	ld xl,a 
 	call dpush 
 	ld a,#TK_RPAREN 
 	call expect 
 	call dpop  
-	ld a,(x)
-	clrw x
-	ld xl,a 
 	ldw tokval,x 
 	ld a,#TK_INTGR 
 	ret 
@@ -4706,7 +4706,7 @@ kword_end:
 	_dict_entry,4,BRES,bit_reset
 	_dict_entry,5,BTOGL,bit_toggle
 	_dict_entry 4,WAIT,wait 
-	_dict_entry 3,REM,rem 
+	_dict_entry 6,REMARK,rem 
 	_dict_entry 5,PRINT,print 
 	_dict_entry,2,IF,if 
 	_dict_entry,5,GOSUB,gosub 
