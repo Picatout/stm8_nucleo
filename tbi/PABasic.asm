@@ -57,6 +57,7 @@ base:  .blkb 1 ; nemeric base used to print integer
 acc24: .blkb 1 ; 24 accumulator
 acc16: .blkb 1
 acc8:  .blkb 1
+ticks: .blkw 1 ; milliseconds ticks counter (see Timer4UpdateHandler)
 seedx: .blkw 1  ; xorshift 16 seed x 
 seedy: .blkw 1  ; xorshift 16 seed y 
 untok: .blkb 1  ; last ungotten token attribute 
@@ -152,9 +153,9 @@ TrapHandler:
 
 Timer4UpdateHandler:
 	clr TIM4_SR 
-	ldw x,(3,sp)
-	decw x
-	ldw (3,sp),x 
+	ldw x,ticks
+	incw x
+	ldw ticks,x 
 	iret 
 
 
@@ -168,18 +169,33 @@ UserButtonHandler:
 1$: decw x 
 	jrne 1$
 	btjf USR_BTN_PORT,#USR_BTN_BIT, 1$
-.if DEBUG 	
 	ldw x,#USER_ABORT
 	call puts 
-	ldw x, #RAM_SIZE-1
-	ldw sp, x
+	btjf flags,#FRUN,2$
+	ldw x,basicptr
+	ldw x,(x)
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#5
+	ld xl,a 
+	ld a,#10 
+	call prti24
+	ldw x,basicptr 
+	addw x,#3  
+	call puts 
+	ld a,#CR 
+	call putc
+	clrw x  
+	ld a,in 
+	add a,#2 ; adjustment for line number display 
+	ld xl,a 
+	call spaces 
+	ld a,#'^
+	call putc 
 	rim 
-	call print_registers
-	jp cmd_itf 
-	jp warm_start
-.else 
-	iret 
-.endif 
+2$:	jp warm_start
+
 
 USER_ABORT: .asciz "\nProgram aborted by user.\n"
 
@@ -204,6 +220,17 @@ clock_init:
 ; HSI and cpu clock divisor 
 	ld a,xl 
 	ld CLK_CKDIVR,a  
+	ret
+
+;---------------------------------
+; TIM4 is configured to generate an 
+; interrupt every millisecond 
+;----------------------------------
+timer4_init:
+	mov TIM4_PSCR,#7 ; prescale 128  
+	mov TIM4_ARR,#125 ; set for 1msec.
+	mov TIM4_CR1,#((1<<TIM4_CR1_CEN)|(1<<TIM4_CR1_URS))
+	bset TIM4_IER,#TIM4_IER_UIE 
 	ret
 
 ;----------------------------------
@@ -972,6 +999,7 @@ cold_start:
 	ld a,#CLK_SWR_HSI 
 	clrw x  
     call clock_init 
+	call timer4_init
 ; UART3 at 115200 BAUD
 	call uart3_init
 ; activate PE_4 (user button interrupt)
@@ -1223,6 +1251,12 @@ interp_loop:
 	or a,lineno+1 
 	pop a 
 	jrne interp_loop  
+	cp a,#TK_CHAR 
+	jrne 5$
+	ld a,xl 
+	call putc 
+	jp interp_loop 
+5$:	
 	cp a,#TK_INTGR
 	jrne interp_loop 
 	call dpush 
@@ -1587,9 +1621,26 @@ readln_loop:
 	jreq del_ln
 	cp a,#CTRL_R 
 	jreq reprint 
+;	cp a,#'[
+;	jreq ansi_seq
+final_test:
 	cp a,#SPACE
 	jrpl accept_char
 	jra readln_loop
+ansi_seq:
+;	call getc
+;	cp a,#'C 
+;	jreq rigth_arrow
+;	cp a,#'D 
+;	jreq left_arrow 
+;	jra final_test
+right_arrow:
+;	ld a,#BSP 
+;	call putc 
+;	jra realn_loop 
+left_arrow:
+
+;	jra readln_loop
 reprint: 
 	tnz count 
 	jreq readln_loop
@@ -1897,10 +1948,10 @@ convert_escape:
 ;   tokval   actual integer 
 ;-------------------------
 	BASE=1
-	CHAR=2 
+	TCHAR=2 
 	VSIZE=2 
 parse_integer:
-	push #0 ; CHAR 
+	push #0 ; TCHAR 
 	cp a,#'$
 	jreq 1$ 
 	push #10 ; BASE=10 
@@ -1911,13 +1962,13 @@ parse_integer:
 	inc in 
 	ld a,([in.w],y)
 	call to_upper 
-	ld (CHAR,sp),a 
+	ld (TCHAR,sp),a 
 	call is_digit 
 	jrc 2$
 	ld a,#16 
 	cp a,(BASE,sp)
 	jrne 3$ 
-	ld a,(CHAR,sp)
+	ld a,(TCHAR,sp)
 	cp a,#'A 
 	jrmi 3$ 
 	cp a,#'G 
@@ -2070,11 +2121,11 @@ parse_relop:
 	; use to check special character 
 	.macro _case c t  
 	ld a,#c 
-	cp a,(CHAR,sp) 
+	cp a,(TCHAR,sp) 
 	jrne t
 	.endm 
 
-	CHAR=1
+	TCHAR=1
 	ATTRIB=2 
 	VSIZE=2
 get_token:
@@ -2106,26 +2157,26 @@ get_token:
 
 str_tst: ; check for quoted string  	
 	call to_upper 
-	ld (CHAR,sp),a 
+	ld (TCHAR,sp),a 
 	_case '"' nbr_tst
 	call parse_quote
 	jp token_exit
 nbr_tst: ; check for number 
 	ld a,#'$'
-	cp a,(CHAR,sp) 
+	cp a,(TCHAR,sp) 
 	jreq 1$
 	ld a,#'%
-	cp a,(CHAR,sp)
+	cp a,(TCHAR,sp)
 	jrne 0$
 	call parse_binary ; expect binary integer 
 	jp token_exit 
-0$:	ld a,(CHAR,sp)
+0$:	ld a,(TCHAR,sp)
 	call is_digit
 	jrnc 3$
 1$:	call parse_integer 
 	jp token_exit 
 3$: 
-	ld (CHAR,sp),a 
+	ld (TCHAR,sp),a 
 	_case '(' rparnt_tst 
 	ld a,#TK_LPAREN
 	jp token_char   	
@@ -2194,7 +2245,7 @@ rel_op:
 	call parse_relop
 	jra token_exit 
 other: ; not a special character 	 
-	ld a,(CHAR,sp)
+	ld a,(TCHAR,sp)
 	call is_alpha 
 	jrc 30$ 
 	ld a,#ERR_SYNTAX 
@@ -2204,7 +2255,7 @@ other: ; not a special character
 	jra token_exit 
 token_char:
 	ld (ATTRIB,sp),a 
-	ld a,(CHAR,sp)
+	ld a,(TCHAR,sp)
 	ld tokval+1,a 
 	ld (x),a 
 	incw x 
@@ -3301,7 +3352,7 @@ prt_loop:
 	jrne 1$ 
 	call prt_tos 
 	jra reset_comma  
-1$: 
+1$: 	
 	call get_token
 	cp a,#TK_COLON 
 	jreq print_exit
@@ -3312,7 +3363,13 @@ prt_loop:
 	ldw x,#pad 
 	call puts 
 	jra reset_comma
-2$: cp a,#TK_KWORD 
+2$: cp a,#TK_CHAR 
+	jrne 18$
+	ld a,xl 
+	call putc 
+	jra reset_comma 
+18$: 	
+	cp a,#TK_KWORD 
 	jrne 3$ 
 	call (x)
 	cp a,#TK_INTGR
@@ -4348,6 +4405,91 @@ write:
 
 
 ;---------------------
+;BASIC: CHAR(expr)
+; évaluate expression 
+; and take the 7 least 
+; bits as ASCII character
+;---------------------
+char:
+	ld a,#TK_LPAREN 
+	call expect 
+	call relation 
+	cp a,#TK_INTGR 
+	jreq 1$
+	jp syntax_error
+1$:	
+	ld a,#TK_RPAREN 
+	call expect
+	call dpop 
+	ld a,xl 
+	and a,#0x7f 
+	ld xl,a
+	ldw tokval,x  
+	ld a,#TK_CHAR
+	ret
+
+;---------------------
+; BASIC: ASC(string)
+; extract first character 
+; of string argument 
+; return it as TK_INTGR 
+;---------------------
+ascii:
+	ld a,#TK_LPAREN
+	call expect 
+	call get_token 
+	cp a,#TK_QSTR 
+	jreq 1$
+	jp syntax_error
+1$: ldw x,tokval 
+	call dpush 
+	ld a,#TK_RPAREN 
+	call expect 
+	call dpop  
+	ld a,(x)
+	clrw x
+	ld xl,a 
+	ldw tokval,x 
+	ld a,#TK_INTGR 
+	ret 
+
+;---------------------
+;BASIC: KEY
+; wait for a character 
+; received from STDIN 
+; input:
+;	none 
+; output:
+;	X 		ASCII character 
+;---------------------
+key:
+	call getc 
+	clrw x 
+	ld xl,a 
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
+
+;----------------------
+; BASIC: QKEY
+; Return true if there 
+; is a character in 
+; waiting in STDIN 
+; input:
+;  none 
+; output:
+;   X 		0|1 
+;-----------------------
+qkey: 
+	clrw x 
+	btjf UART3_SR,#UART_SR_RXNE,9$ 
+	incw x 
+9$: ld a,#TK_INTGR
+	ret 
+
+
+
+;---------------------
 ;
 ;---------------------
 usr:
@@ -4377,7 +4519,7 @@ sleep:
 	halt 
 	ret 
 
-
+;-------------------------------
 ; BASIC: PAUSE expr 
 ; suspend execution for n msec.
 ; input:
@@ -4390,18 +4532,29 @@ pause:
 	cp a,#TK_INTGR
 	jreq 0$
 	jp syntax_error
-0$:	call dpop
-	mov TIM4_PSCR,#7 ; prescale 128  
-	mov TIM4_ARR,#125 ; set for 1msec.
-	mov TIM4_CR1,#((1<<TIM4_CR1_CEN)|(1<<TIM4_CR1_URS))
-	bset TIM4_IER,#TIM4_IER_UIE 
-1$: wfi 
-	tnzw x  
-	jrpl 1$
-	bres TIM4_IER,#TIM4_IER_UIE 
-    clr TIM4_CR1 
-	clr a 
+0$: call dpop 	
+1$: tnzw x 
+	jreq 2$
+	wfi 
+	decw x 
+	jrne 1$
+2$:	clr a 
 	ret 
+
+;------------------------------
+; BASIC: TICKS
+; return msec ticks counter value 
+; input:
+; 	none 
+; output:
+;	X 		TK_INTGR
+;-------------------------------
+get_ticks:
+	ldw x,ticks 
+	ld a,#TK_INTGR
+	ret 
+
+
 
 ;------------------------------
 ; BASIC: ABS(expr)
@@ -4538,9 +4691,14 @@ kword_end:
     _dict_entry 3,RUN,run
 	_dict_entry 4,LIST,list
 	_dict_entry,3,USR,usr
+	_dict_entry,3,ASC,ascii  
+	_dict_entry,4,CHAR,char
+	_dict_entry,4,QKEY,qkey  
+	_dict_entry,3,KEY,key 
 	_dict_entry,4,SIZE,size
 	_dict_entry,3,HEX,hex_base
 	_dict_entry,3,DEC,dec_base
+	_dict_entry,5,TICKS,get_ticks
 	_dict_entry,3,ABS,abs
 	_dict_entry,3,RND,random 
 	_dict_entry,5,PAUSE,pause 

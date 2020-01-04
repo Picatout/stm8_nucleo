@@ -36,6 +36,7 @@
         TK_COMMA=8      ; item separator ',' 
         TK_SHARP=9      ; print colon width '#' 
         TK_INTGR=10     ; integer 
+        TK_CHAR=11      ; ASCII character 
         TK_PLUS=0x10    ; addition operator '+'
         TK_MINUS=0x11   ; subtraction operator '-'
         TK_MULT=0x20    ; multiplication operator '*'
