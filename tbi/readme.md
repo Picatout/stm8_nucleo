@@ -56,6 +56,9 @@ Une commande est suivie de ses arguments séparés par une virgule. Les argument
 
 Les *espaces* entre les *unitées lexicales* sont facultatifs sauf s'il y a ambiguité. Par exemple si le nom d'un commande est immédiatement suivit par le nom d'une variable un espace doit les séparés. 
 
+Les commandes peuvent-être entrées indéfèramment en minuscule ou majuscule.
+L'analyseur lexical convertie les lettres en  majuscule.
+
 Les commandes peuvent-être abrégées au plus court à 2 caractères à condition qu'il n'y est pas d'ambiguité entre 2 commandes. L'abréviation doit-être d'au moins 2 lettres pour éviter la confusion avec les variables. Par exemple **GOTO**peut-être abrégé **GOT** et **GOSUB** peut-être abrégé **GOS**. 
 
 Certaines commandes sont représentées facultativement par une caractère unique qui évite d'avoir à faire une recherche dans le dictionnaire ce qui accélère l'exécution. Par exemple la commande **PRINT** peut-être remplacée par **'?'**. 
@@ -295,6 +298,18 @@ Press a key to continue...
 
 >
 ```
+### LET *var*=*expr* {C,P}
+Affecte une valeur à une variable. En Tiny BASIC il n'y a que 26 variables représentées par les lettres de l'alphabet. *expr* peut-être arithmétique ou relationnel ou une combinaison des deux. Le mot réservé **LET** est facultatif. 
+```
+>LET A=24*2+3:?a
+  51
+>b=3*(a>=51):?b
+   3
+>c=-4*(a<51):?c
+   0
+>
+```
+
 ### LIST [*expr1*][,*expr2*] {C}
 Affiche le programme contenu dans la mémoire RAM à l'écran. Sans arguments toutes les lignes sont affichées. Avec un argument la liste débute à la ligne dont le numéro est **&gt;=expr1**. Avec 2 arguments la liste se termine au numéro **&lt;=expr2**. 
 ```
@@ -340,8 +355,222 @@ Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans l
    1   2   3   5   8  13  21  34  55  89
 >
 ```
+### PAUSE *expr* {C,P}
+Cette commande suspend l'exécution pour un nombre de millisecondes équivalent à la valeur d'*epxr*. pendant la pause le CPU est en mode suspendu c'est à dire qu'aucune instruction n'est exécutée jusqu'à la prochaine interruption. le TIMER4 génère une interruption à chaque milliseconde. Le compteur de **PAUSE** est alors décrémenté et lorsqu'il arrive à zéro l'exécution du programme reprend.
+```
+>li
+   10 input "pause en secondes? "a
+   20 pause 1000*a
+   30 if a=0:stop
+   40 goto 10
 
-## code source 
+>ru
+pause en secondes? 5
+pause en secondes? 10
+pause en secondes? 0
+
+>
+```
+
+### PEEK(*expr*) {C,P}
+Retourne la valeur de l'octet situé à l'adresse représentée par *expr*. Même s'il s'agit d'un octet il est retourné comme un entier positif entre {0..255}.
+```
+>hex:peek($5240)'UART3_SR 
+ $D0
+> ' $D0 signifie que le UART3 est inactif.
+
+>
+```
+### POKE *expr1*,*expr2*
+Dépose la valeur de *expr2* à l'adresse de *expr1*. 
+```
+>poke $5241,asc("A") 'UART3_DR, envoie 'A' au terminal
+A
+>
+```
+
+### PRINT [*string*|*expr*][,*string*|*expr*][','] {C,P}
+La commande **PRINT** sans argument envoie le curseur du terminal sur la ligne suivante. Si la commande se termine par une virgule il n'y a pas de saut la ligne suivante et la prochaine commande **PRINT** se fera sur  la même ligne. Les arguments sont séparés par la virgule. 
+
+Le **'?'** peut-être utilisé à la place de **PRINT**.
+
+**PRINT** accepte 3 types d'arguments: 
+
+* *string*,  chaîne de caractère entre guillemets
+* *expr*,   Toute expression arithmétique et relationnelle qui retourne un entier.
+* *char*,  Un caractère ASCII tel que retourné par la fonction **CHAR()**.
+```
+>? "la valeur de A=",a
+la valeur de A=  51
+
+>PRINT "Caractere recu du terminal ",char(key)
+Caractere recu du terminal Z
+
+>
+```
+### QKEY {C,P}
+Cette commande vérifie s'il y a un caractère en attente dans le tampon de réception du terminal. Retourne **1** si c'est le cas sinon retourne **0**.
+```
+>for a=0to0ste0:a=qkey:next a
+
+>a
+```
+L'exemple çi-haut est une astuce de programmation. Pour créer une boucle infinie on utilise un FOR...NEXT avec la valeur de STEP à zéro. À l'intérieur de la boucle on appelle la fonction **QKEY** dont la valeur est affectée à la variable **A** qui est la variable de contrôle de la boucle. Sitôt qu'une touche est enfoncée sur la console la valeur de **A** passe à **1** et la boucle se termine. De retour sur la ligne de commande le caractère reçu  de la console est affiché après le **'&gt;'** puisqu'il est lu par la fonction *readln* de l'interpréteur de commande.
+
+### REM  *texte*
+La commande **REM**  sert à insérer des commentaires (*remark*) dans un programme pour le documenter. Le mot réservé **REM** peut-être avantageusement remplacé par le caractère apostrophe (**'**). Un commentaire se termine avec la ligne et est ignoré par l'interpréteur.
+```
+>list
+   10 REM ceci est un commentaire
+   20 'ceci est aussi un commentaire, (plus rapide)
+```
+
+### RETURN {P}
+La commande **RETURN**  indique la fin d'une sous-routine. Lorsque cette commande est rencontrée l'exécution se poursuit à la ligne qui suit le **GOSUB** qui a appellé cette sous-routine.
+```
+>li
+    5 ? #6,"Suite de Fibonacci,'q'uitter, autre suivant"
+   10 a=1:b=1:f=1
+   12 ? f,
+   20 gosub 100
+   30 r=key:if r=asc("q"):stop
+   40 goto 20
+  100 'imprime terme, calcule suivant
+  110 ?f,
+  120 a=b:b=f:f=a+b
+  130 return
+
+>ru
+Suite de Fibonacci,'q'uitter, autre suivant
+     1     1     2     3     5     8    13    21    34    55    89
+>
+```
+Dans cet exemple chaque fois qu'on presse une touche sur la console le terme suivant de la suite de Fibonacci est imprimé. La touche 'q' termine le programme. 
+
+### RND(*expr*)
+Cette fonction retourne un entier aléatoire dans l'intervalle {1..*expr*}.
+*expr* doit-être un nombre positif sinon le programme s'arrête en indiquant une erreur de syntaxe.
+```
+>?#6:r=32767:fo a=1to100:r=rnd(r):?r,:r=abs(r*113):ne a  
+
+ 10061 15156  1114   572   587   771 13879  3472   109  7406  5650  9869   833 22330 22817 17725  7596  5740  2199  6776  9098 16066  8444 11069  2060 23863  1644  6927  2477  1129   893  9684 16320  2571 11309 25964  8347  2297  1663  1504  2144 17889  5946  4483 10146  1086  8073  2449  5911  5213   417  1796  4428  2811  8606  7311 25498  1127  1488 15552  8132  1370 23611 12255  7190  8535  3260 21717 19866  8811 11734 10410  2767  8649  2142 16396  4067   115  4256 16132  2431 10187 11490  2952  2431  2599 23978 11674  4296  1501 24609 26148  2133 20845  3084 18563    13  1086  3761 10511
+>
+```
+### RUN {C}
+Lance l'exécution du programme qui est chargé en mémoire RAM. Si aucun programme n'est chargé il ne se passe rien.
+
+### SAVE *string* 
+Sauvegarde le programme qui est en mémoire RAM dans un fichier. La mémoire FLASH qui n'est pas utilisée par TinyBASIC est utilisée comme mémoire permanente pour un système de fichier rudimentaire où les programmes sont sauvegardés. *string* est le nom du fichier. Si un fichier avec ce nom existe déjà un message d'erreur s'affiche.
+```
+>li
+    5 ? #6,"Suite de Fibonacci,'q'uitter, autre suivant"
+   10 a=1:b=1:f=1
+   12 ? f,
+   20 gosub 100
+   30 r=key:if r=asc("q"):stop
+   40 goto 20
+  100 'imprime terme, calcule suivant
+  110 ?f,
+  120 a=b:b=f:f=a+b
+  130 return
+
+>save "fibo"
+duplicate name.
+save "fibo"
+           ^
+>
+```
+### SIZE {C,P}
+Cette commande retourne le nombre d'octets libre dans la mémoire RAM
+```
+>size
+5740
+>10 ?hello world!"
+
+>size
+5721
+>
+```
+
+### SLEEP {C,P}
+Cette commande place le MCU en sommeil. En mode *sleep* le processeur est suspendu et dépense un minimum d'énergie. Pour redémarrer le processeur il faut une interruption externe. Comme le bouton **USER** sur la carte NUCLEO.
+
+**SLEEP** utilise l'instruction machine **halt** qui arrête tous les oscillateurs du MCU donc les périphériques ne fonctionnent plus. Par exemple le TIMER4 utilisé pour compter les millisecondes cesse de fonctioner. Le temps est suspendu jusqu'au redémarrage. 
+```
+>li
+   10 ?"hello ",
+   20 sleep
+   30 ?"world!"
+
+>ru
+hello world!
+
+>
+```
+Dans cet exemple le mot **"hello "** s'affiche puis il ne passe plus rien jusqu'à ce qu'on appuie sur le bouton **USER** sur la carte **NUCLEO**. 
+Ce qui déclenche l'interruption externe **INT4** et redémarre le MCU qui exécute la suite du programme et affiche le mot **"world!"**.
+
+### STEP *expr* {C,P}
+Ce mot réservé fait partie de la commande **FOR** et indique l'incrément de la variable de contrôle de la boucle. Pour plus de détail voir la commande **FOR**. 
+
+### STOP {P}
+Cette commande arrête l'exécution d'un programme et retourne le contrôle à la ligne de commande. Cette commande peut-être placée à plusieurs endroits dans un programme. 
+```
+>lis
+   10 a=1
+   20 a=a+1
+   30 ? a,: if a>100:stop 'arrete lorsque A depasse 100
+   40 goto 20
+
+>run
+   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95  96  97  98  99 100 101
+>
+```
+### TICKS {C,P}
+Le systême entretien un compteur de millisecondes en utilisant le **TIMER4**.  Cette commande retourne la valeur de ce compteur. Le compteur est de 16 bits donc le *roll over* est de 65536 millisecondes. Ce compteur peut-être utilisé pour chronométrer la durée d'exécution d'une routine. Par exemple ça prend combien de temps pour exécuter 1000 boucles FOR vide.
+```
+>t=ticks:fo a=1to1000:ne a:?ticks-t
+  56
+
+>
+```
+Réponse: 56 millisecondes. 
+
+### TO *expr* {C,P}
+Ce mot réservé est utilisé lors de l'initialisation d'une boucle **FOR**. **expr** détermine la valeur limite de la variable de contrôle de la boucle. Voir la commande **FOR** pour plus d'information. 
+
+### UBOUND
+Cette fonction retourne la taille de la variable tableau **@**. Comme expliqué plus haut cette variable utilise la mémoire RAM qui n'est pas utilisé par le programme BASIC. Donc plus le programme prend de place plus sa taille diminue. 
+```
+>ubound
+2870
+>10 'plus le programme prend de la place, plus @ diminue.
+
+>ubound
+2841
+>
+```
+### WAIT *expr1*,*expr2*[,*expr3] {C,P}
+Cette commande sert à attendre un changement d'état sur un périphérique.
+*expr1* indique l'adresse du registre de périphérique susceptible de changer d'état. *expr2* est un masque de bits appliqué à l'octet lu dans le registre avec la fonction logique AND.  Si cette valeur est différente de zéro l'attente se termine. *expr3* peut-être utilisé pour attendre qu'un ou des bits passent à zéro. Il est appliqué après la fonction AND ave une fonction logique XOR.  Si B&E1^E2<>0 alors fin de l'attente. 
+```
+>wait $5240,&100000 ' attend reception caractere
+
+>z
+```
+Dans cet exemple l'adresse $5240 correspond au registre UART3_SR. Lorsque le bit 5 de ce registre passe à **1** ça signifit qu'un caractère a été reçu.
+L'exécution est suspendu jusqu'à la réception d'un caractère sur UART3.
+
+### WRITE *expr1*,*expr2* 
+Cette commande permet d'écrire un octet dans la mémoire EEPROM ou dans la mémoire FLASH. *expr1* indique l'adresse et *expr2* indique la valeur à écrire. le **STM8S208RB** possède 2Ko de mémoire EEPROM 128Ko de mémoire FLASH. 
+
+**AVERTISSEMENT: La mémoire FLASH qui n'est pas utilisée par tinyBASIC sert de mémoire pour les fichiers, écrire dans cette mémoire risque d'endommager le système de fichier.** 
+
+# Utilisation de TinyBASIC sur STM8
+A faire: écrire le manuel de l'[utilisateur de tinyBASIC](manuel_util_tb.md).
+
+
+# code source 
 
 * **PABasic.asm**  Code source de l'interpréteur BASIC.
 * **pab_macros.asm** macros utiles pour ce programme.

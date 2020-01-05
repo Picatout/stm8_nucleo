@@ -47,7 +47,8 @@ _dbg
 	FRUN=0 ; flags run code in variable flags
 	FTRAP=1 ; inside trap handler 
 	FFOR=2 ; FOR loop in preparation 
-	
+	FSLEEP=3 ; halt produit par la commande SLEEP 
+
 in.w:  .blkb 1 ; parser position in text line
 in:    .blkb 1 ; low byte of in.w
 count: .blkb 1 ; length of string in text line  
@@ -169,9 +170,14 @@ UserButtonHandler:
 1$: decw x 
 	jrne 1$
 	btjf USR_BTN_PORT,#USR_BTN_BIT, 1$
+    btjf flags,#FSLEEP,2$
+	bres flags,#FSLEEP 
+	iret
+2$:	btjt flags,#FRUN,4$
+	jp 9$ 
+4$:	bres flags,#FRUN 
 	ldw x,#USER_ABORT
 	call puts 
-	btjf flags,#FRUN,2$
 	ldw x,basicptr
 	ldw x,(x)
 	ldw acc16,x 
@@ -193,10 +199,11 @@ UserButtonHandler:
 	call spaces 
 	ld a,#'^
 	call putc 
+9$:
     ldw x,#STACK_EMPTY 
     ldw sp,x
 	rim 
-2$:	jp warm_start
+	jp warm_start
 
 
 USER_ABORT: .asciz "\nProgram aborted by user.\n"
@@ -4534,6 +4541,7 @@ bye:
 ;----------------------------------
 sleep:
 	btjf UART3_SR,#UART_SR_TC,.
+	bset flags,#FSLEEP
 	halt 
 	ret 
 
