@@ -72,13 +72,13 @@ Forme lexicale des entiers. Ce qui est entre **'['** et **']'** est facultatif. 
 *  hex_digit: (digit,'A','B','C','D','E','F') 
 *  entier décimaux:  ['+'|'-']digit+
 *  entier hexadécimaux: '$'hex_digit+
-*  entier binaire: '%'('0'|'1')+   
+*  entier binaire: '&'('0'|'1')+   
 
 examples d'entiers:
 
     -13534 ' entier décimal négatif 
     $ff0f  ' entier hexadécimal 
-    %101   ' entier binaire correspondant à 5 en décimal. 
+    &101   ' entier binaire correspondant à 5 en décimal. 
 
 ## Ligne de commande et programmes 
  
@@ -124,7 +124,7 @@ La commande **bit reset** met à **0** les bits de l'octet situé à *addr*. Seu
 ### BSET addr,mask  {C,P}
 La commande **bit set** met à **1** les bits de l'octet situé à *addr*. Seul les bits à **1** dans l'argument *mask* sont affectés. 
 
-    >bset $500a,%100000
+    >bset $500a,&100000
 
 Allume la LED2 sur la carte en mettant le bit 5 à 1.
 
@@ -221,8 +221,124 @@ hello   21
 ```
 
 ### GOSUB *expr* {P}
-Appel de sous-routine. *expr* doit se résoudre comme un numéro de ligne existant sinon le programme arrête avec un message d'erreur.
+Appel de sous-routine. *expr* doit résulté en un numéro de ligne existant sinon le programme arrête avec un message d'erreur.
 ```
+>li
+   10 a=0
+   20 gosub 1000
+   30 if a>20 : stop 
+   40 goto 20
+ 1000 ? a,
+ 1010 a=a+1
+ 1020 ret
+
+>run
+   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
+>
+```
+### GOTO *expr* {P}
+Passe le contrôle à la ligne dont le numéro est déterminé par *expr*. *expr* doit résulté en un numéro de ligne existant sinon le programme s'arrête avec un message d'erreur. 
+```
+>li
+   10 a=0
+   20 goto 1000
+   30 if a>20 : stop 
+   40 goto 20
+ 1000 ? a,
+ 1010 a=a+1
+ 1020 goto 30
+
+>ru
+   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
+>
+```
+### HEX {C,P}
+Sélectionne la base numérique hexadécimale pour l'affichage des entiers.
+Voir la commande **DEC**  pour revenir en décimale.
+
+    >HEX:?-10:DEC:?-10
+    $FFFFF6
+    -10
+
+### IF *relation* : cmd [:cmd]* {C,P}
+Le **IF** permet d'exécuter les instructions qui suivent sur la même ligne si l'évalution de *relation* est vrai. Toute valeur différente de zéro est considérée comme vrai.  Si la résultat de *relation* est zéro les instructions qui suivent le **IF** sont ignorées.  Il n'y a pas de **ENDIF** ni de **ELSE**. Toutes les instructions à exécuter doivent-être sur la même ligne que le **IF**. 
+
+```
+>a=5%2:if a:?"vrai",a
+vrai   1
+
+>if a>2 : ? "vrai",a
+
+>
+```
+
+### INPUT [*string*]*var* [,[*string*]*var*]+  {P}
+Cette commande permet de saisir un entier fourni par l'utilisateur. Cet entier est déposé dans la variable donnée en argument. Plusieurs variables peuvent-être saisies en une seule commande en les séparant par la virgule. 
+Facultativement un message peut-être affiché à la place du nom de la variable.
+```
+>10 input "age? "a,"sexe(1=M,2=F)? "s 
+
+>run
+age? 24
+sexe(1=M,2=F)? 1
+
+>? a,s
+  24   1
+
+>
+```
+### KEY {C,P}
+Attend qu'un caractère soit reçu de la console. Ce caractère est retourné sous la forme d'un entier et peut-être affecté à une variable.
+```
+>? "Press a key to continue...":k=key
+Press a key to continue...
+
+>
+```
+### LIST [*expr1*][,*expr2*] {C}
+Affiche le programme contenu dans la mémoire RAM à l'écran. Sans arguments toutes les lignes sont affichées. Avec un argument la liste débute à la ligne dont le numéro est **&gt;=expr1**. Avec 2 arguments la liste se termine au numéro **&lt;=expr2**. 
+```
+>list
+   10 'fibonacci 
+   20 a=1:b=1 
+   30 if b>100 : stop 
+   40 ? b,
+   50 c=a+b: a=b:b=c
+   60 goto 30
+
+>run
+   1   2   3   5   8  13  21  34  55  89
+>list 20,40
+   20 a=1:b1
+   30 if b>100 : stop 
+   40 ? b,
+
+>
+
+```
+
+### LOAD *string*  {C}
+Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans le but de l'exécuter. *sting* est le nom du fichier à charger.
+```
+>save "fibonacci"
+  86
+>new
+
+>li
+
+>load "fibonacci"
+  86
+>li
+   10 'fibonacci
+   20 a=1:b=1
+   30 if b>100: stop 
+   40 ? b,
+   50 c=a+b:a=b:b=c
+   60 goto 30
+
+>run
+   1   2   3   5   8  13  21  34  55  89
+>
 ```
 
 ## code source 

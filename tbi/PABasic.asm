@@ -193,6 +193,8 @@ UserButtonHandler:
 	call spaces 
 	ld a,#'^
 	call putc 
+    ldw x,#STACK_EMPTY 
+    ldw sp,x
 	rim 
 2$:	jp warm_start
 
@@ -888,6 +890,10 @@ create_gap:
 	VSIZE=8  
 insert_line:
 	_vars VSIZE 
+	tnzw x 
+	jrpl 0$ 
+	jp syntax_error ; negative line number 
+0$:
 	ldw (LINENO,sp),x 
 	ldw x,#tib 
 	addw x,in.w 
@@ -1206,10 +1212,12 @@ interp:
 interp_loop:
 	ld a,in 
 	cp a,count 
-	jrpl interp 
+	jrpl interp
 	call get_token
 	cp a,#TK_COLON 
 	jreq interp_loop  
+	cp a,#TK_NONE 
+	jreq interp
 	cp a,#TK_VAR
 	jrne 0$
 	call let02  
@@ -1223,15 +1231,8 @@ interp_loop:
 10$:
 	cp a,#TK_KWORD
 	jreq 4$ 
-	cp a,#TK_NONE
-	jreq interp_loop ; empty line 
 	cp a,#TK_INTGR
 	jrne 2$ 
-;if line begin with number 
-;insert it in text area 
-	ld a,xh 
-	jrpl 1$   
-	jp syntax_error
 1$:
 	call insert_line 
 	jp interp 
@@ -1245,12 +1246,16 @@ interp_loop:
 4$:	
 	call (x)
 	cp a,#TK_NONE 
-	jreq interp_loop 
+	jrne 40$
+	jp interp_loop 
+40$:
 	push a  
 	ld a,lineno 
 	or a,lineno+1 
 	pop a 
-	jrne interp_loop  
+	jreq 44$
+	jp interp_loop  
+44$:
 	cp a,#TK_CHAR 
 	jrne 5$
 	ld a,xl 
@@ -1258,7 +1263,9 @@ interp_loop:
 	jp interp_loop 
 5$:	
 	cp a,#TK_INTGR
-	jrne interp_loop 
+	jreq 50$
+	jp interp_loop 
+50$:
 	call dpush 
 	call prt_tos  
 	jp interp_loop 	
@@ -2025,7 +2032,7 @@ bin_exit:
 ;  is keyword or variable. 	
 ; input:
 ;   X 		point to pad 
-;   Y 		point to tib 
+;   Y 		point to text
 ;   A 	    first letter  
 ; output:
 ;   X		exec_addr|var_addr 
@@ -2165,7 +2172,7 @@ nbr_tst: ; check for number
 	ld a,#'$'
 	cp a,(TCHAR,sp) 
 	jreq 1$
-	ld a,#'%
+	ld a,#'&
 	cp a,(TCHAR,sp)
 	jrne 0$
 	call parse_binary ; expect binary integer 
@@ -2507,6 +2514,21 @@ dpop:
 	inc dstkptr+1 
 	inc dstkptr+1 
 	ret 
+
+;-----------------------------
+; swap top 2 elements of dstack
+;  {n1 n2 -- n2 n1 }
+;-----------------------------
+dswap:
+	ldw x,[dstkptr]
+	pushw x 
+	ldw x,#2 
+	ldw x,([dstkptr],x) 
+	ldw [dstkptr],x 
+	ldw x,#2
+	popw y 
+	ldw ([dstkptr],x),y 
+	ret
 
 ;-----------------------------
 ; duplicate TOS 
@@ -3234,7 +3256,7 @@ let02:
 	ret 
 
 ;----------------------------
-; BASIC: LIST([[start][,end]])
+; BASIC: LIST [[start][,end]]
 ; list program lines 
 ; form start to end 
 ; if empty argument list then 
@@ -3246,33 +3268,29 @@ let02:
 	VSIZE=6 
 list:
 	_vars VSIZE
-	clrw x 
-	ldw (FIRST,sp),x ; list from start 
-	ldw x,0x7fff ; biggest line number 
+	ldw x,txtbgn 
+	cpw x,txtend 
+	jrmi 1$
+	jp list_exit ; nothing to list 
+1$:	ldw (LN_PTR,sp),x 
+	ldw x,(x) 
+	ldw (FIRST,sp),x ; list from first line 
+	ldw x,#0x7fff ; biggest line number 
 	ldw (LAST,sp),x 
-	call get_token 
-	cp a,#TK_NONE 
-	jreq lines_skip
-	cp a,#TK_INTGR
+	call arg_list
+	tnz a
+	jreq list_start 
+	cp a,#2 
+	jreq 4$
+	cp a,#1 
 	jreq first_line 
-minus_test:
-    cp a,#TK_MINUS
-	jreq get_last 
-	jp syntax_error
+	jp syntax_error 
+4$:	call dswap
 first_line:
 	call dpop 
 	ldw (FIRST,sp),x 
-	call get_token
-	cp a,#TK_NONE 
-	jreq lines_skip  
-	jra minus_test 
-get_last:	
-	call get_token
-	cp a,#TK_NONE 
-	jreq lines_skip 
-	cp a,#TK_INTGR
-	jreq last_line 
-	jp syntax_error  
+	cp a,#1 
+	jreq lines_skip 	
 last_line:
 	call dpop 
 	ldw (LAST,sp),x 
@@ -3309,7 +3327,7 @@ list_start:
 	ldw (LN_PTR,sp),x
 	ldw x,(x)
 	cpw x,(LAST,sp)  
-	jrpl list_exit 
+	jrsgt list_exit 
 	ldw x,(LN_PTR,sp)
 	jra 3$
 list_exit:
