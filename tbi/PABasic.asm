@@ -33,7 +33,7 @@
 	.include "pab_macros.inc" 
     .list 
 
-_dbg 
+; _dbg 
 
 ;--------------------------------------
     .area DATA 
@@ -847,10 +847,10 @@ del_line:
 ;---------------------------------------------
 ; create a gap in text area 
 ; input:
-;    X 			addr 
+;    X 			addr gap start 
 ;    Y 			gap length 
 ; output:
-;    X 			addr 
+;    X 			addr gap start 
 ;--------------------------------------------
 	DEST=1
 	SRC=3
@@ -3820,13 +3820,13 @@ store_loop_addr:
 ; loop address arguments on cstack 
 	IN=3
 	BPTR=5
-next: ; {var limit step var -- [var limit step ] }
+next: ; {var limit step -- [var limit step ] }
 	tnz loop_depth 
 	jrne 1$ 
 	jp syntax_error 
 1$: ld a,#TK_VAR 
 	call expect
-; chech for good variable after NEXT 	 
+; check for good variable after NEXT 	 
 	ldw y,x 
 	ldw x,#4  
 	cpw y,([dstkptr],x) ; compare variables address 
@@ -3836,24 +3836,23 @@ next: ; {var limit step var -- [var limit step ] }
 	ldw x,y
 	ldw x,(x)  ; get var value 
 	ldw acc16,x 
-	ldw x,[dstkptr]
-	addw x,acc16 
+	ldw x,[dstkptr] ; step
+	addw x,acc16 ; var+step 
 	ldw (y),x ; save var new value 
 ; compare with limit 
 	ldw y,x 
-	ld a,[dstkptr] ; step in x 
-	ldw x,#2 
-	bcp a,#0x80 
-	jreq 4$ ; positive step 
+	ldw x,[dstkptr] ; step in x 
+	tnzw x  
+	jrpl 4$ ; positive step 
 ;negative step 
+	ldw x,#2
 	cpw y,([dstkptr],x)
 	jrslt loop_done
-	jrv loop_done 
 	jra loop_back 
-4$: ; positive step 
+4$: ; positive step
+	ldw x,#2 
 	cpw y,([dstkptr],x)
 	jrsgt loop_done
-	jrv loop_done 
 loop_back:
 	ldw x,(BPTR,sp)
 	ldw basicptr,x 
