@@ -71,7 +71,7 @@
     ERR_CMD_ONLY=7
     ERR_DUPLICATE=8
     ERR_NOT_FILE=9
-    ERR_BOUNDS=10
+    ERR_BAD_VALUE=10
     ERR_NO_ACCESS=11
     
 ;--------------------------------------

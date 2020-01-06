@@ -183,7 +183,8 @@ PI = 40
  GPIO_DDR = 2
  GPIO_CR1 = 3
  GPIO_CR2 = 4
-
+ GPIO_BASE=(0X5000)
+ 
 ; port A
  PA_BASE = (0X5000)
  PA_ODR  = (0x5000)

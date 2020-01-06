@@ -33,7 +33,7 @@
 	.include "pab_macros.inc" 
     .list 
 
-; _dbg 
+_dbg 
 
 ;--------------------------------------
     .area DATA 
@@ -1002,12 +1002,23 @@ is_alpha:
 	MINOR=0
 software: .asciz "\n\nTiny BASIC for STM8\nCopyright, Jacques Deschenes 2019,2020\nversion "
 cold_start:
-; clear all ram 
+;set stack 
 	ldw x,#STACK_EMPTY
 	ldw sp,x   
+; clear all ram 
 0$: clr (x)
 	decw x 
 	jrne 0$
+; activate pull up on all inputs 
+	ld a,#255 
+	ld PA_CR1,a 
+	ld PB_CR1,a 
+	ld PC_CR1,a 
+	ld PD_CR1,a 
+	ld PE_CR1,a 
+	ld PF_CR1,a 
+	ld PG_CR1,a 
+	ld PI_CR1,a 
 ; select internal clock no divisor: 16 Mhz 	
 	ld a,#CLK_SWR_HSI 
 	clrw x  
@@ -1061,7 +1072,7 @@ clear_basic:
 
 err_msg:
 	.word 0,err_mem_full, err_syntax, err_math_ovf, err_div0,err_no_line    
-	.word err_run_only,err_cmd_only,err_duplicate,err_not_file,err_bounds 
+	.word err_run_only,err_cmd_only,err_duplicate,err_not_file,err_bad_value
 	.word err_no_access 
 
 err_mem_full: .asciz "\nMemory full\n" 
@@ -1073,7 +1084,7 @@ err_run_only: .asciz "\nrun time only usage.\n"
 err_cmd_only: .asciz "\ncommand line only usage.\n"
 err_duplicate: .asciz "\nduplicate name.\n"
 err_not_file: .asciz "\nFile not found.\n"
-err_bounds: .asciz "\narray index out of bounds.\n"
+err_bad_value: .asciz "\nbad value.\n"
 err_no_access: .asciz "\nFile in extended memory, can't be run from there.\n" 
 
 syntax_error:
@@ -2981,7 +2992,7 @@ get_array_element:
 	cpw x,array_size 
 	jrule 3$
 ; bounds {1..array_size}	
-2$: ld a,#ERR_BOUNDS 
+2$: ld a,#ERR_BAD_VALUE 
 	jp tb_error 
 3$: tnzw  x
 	jreq 2$ 
@@ -3644,7 +3655,8 @@ bit_reset:
 	cp a,#2  
 	jreq 1$ 
 	jp syntax_error
-1$: call dpop ; mask 
+1$: 
+	call dpop ; mask 
 	ld a,xl 
 	cpl a 
 	call dpop ; addr  
@@ -4511,6 +4523,95 @@ qkey:
 9$: ld a,#TK_INTGR
 	ret 
 
+;---------------------
+; BASIC: PORT(expr)
+; return port address 
+; expr {0..8} except 7
+; input:
+;   none 
+; output:
+;   X 		port base address
+;----------------------------
+port:
+	ld a,#TK_LPAREN 
+	call expect 
+	call relation
+	cp a,#TK_INTGR
+	jreq 1$
+	jp syntax_error  
+1$:	
+	ld a,#TK_RPAREN 
+	call expect 
+	call dpop
+	tnzw x 
+	jrmi bad_port
+	cpw x,#9
+	jrpl bad_port
+	cpw x,#7 
+	jreq bad_port 
+	ld a,#5
+	mul x,a
+	addw x,#GPIO_BASE  
+	ld a,#TK_INTGR
+	ret
+bad_port:
+	ld a,#ERR_BAD_VALUE
+	jp tb_error
+
+;----------------------
+; BASIC: ODR 
+; return offset of port
+; ODR register: 0
+; ---------------------
+port_odr:
+	clrw x 
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
+
+;----------------------
+; BASIC: IDR 
+; return offset of port
+; IDR register: 1
+; ---------------------
+port_idr:
+	ldw x,#1
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
+
+;----------------------
+; BASIC: DDR 
+; return offset of port
+; DDR register: 2
+; ---------------------
+port_ddr:
+	ldw x,#2
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
+
+;----------------------
+; BASIC: CRL  
+; return offset of port
+; CR1 register: 3
+; ---------------------
+port_cr1:
+	ldw x,#3
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
+
+;----------------------
+; BASIC: CRH  
+; return offset of port
+; CR2 register: 4
+; ---------------------
+port_cr2:
+	ldw x,#4
+	ldw tokval,x 
+	ld a,#TK_INTGR
+	ret
 
 
 ;---------------------
@@ -4716,6 +4817,12 @@ kword_end:
     _dict_entry 3,RUN,run
 	_dict_entry 4,LIST,list
 	_dict_entry,3,USR,usr
+	_dict_entry,3,ODR,port_odr
+	_dict_entry,3,IDR,port_idr
+	_dict_entry,3,DDR,port_ddr 
+	_dict_entry,3,CRL,port_cr1 
+	_dict_entry,3,CRH,port_cr2
+	_dict_entry,4,PORT,port 
 	_dict_entry,3,ASC,ascii  
 	_dict_entry,4,CHAR,char
 	_dict_entry,4,QKEY,qkey  

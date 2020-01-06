@@ -148,6 +148,21 @@ La fonction *character* retourne le caractère ASCII correspondant aux 7 bits le
      !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
     > 
 
+### CRH {C,P}
+Cette fonction retourne l'index du registre **CR2** *(Control Register 2)* d'un port GPIO. En mode entrée ce registre active ou désactive l'interruption externe. En mode sortie il configure la vitesse du port. 
+
+### CRL (C,P)
+
+Cette fonction retourne l'index du registre **CR1** *(Control Register 1)* d'un port GPIO. En mode entrée ce registre active ou désactive le pull-up. En mode sortie il configure le mode push-pull ou open-drain. 
+
+### DDR {C,P}
+Cette fonction retourne l'index du registre **DDR** *(Data Direction Register)* d'un périphérique GPIO. Ce registre permet de configurer les bits du port en entrée ou en sortie. Par défaut ils sont tous en entrée. 
+```
+>bset port(2)+ddr,32 ' LED2 en sortie
+
+>
+```
+
 ### DEC {C,P}
 La commande *decimal* définie la base numérique pour l'affichage des entiers à la base décimale. C'est la base par défaut. Voir la commande **HEX**.
 
@@ -263,6 +278,16 @@ Voir la commande **DEC**  pour revenir en décimale.
     $FFFFF6
     -10
 
+### IDR {C,P}
+Cette fonction retourne l'index du registre GPIO **IDR** *(Input Data Register)*. Ce registre permet de lire les états d'entrée d'un port GPIO. 
+```
+>hext:?peek(port(4)+idr)
+ $F9
+
+>
+```
+Dans cet exemple on fait la lecture du PORT E et on constate que toutes les entrées sauf les bits 1 et 2 sont à l'état **1**. 
+
 ### IF *relation* : cmd [:cmd]* {C,P}
 Le **IF** permet d'exécuter les instructions qui suivent sur la même ligne si l'évalution de *relation* est vrai. Toute valeur différente de zéro est considérée comme vrai.  Si la résultat de *relation* est zéro les instructions qui suivent le **IF** sont ignorées.  Il n'y a pas de **ENDIF** ni de **ELSE**. Toutes les instructions à exécuter doivent-être sur la même ligne que le **IF**. 
 
@@ -355,6 +380,19 @@ Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans l
    1   2   3   5   8  13  21  34  55  89
 >
 ```
+### ODR {C,P}
+Renvoie l'index du registre **ODR** *(Output Data Register)* d'un périphérique **GPIO**. Ce registre est utilisé pour contrôler l'état des sorties du port GPIO. Considérez chaque GPIO comme un tableau à 5 valeurs, 
+qu'on définirait en 'C' par __uint8_t gpio[5]__. Les fonctions **ODR**,**IDR**,**DDR**,**CRL** et **CRH**  retourne l'index du tableau qui correspond à 1 des 5 registres du tableau. 
+
+```
+>bset port(2)+odr,32 ' allume LED2 
+
+>bres port(2)+odr,32 ' eteint LED2
+
+>
+``` 
+Dans cette exemple la LED2 est allumée puis éteinte. La LED est branchée sur le bit 5 du port **C**. **32=(1&lt;&lt;5)** donc ce masque affecte seulement le bit 5.  
+
 ### PAUSE *expr* {C,P}
 Cette commande suspend l'exécution pour un nombre de millisecondes équivalent à la valeur d'*epxr*. pendant la pause le CPU est en mode suspendu c'est à dire qu'aucune instruction n'est exécutée jusqu'à la prochaine interruption. le TIMER4 génère une interruption à chaque milliseconde. Le compteur de **PAUSE** est alors décrémenté et lorsqu'il arrive à zéro l'exécution du programme reprend.
 ```
@@ -388,6 +426,16 @@ Dépose la valeur de *expr2* à l'adresse de *expr1*.
 A
 >
 ```
+### PORT(*expr*) {C,P}
+Cette commande retourne l'adresse de base des registres de contrôle d'un port GPIO. *expr* doit indiqué un numéro de port valide dans l'ensemble **{0,1,2,3,4,5,6,8}**. Ces valeurs correspondent aux ports {A,B,C,D,E,F,G,I} du MCU. Voir aussi les fonctions **ODR**,**IDR**,**DDR**,**CRL**,**CRH**. 
+```
+>bset port(2)+odr,32 ' allume LED2 
+
+>bres port(2)+odr,32 ' eteint LED2
+
+>
+``` 
+Dans cette exemple la LED2 est allumée puis éteinte. La LED est branchée sur le bit 5 du port **C**. **32=(1&lt;&lt;5)** donc ce masque affecte seulement le bit 5.  
 
 ### PRINT [*string*|*expr*][,*string*|*expr*][','] {C,P}
 La commande **PRINT** sans argument envoie le curseur du terminal sur la ligne suivante. Si la commande se termine par une virgule il n'y a pas de saut la ligne suivante et la prochaine commande **PRINT** se fera sur  la même ligne. Les arguments sont séparés par la virgule. 
