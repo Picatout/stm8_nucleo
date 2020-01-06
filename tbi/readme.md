@@ -20,6 +20,8 @@ Le seul type de donné est l'entier 16 bits donc dans l'intervalle **-32768...32
 
 Cependant pour des fins d'impression des chaînes de caractères entre guillemets sont disponibles. Seul les commandes **PRINT** et **INPUT** utilisent ces chaînes comme arguments. 
 
+Le type caractère est aussi disponible sous la forme \c i.e. un *backslash* suivit d'une lettre. 
+
 Il est aussi possible d'imprimer un caractère en utilisant la fonction **CHAR()**. Qui retourne un type de donnée **TK_CHAR**. Ce type de donnée ne peut-être sauvegardé dans une variable sauf en utilisant la fonction **ASC()** qui le convertie ent type **TK_INTGR** qui peut-être sauvegardé dans une variable ou utilisé dans un expression.  
 
 ### Variables 
@@ -111,11 +113,17 @@ Cette fonction retourne la valeur absolue de l'expression fournie en argument.
     >? abs(-45)
     45
 
-### ASC(*string*) {C,P}
-La fonction **ascii** retourne la valeur ASCII du premier caractère de la chaîne fournie en argument.
-
+### ASC(*string*|*\char*) {C,P}
+La fonction **ascii** retourne la valeur ASCII du premier caractère de la chaîne fournie en argument ou du caractère.
+```
     >asc("A")
     65 
+
+    >asc(\Z)
+    90
+
+    >
+```
 
 ### BRES addr,mask {C,P}
 La commande **bit reset** met à **0** les bits de l'octet situé à *addr*. Seul les bits à **1** dans l'argument *mask* sont affectés. 
@@ -158,7 +166,7 @@ Cette fonction retourne l'index du registre **CR1** *(Control Register 1)* d'un 
 ### DDR {C,P}
 Cette fonction retourne l'index du registre **DDR** *(Data Direction Register)* d'un périphérique GPIO. Ce registre permet de configurer les bits du port en entrée ou en sortie. Par défaut ils sont tous en entrée. 
 ```
->bset port(2)+ddr,32 ' LED2 en sortie
+>bset gpio(2,ddr),32 ' LED2 en sortie
 
 >
 ```
@@ -281,12 +289,12 @@ Voir la commande **DEC**  pour revenir en décimale.
 ### IDR {C,P}
 Cette fonction retourne l'index du registre GPIO **IDR** *(Input Data Register)*. Ce registre permet de lire les états d'entrée d'un port GPIO. 
 ```
->hext:?peek(port(4)+idr)
+>hext:?peek(gpio(4,idr))
  $F9
 
 >
 ```
-Dans cet exemple on fait la lecture du PORT E et on constate que toutes les entrées sauf les bits 1 et 2 sont à l'état **1**. 
+Dans cet exemple on fait la lecture du GPIO E et on constate que toutes les entrées sauf les bits 1 et 2 sont à l'état **1**. 
 
 ### IF *relation* : cmd [:cmd]* {C,P}
 Le **IF** permet d'exécuter les instructions qui suivent sur la même ligne si l'évalution de *relation* est vrai. Toute valeur différente de zéro est considérée comme vrai.  Si la résultat de *relation* est zéro les instructions qui suivent le **IF** sont ignorées.  Il n'y a pas de **ENDIF** ni de **ELSE**. Toutes les instructions à exécuter doivent-être sur la même ligne que le **IF**. 
@@ -385,9 +393,9 @@ Renvoie l'index du registre **ODR** *(Output Data Register)* d'un périphérique
 qu'on définirait en 'C' par __uint8_t gpio[5]__. Les fonctions **ODR**,**IDR**,**DDR**,**CRL** et **CRH**  retourne l'index du tableau qui correspond à 1 des 5 registres du tableau. 
 
 ```
->bset port(2)+odr,32 ' allume LED2 
+>bset gpio(2,odr),32 ' allume LED2 
 
->bres port(2)+odr,32 ' eteint LED2
+>bres gpio(2,odr),32 ' eteint LED2
 
 >
 ``` 
@@ -426,12 +434,12 @@ Dépose la valeur de *expr2* à l'adresse de *expr1*.
 A
 >
 ```
-### PORT(*expr*) {C,P}
-Cette commande retourne l'adresse de base des registres de contrôle d'un port GPIO. *expr* doit indiqué un numéro de port valide dans l'ensemble **{0,1,2,3,4,5,6,8}**. Ces valeurs correspondent aux ports {A,B,C,D,E,F,G,I} du MCU. Voir aussi les fonctions **ODR**,**IDR**,**DDR**,**CRL**,**CRH**. 
+### GPIO(*expr1*,*reg*) {C,P}
+Cette commande retourne l'adresse d'un des registre de contrôle d'un port GPIO. *expr1* doit indiqué un numéro de port valide dans l'ensemble **{0..8}**. Ces valeurs correspondent aux ports {A,B,C,D,E,F,G,H,I} du MCU. *reg* indique le registre. Chaque GPIO a 5 registres de contrôle: **ODR**, **IDR**, **DDR**, **CRL**, **CRH**. 
 ```
->bset port(2)+odr,32 ' allume LED2 
+>bset gpio(2,odr),32 ' allume LED2 
 
->bres port(2)+odr,32 ' eteint LED2
+>bres gpio(2,odr),32 ' eteint LED2
 
 >
 ``` 

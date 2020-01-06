@@ -101,11 +101,11 @@ stack_unf: ; stack underflow
 	int NonHandledInterrupt ;int0 TLI   external top level interrupt
 	int NonHandledInterrupt ;int1 AWU   auto wake up from halt
 	int NonHandledInterrupt ;int2 CLK   clock controller
-	int NonHandledInterrupt ;int3 EXTI0 port A external interrupts
-	int NonHandledInterrupt ;int4 EXTI1 port B external interrupts
-	int NonHandledInterrupt ;int5 EXTI2 port C external interrupts
-	int NonHandledInterrupt ;int6 EXTI3 port D external interrupts
-	int UserButtonHandler   ;int7 EXTI4 port E external interrupts
+	int NonHandledInterrupt ;int3 EXTI0 gpio A external interrupts
+	int NonHandledInterrupt ;int4 EXTI1 gpio B external interrupts
+	int NonHandledInterrupt ;int5 EXTI2 gpio C external interrupts
+	int NonHandledInterrupt ;int6 EXTI3 gpio D external interrupts
+	int UserButtonHandler   ;int7 EXTI4 gpio E external interrupts
 	int NonHandledInterrupt ;int8 beCAN RX interrupt
 	int NonHandledInterrupt ;int9 beCAN TX/ER/SC interrupt
 	int NonHandledInterrupt ;int10 SPI End of transfer
@@ -2202,9 +2202,18 @@ nbr_tst: ; check for number
 	jp token_exit 
 3$: 
 	ld (TCHAR,sp),a 
-	_case '(' rparnt_tst 
+	_case '(' bkslsh_tst 
 	ld a,#TK_LPAREN
 	jp token_char   	
+bkslsh_tst:
+	_case '\',rparnt_tst
+	ld (x),a 
+	incw x 
+	inc in 
+	ld a,([in.w],y)
+	ld (TCHAR,sp),a 
+	ld a,#TK_CHAR 
+	jp token_char  
 rparnt_tst:		
 	_case ')' colon_tst 
 	ld a,#TK_RPAREN 
@@ -4465,7 +4474,7 @@ char:
 	ret
 
 ;---------------------
-; BASIC: ASC(string)
+; BASIC: ASC(string|char)
 ; extract first character 
 ; of string argument 
 ; return it as TK_INTGR 
@@ -4476,10 +4485,15 @@ ascii:
 	call get_token 
 	cp a,#TK_QSTR 
 	jreq 1$
+	cp a,#TK_CHAR 
+	jreq 2$ 
 	jp syntax_error
 1$: ldw x,tokval 
 	ld a,(x)
-	clrw x 
+	jra 3$
+2$: ldw x,tokval
+	ld a,xl 
+3$:	clrw x 
 	ld xl,a 
 	call dpush 
 	ld a,#TK_RPAREN 
@@ -4524,34 +4538,36 @@ qkey:
 	ret 
 
 ;---------------------
-; BASIC: PORT(expr)
-; return port address 
-; expr {0..8} except 7
+; BASIC: GPIO(expr,reg)
+; return gpio address 
+; expr {0..8}
 ; input:
 ;   none 
 ; output:
-;   X 		port base address
+;   X 		gpio register address
 ;----------------------------
-port:
+gpio:
 	ld a,#TK_LPAREN 
 	call expect 
-	call relation
-	cp a,#TK_INTGR
+	call arg_list
+	cp a,#2
 	jreq 1$
 	jp syntax_error  
 1$:	
 	ld a,#TK_RPAREN 
 	call expect 
 	call dpop
+	pushw x 
+	call dpop 
 	tnzw x 
 	jrmi bad_port
 	cpw x,#9
 	jrpl bad_port
-	cpw x,#7 
-	jreq bad_port 
 	ld a,#5
 	mul x,a
-	addw x,#GPIO_BASE  
+	addw x,#GPIO_BASE 
+	addw x,(1,sp)
+	_drop 2 
 	ld a,#TK_INTGR
 	ret
 bad_port:
@@ -4560,7 +4576,7 @@ bad_port:
 
 ;----------------------
 ; BASIC: ODR 
-; return offset of port
+; return offset of gpio
 ; ODR register: 0
 ; ---------------------
 port_odr:
@@ -4571,7 +4587,7 @@ port_odr:
 
 ;----------------------
 ; BASIC: IDR 
-; return offset of port
+; return offset of gpio
 ; IDR register: 1
 ; ---------------------
 port_idr:
@@ -4582,7 +4598,7 @@ port_idr:
 
 ;----------------------
 ; BASIC: DDR 
-; return offset of port
+; return offset of gpio
 ; DDR register: 2
 ; ---------------------
 port_ddr:
@@ -4593,7 +4609,7 @@ port_ddr:
 
 ;----------------------
 ; BASIC: CRL  
-; return offset of port
+; return offset of gpio
 ; CR1 register: 3
 ; ---------------------
 port_cr1:
@@ -4604,7 +4620,7 @@ port_cr1:
 
 ;----------------------
 ; BASIC: CRH  
-; return offset of port
+; return offset of gpio
 ; CR2 register: 4
 ; ---------------------
 port_cr2:
@@ -4822,7 +4838,7 @@ kword_end:
 	_dict_entry,3,DDR,port_ddr 
 	_dict_entry,3,CRL,port_cr1 
 	_dict_entry,3,CRH,port_cr2
-	_dict_entry,4,PORT,port 
+	_dict_entry,4,GPIO,gpio 
 	_dict_entry,3,ASC,ascii  
 	_dict_entry,4,CHAR,char
 	_dict_entry,4,QKEY,qkey  
