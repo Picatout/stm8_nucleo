@@ -1,13 +1,16 @@
-# TinyBASIC for STM8
+# Tiny BASIC for STM8
 
 Il s'agit d'une implémentation du [Tiny BASIC](https://en.wikipedia.org/wiki/Tiny_BASIC) originellement conçu par [Dennis Allison](https://en.wikipedia.org/wiki/Dennis_Allison) au milieu des années 197x. Cette implémentation est créée à partir des documents [TINYDISK.DOC](TINYDISK.DOC) et [TINYDISK.ASM](TINYDISK.ASM). Cepandant elle n'est pas exactement identique. 
 
 Il s'agit d'un interpréteur pur. C'est à dire que le texte est lu à chaque exécution. Il n'y a pas de génération de code intermédiaire pour exécution sur une machine virtuelle. L'avantage est au niveau de la simplicité. Par exemple la commande **LIST** ne nécessite pas de désassemblage pour afficher le contenu du texte original puisque celui-ci est sauvegarder tel quel. 
 
-L'inconvénient est au niveau de la vitesse d'éxécution qui est beaucoup plus lente. Chaque fois qu'une commande est lue dans le texte elle doit-être recherchée dans le dictionnaire pour connaître l'adresse de la routine d'exécution de cette commande. Alors que si les commandes étaient convertie en **bytecode**, il suffirait de consulter une table en utilisant ce code comme index dans la table. C'est beaucoup plus rapide. Par contre pour afficher le texte original ça demanderait plus de code et se serait plus long. Certaines implémentations de Tiny BASIC ont cependant opté pour la machine virtuelle exécutant du *byte code*.  
+L'inconvénient est au niveau de la vitesse d'éxécution qui est beaucoup plus lente. Chaque fois qu'une commande est lue dans le texte elle doit-être recherchée dans le dictionnaire pour connaître l'adresse de la routine d'exécution de cette commande. Alors que si les commandes étaient convertie en **bytecode**, il suffirait de consulter une table en utilisant ce code comme index dans la table. Ce serait plus rapide. Par contre pour afficher le texte original ça demanderait plus de code et se serait plus lent. Certaines implémentations de Tiny BASIC ont cependant opté pour la machine virtuelle exécutant du *byte code*.  Peut-être vais-je choisir cette option pour la prochaine version. 
+
+Ce système a été développé et testé sur une carte ![NUCLEO-8S208RB](../docs/images/carte.png)
 
 ## Notes historique
-* Avant même l'invention de l'expression *logiciel libre* Tiny BASIC a été le premier logiciel libre. Ce qui l'à rendu populaire sur les premiers ordinateurs qui possédaient peut de mémoire RAM.
+
+* Avant même l'invention de l'expression *logiciel libre* Tiny BASIC a été le premier logiciel libre. Ce qui l'à rendu populaire sur les premier ordinateurs qui possédaient peu de mémoire RAM.
 
 * La première version TRS-80 modèle I, était vendu avec 4Ko de mémoire RAM et une version de Tiny BASIC en ROM. Cependant ils ont rapidement ajouter les calcul en virgule flottante par la suite.  
 
@@ -16,13 +19,13 @@ L'inconvénient est au niveau de la vitesse d'éxécution qui est beaucoup plus 
 ## Référence du langage
 
 ### Type de données 
-Le seul type de donné est l'entier 16 bits donc dans l'intervalle **-32768...32767**.  
+Le seul type de donné numérique est l'entier 16 bits donc dans l'intervalle **-32768...32767**.  
 
 Cependant pour des fins d'impression des chaînes de caractères entre guillemets sont disponibles. Seul les commandes **PRINT** et **INPUT** utilisent ces chaînes comme arguments. 
 
-Le type caractère est aussi disponible sous la forme \c i.e. un *backslash* suivit d'une lettre. 
+Le type caractère est aussi disponible sous la forme **\c** i.e. un *backslash* suivit d'une lettre. 
 
-Il est aussi possible d'imprimer un caractère en utilisant la fonction **CHAR()**. Qui retourne un type de donnée **TK_CHAR**. Ce type de donnée ne peut-être sauvegardé dans une variable sauf en utilisant la fonction **ASC()** qui le convertie ent type **TK_INTGR** qui peut-être sauvegardé dans une variable ou utilisé dans un expression.  
+Il est aussi possible d'imprimer un caractère en utilisant la fonction **CHAR()**. Qui retourne un jeton de type **TK_CHAR**. Ce type de donnée ne peut-être sauvegardé dans une variable sauf en utilisant la fonction **ASC()** qui le convertie ent type **TK_INTGR** qui peut-être sauvegardé dans une variable ou utilisé dans un expression.  
 
 ### Variables 
 
@@ -30,7 +33,7 @@ Le nombre des variables est limité à 26 et chacune d'elle est représentée pa
 
 ### Tableau 
 
-Il n'y a qu'un seul tableau appellée **@** et dont la taille dépend de la taille du programme. En effet ce tableau utilise la mémoire RAM laissée libre par le programme. Un programme peut connaître la taille de ce tableau en invoquant la fonction **UBOUND**. 
+Il n'y a qu'un seul tableau appelé **@** et dont la taille dépend de la taille du programme. En effet ce tableau utilise la mémoire RAM laissée libre par le programme. Un programme peut connaître la taille de ce tableau en invoquant la fonction **UBOUND**. 
 
 ### expression arithmétiques 
 
@@ -43,7 +46,7 @@ Notez que les opérations de division et de modulo réponde à la définition de
 
 ### opérateurs relationnels.
 
-Les opérateurs relationnels ont une priorités inférieure à celle des opérateurs arithmétiques. Le résultat d'une relation est **0|1** et ce résultat peut-être utilisé dans une expression arithmérique. Puisque les relations sont de moindre priorité elle doivent-être misent entre parenthères lorsqu'elles sont utilisées dans une expression arithmétique.
+Les opérateurs relationnels ont une priorités inférieure à celle des opérateurs arithmétiques. Le résultat d'une relation est **0|1** et ce résultat peut-être utilisé dans une expression arithmérique. Puisque les relations sont de moindre priorité elle doivent-être misent entre parenthèses lorsqu'elles sont utilisées dans une expression arithmétique.
 
 1. **'&gt;'**   Retourne vrai si le premier terme est plus grand que le deuxième.
 1. **'&lt;'** Retourne vrai si le premier terme est plus petit que le second.
@@ -54,30 +57,35 @@ Les opérateurs relationnels ont une priorités inférieure à celle des opérat
 
 ## Syntaxe 
 
-Une commande est suivie de ses arguments séparés par une virgule. Les arguments des fonctions doiven-être mis entre parenthèses. Par fonction j'entends une sous-routine qui retourne une valeur. Cependant une fonction qui n'utilise pas d'arguments n'est pas suivie de parenthèses. Les commandes reçoivent leur arguments sans parenthèses. 
+Le code utilisé pour le texte est le code [ASCII](https://fr.wikipedia.org/wiki/American_Standard_Code_for_Information_Interchange).
 
-Les *espaces* entre les *unitées lexicales* sont facultatifs sauf s'il y a ambiguité. Par exemple si le nom d'un commande est immédiatement suivit par le nom d'une variable un espace doit les séparés. 
+Un programme débute par un numéro de ligne suivit d'une ou plusieurs commandes séparées par le caractère **':'**.
 
-Les commandes peuvent-être entrées indéfèramment en minuscule ou majuscule.
-L'analyseur lexical convertie les lettres en  majuscule.
+Une commande est suivie de ses arguments séparés par une virgule. Les arguments des fonctions doiven-être mis entre parenthèses. Par fonction j'entends une sous-routine qui retourne une valeur. Cependant une fonction qui n'utilise pas d'arguments n'est pas suivie de parenthèses. Les commandes , c'est à dire les sous-routine qui ne retoune pas de valeur, reçoivent leur arguments sans parenthèses. 
+
+Les *espaces* entre les *unitées lexicales* sont facultatifs sauf s'il y a ambiguité. Par exemple si le nom d'un commande est immédiatement suivit par le nom d'une variable un espace doit les séparer. 
+
+Les commandes peuvent-être entrées indifféremment en minuscule ou majuscule.
+L'analyseur lexical convertie les lettres en  majuscule sauf à l'intérieur d'une chaîne entre guillemets.
 
 Les commandes peuvent-être abrégées au plus court à 2 caractères à condition qu'il n'y est pas d'ambiguité entre 2 commandes. L'abréviation doit-être d'au moins 2 lettres pour éviter la confusion avec les variables. Par exemple **GOTO**peut-être abrégé **GOT** et **GOSUB** peut-être abrégé **GOS**. 
 
-Certaines commandes sont représentées facultativement par une caractère unique qui évite d'avoir à faire une recherche dans le dictionnaire ce qui accélère l'exécution. Par exemple la commande **PRINT** peut-être remplacée par **'?'**. 
+Certaines commandes sont représentées facultativement par une caractère unique qui évite d'avoir à faire une recherche dans le dictionnaire ce qui accélère l'exécution. Par exemple la commande **PRINT** peut-être remplacée par le caractère **'?'**. 
 
-Plusieurs commandes peuvent-être présentent sur la même ligne. Le caractère **':'** est utilisé comme terminateur de commande.  Son utilisation est facultative s'il n'y a pas d'ambiguité.
+Plusieurs commandes peuvent-être présentent sur la même ligne. Le caractère **':'** est utilisé comme séparateur de commande.  Son utilisation est facultative s'il n'y a pas d'ambiguité.
 
 Une fin de ligne marque la fin d'une commande. Autrement dit une commande ne peut s'étendre sur plusieurs lignes. 
 
 ## bases numériques
 Les entiers peuvent-être indiqués en décimal,hexadécimal ou binaire. Cependant ils ne peuvent-être affichés qu'en décimal ou hexadécimal. 
 
-Forme lexicale des entiers. Ce qui est entre **'['** et **']'** est facultatif. Le caractère **'+'** indique que le symbole apparaît au moins une fois. 
-*  digit: ('0','1','2','3','4','5','6','7','8','9')
-*  hex_digit: (digit,'A','B','C','D','E','F') 
-*  entier décimaux:  ['+'|'-']digit+
-*  entier hexadécimaux: '$'hex_digit+
-*  entier binaire: '&'('0'|'1')+   
+Forme lexicale des entiers. Dans la liste qui suit ce qui est entre **'['** et **']'** est facultatif. Le caractère **'+'** indique que le symbole apparaît au moins une fois. Un caractère entre apostrophes est écris tel quel *(symbole terminal)*. **::=** introduit la définition d'un symbole.
+
+*  digit::= ('0','1','2','3','4','5','6','7','8','9')
+*  hex_digit::= (digit,'A','B','C','D','E','F') 
+*  entier décimaux::=  ['+'|'-']digit+
+*  entier hexadécimaux::= '$'hex_digit+
+*  entier binaire::= '&'('0'|'1')+   
 
 examples d'entiers:
 
@@ -87,27 +95,32 @@ examples d'entiers:
 
 ## Ligne de commande et programmes 
  
-Au démarrage l'utilisateur retrouve à l'écran l'indicateur de commande *(prompt)* qui est le caractères **'&gt;'**. À partir de là il doit saisir une commande au clavier. Cette commande est considérée comme complétée lorsque la touche **ENTER** est enfoncée. C'est alors que l'interpréteur l'analyse et l'exécute. 
+Au démarrage l'information sur Tiny BASIC est affichée, suivit de l'adresse en hexadécimal de premier emplacement libre pour le système de fichier. Ensuite viens l'invite de commande qui est représentée par le caractère **&gt;**. 
 
-Cependant si cette commande débute par un entier, cette ligne est considéré comme faisant partie d'un programme et et au lieu d'être exécutée est les déposée en mémoire RAM.  
+À partir de là l'utilisateur doit saisir une commande au clavier. Cette commande est considérée comme complétée lorsque la touche **ENTER** est enfoncée. C'est alors que l'interpréteur l'analyse et l'exécute. 
+
+Cependant si cette commande débute par un entier, cette ligne est considéré comme faisant partie d'un programme et et au lieu d'être exécutée est insérée dans la mémoire RAM réservé au programmes BASIC.  
 
 * Un numéro de ligne doit-être dans l'intervalle {1...32767}.
 
 * Si une ligne avec le même numéro existe déjà elle est remplacée par la nouvelle. 
 
-* Si la ligne ne contient qu'un numéro sans autre texte et qu'il existe déjà une ligne avec ce numéro la ligne en question est supprimée. 
+* Si la ligne ne contient qu'un numéro sans autre texte et qu'il existe déjà une ligne avec ce numéro la ligne en question est supprimée. Sinon elle est ignorée. 
 
 * Les lignes sont insérée en ordre numérique croissant. 
 
+Certaines commandes ne peuvent-être utilisées qu'à l'intérieur d'un programme et d'autres seulement en mode ligne de commande. L'exécution est interrompue et un message d'erreur est affiché si une commande est utilisée dans un contexte innaproprié. 
 
-Certaines commandes ne peuvent-être utilisées qu'à l'intérieur d'un programme et d'autres seulement en mode ligne de commande. Un message d'erreur s'affiche si une commande est utilisée dans un contexte innaproprié. 
+Le programme en mémoire RAM est perdu à chaque réinitialiation du processeur sauf s'il a été sauvegardé comme fichier dans la mémoire flash. Les commandes de fichiers sont décrites dans la section référence.
 
-Le programme en mémoire RAM est perdu à chaque réinitialiation du processeur sauf s'il a été sauvegardé comme fichier dans la mémoire flash. Les commandes de fichiers sont décrites dans la section référence qui suit.
+## Système de fichier
+Le microcontrôleur de la carte NUCLEO-8S208RB possède 128Ko de mémoire flash. Cependant seulement 32Ko sont dans la plage de mémoire standard {0..65535}. Le reste fait partie de la mémoire étendue {32768..131071}. 
+Cette mémoire étendu n'est pas utilisée par Tiny BASIC, elle est réservée pour un mini système de fichiers qui sert à sauvegarder les programmes BASIC.
 
 ## Référence des commandes et fonctions.
-la remarque {C,P} après le nom de chaque commande indique dans quel contexte cette commande ou fonction peut-être utilisée. **P** pour *programme* et **C** pour ligne de commande. Lorsqu'une fonction est utilisée sur la ligne de commande la valeur retournée est automatiquement imprimée même si cette fonction n'est pas utilisée comme argument d'une commande **PRINT**. 
+la remarque **{C,P}** après le nom de chaque commande indique dans quel contexte cette commande ou fonction peut-être utilisée. **P** pour *programme* et **C** pour ligne de commande. Lorsqu'une fonction est utilisée sur la ligne de commande la valeur retournée est automatiquement imprimée même si cette fonction n'est pas utilisée comme argument d'une commande **PRINT**. 
 
-### ABS(expr)  {C,P}
+### ABS(*expr*)  {C,P}
 Cette fonction retourne la valeur absolue de l'expression fournie en argument. 
 
     >? abs(-45)
@@ -147,10 +160,10 @@ La commande **bit toggle** inverse les bits de l'octet situé à *addr*. Seul le
 Inverse l'état de la LED2 sur la carte. 
 
 ### BYE  {C,P}
-Met le microcontrôleur en mode sommeil  profond. Dans ce mode tous les oscilleurs sont arrêtés et la consommation électrique est minimale. Une interruption extérieure ou un *reset* redémarre le MCU. Sur la care **NUCLEO-8S208RB** il y a un bouton **RESET** et un bouton **USER**. Le bouton **USER** est connecté à l'interruption externe **INT4** donc permet de réveiller le MCU. 
+Met le microcontrôleur en mode sommeil profond. Dans ce mode tous les oscilleurs sont arrêtés et la consommation électrique est minimale. Une interruption extérieure ou un *reset* redémarre le MCU. Sur la care **NUCLEO-8S208RB** il y a un bouton **RESET** et un bouton **USER**. Le bouton **USER** est connecté à l'interruption externe **INT4** donc permet de réveiller le MCU. 
 
 ### CHAR(*expr*) {C,P}
-La fonction *character* retourne le caractère ASCII correspondant aux 7 bits les moins significatifs de l'expression utilisée en argument. Pour l'interpréteur cette fonction retourne un jeton de type **TK_CHAR** qui n'est reconnu que par la commande **PRINT**.
+La fonction *character* retourne le caractère ASCII correspondant aux 7 bits les moins significatifs de l'expression utilisée en argument. Pour l'interpréteur cette fonction retourne un jeton de type **TK_CHAR** qui n'est reconnu que par les commandes **PRINT** et **ASC**.
 
     >for a=32 to 126:? char(a),:next a 
      !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
@@ -278,6 +291,17 @@ Passe le contrôle à la ligne dont le numéro est déterminé par *expr*. *expr
    0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
 >
 ```
+
+### GPIO(*expr1*,*reg*) {C,P}
+Cette commande retourne l'adresse d'un des registre de contrôle d'un port GPIO. *expr1* doit indiqué un numéro de port valide dans l'ensemble **{0..8}**. Ces valeurs correspondent aux ports {A,B,C,D,E,F,G,H,I} du MCU. *reg* indique le registre. Chaque GPIO a 5 registres de contrôle: **ODR**, **IDR**, **DDR**, **CRL**, **CRH**. 
+```
+>bset gpio(2,odr),32 ' allume LED2 
+
+>bres gpio(2,odr),32 ' eteint LED2
+
+>
+``` 
+
 ### HEX {C,P}
 Sélectionne la base numérique hexadécimale pour l'affichage des entiers.
 Voir la commande **DEC**  pour revenir en décimale.
@@ -310,7 +334,8 @@ vrai   1
 
 ### INPUT [*string*]*var* [,[*string*]*var*]+  {P}
 Cette commande permet de saisir un entier fourni par l'utilisateur. Cet entier est déposé dans la variable donnée en argument. Plusieurs variables peuvent-être saisies en une seule commande en les séparant par la virgule. 
-Facultativement un message peut-être affiché à la place du nom de la variable.
+Facultativement un message peut-être affiché à la place du nom de la variable. Cette chaîne précède le nom de la variable sans virgule de séparation entre les deux.
+
 ```
 >10 input "age? "a,"sexe(1=M,2=F)? "s 
 
@@ -332,7 +357,9 @@ Press a key to continue...
 >
 ```
 ### LET *var*=*expr* {C,P}
-Affecte une valeur à une variable. En Tiny BASIC il n'y a que 26 variables représentées par les lettres de l'alphabet. *expr* peut-être arithmétique ou relationnel ou une combinaison des deux. Le mot réservé **LET** est facultatif. 
+Affecte une valeur à une variable. En Tiny BASIC il n'y a que 26 variables représentées par les lettres de l'alphabet. Il y a aussi une variable tableau unidimensionnelle nommée **@**. 
+
+*expr* peut-être arithmétique ou relationnel ou une combinaison des deux. Le mot réservé **LET** est facultatif. 
 ```
 >LET A=24*2+3:?a
   51
@@ -366,7 +393,7 @@ Affiche le programme contenu dans la mémoire RAM à l'écran. Sans arguments to
 ```
 
 ### LOAD *string*  {C}
-Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans le but de l'exécuter. *sting* est le nom du fichier à charger.
+Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans le but de l'exécuter. *string* est le nom du fichier à charger.
 ```
 >save "fibonacci"
   86
@@ -377,15 +404,18 @@ Charge un fichier sauvegardé dans la mémoire flash vers la mémoire RAM dans l
 >load "fibonacci"
   86
 >li
-   10 'fibonacci
-   20 a=1:b=1
-   30 if b>100: stop 
-   40 ? b,
-   50 c=a+b:a=b:b=c
-   60 goto 30
+   10 'Suite de Fibonacci
+   20 a=1:b=1:f=1
+   30 ?#6,f,
+   40 gosub 100
+   50 if f<0:stop
+   60 goto 40
+  100 ?f,
+  110 a=b:b=f:f=a+b
+  120 ret
 
 >run
-   1   2   3   5   8  13  21  34  55  89
+     1     1     2     3     5     8    13    21    34    55    89   144   233   377   610   987  1597  2584  4181  6765 10946 17711 28657
 >
 ```
 ### ODR {C,P}
@@ -402,7 +432,7 @@ qu'on définirait en 'C' par __uint8_t gpio[5]__. Les fonctions **ODR**,**IDR**,
 Dans cette exemple la LED2 est allumée puis éteinte. La LED est branchée sur le bit 5 du port **C**. **32=(1&lt;&lt;5)** donc ce masque affecte seulement le bit 5.  
 
 ### PAUSE *expr* {C,P}
-Cette commande suspend l'exécution pour un nombre de millisecondes équivalent à la valeur d'*epxr*. pendant la pause le CPU est en mode suspendu c'est à dire qu'aucune instruction n'est exécutée jusqu'à la prochaine interruption. le TIMER4 génère une interruption à chaque milliseconde. Le compteur de **PAUSE** est alors décrémenté et lorsqu'il arrive à zéro l'exécution du programme reprend.
+Cette commande suspend l'exécution pour un nombre de millisecondes équivalent à la valeur d'*epxr*. pendant la pause le CPU est en mode suspendu c'est à dire qu'aucune instruction n'est exécutée jusqu'à la prochaine interruption. La commande **PAUSE** utilise l'instruction machine *wfi* pour suspendre le processeur. Le TIMER4 génère une interruption à chaque milliseconde. Le compteur de **PAUSE** est alors décrémenté et lorsqu'il arrive à zéro l'exécution du programme reprend.
 ```
 >li
    10 input "pause en secondes? "a
@@ -428,25 +458,15 @@ Retourne la valeur de l'octet situé à l'adresse représentée par *expr*. Mêm
 >
 ```
 ### POKE *expr1*,*expr2*
-Dépose la valeur de *expr2* à l'adresse de *expr1*. 
+Dépose la valeur de *expr2* à l'adresse de *expr1*. Même si expr2 est un entier seul l'octet faible est utilisé. 
 ```
 >poke $5241,asc("A") 'UART3_DR, envoie 'A' au terminal
 A
 >
 ```
-### GPIO(*expr1*,*reg*) {C,P}
-Cette commande retourne l'adresse d'un des registre de contrôle d'un port GPIO. *expr1* doit indiqué un numéro de port valide dans l'ensemble **{0..8}**. Ces valeurs correspondent aux ports {A,B,C,D,E,F,G,H,I} du MCU. *reg* indique le registre. Chaque GPIO a 5 registres de contrôle: **ODR**, **IDR**, **DDR**, **CRL**, **CRH**. 
-```
->bset gpio(2,odr),32 ' allume LED2 
-
->bres gpio(2,odr),32 ' eteint LED2
-
->
-``` 
-Dans cette exemple la LED2 est allumée puis éteinte. La LED est branchée sur le bit 5 du port **C**. **32=(1&lt;&lt;5)** donc ce masque affecte seulement le bit 5.  
 
 ### PRINT [*string*|*expr*][,*string*|*expr*][','] {C,P}
-La commande **PRINT** sans argument envoie le curseur du terminal sur la ligne suivante. Si la commande se termine par une virgule il n'y a pas de saut la ligne suivante et la prochaine commande **PRINT** se fera sur  la même ligne. Les arguments sont séparés par la virgule. 
+La commande **PRINT** sans argument envoie le curseur du terminal sur la ligne suivante. Si la commande se termine par une virgule il n'y a pas de saut à la ligne suivante et la prochaine commande **PRINT** se fera sur  la même ligne. Les arguments sont séparés par la virgule. 
 
 Le **'?'** peut-être utilisé à la place de **PRINT**.
 
@@ -454,7 +474,7 @@ Le **'?'** peut-être utilisé à la place de **PRINT**.
 
 * *string*,  chaîne de caractère entre guillemets
 * *expr*,   Toute expression arithmétique et relationnelle qui retourne un entier.
-* *char*,  Un caractère ASCII tel que retourné par la fonction **CHAR()**.
+* *char*,  Un caractère ASCII pécédé de **\** ou tel que retourné par la fonction **CHAR()**.
 ```
 >? "la valeur de A=",a
 la valeur de A=  51
@@ -478,7 +498,7 @@ La commande **REM**  sert à insérer des commentaires (*remark*) dans un progra
 ```
 >list
    10 REM ceci est un commentaire
-   20 'ceci est aussi un commentaire, (plus rapide)
+   20 'ceci est aussi un commentaire
 ```
 
 ### RETURN {P}
@@ -505,7 +525,7 @@ Dans cet exemple chaque fois qu'on presse une touche sur la console le terme sui
 
 ### RND(*expr*)
 Cette fonction retourne un entier aléatoire dans l'intervalle {1..*expr*}.
-*expr* doit-être un nombre positif sinon le programme s'arrête en indiquant une erreur de syntaxe.
+*expr* doit-être un nombre positif sinon le programme s'arrête et affiche un message d'erreur.
 ```
 >?#6:r=32767:fo a=1to100:r=rnd(r):?r,:r=abs(r*113):ne a  
 

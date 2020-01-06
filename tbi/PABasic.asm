@@ -4750,7 +4750,8 @@ random:
 	ld a,xh 
 	bcp a,#0x80 
 	jreq 2$
-	jp syntax_error 
+	ld a,#ERR_BAD_VALUE
+	jp tb_error
 2$: 
 ; acc16=(x<<5)^x 
 	ldw x,seedx 
