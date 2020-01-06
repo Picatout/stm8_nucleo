@@ -536,7 +536,7 @@ Cette fonction retourne un entier aléatoire dans l'intervalle {1..*expr*}.
 Lance l'exécution du programme qui est chargé en mémoire RAM. Si aucun programme n'est chargé il ne se passe rien.
 
 ### SAVE *string* 
-Sauvegarde le programme qui est en mémoire RAM dans un fichier. La mémoire FLASH qui n'est pas utilisée par TinyBASIC est utilisée comme mémoire permanente pour un système de fichier rudimentaire où les programmes sont sauvegardés. *string* est le nom du fichier. Si un fichier avec ce nom existe déjà un message d'erreur s'affiche.
+Sauvegarde le programme qui est en mémoire RAM dans un fichier. La mémoire FLASH étendue qui n'est pas utilisée par Tiny BASIC est utilisée comme mémoire permanente pour un système de fichier rudimentaire où les programmes sont sauvegardés. *string* est le nom du fichier. Si un fichier avec ce nom existe déjà un message d'erreur s'affiche. À la fin de  la commande la taille du programme sauvegardé est affichée.
 ```
 >li
     5 ? #6,"Suite de Fibonacci,'q'uitter, autre suivant"
@@ -569,7 +569,7 @@ Cette commande retourne le nombre d'octets libre dans la mémoire RAM
 ```
 
 ### SLEEP {C,P}
-Cette commande place le MCU en sommeil. En mode *sleep* le processeur est suspendu et dépense un minimum d'énergie. Pour redémarrer le processeur il faut une interruption externe. Comme le bouton **USER** sur la carte NUCLEO.
+Cette commande place le MCU en sommeil profond. En mode *sleep* le processeur est suspendu et dépense un minimum d'énergie. Pour redémarrer le processeur il faut une interruption externe ou un reset. Le bouton **USER** sur la carte NUCLEO peut réactivé celle-ci.
 
 **SLEEP** utilise l'instruction machine **halt** qui arrête tous les oscillateurs du MCU donc les périphériques ne fonctionnent plus. Par exemple le TIMER4 utilisé pour compter les millisecondes cesse de fonctioner. Le temps est suspendu jusqu'au redémarrage. 
 ```
@@ -616,7 +616,7 @@ Réponse: 56 millisecondes.
 Ce mot réservé est utilisé lors de l'initialisation d'une boucle **FOR**. **expr** détermine la valeur limite de la variable de contrôle de la boucle. Voir la commande **FOR** pour plus d'information. 
 
 ### UBOUND
-Cette fonction retourne la taille de la variable tableau **@**. Comme expliqué plus haut cette variable utilise la mémoire RAM qui n'est pas utilisé par le programme BASIC. Donc plus le programme prend de place plus sa taille diminue. 
+Cette fonction retourne la taille de la variable tableau **@**. Comme expliqué plus haut cette variable utilise la mémoire RAM qui n'est pas utilisé par le programme BASIC. Donc plus le programme prend de place plus sa taille diminue. Un programme peut donc invoqué cette commande pour connaître la taille **@** dont il dispose.
 ```
 >ubound
 2870
@@ -628,7 +628,7 @@ Cette fonction retourne la taille de la variable tableau **@**. Comme expliqué 
 ```
 ### WAIT *expr1*,*expr2*[,*expr3] {C,P}
 Cette commande sert à attendre un changement d'état sur un périphérique.
-*expr1* indique l'adresse du registre de périphérique susceptible de changer d'état. *expr2* est un masque de bits appliqué à l'octet lu dans le registre avec la fonction logique AND.  Si cette valeur est différente de zéro l'attente se termine. *expr3* peut-être utilisé pour attendre qu'un ou des bits passent à zéro. Il est appliqué après la fonction AND ave une fonction logique XOR.  Si B&E1^E2<>0 alors fin de l'attente. 
+*expr1* indique l'adresse du registre de périphérique susceptible de changer d'état. *expr2* est un masque de bits appliqué à l'octet lu dans le registre avec la fonction logique AND.  Si cette valeur est différente de zéro l'attente se termine. *expr3* peut-être utilisé pour attendre qu'un ou des bits passent à zéro. Il est appliqué après la fonction AND avec une fonction logique XOR.  Si Byte&E1^E2<>0 alors l'attente prend fin. 
 ```
 >wait $5240,&100000 ' attend reception caractere
 
@@ -640,7 +640,33 @@ L'exécution est suspendu jusqu'à la réception d'un caractère sur UART3.
 ### WRITE *expr1*,*expr2* 
 Cette commande permet d'écrire un octet dans la mémoire EEPROM ou dans la mémoire FLASH. *expr1* indique l'adresse et *expr2* indique la valeur à écrire. le **STM8S208RB** possède 2Ko de mémoire EEPROM 128Ko de mémoire FLASH. 
 
-**AVERTISSEMENT: La mémoire FLASH qui n'est pas utilisée par tinyBASIC sert de mémoire pour les fichiers, écrire dans cette mémoire risque d'endommager le système de fichier.** 
+**AVERTISSEMENT: Écrire dans la mémoire FLASH peut endommagé le système Tiny BASIC** 
+
+## Installation de Tiny BASIC sur la carte NUCLEO-8S208RB 
+À la ligne 36 du fichier [PABasic.asm](PABasic.asm) il y a une macro nommée **_dbg**. Cette macro ajoute du code supplémentaire lors du développement du système et doit-être mise en commentaire pour construire la version finale. construire Tiny BASIC et programmer la carte NUCLEO est très simple grâce la l'utilitaire **make**. Lorsque la carte est branchée et prête à être programmée faites la commande suivante:
+```
+$ make && make flash
+
+***************
+cleaning files
+***************
+rm -f build/*
+
+**********************
+compiling PABasic       
+**********************
+sdasstm8 -g -l -o build/PABasic.rel PABasic.asm
+sdcc -mstm8 -lstm8 -L../lib/ -I../inc  -o build/PABasic.ihx  build/PABasic.rel
+
+***************
+flashing device
+***************
+stm8flash -c stlinkv21 -p stm8s208rb -w build/PABasic.ihx 
+Determine FLASH area
+Due to its file extension (or lack thereof), "build/PABasic.ihx" is considered as INTEL HEX format!
+7808 bytes at 0x8000... OK
+Bytes written: 7808
+```
 
 # Utilisation de TinyBASIC sur STM8
 A faire: écrire le manuel de l'[utilisateur de tinyBASIC](manuel_util_tb.md).
@@ -648,6 +674,6 @@ A faire: écrire le manuel de l'[utilisateur de tinyBASIC](manuel_util_tb.md).
 
 # code source 
 
-* **PABasic.asm**  Code source de l'interpréteur BASIC.
-* **pab_macros.asm** macros utiles pour ce programme.
+* [PABasic.asm](PABasic.asm)  Code source de l'interpréteur BASIC.
+* [pab_macros.asm](pab_macros.asm) constantes et macros utilisées par ce programme.
 

@@ -364,7 +364,7 @@ write_byte:
 ; check addr[23:16], if <> 0 then it is extened flash memory
 	tnz farptr 
 	jrne write_flash
-    cpw y,#fdrive 
+    cpw y,#user_space
     jruge write_flash
 	cpw y,#EEPROM_BASE  
     jrult write_exit
