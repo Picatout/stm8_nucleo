@@ -1028,6 +1028,7 @@ cold_start:
 	call uart3_init
 ; activate PE_4 (user button interrupt)
     bset PE_CR2,#USR_BTN_BIT 
+; display system information
 	ldw x,#software 
 	call puts 
 	ld a,#MAJOR 
@@ -4045,18 +4046,20 @@ incr_farptr:
 	ret 
 
 ;------------------------------
-; seek end of used flash  
-; starting at 'fdrive' address.
+; extended flash memory used as FLASH_DRIVE 
+; seek end of used flash drive   
+; starting at 0x10000 address.
 ; 4 consecutives 0 bytes signal free space. 
 ; input:
 ;	none
 ; output:
 ;   ffree     free_addr| 0 if memory full.
 ;------------------------------
-seek_fdrive: 
-	ldw x,#fdrive  
+seek_fdrive:
+	ld a,#1
+	ld farptr,a 
+	clrw x 
 	ldw farptr+1,x 
-	clr farptr
 1$:
 	clrw x 
 	ldf a,([farptr],x) 
@@ -4156,9 +4159,9 @@ cmp_name:
 search_file: 
 	_vars VSIZE
 	ldw (YSAVE,sp),y  
-	ldw x,#fdrive
+	clrw x 
 	ldw farptr+1,x 
-	clr farptr
+	mov farptr,#1
 1$:	
 ; check if farptr is after any file 
 ; if  0 then so.
@@ -4379,9 +4382,9 @@ directory:
 	_vars VSIZE 
 	clrw x 
 	ldw (COUNT,sp),x 
-	ldw x,#fdrive 
+	clrw x
 	ldw farptr+1,x 
-	clr farptr 
+	mov farptr,#1 
 dir_loop:
 	clrw x 
 	ldf a,([farptr],x)
@@ -4917,8 +4920,9 @@ relop_dict:
 	.word TK_EQUAL
 
 	.bndry 128 ; align on FLASH block.
-; free space where files are saved 
+; free space for user application  
+user_space:
+
+	.area FLASH_DRIVE (ABS)
+	.org 0x10000
 fdrive:
-.if DEBUG 
-.byte 0,0,0,0 
-.endif 
