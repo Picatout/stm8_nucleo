@@ -31,17 +31,19 @@
         TK_LPAREN=3     ; left parenthesis '('
         TK_RPAREN=4     ; right parenthesis ')'
         TK_QSTR=5       ; quoted string  
-        TK_KWORD=6      ; BASIC keyword  
+        TK_CMD=6        ; BASIC command   
         TK_COLON=7      ; command end marker ':' 
         TK_COMMA=8      ; item separator ',' 
         TK_SHARP=9      ; print colon width '#' 
         TK_INTGR=10     ; integer 
         TK_CHAR=11      ; ASCII character 
+        TK_FUNC=12      ; BASIC function 
         TK_PLUS=0x10    ; addition operator '+'
         TK_MINUS=0x11   ; subtraction operator '-'
         TK_MULT=0x20    ; multiplication operator '*'
         TK_DIV=0x21     ; division operator '/'
         TK_MOD=0x22     ; modulo operator '%'
+
         ; don't change these token values 
         ; values chosen to be used as a mask with CC.
         ; bits 4:5 identify group 
@@ -83,9 +85,17 @@
 ;  data stack macros 
 ;---------------------------------------
     CELL_SIZE=2 
-    ; return token to pool 
-    .macro _unget_tok 
-    ld untok,a 
+
+    ; move dp up 1 element 
+    .macro _dp_up 
+    inc dstkptr+1
+    inc dstkptr+1
+    .endm
+
+    ;move dp down 1 element
+    .macro _dp_down 
+    dec dstkptr+1 
+    dec dstkptr+1
     .endm 
 
     ; load X register with 

@@ -6,7 +6,7 @@ Il s'agit d'un interpréteur pur. C'est à dire que le texte est lu à chaque ex
 
 L'inconvénient est au niveau de la vitesse d'éxécution qui est beaucoup plus lente. Chaque fois qu'une commande est lue dans le texte elle doit-être recherchée dans le dictionnaire pour connaître l'adresse de la routine d'exécution de cette commande. Alors que si les commandes étaient convertie en **bytecode**, il suffirait de consulter une table en utilisant ce code comme index dans la table. Ce serait plus rapide. Par contre pour afficher le texte original ça demanderait plus de code et se serait plus lent. Certaines implémentations de Tiny BASIC ont cependant opté pour la machine virtuelle exécutant du *byte code*.  Peut-être vais-je choisir cette option pour la prochaine version. 
 
-Ce système a été développé et testé sur une carte ![NUCLEO-8S208RB](../docs/images/carte.png)
+Ce système a été développé et testé sur une carte NUCLEO-8S208RB ![NUCLEO-8S208RB](../docs/images/carte.png)
 
 ## Notes historique
 
