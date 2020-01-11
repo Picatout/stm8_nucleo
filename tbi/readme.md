@@ -1,3 +1,5 @@
+**NOTEZ que j'ai transféré ce projet sur un dépôt séparé. Celui-ci ne sera plus mis à jour. Pour accéder au nouveau dépôt suivez ce lien [https://github.com/Picatout/stm8_tbi](https://github.com/Picatout/stm8_tbi).** 
+
 # Tiny BASIC for STM8
 
 Il s'agit d'une implémentation du [Tiny BASIC](https://en.wikipedia.org/wiki/Tiny_BASIC) originellement conçu par [Dennis Allison](https://en.wikipedia.org/wiki/Dennis_Allison) au milieu des années 197x. Cette implémentation est créée à partir des documents [TINYDISK.DOC](TINYDISK.DOC) et [TINYDISK.ASM](TINYDISK.ASM). Cepandant elle n'est pas exactement identique. 
@@ -72,7 +74,7 @@ Les commandes peuvent-être abrégées au plus court à 2 caractères à conditi
 
 Certaines commandes sont représentées facultativement par une caractère unique qui évite d'avoir à faire une recherche dans le dictionnaire ce qui accélère l'exécution. Par exemple la commande **PRINT** peut-être remplacée par le caractère **'?'**. 
 
-Plusieurs commandes peuvent-être présentent sur la même ligne. Le caractère **':'** est utilisé comme séparateur de commande.  Son utilisation est facultative s'il n'y a pas d'ambiguité.
+Plusieurs commandes peuvent-être présentent sur la même ligne. Le caractère **':'** est utilisé comme séparateur de commande.
 
 Une fin de ligne marque la fin d'une commande. Autrement dit une commande ne peut s'étendre sur plusieurs lignes. 
 

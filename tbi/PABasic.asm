@@ -1059,6 +1059,9 @@ cold_start:
 	inc seedy+1 
 	inc seedx+1 
 	call clear_basic
+	call ubound 
+	call dpop 
+	ldw array_size,x 
     jp warm_start 
 
 clear_basic:
@@ -1233,12 +1236,10 @@ interp_loop:
 	cp a,count 
 	jrpl interp
 	call get_token
-	cp a,#TK_NONE 
-	jreq interp
 	cp a,#TK_COLON 
-	jrne 1$
-	call ddrop  
-	jra interp 
+	jreq interp_loop 
+	cp a,#TK_NONE 
+	jreq interp 
 1$:
 	cp a,#TK_VAR
 	jrne 2$
@@ -1255,35 +1256,12 @@ interp_loop:
 	jrne 4$
 	call execute 
 	jra interp_loop 
-4$: cp a,TK_FUNC 
+4$:	cp a,#TK_INTGR
 	jrne 5$
-	call execute 	
-	call prt_tos 
-	jp interp_loop 
-5$:
-	cp a,#TK_INTGR
-	jreq 6$
-.if DEBUG
-	jp 9$
-.else 
-	jp syntax_error
-.endif 
-6$:	btjt flags,#FRUN,7$ 
-	ld a,#5
-	cp a,in 
-	jrpl 8$
-7$:	jp syntax_error
-8$:	call insert_line 
-	jp interp 
-.if DEBUG 
-9$:	ld a,#'D  
-	cp a,pad 
-	jrne 3$ 
-	_dbg_trap 
-10$:
-	jp syntax_error  
-.endif 
-	.blkb 0x71 ; reset MCU
+	call insert_line 
+	jp interp
+5$: 
+	jp syntax_error 
 
 ;----------------------------------------
 ;   DEBUG support functions
@@ -2188,8 +2166,9 @@ rparnt_tst:
 	jp token_char 
 colon_tst:
 	_case ':' comma_tst 
+	inc in 
 	ld a,#TK_COLON 
-	jp token_char
+	jp token_exit 
 comma_tst:
 	_case COMMA sharp_tst 
 	ld a,#TK_COMMA
@@ -2296,8 +2275,7 @@ other: ; not a special character
 	ld a,(TCHAR,sp)
 	call is_alpha 
 	jrc 30$ 
-	ld a,#ERR_SYNTAX 
-	jp tb_error 
+	jp syntax_error 
 30$: 
 	call parse_keyword
 	jra token_exit 
@@ -2661,7 +2639,7 @@ unget_token:
 
 
 .if DEBUG 
-ds_msg: .asciz "\ndstack: " 
+dstk_prompt: .asciz "\ndstack: " 
 ;----------------------------
 ; print dstack content 
 ;---------------------------
@@ -2669,7 +2647,7 @@ ds_msg: .asciz "\ndstack: "
 	VSIZE=2
 dots:
 	_vars VSIZE 
-	ldw x,#ds_msg 
+	ldw x,#dstk_prompt 
 	call puts
 	ldw x,#dstack_unf-CELL_SIZE 
 1$:	cpw x,dstkptr 
@@ -2687,8 +2665,51 @@ dots:
 4$: ld a,#CR 
 	call putc 
 	_drop VSIZE
+	clr a 
 	ret
 .endif 
+
+cstk_prompt: .asciz "\nctack: "
+;--------------------------------
+; print cstack content
+;--------------------------------
+dotr:
+	ldw x,#cstk_prompt
+	call puts 
+	ldw x,sp 
+	incw x 
+	call dpush 
+	ldw x,#RAM_SIZE-2
+dotr_loop:
+	call dpush  
+	ldw x,(x)
+	ldw acc16,x 
+	clr acc24 
+	clrw x 
+	ld a,#16+128
+	call prti24 
+	call dpop 
+	subw x,#CELL_SIZE
+	cpw x,[dstkptr]
+	jrpl dotr_loop 
+	ldw x,#2 
+	call ddrop_n 
+	ld a,#CR 
+	call putc 
+	clr a
+	ret
+
+
+;--------------------------------
+; BASIC: SHOW 
+;  show content of dstack,cstack
+;--------------------------------
+show:
+	call dots
+	call dotr 
+	clr a 
+	ret
+
 
 ;--------------------------------
 ;  add 2 top integer on dstack 
@@ -2896,8 +2917,7 @@ ddrop_n:
 ; --------------------------------
 execute: ; { addr -- ? }
 	call dpop
-	call (x)
-	ret 
+	jp (x)
 
 
 ;---------------------------------
@@ -3054,13 +3074,15 @@ get_array_element:
 	call ddrop ; {*pad -- }
 	ld a,#TK_LPAREN 
 	call expect
+	call ddrop 
 	call relation 
 	cp a,#TK_INTGR 
 	jreq 1$
 	jp syntax_error
 1$: 
 	ld a,#TK_RPAREN 
-	call expect 
+	call expect
+	call ddrop  
 	; check for bounds 
 	call dpop  
 	cpw x,array_size 
@@ -3095,10 +3117,10 @@ get_array_element:
 factor:
 	_vars VSIZE 
 	call get_token
-	cp a,#TK_NONE 
-	jrne 0$
+	cp a,#2 
+	jrmi 1$
 	jp 20$
-0$:	ld (NEG,sp),a 
+1$:	ld (NEG,sp),a 
 	and a,#TK_GRP_MASK 
 	cp a,#TK_GRP_ADD 
 	jreq 2$ 
@@ -3165,16 +3187,12 @@ factor:
 term:
 	_vars VSIZE
 	call factor
-	cp a,#TK_NONE 
-	jreq term_exit
+	cp a,#2
+	jrmi term_exit
 term01:	 ; check for  operator 
 	call get_token
-	cp a,#TK_NONE
-	jreq 9$
-	cp a,#TK_COLON 
-	jrne 0$
-	call ddrop
-	jra 9$   
+	cp a,#2
+	jrmi 9$
 0$:	ld (MULOP,sp),a
 	and a,#TK_GRP_MASK
 	cp a,#TK_GRP_MULT
@@ -3218,13 +3236,13 @@ expression:
 	call term
 	cp a,#TK_NONE 
 	jreq expr_exit 
+	cp a,#TK_COLON 
+	jreq expr_exit 
 0$:	call get_token
 	cp a,#TK_NONE 
-	jreq 9$  
+	jreq 9$ 
 	cp a,#TK_COLON 
-	jrne 1$
-	call ddrop
-	jra 9$   
+	jreq 9$  
 1$:	ld (OP,sp),a  
 	and a,#TK_GRP_MASK
 	cp a,#TK_GRP_ADD 
@@ -3268,10 +3286,6 @@ relation:
 	call get_token 
 	cp a,#TK_NONE 
 	jreq 9$
-	cp a,#TK_COLON 
-	jrne 1$
-	call ddrop 
-	jra 9$ 
 1$:	
 	ld (RELOP,sp),a 
 	and a,#TK_GRP_MASK
@@ -3495,17 +3509,17 @@ reset_comma:
 	clr (COMMA,sp)
 prt_loop:
 	call relation
+	cp a,#TK_COLON 
+	jreq print_exit   
 	cp a,#TK_INTGR 
-	jrne 1$ 
+	jrne 0$ 
 	call prt_tos 
 	jra reset_comma
-1$: 	
+0$: 	
 	call get_token
-	cp a,#TK_COLON 
-	jreq print_exit
 	cp a,#TK_NONE 
 	jreq print_exit 
-	cp a,#TK_QSTR
+1$:	cp a,#TK_QSTR
 	jrne 2$   
 	call dpop  
 	call puts 
@@ -3522,13 +3536,14 @@ prt_loop:
 	call execute
 	call prt_tos 
 	jra reset_comma 
-4$: cp a,#TK_COMMA 
+4$: 
+	cp a,#TK_COMMA 
 	jrne 5$
 	call ddrop 
-	ld a,#1 
-	ld (COMMA,sp),a 
-	jra prt_loop   
-5$: cp a,#TK_SHARP
+	cpl (COMMA,sp) 
+	jp prt_loop   
+5$: 
+	cp a,#TK_SHARP
 	jrne 7$
 	call ddrop   
 	call get_token
@@ -3539,8 +3554,9 @@ prt_loop:
 	ld a,xl 
 	and a,#15 
 	ld tab_width,a 
-	jp reset_comma 
-7$:	call unget_token
+	jra reset_comma 
+7$:	
+	call unget_token
 print_exit:
 	tnz (COMMA,sp)
 	jrne 9$
@@ -3669,9 +3685,6 @@ input_exit:
 ; it is faster 
 ;---------------------- 
 rem: 
-	mov in,count 
-	clr untok 
-	clr a 
 	ret 
 
 
@@ -3849,12 +3862,22 @@ if:
 ; on dstack and set
 ; FFOR bit in 'flags'
 ;-----------------
+	RETL1=1
+	INW=3
+	BPTR=5
 for: ; { -- var_addr }
 	ld a,#TK_VAR 
-	call expect 
+	call expect
+	call ddup 
 	call let02 
-; leave with variable addr on dstack 		
 	bset flags,#FFOR 
+; open space on cstack for BPTR and INW 
+	popw x ; call return address 
+	_vars 4
+	pushw x  ; RETL1 
+	clrw x 
+	ldw (BPTR,sp),x 
+	ldw (INW,sp),x 
 	call get_token 
 	cp a,#TK_CMD 
 	jreq 1$
@@ -3874,20 +3897,24 @@ for: ; { -- var_addr }
 to: ; { var_addr -- var_addr limit step }
 	btjt flags,#FFOR,1$
 	jp syntax_error
-1$: call expression 
+1$: call relation  
 	cp a,#TK_INTGR 
 	jreq 2$ 
 	jp syntax_error
 2$: 
 	call get_token
+	cp a,#TK_NONE 
+	jreq 4$ 
 	cp a,#TK_CMD
 	jrne 3$
 	call dpop 
+	ldw tokval,x 
 	cpw x,#step 
-	jreq step 
-3$:	 
-	call unget_token 
-	ldw x,#1   ; default step  
+	jreq step
+	ld untok,a 
+	jra 4$ 
+3$:	jp syntax_error  	 
+4$:	ldw x,#1   ; default step  
 	call dpush ; save step on dstack 
 	jra store_loop_addr 
 
@@ -3905,20 +3932,12 @@ step: ; {var limit -- var limit step}
 	jreq store_loop_addr  
 	jp syntax_error
 ; leave loop back entry point on cstack 
-; cstack 2 call deep from interp_loop
-; we must copy those 2 return address on
-; top of cstack 
+; cstack is 2 call deep from interp_loop
 store_loop_addr:
-	_vars 4 ; reserve 4 bytes 
-; move return address on top 	
-	ldw x,(5,sp)
-	ldw (1,sp),x
-	ldw x,(7,sp)
-	ldw (3,sp),x  
 	ldw x,basicptr  
-	ldw (7,sp),x 
+	ldw (BPTR,sp),x 
 	ldw x,in.w 
-	ldw (5,sp),x   
+	ldw (INW,sp),x   
 	bres flags,#FFOR 
 	inc loop_depth 
 	clr a 
@@ -3933,16 +3952,15 @@ store_loop_addr:
 ; else clean both stacks. 
 ; and decrement 'loop_depth' 
 ;--------------------------------
-; loop address arguments on cstack 
-	IN=5
-	BPTR=7
 next: ; {var limit step -- [var limit step ] }
 	tnz loop_depth 
 	jrne 1$ 
 	jp syntax_error 
-1$: ld a,#TK_VAR 
+1$: 
+	ld a,#TK_VAR 
 	call expect
 ; check for good variable after NEXT 	 
+	call dpop 
 	ldw y,x 
 	ldw x,#4  
 	cpw y,([dstkptr],x) ; compare variables address 
@@ -3978,7 +3996,7 @@ loop_back:
 	ld count,a
 	ldw x,(x)
 	ldw lineno,x
-1$:	ldw x,(IN,sp)
+1$:	ldw x,(INW,sp)
 	ldw in.w,x 
 	clr a 
 	ret 
@@ -3988,11 +4006,9 @@ loop_done:
 	addw x,#3*CELL_SIZE
 	ldw dstkptr,x 
 	; remove 2 return address on cstack 
-	ldw x,(1,sp)
-	ldw y,(3,sp)
-	_drop 4 
-	ldw (1,sp),x
-	ldw (3,sp),y 
+	popw x
+	_drop 4
+	pushw x 
 	dec loop_depth 
 	clr a 
 	ret 
@@ -4008,8 +4024,7 @@ goto:
 	ld a,#ERR_RUN_ONLY
 	jp tb_error 
 	ret 
-0$:	_drop 4 ; drop 2 return address 
-	jra go_common
+0$:	jra go_common
 
 ;--------------------
 ; BASIC: GOSUB lineno
@@ -4018,19 +4033,22 @@ goto:
 ; are saved on cstack
 ; here cstack is 2 call deep from interp_loop 
 ;--------------------
+	GOS_RET=3
 gosub:
 	btjt flags,#FRUN,0$ 
 	ld a,#ERR_RUN_ONLY
 	jp tb_error 
 	ret 
-0$:	ldw x,basicptr
+0$:	popw x 
+	sub sp,#2 
+	pushw x 
+	ldw x,basicptr
 	ld a,(2,x)
 	add a,#3 
 	ld acc8,a 
 	clr acc16 
 	addw x,acc16
-	_drop 2  ; drop 1 return address  
-	ldw (1,sp),x ; overwrite return addr, will not be used  
+	ldw (GOS_RET,sp),x 
 go_common: 
 	call relation 
 	cp a,#TK_INTGR
@@ -4050,7 +4068,7 @@ go_common:
 	ldw x,(x)
 	ldw lineno,x 
 	mov in,#3 
-	jp interp_loop 
+	ret 
 
 ;------------------------
 ; BASIC: RETURN 
@@ -4061,15 +4079,18 @@ return:
 	btjt flags,#FRUN,0$ 
 	ld a,#ERR_RUN_ONLY
 	jp tb_error 
-0$:	_drop 4 ; drop return address  
-	ldw x,(1,sp) 
+0$:	
+	ldw x,(GOS_RET,sp) 
 	ldw basicptr,x 
 	ld a,(2,x)
 	add a,#3 
 	ld count,a 
 	mov in,#3 
 	clr a 
-	jp interp_loop 
+	popw x 
+	_drop 2
+	pushw x
+	ret  
 
 
 ;----------------------------------
@@ -4933,7 +4954,7 @@ kword_end:
 	_dict_entry,5,WRITE,write  
 	_dict_entry,3,NEW,new
 	_dict_entry,4,STOP,stop 
-    _dict_entry,4,SHOW,dots
+    _dict_entry,4,SHOW,show 
 	_dict_entry 3,RUN,run
 	_dict_entry 4,LIST,list
 	_dict_entry,3,USR,usr

@@ -26,13 +26,13 @@
         ; 0x2n -> *|/|% operators
         ; 0x3n -> relational operators 
         TK_NONE=0       ; undefined
-        TK_VAR=1        ; variable letters {A..Z}
-        TK_ARRAY=2      ; array variable '@' 
-        TK_LPAREN=3     ; left parenthesis '('
-        TK_RPAREN=4     ; right parenthesis ')'
-        TK_QSTR=5       ; quoted string  
-        TK_CMD=6        ; BASIC command   
-        TK_COLON=7      ; command end marker ':' 
+        TK_COLON=1      ; command end marker ':' 
+        TK_VAR=2        ; variable letters {A..Z}
+        TK_ARRAY=3      ; array variable '@' 
+        TK_LPAREN=4     ; left parenthesis '('
+        TK_RPAREN=5     ; right parenthesis ')'
+        TK_QSTR=6       ; quoted string  
+        TK_CMD=7        ; BASIC command   
         TK_COMMA=8      ; item separator ',' 
         TK_SHARP=9      ; print colon width '#' 
         TK_INTGR=10     ; integer 
@@ -243,7 +243,8 @@
     .if DEBUG 
     push a 
     ld a,#n 
-    call putc 
+    call putc
+    btjf UART3_SR,#UART_SR_TC,. 
     pop a 
     .endif 
     .endm 
@@ -263,3 +264,10 @@
     .endif 
     .endm 
 
+    .macro _dbg_show 
+    .if DEBUG 
+    _dbg_save_regs 
+    call show 
+    _dbg_restore_regs
+    .endif
+    .endm 
